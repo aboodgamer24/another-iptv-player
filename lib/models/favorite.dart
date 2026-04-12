@@ -96,4 +96,4 @@ class Favorite {
       streamId.hashCode ^
       episodeId.hashCode ^
       m3uItemId.hashCode;
-} 
+}

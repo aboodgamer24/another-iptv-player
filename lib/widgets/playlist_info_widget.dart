@@ -45,7 +45,9 @@ class _PlaylistInfoWidgetState extends State<PlaylistInfoWidget> {
                 InfoTileWidget(
                   icon: Icons.person,
                   label: context.loc.username,
-                  value: widget.playlist.username ?? context.loc.not_found_in_category,
+                  value:
+                      widget.playlist.username ??
+                      context.loc.not_found_in_category,
                   copyOnTap: true,
                 ),
               ],
@@ -53,7 +55,10 @@ class _PlaylistInfoWidgetState extends State<PlaylistInfoWidget> {
                 const Divider(height: 1),
                 ListTile(
                   leading: Icon(Icons.lock_outline, color: Colors.grey[700]),
-                  title: Text(context.loc.password, style: const TextStyle(fontSize: 13)),
+                  title: Text(
+                    context.loc.password,
+                    style: const TextStyle(fontSize: 13),
+                  ),
                   subtitle: Text(
                     _passwordVisible
                         ? widget.playlist.password!
@@ -63,7 +68,9 @@ class _PlaylistInfoWidgetState extends State<PlaylistInfoWidget> {
                   dense: true,
                   trailing: IconButton(
                     icon: Icon(
-                      _passwordVisible ? Icons.visibility_off : Icons.visibility,
+                      _passwordVisible
+                          ? Icons.visibility_off
+                          : Icons.visibility,
                       size: 20,
                     ),
                     onPressed: () {

@@ -4,10 +4,10 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 
 class SubscriptionUtils {
   /// Calculates the remaining days for a subscription
-  /// 
+  ///
   /// [serverInfo] - The API response containing user information
   /// [context] - BuildContext for localization
-  /// 
+  ///
   /// Returns a localized string with remaining days or status
   static String getRemainingDays(
     ApiResponse? serverInfo,
@@ -32,15 +32,12 @@ class SubscriptionUtils {
   }
 
   /// Gets the status color based on remaining days
-  /// 
+  ///
   /// [serverInfo] - The API response containing user information
   /// [context] - BuildContext for localization
-  /// 
+  ///
   /// Returns a color indicating the subscription status
-  static Color getStatusColor(
-    ApiResponse? serverInfo,
-    BuildContext context,
-  ) {
+  static Color getStatusColor(ApiResponse? serverInfo, BuildContext context) {
     if (serverInfo != null) {
       final remaining = getRemainingDays(serverInfo, context);
       if (remaining == context.loc.expired) return Colors.red;

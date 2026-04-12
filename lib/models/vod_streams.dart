@@ -39,7 +39,7 @@ class VodStream {
       rating5based: safeDouble(json['rating_5based']) ?? 0.0,
       containerExtension: safeString(json['container_extension']),
       playlistId: safeString(playlistId),
-      createdAt:(json['createdAt']),
+      createdAt: (json['createdAt']),
       youtubeTrailer: safeString(json['youtube_trailer']),
       genre: safeString(json['genre']),
     );

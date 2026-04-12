@@ -101,8 +101,10 @@ class _PlaylistScreenBody extends StatelessWidget {
             itemBuilder: (context, index) {
               return PlaylistCard(
                 playlist: controller.playlists[index],
-                onTap: () =>
-                    controller.openPlaylist(context, controller.playlists[index]),
+                onTap: () => controller.openPlaylist(
+                  context,
+                  controller.playlists[index],
+                ),
                 onDelete: () => _showDeleteDialog(
                   context,
                   controller,

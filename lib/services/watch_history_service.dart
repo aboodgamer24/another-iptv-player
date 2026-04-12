@@ -41,10 +41,15 @@ class WatchHistoryService {
   }
 
   Future<List<WatchHistory>> getWatchHistoryByContentType(
-    ContentType contentType, String playlistId
+    ContentType contentType,
+    String playlistId,
   ) async {
     final query = _database.select(_database.watchHistories)
-      ..where((tbl) => tbl.contentType.equals(contentType.index) & tbl.playlistId.equals(playlistId))
+      ..where(
+        (tbl) =>
+            tbl.contentType.equals(contentType.index) &
+            tbl.playlistId.equals(playlistId),
+      )
       ..orderBy([(tbl) => OrderingTerm.desc(tbl.lastWatched)]);
 
     final results = await query.get();

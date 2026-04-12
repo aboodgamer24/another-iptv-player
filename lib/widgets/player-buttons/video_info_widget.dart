@@ -208,7 +208,9 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                             Icons.category,
                           ),
                           if (currentContent.containerExtension != null &&
-                              currentContent.containerExtension!.isNotEmpty) ...[
+                              currentContent
+                                  .containerExtension!
+                                  .isNotEmpty) ...[
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
@@ -261,14 +263,15 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                                 Icons.movie,
                               ),
                             ],
-                            if (currentContent.vodStream!.createdAt != null) ...[
+                            if (currentContent.vodStream!.createdAt !=
+                                null) ...[
                               const SizedBox(height: 12),
                               _buildInfoRow(
                                 context,
                                 context.loc.creation_date,
-                                DateFormat('dd.MM.yyyy HH:mm').format(
-                                  currentContent.vodStream!.createdAt!,
-                                ),
+                                DateFormat(
+                                  'dd.MM.yyyy HH:mm',
+                                ).format(currentContent.vodStream!.createdAt!),
                                 Icons.calendar_today,
                               ),
                             ],
@@ -425,7 +428,10 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
                           ],
                           if (currentContent.m3uItem != null &&
                               currentContent.m3uItem!.groupTitle != null &&
-                              currentContent.m3uItem!.groupTitle!.isNotEmpty) ...[
+                              currentContent
+                                  .m3uItem!
+                                  .groupTitle!
+                                  .isNotEmpty) ...[
                             const SizedBox(height: 12),
                             _buildInfoRow(
                               context,
@@ -455,7 +461,10 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
     );
   }
 
-  String _getContentTypeDisplayName(BuildContext context, ContentType contentType) {
+  String _getContentTypeDisplayName(
+    BuildContext context,
+    ContentType contentType,
+  ) {
     switch (contentType) {
       case ContentType.liveStream:
         return context.loc.live_stream_content_type;

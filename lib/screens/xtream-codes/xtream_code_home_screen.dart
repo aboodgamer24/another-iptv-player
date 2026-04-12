@@ -14,6 +14,8 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/utils/responsive_helper.dart';
 import 'package:another_iptv_player/widgets/category_section.dart';
+import 'package:another_iptv_player/screens/desktop/desktop_content_screen.dart';
+import 'package:another_iptv_player/screens/desktop/desktop_live_tv_screen.dart';
 import '../../models/content_type.dart';
 
 class XtreamCodeHomeScreen extends StatefulWidget {
@@ -28,15 +30,6 @@ class XtreamCodeHomeScreen extends StatefulWidget {
 class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   late XtreamCodeHomeController _controller;
   static const double _desktopBreakpoint = 900.0;
-  static const double _largeScreenBreakpoint = 1200.0;
-  static const double _defaultNavWidth = 80.0;
-  static const double _largeNavWidth = 100.0;
-  static const double _defaultItemHeight = 60.0;
-  static const double _largeItemHeight = 70.0;
-  static const double _defaultIconSize = 24.0;
-  static const double _largeIconSize = 28.0;
-  static const double _defaultFontSize = 10.0;
-  static const double _largeFontSize = 11.0;
   int? _hoveredIndex;
   final ScrollController _scrollController = ScrollController();
 
@@ -108,39 +101,28 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     );
   }
 
+  // ========================
+  // MOBILE LAYOUT (unchanged)
+  // ========================
+
   Widget _buildMobileLayout(
     BuildContext context,
     XtreamCodeHomeController controller,
   ) {
     return Scaffold(
-      body: _buildPageView(controller),
+      body: _buildMobilePageView(controller),
       bottomNavigationBar: _buildBottomNavigationBar(context, controller),
     );
   }
 
-  Widget _buildDesktopLayout(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    BoxConstraints constraints,
-  ) {
-    return Scaffold(
-      body: Row(
-        children: [
-          _buildDesktopNavigationBar(context, controller, constraints),
-          Expanded(child: _buildPageView(controller)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPageView(XtreamCodeHomeController controller) {
+  Widget _buildMobilePageView(XtreamCodeHomeController controller) {
     return IndexedStack(
       index: controller.currentIndex,
-      children: _buildPages(controller),
+      children: _buildMobilePages(controller),
     );
   }
 
-  List<Widget> _buildPages(XtreamCodeHomeController controller) {
+  List<Widget> _buildMobilePages(XtreamCodeHomeController controller) {
     return [
       WatchHistoryScreen(
         key: ValueKey('watch_history_${controller.currentIndex}'),
@@ -165,53 +147,338 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     ];
   }
 
+  // ========================
+  // DESKTOP LAYOUT (new sidebar + desktop screens)
+  // ========================
+
+  Widget _buildDesktopLayout(
+    BuildContext context,
+    XtreamCodeHomeController controller,
+    BoxConstraints constraints,
+  ) {
+    return Scaffold(
+      backgroundColor: const Color(0xFF0B0E14),
+      body: Column(
+        children: [
+          _buildTopNavigationBar(context, controller),
+          Expanded(child: _buildDesktopPageView(controller)),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDesktopPageView(XtreamCodeHomeController controller) {
+    return IndexedStack(
+      index: controller.currentIndex,
+      children: _buildDesktopPages(controller),
+    );
+  }
+
+  List<Widget> _buildDesktopPages(XtreamCodeHomeController controller) {
+    return [
+      WatchHistoryScreen(
+        key: ValueKey('watch_history_desktop_${controller.currentIndex}'),
+        playlistId: widget.playlist.id,
+      ),
+      DesktopLiveTvScreen(
+        categories: controller.liveCategories!,
+        title: context.loc.live_streams,
+      ),
+      DesktopContentScreen(
+        categories: controller.movieCategories,
+        contentType: ContentType.vod,
+        title: context.loc.movies,
+      ),
+      DesktopContentScreen(
+        categories: controller.seriesCategories,
+        contentType: ContentType.series,
+        title: context.loc.series_plural,
+      ),
+      XtreamCodePlaylistSettingsScreen(playlist: widget.playlist),
+    ];
+  }
+
+  // ========================
+  // DESKTOP TOP BAR
+  // ========================
+
+  Widget _buildTopNavigationBar(
+    BuildContext context,
+    XtreamCodeHomeController controller,
+  ) {
+    final items = _getNavigationItems(context);
+
+    // Filter main tabs: Live TV (1), Movies (2), Series (3)
+    final mainTabs = items
+        .where((i) => i.index == 1 || i.index == 2 || i.index == 3)
+        .toList();
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: const BoxDecoration(
+        color: Color(0xFF13161C), // Deep dark minimal color
+        border: Border(bottom: BorderSide(color: Color(0xFF1E2128), width: 1)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              // Left: Clock & Free Mode placeholder
+              Row(
+                children: [
+                  const Icon(
+                    Icons.access_time,
+                    color: Color(0xFF747B8B),
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    "Desktop Player",
+                    style: TextStyle(color: Color(0xFFA0A5B5), fontSize: 13),
+                  ),
+                  const SizedBox(width: 16),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1D24),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: const Color(0xFF262A35)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.rocket_launch,
+                          color: Color(0xFFE55D5D),
+                          size: 14,
+                        ),
+                        const SizedBox(width: 6),
+                        const Text(
+                          "FREE MODE",
+                          style: TextStyle(
+                            color: Color(0xFFE55D5D),
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              // Center: Logo Z (Click to go Home/History)
+              MouseRegion(
+                cursor: SystemMouseCursors.click,
+                child: GestureDetector(
+                  onTap: () => controller.onNavigationTap(0),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF5A45FF), Color(0xFF00D1FF)],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Text(
+                        "Z",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+
+              // Right: Profile and Settings
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF1A1D24),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: const Color(0xFF262A35)),
+                    ),
+                    child: Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              widget.playlist.name ?? 'Playlist',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const Text(
+                              "User Profile",
+                              style: TextStyle(
+                                color: Color(0xFF747B8B),
+                                fontSize: 10,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(width: 12),
+                        const Icon(
+                          Icons.person,
+                          color: Color(0xFFA0A5B5),
+                          size: 24,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  // Notifications
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF1A1D24),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.notifications_none,
+                      color: Color(0xFFA0A5B5),
+                      size: 20,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Settings
+                  MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => controller.onNavigationTap(4),
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: controller.currentIndex == 4
+                              ? const Color(0xFF2C52FF).withValues(alpha: 0.15)
+                              : const Color(0xFF1A1D24),
+                          shape: BoxShape.circle,
+                          border: controller.currentIndex == 4
+                              ? Border.all(
+                                  color: const Color(
+                                    0xFF2C52FF,
+                                  ).withValues(alpha: 0.5),
+                                )
+                              : null,
+                        ),
+                        child: Icon(
+                          Icons.settings,
+                          color: controller.currentIndex == 4
+                              ? Colors.white
+                              : const Color(0xFFA0A5B5),
+                          size: 20,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Nav tabs (Live TV, Movies, Series)
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: mainTabs
+                .map((item) => _buildTopNavItem(context, item, controller))
+                .toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTopNavItem(
+    BuildContext context,
+    NavigationItem item,
+    XtreamCodeHomeController controller,
+  ) {
+    final isSelected = controller.currentIndex == item.index;
+    final isHovered = _hoveredIndex == item.index;
+
+    final iconColor = isSelected
+        ? Colors.white
+        : (isHovered ? const Color(0xFFDCE0EA) : const Color(0xFF747B8B));
+    final textColor = isSelected
+        ? Colors.white
+        : (isHovered ? const Color(0xFFDCE0EA) : const Color(0xFFA0A5B5));
+    final bgColor = isSelected
+        ? const Color(0xFF1A1D24)
+        : (isHovered ? const Color(0xFF13161C) : Colors.transparent);
+    final borderColor = isSelected
+        ? const Color(0xFF262A35)
+        : Colors.transparent;
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hoveredIndex = item.index),
+      onExit: (_) => setState(() => _hoveredIndex = null),
+      cursor: SystemMouseCursors.click,
+      child: GestureDetector(
+        onTap: () => controller.onNavigationTap(item.index),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+          decoration: BoxDecoration(
+            color: bgColor,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: borderColor),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(item.icon, color: iconColor, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                item.label,
+                style: TextStyle(
+                  color: textColor,
+                  fontSize: 14,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ========================
+  // SHARED: Content page for MOBILE
+  // ========================
+
   Widget _buildContentPage(
     List<CategoryViewModel> categories,
     ContentType contentType,
     XtreamCodeHomeController controller,
   ) {
     return Scaffold(
-      appBar: _buildAppBar(context, controller, contentType),
+      appBar: _buildMobileAppBar(context, controller, contentType),
       body: _buildCategoryList(categories, contentType),
     );
-  }
-
-  AppBar _buildAppBar(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    ContentType contentType,
-  ) {
-    if (ResponsiveHelper.isDesktopOrTV(context)) {
-      return _buildDesktopAppBar(context, contentType);
-    }
-    return _buildMobileAppBar(context, controller, contentType);
-  }
-
-  AppBar _buildDesktopAppBar(BuildContext context, ContentType contentType) {
-    return AppBar(
-      title: SelectableText(
-        _getDesktopTitle(context, contentType),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      elevation: 0,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.search),
-          onPressed: () => _navigateToSearch(context, contentType),
-        ),
-      ],
-    );
-  }
-
-  String _getDesktopTitle(BuildContext context, ContentType contentType) {
-    switch (contentType) {
-      case ContentType.liveStream:
-        return context.loc.live_streams;
-      case ContentType.vod:
-        return context.loc.movies;
-      case ContentType.series:
-        return context.loc.series_plural;
-    }
   }
 
   AppBar _buildMobileAppBar(
@@ -283,6 +550,10 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     );
   }
 
+  // ========================
+  // MOBILE: Bottom Navigation
+  // ========================
+
   BottomNavigationBar _buildBottomNavigationBar(
     BuildContext context,
     XtreamCodeHomeController controller,
@@ -303,146 +574,34 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     }).toList();
   }
 
-  Widget _buildDesktopNavigationBar(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    BoxConstraints constraints,
-  ) {
-    final navWidth = _getNavigationWidth(constraints.maxWidth);
-    return Container(
-      width: navWidth,
-      decoration: _getNavigationBarDecoration(context),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          _buildDesktopNavigationItems(context, controller, constraints),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDesktopNavigationItems(
-    BuildContext context,
-    XtreamCodeHomeController controller,
-    BoxConstraints constraints,
-  ) {
-    final items = _getNavigationItems(context);
-    final sizes = _getNavigationSizes(constraints.maxWidth);
-    return Column(
-      children: items.map((item) {
-        final isSelected = controller.currentIndex == item.index;
-        return _buildNavigationItem(
-          context,
-          item,
-          isSelected,
-          sizes,
-          () => controller.onNavigationTap(item.index),
-        );
-      }).toList(),
-    );
-  }
-
-  Widget _buildNavigationItem(
-    BuildContext context,
-    NavigationItem item,
-    bool isSelected,
-    NavigationSizes sizes,
-    VoidCallback onTap,
-  ) {
-    return Focus(
-      onFocusChange: (hasFocus) {
-        setState(() => _hoveredIndex = hasFocus ? item.index : null);
-      },
-      child: GestureDetector(
-        onTap: onTap,
-        child: Container(
-          width: double.infinity,
-          height: sizes.itemHeight,
-          margin: const EdgeInsets.symmetric(vertical: 2),
-          decoration: BoxDecoration(
-            color: isSelected
-                ? Theme.of(context).colorScheme.primaryContainer
-                : (_hoveredIndex == item.index
-                      ? Colors.grey.withOpacity(0.2)
-                      : Colors.transparent),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(
-                item.icon,
-                color: _getIconColor(context, isSelected),
-                size: sizes.iconSize,
-              ),
-              const SizedBox(height: 2),
-              Text(
-                item.label,
-                style: TextStyle(
-                  color: _getTextColor(context, isSelected),
-                  fontSize: sizes.fontSize,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  BoxDecoration _getNavigationBarDecoration(BuildContext context) {
-    return BoxDecoration(
-      color: Theme.of(context).colorScheme.surface,
-      border: Border(
-        right: BorderSide(color: Theme.of(context).dividerColor, width: 0.5),
-      ),
-    );
-  }
-
-  double _getNavigationWidth(double screenWidth) {
-    return screenWidth >= _largeScreenBreakpoint
-        ? _largeNavWidth
-        : _defaultNavWidth;
-  }
-
-  NavigationSizes _getNavigationSizes(double screenWidth) {
-    final isLargeScreen = screenWidth >= _largeScreenBreakpoint;
-    return NavigationSizes(
-      itemHeight: isLargeScreen ? _largeItemHeight : _defaultItemHeight,
-      iconSize: isLargeScreen ? _largeIconSize : _defaultIconSize,
-      fontSize: isLargeScreen ? _largeFontSize : _defaultFontSize,
-    );
-  }
-
-  Color _getIconColor(BuildContext context, bool isSelected) {
-    return isSelected
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface;
-  }
-
-  Color _getTextColor(BuildContext context, bool isSelected) {
-    return isSelected
-        ? Theme.of(context).colorScheme.primary
-        : Theme.of(context).colorScheme.onSurface;
-  }
+  // ========================
+  // Navigation Items
+  // ========================
 
   List<NavigationItem> _getNavigationItems(BuildContext context) {
     return [
-      NavigationItem(icon: Icons.history, label: context.loc.history, index: 0),
-      NavigationItem(icon: Icons.live_tv, label: context.loc.live, index: 1),
       NavigationItem(
-        icon: Icons.movie_outlined,
+        icon: Icons.home_rounded,
+        label: context.loc.history,
+        index: 0,
+      ),
+      NavigationItem(
+        icon: Icons.live_tv_rounded,
+        label: context.loc.live,
+        index: 1,
+      ),
+      NavigationItem(
+        icon: Icons.movie_rounded,
         label: context.loc.movie,
         index: 2,
       ),
       NavigationItem(
-        icon: Icons.tv,
+        icon: Icons.tv_rounded,
         label: context.loc.series_plural,
         index: 3,
       ),
       NavigationItem(
-        icon: Icons.settings,
+        icon: Icons.settings_rounded,
         label: context.loc.settings,
         index: 4,
       ),
@@ -459,17 +618,5 @@ class NavigationItem {
     required this.icon,
     required this.label,
     required this.index,
-  });
-}
-
-class NavigationSizes {
-  final double itemHeight;
-  final double iconSize;
-  final double fontSize;
-
-  const NavigationSizes({
-    required this.itemHeight,
-    required this.iconSize,
-    required this.fontSize,
   });
 }

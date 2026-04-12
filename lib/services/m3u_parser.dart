@@ -5,7 +5,6 @@ import 'package:uuid/uuid.dart';
 import '../models/m3u_item.dart';
 
 class M3uParser {
-
   static Future<List<M3uItem>> parseM3uFile(Map<String, String> params) async {
     return await M3uParser.parseFile(params['id']!, params['filePath']!);
   }

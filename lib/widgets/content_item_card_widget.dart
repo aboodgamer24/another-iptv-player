@@ -76,7 +76,8 @@ class _ContentItemCardWidgetState extends State<ContentItemCardWidget> {
     double screenWidth = MediaQuery.of(context).size.width;
 
     double cardTotalWidth = widget.cardWidth + 8;
-    double targetPosition = (cardTotalWidth * index) + (widget.cardWidth / 2) - (screenWidth / 2);
+    double targetPosition =
+        (cardTotalWidth * index) + (widget.cardWidth / 2) - (screenWidth / 2);
 
     double maxScrollExtent = _scrollController.position.maxScrollExtent;
     double minScrollExtent = _scrollController.position.minScrollExtent;
@@ -95,7 +96,10 @@ class _ContentItemCardWidgetState extends State<ContentItemCardWidget> {
   }
 
   void selectAndScrollToIndex(int index) {
-    if (index < 0 || index >= widget.contentItems.length || !widget.isSelectionModeEnabled) return;
+    if (index < 0 ||
+        index >= widget.contentItems.length ||
+        !widget.isSelectionModeEnabled)
+      return;
 
     setState(() {
       selectedIndex = index;
@@ -154,7 +158,6 @@ class _ContentItemCardWidgetState extends State<ContentItemCardWidget> {
                     },
                     isSelected: selectedIndex == index,
                     key: widget.key,
-
                   ),
                 );
               },

@@ -138,7 +138,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    final result = await _favoritesController.toggleFavorite(widget.contentItem);
+    final result = await _favoritesController.toggleFavorite(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() {
         _isFavorite = result;
@@ -147,7 +149,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            result ? context.loc.added_to_favorites : context.loc.removed_from_favorites,
+            result
+                ? context.loc.added_to_favorites
+                : context.loc.removed_from_favorites,
           ),
         ),
       );
@@ -252,8 +256,12 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                 IconButton(
                                   onPressed: _toggleFavorite,
                                   icon: Icon(
-                                    _isFavorite ? Icons.favorite : Icons.favorite_border,
-                                    color: _isFavorite ? Colors.red : Colors.white,
+                                    _isFavorite
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: _isFavorite
+                                        ? Colors.red
+                                        : Colors.white,
                                     size: 28,
                                   ),
                                 ),
@@ -362,7 +370,6 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 const SizedBox(height: 20),
               ],
 
-
               // Sezonlar Bölümü
               _buildSeasonsSection(),
               const SizedBox(height: 24),
@@ -410,7 +417,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     color: Colors.black.withOpacity(0.2),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
-                  )
+                  ),
                 ],
         ),
         child: Row(
@@ -443,13 +450,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
     );
   }
 
-
-
   Widget _buildRatingSection() {
     final rating = seriesInfo?.rating5based ?? 0;
     final ratingText =
         widget.contentItem.seriesStream?.rating5based?.toStringAsFixed(1) ??
-            '0.0';
+        '0.0';
 
     return Row(
       children: [
@@ -657,7 +662,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
     // Bölüm Süresi
     final episodeRunTime =
         seriesInfo?.episodeRunTime ??
-            widget.contentItem.seriesStream?.episodeRunTime;
+        widget.contentItem.seriesStream?.episodeRunTime;
     if (episodeRunTime != null && episodeRunTime.isNotEmpty) {
       details.add({
         'icon': Icons.access_time,
@@ -678,8 +683,8 @@ class _SeriesScreenState extends State<SeriesScreen> {
     // Dizi ID
     final seriesIdValue =
         seriesInfo?.seriesId ??
-            widget.contentItem.seriesStream?.seriesId.toString() ??
-            widget.contentItem.id.toString();
+        widget.contentItem.seriesStream?.seriesId.toString() ??
+        widget.contentItem.id.toString();
     details.add({
       'icon': Icons.tag,
       'title': context.loc.series_id,
@@ -691,20 +696,24 @@ class _SeriesScreenState extends State<SeriesScreen> {
       children: [
         _buildTrailerCard(),
         const SizedBox(height: 12),
-        ...details.map((detail) => Padding(
-          padding: const EdgeInsets.only(bottom: 12),
-          child: _buildDetailCard(
-            icon: detail['icon'],
-            title: detail['title'],
-            value: detail['value'],
-          ),
-        )).toList(),
+        ...details
+            .map(
+              (detail) => Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildDetailCard(
+                  icon: detail['icon'],
+                  title: detail['title'],
+                  value: detail['value'],
+                ),
+              ),
+            )
+            .toList(),
       ],
     );
   }
 
   void _showSeasonEpisodes(SeasonsData season) async {
-        // FIX: Calculate the real count by filtering the full episodes list
+    // FIX: Calculate the real count by filtering the full episodes list
     // matching the current season number.
     final int realEpisodeCount = episodes
         .where((e) => e.season == season.seasonNumber)
@@ -864,14 +873,27 @@ class _SeriesScreenState extends State<SeriesScreen> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
-                episode.movieImage != null && episode.movieImage!.isNotEmpty
+                    episode.movieImage != null && episode.movieImage!.isNotEmpty
                     ? ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    episode.movieImage!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return Center(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          episode.movieImage!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Center(
+                              child: Text(
+                                '${episode.episodeNum}',
+                                style: TextStyle(
+                                  color: Theme.of(context).primaryColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    : Center(
                         child: Text(
                           '${episode.episodeNum}',
                           style: TextStyle(
@@ -880,20 +902,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                             fontSize: 16,
                           ),
                         ),
-                      );
-                    },
-                  ),
-                )
-                    : Center(
-                  child: Text(
-                    '${episode.episodeNum}',
-                    style: TextStyle(
-                      color: Theme.of(context).primaryColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
+                      ),
               ),
               const SizedBox(width: 12),
 
@@ -926,7 +935,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                               color: Colors.green,
                               borderRadius: BorderRadius.circular(6),
                             ),
-                            child:  Text(
+                            child: Text(
                               context.loc.new_ep,
                               style: TextStyle(
                                 color: Colors.white,
@@ -1015,10 +1024,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
     final hasBackdrop =
         (apiBackdrop?.isNotEmpty == true) ||
-            (widget.contentItem.seriesStream?.backdropPath?.isNotEmpty == true);
+        (widget.contentItem.seriesStream?.backdropPath?.isNotEmpty == true);
     final hasCover =
         (apiCover?.isNotEmpty == true) ||
-            (widget.contentItem.seriesStream?.cover?.isNotEmpty == true);
+        (widget.contentItem.seriesStream?.cover?.isNotEmpty == true);
 
     if (hasBackdrop || hasCover) {
       String? imageUrl;
@@ -1052,7 +1061,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     CircularProgressIndicator(
                       value: loadingProgress.expectedTotalBytes != null
                           ? loadingProgress.cumulativeBytesLoaded /
-                          loadingProgress.expectedTotalBytes!
+                                loadingProgress.expectedTotalBytes!
                           : null,
                       color: Colors.grey.shade400,
                     ),
@@ -1184,7 +1193,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
         } else {
           final trailerText = context.loc.trailer;
           final languageCode = Localizations.localeOf(context).languageCode;
-          final query = Uri.encodeQueryComponent("${widget.contentItem.name} $trailerText $languageCode");
+          final query = Uri.encodeQueryComponent(
+            "${widget.contentItem.name} $trailerText $languageCode",
+          );
           urlString = "https://www.youtube.com/results?search_query=$query";
         }
 
@@ -1212,15 +1223,16 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 color: Colors.red.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(Icons.ondemand_video, size: 20, color: Colors.red),
+              child: const Icon(
+                Icons.ondemand_video,
+                size: 20,
+                color: Colors.red,
+              ),
             ),
             const SizedBox(width: 16),
             Text(
               context.loc.trailer,
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
+              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
             ),
             const Spacer(),
             const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),

@@ -3,8 +3,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/content_type.dart';
+import 'package:another_iptv_player/utils/responsive_helper.dart';
 
-class ContentCard extends StatelessWidget {
+class ContentCard extends StatefulWidget {
   final ContentItem content;
   final double width;
   final VoidCallback? onTap;
@@ -19,13 +20,20 @@ class ContentCard extends StatelessWidget {
   });
 
   @override
+  State<ContentCard> createState() => _ContentCardState();
+}
+
+class _ContentCardState extends State<ContentCard> {
+  bool _isHovered = false;
+
+  @override
   Widget build(BuildContext context) {
     bool isRecent = false;
     String? releaseDateStr;
     DateTime? releaseDate;
 
-    if (content.contentType == ContentType.series) {
-      releaseDateStr = content.seriesStream?.releaseDate;
+    if (widget.content.contentType == ContentType.series) {
+      releaseDateStr = widget.content.seriesStream?.releaseDate;
     }
 
     if (releaseDateStr != null && releaseDateStr.isNotEmpty) {
@@ -41,16 +49,21 @@ class ContentCard extends StatelessWidget {
       isRecent = diff <= 15;
     }
 
-    final bool isLiveStream = content.contentType == ContentType.liveStream;
-    final Widget? ratingBadge =
-    isLiveStream ? null : _buildRatingBadge(context);
+    final bool isLiveStream =
+        widget.content.contentType == ContentType.liveStream;
+    final Widget? ratingBadge = isLiveStream
+        ? null
+        : _buildRatingBadge(context);
+    final bool isDesktop = ResponsiveHelper.isDesktopOrTV(context);
 
     Widget cardWidget = Card(
       clipBehavior: Clip.antiAlias,
       margin: const EdgeInsets.fromLTRB(0, 0, 0, 1),
-      color: isSelected ? Theme.of(context).colorScheme.primaryContainer : null,
+      color: widget.isSelected
+          ? Theme.of(context).colorScheme.primaryContainer
+          : null,
       child: InkWell(
-        onTap: onTap,
+        onTap: widget.onTap,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           mainAxisSize: MainAxisSize.min,
@@ -59,27 +72,27 @@ class ContentCard extends StatelessWidget {
               child: Stack(
                 children: [
                   Positioned.fill(
-                    child: content.imagePath.isNotEmpty
+                    child: widget.content.imagePath.isNotEmpty
                         ? CachedNetworkImage(
-                      imageUrl: content.imagePath,
-                      fit: _getFitForContentType(),
-                      placeholder: (context, url) => Container(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .surfaceContainerHighest,
-                        child: const Center(
-                          child: SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
+                            imageUrl: widget.content.imagePath,
+                            fit: _getFitForContentType(),
+                            placeholder: (context, url) => Container(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.surfaceContainerHighest,
+                              child: const Center(
+                                child: SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                  ),
+                                ),
+                              ),
                             ),
-                          ),
-                        ),
-                      ),
-                      errorWidget: (context, url, error) =>
-                          _buildTitleCard(context),
-                    )
+                            errorWidget: (context, url, error) =>
+                                _buildTitleCard(context),
+                          )
                         : _buildTitleCard(context),
                   ),
                   if (ratingBadge != null) ratingBadge,
@@ -106,6 +119,27 @@ class ContentCard extends StatelessWidget {
                         ),
                       ),
                     ),
+                  // Hover play icon overlay (desktop only)
+                  if (isDesktop && _isHovered)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.black.withValues(alpha: 0.3),
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Icon(
+                              Icons.play_arrow_rounded,
+                              color: Theme.of(context).colorScheme.onPrimary,
+                              size: 20,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   Positioned(
                     left: 0,
                     right: 0,
@@ -115,9 +149,9 @@ class ContentCard extends StatelessWidget {
                         horizontal: 6,
                         vertical: 4,
                       ),
-                      color: Colors.black.withOpacity(0.7),
+                      color: Colors.black.withValues(alpha: 0.7),
                       child: Text(
-                        content.name,
+                        widget.content.name,
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
@@ -136,11 +170,27 @@ class ContentCard extends StatelessWidget {
         ),
       ),
     );
+
+    // Desktop: wrap with hover effects
+    if (isDesktop) {
+      return MouseRegion(
+        onEnter: (_) => setState(() => _isHovered = true),
+        onExit: (_) => setState(() => _isHovered = false),
+        cursor: SystemMouseCursors.click,
+        child: AnimatedScale(
+          scale: _isHovered ? 1.05 : 1.0,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
+          child: cardWidget,
+        ),
+      );
+    }
+
     return cardWidget;
   }
 
   BoxFit _getFitForContentType() {
-    if (content.contentType == ContentType.liveStream) {
+    if (widget.content.contentType == ContentType.liveStream) {
       return BoxFit.contain;
     }
     return BoxFit.cover;
@@ -148,18 +198,20 @@ class ContentCard extends StatelessWidget {
 
   Widget _buildTitleCard(BuildContext context) {
     return Container(
-      color: isSelected
-          ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+      color: widget.isSelected
+          ? Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.3)
           : Theme.of(context).colorScheme.surfaceContainerHighest,
       child: Center(
         child: Padding(
           padding: const EdgeInsets.all(6),
           child: Text(
-            content.name,
+            widget.content.name,
             style: TextStyle(
               fontWeight: FontWeight.bold,
               fontSize: 11,
-              color: isSelected
+              color: widget.isSelected
                   ? Theme.of(context).colorScheme.onPrimaryContainer
                   : null,
             ),
@@ -173,9 +225,9 @@ class ContentCard extends StatelessWidget {
   }
 
   Widget? _buildRatingBadge(BuildContext context) {
-    final dynamic rawRating = content.contentType == ContentType.series
-        ? content.seriesStream?.rating
-        : content.vodStream?.rating;
+    final dynamic rawRating = widget.content.contentType == ContentType.series
+        ? widget.content.seriesStream?.rating
+        : widget.content.vodStream?.rating;
 
     final double? rating = _parseRating(rawRating);
     if (rating == null || rating <= 0) {
@@ -197,20 +249,20 @@ class ContentCard extends StatelessWidget {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                colorScheme.secondaryContainer.withOpacity(0.93),
-                colorScheme.secondary.withOpacity(0.8),
+                colorScheme.secondaryContainer.withValues(alpha: 0.93),
+                colorScheme.secondary.withValues(alpha: 0.8),
               ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color: colorScheme.onSecondaryContainer.withOpacity(0.16),
+              color: colorScheme.onSecondaryContainer.withValues(alpha: 0.16),
               width: 0.8,
             ),
             boxShadow: [
               BoxShadow(
-                color: colorScheme.shadow.withOpacity(0.22),
+                color: colorScheme.shadow.withValues(alpha: 0.22),
                 offset: const Offset(0, 1),
                 blurRadius: 4,
               ),
@@ -222,7 +274,7 @@ class ContentCard extends StatelessWidget {
               Icon(
                 Icons.star_rounded,
                 size: 14,
-                color: colorScheme.onSecondaryContainer.withOpacity(0.9),
+                color: colorScheme.onSecondaryContainer.withValues(alpha: 0.9),
               ),
               const SizedBox(width: 3),
               Text(

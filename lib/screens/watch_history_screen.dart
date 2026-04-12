@@ -15,7 +15,7 @@ class WatchHistoryScreen extends StatefulWidget {
   final Key? screenKey;
 
   const WatchHistoryScreen({
-    super.key, 
+    super.key,
     required this.playlistId,
     this.screenKey,
   });
@@ -40,7 +40,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
   }
 
   void _refreshData() {
-    print('WatchHistoryScreen: _refreshData çağrıldı - Key: ${widget.screenKey}');
+    print(
+      'WatchHistoryScreen: _refreshData çağrıldı - Key: ${widget.screenKey}',
+    );
     if (mounted) {
       print('WatchHistoryScreen: Veriler yenileniyor...');
       _historyController.loadWatchHistory();
@@ -84,7 +86,9 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
                 await historyController.loadWatchHistory();
                 await favoritesController.loadFavorites();
               },
-              child: historyController.isAllEmpty && favoritesController.favorites.isEmpty
+              child:
+                  historyController.isAllEmpty &&
+                      favoritesController.favorites.isEmpty
                   ? const WatchHistoryEmptyState()
                   : WatchHistoryContent(
                       onHistoryTap: (history) =>
@@ -108,7 +112,8 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
         builder: (context) => WatchHistoryListScreen(
           title: title,
           histories: histories,
-          onHistoryTap: (history) => _historyController.playContent(context, history),
+          onHistoryTap: (history) =>
+              _historyController.playContent(context, history),
           onHistoryRemove: (history) => _showRemoveDialog(history),
         ),
       ),
@@ -128,7 +133,7 @@ class _WatchHistoryScreenState extends State<WatchHistoryScreen> {
       favorite.contentType,
       episodeId: favorite.episodeId,
     );
-    
+
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -10,7 +10,6 @@ class SubscriptionInfoWidget extends StatelessWidget {
 
   const SubscriptionInfoWidget({super.key, required this.serverInfo});
 
-
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -24,7 +23,10 @@ class SubscriptionInfoWidget extends StatelessWidget {
                 icon: Icons.schedule,
                 label: context.loc.remaining_day_title,
                 value: SubscriptionUtils.getRemainingDays(serverInfo, context),
-                valueColor: SubscriptionUtils.getStatusColor(serverInfo, context),
+                valueColor: SubscriptionUtils.getStatusColor(
+                  serverInfo,
+                  context,
+                ),
               ),
               if (serverInfo?.userInfo != null)
                 InfoTileWidget(

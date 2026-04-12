@@ -30,10 +30,7 @@ class SliderTileWidget extends StatelessWidget {
           // Üst kısım: Icon, Label ve Value
           Row(
             children: [
-              Icon(
-                icon,
-                size: 18,
-              ),
+              Icon(icon, size: 18),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -50,9 +47,9 @@ class SliderTileWidget extends StatelessWidget {
                 ),
                 child: Text(
                   value.toStringAsFixed(1),
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
                 ),
               ),
             ],

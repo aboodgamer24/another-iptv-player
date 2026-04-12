@@ -18,13 +18,13 @@ class _VideoTitleWidgetState extends State<VideoTitleWidget> {
   @override
   void initState() {
     super.initState();
-    
+
     if (PlayerState.currentContent != null) {
       videoTitle = PlayerState.currentContent!.name;
     } else if (PlayerState.title.isNotEmpty) {
       videoTitle = PlayerState.title;
     }
-    
+
     subscription = EventBus().on<ContentItem>('player_content_item').listen((
       ContentItem data,
     ) {
@@ -55,12 +55,10 @@ class _VideoTitleWidgetState extends State<VideoTitleWidget> {
         }
       });
     }
-    
+
     return Text(
       videoTitle,
-      style: const TextStyle(
-        color: Colors.white,
-      ),
+      style: const TextStyle(color: Colors.white),
       maxLines: 1,
       overflow: TextOverflow.clip,
     );

@@ -8,11 +8,7 @@ class ContentGrid extends StatelessWidget {
   final List<ContentItem> items;
   final Function(ContentItem) onItemTap;
 
-  const ContentGrid({
-    super.key,
-    required this.items,
-    required this.onItemTap,
-  });
+  const ContentGrid({super.key, required this.items, required this.onItemTap});
 
   @override
   Widget build(BuildContext context) {

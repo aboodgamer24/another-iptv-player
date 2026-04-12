@@ -120,21 +120,23 @@ class _VideoChannelSelectorWidgetState
     _channelsScrollController = ScrollController();
 
     final currentContent = PlayerState.currentContent;
-    
+
     if (currentContent?.contentType == ContentType.liveStream) {
       if (PlaylistContentState.liveCategories.isEmpty) {
         await PlaylistContentState.loadLiveStreams();
       }
-      
+
       String? currentCategoryId;
       if (currentContent?.liveStream != null) {
         currentCategoryId = currentContent!.liveStream!.categoryId;
       } else if (currentContent?.m3uItem != null) {
         currentCategoryId = currentContent!.m3uItem!.categoryId;
       }
-      
-      if (currentCategoryId != null && 
-          PlaylistContentState.liveCategories.any((c) => c.categoryId == currentCategoryId)) {
+
+      if (currentCategoryId != null &&
+          PlaylistContentState.liveCategories.any(
+            (c) => c.categoryId == currentCategoryId,
+          )) {
         _selectedCategoryId = currentCategoryId;
         _showCategories = false;
       } else {
@@ -146,9 +148,9 @@ class _VideoChannelSelectorWidgetState
     } else if (currentContent?.contentType == ContentType.series) {
       final items = widget.queue ?? [];
       if (items.isEmpty) return;
-      
+
       final currentSeason = currentContent?.season;
-      
+
       if (currentSeason != null) {
         _selectedSeason = currentSeason;
         _showSeasons = false;
@@ -211,10 +213,7 @@ class _VideoChannelSelectorWidgetState
     PlayerState.showChannelList = false;
   }
 
-  Widget _buildOverlay(
-    BuildContext context,
-    double panelWidth,
-  ) {
+  Widget _buildOverlay(BuildContext context, double panelWidth) {
     if (_globalOverlayEntry == null) {
       return const SizedBox.shrink();
     }
@@ -232,10 +231,12 @@ class _VideoChannelSelectorWidgetState
 
     List<ContentItem> items = [];
     int? selectedIndex;
-    
+
     if (_showCategories && isLiveStream) {
     } else if (_selectedCategoryId != null && isLiveStream) {
-      items = PlaylistContentState.getLiveStreamsByCategory(_selectedCategoryId!);
+      items = PlaylistContentState.getLiveStreamsByCategory(
+        _selectedCategoryId!,
+      );
       if (currentContent != null) {
         final foundIndex = items.indexWhere(
           (item) => item.id == currentContent.id,
@@ -259,7 +260,9 @@ class _VideoChannelSelectorWidgetState
     } else {
       if (isSeries && _selectedSeason != null) {
         final allItems = widget.queue ?? [];
-        items = allItems.where((item) => item.season == _selectedSeason).toList();
+        items = allItems
+            .where((item) => item.season == _selectedSeason)
+            .toList();
       } else {
         items = widget.queue ?? [];
       }
@@ -307,10 +310,14 @@ class _VideoChannelSelectorWidgetState
                   ),
                   child: Row(
                     children: [
-                      if ((_selectedCategoryId != null && isLiveStream) || 
+                      if ((_selectedCategoryId != null && isLiveStream) ||
                           (_selectedSeason != null && isSeries))
                         IconButton(
-                          icon: Icon(Icons.arrow_back, color: textColor, size: 20),
+                          icon: Icon(
+                            Icons.arrow_back,
+                            color: textColor,
+                            size: 20,
+                          ),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           onPressed: () {
@@ -336,18 +343,23 @@ class _VideoChannelSelectorWidgetState
                           _showCategories && isLiveStream
                               ? context.loc.categories
                               : _selectedCategoryId != null && isLiveStream
-                                  ? PlaylistContentState.liveCategories
-                                      .firstWhere((c) => c.categoryId == _selectedCategoryId)
-                                      .categoryName
-                                      : _showSeasons && isSeries
-                                          ? context.loc.seasons
-                                          : _selectedSeason != null && isSeries
-                                              ? context.loc.season_number_format(_selectedSeason!)
-                                              : isVod
-                                                  ? context.loc.movies
-                                                  : isSeries
-                                                      ? context.loc.episodes
-                                                      : context.loc.select_channel,
+                              ? PlaylistContentState.liveCategories
+                                    .firstWhere(
+                                      (c) =>
+                                          c.categoryId == _selectedCategoryId,
+                                    )
+                                    .categoryName
+                              : _showSeasons && isSeries
+                              ? context.loc.seasons
+                              : _selectedSeason != null && isSeries
+                              ? context.loc.season_number_format(
+                                  _selectedSeason!,
+                                )
+                              : isVod
+                              ? context.loc.movies
+                              : isSeries
+                              ? context.loc.episodes
+                              : context.loc.select_channel,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
@@ -355,8 +367,8 @@ class _VideoChannelSelectorWidgetState
                           ),
                         ),
                       ),
-                      if ((!_showCategories || _selectedCategoryId != null) && 
-                          (!_showSeasons || _selectedSeason != null) && 
+                      if ((!_showCategories || _selectedCategoryId != null) &&
+                          (!_showSeasons || _selectedSeason != null) &&
                           selectedIndex != null)
                         Text(
                           '${selectedIndex + 1} / ${items.length}',
@@ -379,23 +391,24 @@ class _VideoChannelSelectorWidgetState
                   child: _showCategories && isLiveStream
                       ? _buildCategoriesList(context)
                       : _showSeasons && isSeries
-                          ? _buildSeasonsList(context)
-                          : ListView.builder(
-                              controller: _channelsScrollController,
-                              padding: const EdgeInsets.all(12),
-                              itemCount: items.length,
-                              itemBuilder: (context, index) {
-                                final item = items[index];
-                                final isSelected = selectedIndex != null && index == selectedIndex;
+                      ? _buildSeasonsList(context)
+                      : ListView.builder(
+                          controller: _channelsScrollController,
+                          padding: const EdgeInsets.all(12),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            final isSelected =
+                                selectedIndex != null && index == selectedIndex;
 
-                                return _buildChannelListItem(
-                                  context,
-                                  item,
-                                  index,
-                                  isSelected,
-                                );
-                              },
-                            ),
+                            return _buildChannelListItem(
+                              context,
+                              item,
+                              index,
+                              isSelected,
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
@@ -415,14 +428,15 @@ class _VideoChannelSelectorWidgetState
 
     final allItems = widget.queue ?? [];
     final currentContent = PlayerState.currentContent;
-    
-    final seasons = allItems
-        .where((item) => item.season != null)
-        .map((item) => item.season!)
-        .toSet()
-        .toList()
-      ..sort();
-    
+
+    final seasons =
+        allItems
+            .where((item) => item.season != null)
+            .map((item) => item.season!)
+            .toSet()
+            .toList()
+          ..sort();
+
     final currentSeason = currentContent?.season;
 
     return ListView.builder(
@@ -430,7 +444,9 @@ class _VideoChannelSelectorWidgetState
       itemCount: seasons.length,
       itemBuilder: (context, index) {
         final season = seasons[index];
-        final episodeCount = allItems.where((item) => item.season == season).length;
+        final episodeCount = allItems
+            .where((item) => item.season == season)
+            .length;
         final isSelected = currentSeason != null && season == currentSeason;
 
         return Material(
@@ -469,7 +485,9 @@ class _VideoChannelSelectorWidgetState
                           context.loc.season_number_format(season),
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w600,
                             color: textColor,
                           ),
                         ),
@@ -485,11 +503,7 @@ class _VideoChannelSelectorWidgetState
                     ),
                   ),
                   if (isSelected)
-                    Icon(
-                      Icons.check_circle,
-                      color: primaryColor,
-                      size: 20,
-                    )
+                    Icon(Icons.check_circle, color: primaryColor, size: 20)
                   else
                     const Icon(
                       Icons.arrow_forward_ios,
@@ -515,7 +529,7 @@ class _VideoChannelSelectorWidgetState
 
     final categories = PlaylistContentState.liveCategories;
     final currentContent = PlayerState.currentContent;
-    
+
     String? currentCategoryId;
     if (currentContent?.liveStream != null) {
       currentCategoryId = currentContent!.liveStream!.categoryId;
@@ -529,8 +543,12 @@ class _VideoChannelSelectorWidgetState
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final category = categories[index];
-        final channelCount = PlaylistContentState.getLiveStreamsByCategory(category.categoryId).length;
-        final isSelected = currentCategoryId != null && category.categoryId == currentCategoryId;
+        final channelCount = PlaylistContentState.getLiveStreamsByCategory(
+          category.categoryId,
+        ).length;
+        final isSelected =
+            currentCategoryId != null &&
+            category.categoryId == currentCategoryId;
 
         return Material(
           color: Colors.transparent,
@@ -575,7 +593,9 @@ class _VideoChannelSelectorWidgetState
                           category.categoryName,
                           style: TextStyle(
                             fontSize: 14,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.w600,
                             color: textColor,
                           ),
                         ),
@@ -591,11 +611,7 @@ class _VideoChannelSelectorWidgetState
                     ),
                   ),
                   if (isSelected)
-                    Icon(
-                      Icons.check_circle,
-                      color: primaryColor,
-                      size: 20,
-                    )
+                    Icon(Icons.check_circle, color: primaryColor, size: 20)
                   else
                     const Icon(
                       Icons.arrow_forward_ios,
@@ -630,35 +646,43 @@ class _VideoChannelSelectorWidgetState
       color: Colors.transparent,
       child: InkWell(
         onTap: () {
-          final isSeries = PlayerState.currentContent?.contentType == ContentType.series;
-          
+          final isSeries =
+              PlayerState.currentContent?.contentType == ContentType.series;
+
           if (isSeries && item.season != null) {
             if (_selectedSeason != item.season) {
               _selectedSeason = item.season;
               _showSeasons = false;
             }
           }
-          
-          if (_selectedCategoryId != null && 
-              PlayerState.currentContent?.contentType == ContentType.liveStream) {
-            final categoryItems = PlaylistContentState.getLiveStreamsByCategory(_selectedCategoryId!);
+
+          if (_selectedCategoryId != null &&
+              PlayerState.currentContent?.contentType ==
+                  ContentType.liveStream) {
+            final categoryItems = PlaylistContentState.getLiveStreamsByCategory(
+              _selectedCategoryId!,
+            );
             PlayerState.queue = categoryItems;
             PlayerState.currentIndex = index;
             PlayerState.currentContent = item;
-            
+
             EventBus().emit('player_content_item_index_changed', index);
             EventBus().emit('player_content_item', item);
           } else {
             final allItems = widget.queue ?? [];
-            final realIndex = allItems.indexWhere((queueItem) => queueItem.id == item.id);
+            final realIndex = allItems.indexWhere(
+              (queueItem) => queueItem.id == item.id,
+            );
             if (realIndex != -1) {
               EventBus().emit('player_content_item_index_changed', realIndex);
             } else {
               EventBus().emit('player_content_item_index_changed', index);
             }
           }
-          
-          if (isSeries && item.season != null && _selectedSeason == item.season) {
+
+          if (isSeries &&
+              item.season != null &&
+              _selectedSeason == item.season) {
             _globalOverlayEntry?.markNeedsBuild();
           }
         },
@@ -740,7 +764,10 @@ class _VideoChannelSelectorWidgetState
                         const SizedBox(width: 4),
                         Flexible(
                           child: Text(
-                            _getContentTypeDisplayName(context, item.contentType),
+                            _getContentTypeDisplayName(
+                              context,
+                              item.contentType,
+                            ),
                             style: TextStyle(
                               fontSize: 11,
                               color: secondaryTextColor,
@@ -773,7 +800,10 @@ class _VideoChannelSelectorWidgetState
     }
   }
 
-  String _getContentTypeDisplayName(BuildContext context, ContentType contentType) {
+  String _getContentTypeDisplayName(
+    BuildContext context,
+    ContentType contentType,
+  ) {
     switch (contentType) {
       case ContentType.liveStream:
         return context.loc.live_stream_content_type;

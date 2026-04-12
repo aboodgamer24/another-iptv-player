@@ -73,8 +73,7 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
 
   Future<void> _initializeQueue() async {
     // Tüm sezonların tüm bölümlerini ekle (sadece mevcut sezonu değil)
-    allContents = widget.episodes
-        .map((x) {
+    allContents = widget.episodes.map((x) {
       return ContentItem(
         x.episodeId,
         x.title,
@@ -83,12 +82,11 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
         containerExtension: x.containerExtension,
         season: x.season,
       );
-    })
-        .toList();
+    }).toList();
 
     setState(() {
       selectedContentItemIndex = allContents.indexWhere(
-            (element) => element.id == widget.contentItem.id,
+        (element) => element.id == widget.contentItem.id,
       );
       allContentsLoaded = true;
     });
@@ -96,15 +94,14 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
     contentItemIndexChangedSubscription = EventBus()
         .on<int>('player_content_item_index')
         .listen((int index) {
-      if (!mounted) return;
+          if (!mounted) return;
 
-      setState(() {
-        selectedContentItemIndex = index;
-        contentItem = allContents[selectedContentItemIndex];
-      });
-    });
+          setState(() {
+            selectedContentItemIndex = index;
+            contentItem = allContents[selectedContentItemIndex];
+          });
+        });
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -115,11 +112,13 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
         backgroundColor: Colors.black,
         body: SafeArea(
           child: SizedBox.expand(
-            child: PlayerWidget(contentItem: widget.contentItem, queue: allContents),
+            child: PlayerWidget(
+              contentItem: widget.contentItem,
+              queue: allContents,
+            ),
           ),
         ),
       );
     }
   }
-
 }

@@ -1,10 +1,4 @@
-enum ProgressStep {
-  userInfo,
-  categories,
-  liveChannels,
-  movies,
-  series
-}
+enum ProgressStep { userInfo, categories, liveChannels, movies, series }
 
 class ProgressState {
   final ProgressStep currentStep;

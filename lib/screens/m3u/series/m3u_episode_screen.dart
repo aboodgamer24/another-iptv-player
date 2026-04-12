@@ -71,17 +71,15 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
 
   Future<void> _initializeQueue() async {
     // Tüm sezonların tüm bölümlerini ekle (sadece mevcut sezonu değil)
-    allContents = widget.episodes
-        .map((x) {
-          return ContentItem(
-            x.url,
-            x.name,
-            x.cover ?? "",
-            ContentType.series,
-            season: x.seasonNumber,
-          );
-        })
-        .toList();
+    allContents = widget.episodes.map((x) {
+      return ContentItem(
+        x.url,
+        x.name,
+        x.cover ?? "",
+        ContentType.series,
+        season: x.seasonNumber,
+      );
+    }).toList();
 
     setState(() {
       selectedContentItemIndex = allContents.indexWhere(
@@ -102,7 +100,6 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
         });
   }
 
-
   @override
   Widget build(BuildContext context) {
     if (!allContentsLoaded) {
@@ -112,11 +109,13 @@ class _M3uEpisodeScreenState extends State<M3uEpisodeScreen> {
         backgroundColor: Colors.black,
         body: SafeArea(
           child: SizedBox.expand(
-            child: PlayerWidget(contentItem: widget.contentItem, queue: allContents),
+            child: PlayerWidget(
+              contentItem: widget.contentItem,
+              queue: allContents,
+            ),
           ),
         ),
       );
     }
   }
-
 }

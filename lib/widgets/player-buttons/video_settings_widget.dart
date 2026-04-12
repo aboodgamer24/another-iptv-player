@@ -32,16 +32,17 @@ class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
     super.initState();
     _globalContext = context;
 
-    _globalToggleSubscription ??=
-        EventBus().on<bool>('toggle_video_settings').listen((bool show) {
-      if (show) {
-        if (_globalContext != null) {
-          _showSettings(_globalContext!);
-        }
-      } else {
-        hideOverlay();
-      }
-    });
+    _globalToggleSubscription ??= EventBus()
+        .on<bool>('toggle_video_settings')
+        .listen((bool show) {
+          if (show) {
+            if (_globalContext != null) {
+              _showSettings(_globalContext!);
+            }
+          } else {
+            hideOverlay();
+          }
+        });
   }
 
   @override
@@ -86,10 +87,8 @@ class _VideoSettingsWidgetState extends State<VideoSettingsWidget> {
     _globalOverlayEntry = OverlayEntry(
       opaque: false,
       maintainState: true,
-      builder: (context) => _VideoSettingsOverlay(
-        width: panelWidth,
-        onClose: hideOverlay,
-      ),
+      builder: (context) =>
+          _VideoSettingsOverlay(width: panelWidth, onClose: hideOverlay),
     );
 
     overlay.insert(_globalOverlayEntry!);
@@ -101,10 +100,7 @@ class _VideoSettingsOverlay extends StatefulWidget {
   final double width;
   final VoidCallback onClose;
 
-  const _VideoSettingsOverlay({
-    required this.width,
-    required this.onClose,
-  });
+  const _VideoSettingsOverlay({required this.width, required this.onClose});
 
   @override
   State<_VideoSettingsOverlay> createState() => _VideoSettingsOverlayState();
@@ -137,16 +133,17 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
       }
     });
 
-    _trackChangeSubscription =
-        EventBus().on<dynamic>('player_track_changed').listen((_) {
-      if (mounted) {
-        setState(() {
-          selectedVideoTrack = PlayerState.selectedVideo.id;
-          selectedAudioTrack = PlayerState.selectedAudio.id;
-          selectedSubtitleTrack = PlayerState.selectedSubtitle.id;
+    _trackChangeSubscription = EventBus()
+        .on<dynamic>('player_track_changed')
+        .listen((_) {
+          if (mounted) {
+            setState(() {
+              selectedVideoTrack = PlayerState.selectedVideo.id;
+              selectedAudioTrack = PlayerState.selectedAudio.id;
+              selectedSubtitleTrack = PlayerState.selectedSubtitle.id;
+            });
+          }
         });
-      }
-    });
   }
 
   void _loadTracks() {
@@ -207,9 +204,7 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: cardColor,
-            border: Border(
-              bottom: BorderSide(color: dividerColor, width: 1),
-            ),
+            border: Border(bottom: BorderSide(color: dividerColor, width: 1)),
           ),
           child: Row(
             children: [
@@ -316,10 +311,7 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
       decoration: BoxDecoration(
         color: cardBackground,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: dividerColor,
-          width: 1,
-        ),
+        border: Border.all(color: dividerColor, width: 1),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -340,24 +332,23 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
           ),
           if (tracks.isNotEmpty) ...[
             const SizedBox(height: 12),
-            ...tracks.map((track) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _buildTrackItem(
-                    context,
-                    title: labelBuilder(track),
-                    isSelected: isSelected(track),
-                    onTap: () => onTrackSelected(track),
-                  ),
-                )),
+            ...tracks.map(
+              (track) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _buildTrackItem(
+                  context,
+                  title: labelBuilder(track),
+                  isSelected: isSelected(track),
+                  onTap: () => onTrackSelected(track),
+                ),
+              ),
+            ),
           ] else
             Padding(
               padding: const EdgeInsets.only(left: 32, top: 8),
               child: Text(
                 context.loc.no_tracks_available,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: secondaryTextColor,
-                ),
+                style: TextStyle(fontSize: 12, color: secondaryTextColor),
               ),
             ),
         ],
@@ -387,14 +378,8 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
               : unselectedBackground,
           borderRadius: BorderRadius.circular(6),
           border: isSelected
-              ? Border.all(
-                  color: primaryColor,
-                  width: 1.5,
-                )
-              : Border.all(
-                  color: dividerColor,
-                  width: 0.5,
-                ),
+              ? Border.all(color: primaryColor, width: 1.5)
+              : Border.all(color: dividerColor, width: 0.5),
         ),
         child: Row(
           children: [
@@ -409,11 +394,7 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
               ),
             ),
             if (isSelected)
-              Icon(
-                Icons.check_circle,
-                color: primaryColor,
-                size: 18,
-              ),
+              Icon(Icons.check_circle, color: primaryColor, size: 18),
           ],
         ),
       ),

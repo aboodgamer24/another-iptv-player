@@ -132,7 +132,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
         for (var liveCategory in liveCategories) {
           var liveStreams = await _repository.getLiveChannelsByCategoryId(
             categoryId: liveCategory.categoryId,
-            top: 10,
           );
 
           if (liveStreams == null || liveStreams.isEmpty) continue;
@@ -142,13 +141,13 @@ class XtreamCodeHomeController extends ChangeNotifier {
             contentItems: liveStreams
                 .map(
                   (x) => ContentItem(
-                x.streamId,
-                x.name,
-                x.streamIcon,
-                ContentType.liveStream,
-                liveStream: x,
-              ),
-            )
+                    x.streamId,
+                    x.name,
+                    x.streamIcon,
+                    ContentType.liveStream,
+                    liveStream: x,
+                  ),
+                )
                 .toList(),
           );
           if (!all) {
@@ -168,7 +167,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
         for (var movieCategory in movieCategories) {
           var movies = await _repository.getMovies(
             categoryId: movieCategory.categoryId,
-            top: 10,
           );
 
           if (movies == null || movies.isEmpty) {
@@ -180,14 +178,14 @@ class XtreamCodeHomeController extends ChangeNotifier {
             contentItems: movies
                 .map(
                   (x) => ContentItem(
-                x.streamId,
-                x.name,
-                x.streamIcon,
-                ContentType.vod,
-                containerExtension: x.containerExtension,
-                vodStream: x,
-              ),
-            )
+                    x.streamId,
+                    x.name,
+                    x.streamIcon,
+                    ContentType.vod,
+                    containerExtension: x.containerExtension,
+                    vodStream: x,
+                  ),
+                )
                 .toList(),
           );
           if (!all) {
@@ -207,7 +205,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
         for (var seriesCategory in seriesCategories) {
           var series = await _repository.getSeries(
             categoryId: seriesCategory.categoryId,
-            top: 10,
           );
 
           if (series == null || series.isEmpty) {
@@ -219,13 +216,13 @@ class XtreamCodeHomeController extends ChangeNotifier {
             contentItems: series
                 .map(
                   (x) => ContentItem(
-                x.seriesId,
-                x.name,
-                x.cover ?? '',
-                ContentType.series,
-                seriesStream: x,
-              ),
-            )
+                    x.seriesId,
+                    x.name,
+                    x.cover ?? '',
+                    ContentType.series,
+                    seriesStream: x,
+                  ),
+                )
                 .toList(),
           );
           if (!all) {

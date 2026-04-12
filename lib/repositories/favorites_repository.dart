@@ -119,14 +119,11 @@ class FavoritesRepository {
       playlistId,
       contentItem.id,
       contentItem.contentType,
-      null
+      null,
     );
 
     if (isCurrentlyFavorite) {
-      await removeFavorite(
-        contentItem.id,
-        contentItem.contentType
-      );
+      await removeFavorite(contentItem.id, contentItem.contentType);
       return false;
     } else {
       await addFavorite(contentItem);

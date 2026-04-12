@@ -272,62 +272,62 @@ class IptvRepository {
     }
   }
 
-   Future<List<SeriesStream>?> getSeries({
-     String? categoryId,
-     bool forceRefresh = false,
-     int? top,
-   }) async {
-     try {
-       if (categoryId != null) {
-         var series = await _database.getSeriesStreamsByCategoryAndPlaylistId(
-           categoryId: categoryId,
-           playlistId: _playlistId,
-           top: top,
-         );
+  Future<List<SeriesStream>?> getSeries({
+    String? categoryId,
+    bool forceRefresh = false,
+    int? top,
+  }) async {
+    try {
+      if (categoryId != null) {
+        var series = await _database.getSeriesStreamsByCategoryAndPlaylistId(
+          categoryId: categoryId,
+          playlistId: _playlistId,
+          top: top,
+        );
 
-         if (series.isNotEmpty) {
-           return series;
-         }
-       } else {
-         var series = await _database.getSeriesStreamsByPlaylistId(_playlistId);
+        if (series.isNotEmpty) {
+          return series;
+        }
+      } else {
+        var series = await _database.getSeriesStreamsByPlaylistId(_playlistId);
 
-         if (series.isNotEmpty) {
-           return series;
-         }
-       }
-     } catch (e) {
-       print('Series Error: $e');
-       return null;
-     }
-   }
+        if (series.isNotEmpty) {
+          return series;
+        }
+      }
+    } catch (e) {
+      print('Series Error: $e');
+      return null;
+    }
+  }
 
-   /// Fetch VOD movie info from API
-   Future<Map<String, dynamic>?> getVodInfo(String vodId) async {
-     try {
-       final response = await _makeRequest(
-         'player_api.php',
-         additionalParams: {'action': 'get_vod_info', 'vod_id': vodId},
-         cacheBuster: true,
-       );
+  /// Fetch VOD movie info from API
+  Future<Map<String, dynamic>?> getVodInfo(String vodId) async {
+    try {
+      final response = await _makeRequest(
+        'player_api.php',
+        additionalParams: {'action': 'get_vod_info', 'vod_id': vodId},
+        cacheBuster: true,
+      );
 
-       if (response.statusCode == 200) {
-         final jsonData = json.decode(response.body);
-         if (jsonData is Map<String, dynamic>) {
-           return jsonData;
-         } else if (jsonData is Map) {
-           return Map<String, dynamic>.from(jsonData);
-         }
-         return null;
-       } else {
-         throw Exception(
-           'HTTP ${response.statusCode}: ${response.reasonPhrase}',
-         );
-       }
-     } catch (e) {
-       print('VOD Info Error: $e');
-       return null;
-     }
-   }
+      if (response.statusCode == 200) {
+        final jsonData = json.decode(response.body);
+        if (jsonData is Map<String, dynamic>) {
+          return jsonData;
+        } else if (jsonData is Map) {
+          return Map<String, dynamic>.from(jsonData);
+        }
+        return null;
+      } else {
+        throw Exception(
+          'HTTP ${response.statusCode}: ${response.reasonPhrase}',
+        );
+      }
+    } catch (e) {
+      print('VOD Info Error: $e');
+      return null;
+    }
+  }
 
   Future<List<Category>?> getLiveCategories({bool forceRefresh = false}) async {
     return _getCategories(
@@ -460,16 +460,24 @@ class IptvRepository {
 
         if (seriesInfo != null) {
           // fetch main list to compare lastModified
-          final allSeries = await _database.getSeriesStreamsByPlaylistId(_playlistId);
+          final allSeries = await _database.getSeriesStreamsByPlaylistId(
+            _playlistId,
+          );
 
           bool isStale = false;
           try {
-            final seriesItem = allSeries.firstWhere((s) => s.seriesId == seriesId);
+            final seriesItem = allSeries.firstWhere(
+              (s) => s.seriesId == seriesId,
+            );
 
-            final cachedLast = (seriesItem.lastModified ?? '').toString().trim();
+            final cachedLast = (seriesItem.lastModified ?? '')
+                .toString()
+                .trim();
             final infoLast = (seriesInfo.lastModified ?? '').toString().trim();
 
-            if (cachedLast.isEmpty || infoLast.isEmpty || cachedLast != infoLast) {
+            if (cachedLast.isEmpty ||
+                infoLast.isEmpty ||
+                cachedLast != infoLast) {
               isStale = true;
             }
           } catch (e) {
@@ -478,26 +486,26 @@ class IptvRepository {
           }
 
           if (!isStale) {
-        final seasons = await _database.getSeasonsBySeriesId(
-          seriesId,
-          _playlistId,
-        );
-        final episodes = await _database.getEpisodesBySeriesId(
-          seriesId,
-          _playlistId,
-        );
+            final seasons = await _database.getSeasonsBySeriesId(
+              seriesId,
+              _playlistId,
+            );
+            final episodes = await _database.getEpisodesBySeriesId(
+              seriesId,
+              _playlistId,
+            );
 
-        if (seasons.isNotEmpty && episodes.isNotEmpty) {
-          return SeriesDetailResponse(
-            seriesInfo: seriesInfo,
-            seasons: seasons,
-            episodes: episodes,
-            playlistId: _playlistId,
-          );
+            if (seasons.isNotEmpty && episodes.isNotEmpty) {
+              return SeriesDetailResponse(
+                seriesInfo: seriesInfo,
+                seasons: seasons,
+                episodes: episodes,
+                playlistId: _playlistId,
+              );
+            }
+          }
         }
       }
-    }
-  }
 
       final response = await _makeRequest(
         'player_api.php',
@@ -683,7 +691,9 @@ class IptvRepository {
               try {
                 await _database.insertEpisode(episodeCompanion);
               } catch (e) {
-                print('Error inserting episode ${episode['id']} for series $seriesId: $e');
+                print(
+                  'Error inserting episode ${episode['id']} for series $seriesId: $e',
+                );
               }
             }
           }
@@ -712,7 +722,8 @@ class IptvRepository {
                 final seasonEpisodes = episodes[seasonKey];
                 if (seasonEpisodes is List) {
                   for (final episode in seasonEpisodes) {
-                    final epSeason = safeInt(episode['season']) ?? safeInt(seasonKey) ?? 1;
+                    final epSeason =
+                        safeInt(episode['season']) ?? safeInt(seasonKey) ?? 1;
                     if (epSeason == seasonNumber) {
                       episodeCount++;
                     }

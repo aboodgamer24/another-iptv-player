@@ -40,64 +40,91 @@ class WatchHistoryContent extends StatelessWidget {
                 onRefresh: controller.loadWatchHistory,
                 onClearAll: controller.clearAllHistory,
                 onRefreshFavorites: () {
-                  final favoritesController = context.read<FavoritesController>();
+                  final favoritesController = context
+                      .read<FavoritesController>();
                   favoritesController.loadFavorites();
                 },
               ),
             ];
           },
           body: SingleChildScrollView(
-            child: Column(
-              children: [
-                Consumer<FavoritesController>(
-                  builder: (context, favoritesController, child) {
-                    return FavoritesSection(
-                      favorites: favoritesController.favorites,
+            child: Consumer<FavoritesController>(
+              builder: (context, favoritesController, child) {
+                return Column(
+                  children: [
+                    // ── TV Favorites + TV History ──
+                    FavoritesSection(
+                      title:
+                          '⭐ ${context.loc.live_streams} ${context.loc.favorites}',
+                      favorites: favoritesController.liveStreamFavorites,
                       cardWidth: cardWidth,
                       cardHeight: cardHeight,
                       onSeeAllTap: onSeeAllFavorites,
                       onFavoriteRemove: onFavoriteRemove,
-                    );
-                  },
-                ),
-                WatchHistorySection(
-                  title: context.loc.live_streams,
-                  histories: controller.liveHistory,
-                  cardWidth: cardWidth,
-                  cardHeight: cardHeight,
-                  onHistoryTap: onHistoryTap,
-                  onHistoryRemove: onHistoryRemove,
-                  onSeeAllTap: () => onSeeAllTap(
-                    context.loc.live_streams,
-                    controller.liveHistory,
-                  ),
-                ),
-                WatchHistorySection(
-                  title: context.loc.movies,
-                  histories: controller.movieHistory,
-                  cardWidth: cardWidth,
-                  cardHeight: cardHeight,
-                  showProgress: true,
-                  onHistoryTap: onHistoryTap,
-                  onHistoryRemove: onHistoryRemove,
-                  onSeeAllTap: () =>
-                      onSeeAllTap(context.loc.movies, controller.movieHistory),
-                ),
-                WatchHistorySection(
-                  title: context.loc.series_plural,
-                  histories: controller.seriesHistory,
-                  cardWidth: cardWidth,
-                  cardHeight: cardHeight,
-                  showProgress: true,
-                  onHistoryTap: onHistoryTap,
-                  onHistoryRemove: onHistoryRemove,
-                  onSeeAllTap: () => onSeeAllTap(
-                    context.loc.series_plural,
-                    controller.seriesHistory,
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
+                    ),
+                    WatchHistorySection(
+                      title: context.loc.live_streams,
+                      histories: controller.liveHistory,
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      onHistoryTap: onHistoryTap,
+                      onHistoryRemove: onHistoryRemove,
+                      onSeeAllTap: () => onSeeAllTap(
+                        context.loc.live_streams,
+                        controller.liveHistory,
+                      ),
+                    ),
+
+                    // ── Movie Favorites + Movie History ──
+                    FavoritesSection(
+                      title: '⭐ ${context.loc.movies} ${context.loc.favorites}',
+                      favorites: favoritesController.movieFavorites,
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      onSeeAllTap: onSeeAllFavorites,
+                      onFavoriteRemove: onFavoriteRemove,
+                    ),
+                    WatchHistorySection(
+                      title: context.loc.movies,
+                      histories: controller.movieHistory,
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      showProgress: true,
+                      onHistoryTap: onHistoryTap,
+                      onHistoryRemove: onHistoryRemove,
+                      onSeeAllTap: () => onSeeAllTap(
+                        context.loc.movies,
+                        controller.movieHistory,
+                      ),
+                    ),
+
+                    // ── Series Favorites + Series History ──
+                    FavoritesSection(
+                      title:
+                          '⭐ ${context.loc.series_plural} ${context.loc.favorites}',
+                      favorites: favoritesController.seriesFavorites,
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      onSeeAllTap: onSeeAllFavorites,
+                      onFavoriteRemove: onFavoriteRemove,
+                    ),
+                    WatchHistorySection(
+                      title: context.loc.series_plural,
+                      histories: controller.seriesHistory,
+                      cardWidth: cardWidth,
+                      cardHeight: cardHeight,
+                      showProgress: true,
+                      onHistoryTap: onHistoryTap,
+                      onHistoryRemove: onHistoryRemove,
+                      onSeeAllTap: () => onSeeAllTap(
+                        context.loc.series_plural,
+                        controller.seriesHistory,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
+                  ],
+                );
+              },
             ),
           ),
         );

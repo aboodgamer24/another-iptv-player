@@ -72,46 +72,46 @@ class _VideoWidgetState extends State<VideoWidget> {
             speedUpOnLongPress: _speedUpOnLongPress,
             seekOnDoubleTap: _seekOnDoubleTap,
             topButtonBar: [
-            BackButtonWidget(),
-            Expanded(child: VideoTitleWidget()),
-            VideoInfoWidget(),
-            VideoChannelSelectorWidget(
-              queue: PlayerState.queue,
-              currentIndex: PlayerState.currentIndex,
-            ),
-            VideoFavoriteWidget(),
-            VideoSettingsWidget(),
-          ],
-          bottomButtonBar: const [MaterialPositionIndicator()],
-        ),
-        fullscreen: MaterialVideoControlsThemeData().copyWith(
-          brightnessGesture: _brightnessGesture,
-          volumeGesture: _volumeGesture,
-          seekGesture: _seekGesture,
-          speedUpOnLongPress: _speedUpOnLongPress,
-          seekOnDoubleTap: _seekOnDoubleTap,
-          topButtonBar: [
-            BackButtonWidget(),
-            Expanded(child: VideoTitleWidget()),
-            VideoInfoWidget(),
-            VideoChannelSelectorWidget(
-              queue: PlayerState.queue,
-              currentIndex: PlayerState.currentIndex,
-            ),
-            VideoFavoriteWidget(),
-            VideoSettingsWidget(),
-          ],
-          seekBarMargin: EdgeInsets.fromLTRB(0, 0, 0, 10),
-        ),
-        child: Scaffold(
-          body: Video(
-            controller: widget.controller,
-            resumeUponEnteringForegroundMode: true,
-            pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
-            subtitleViewConfiguration: widget.subtitleViewConfiguration,
+              BackButtonWidget(),
+              Expanded(child: VideoTitleWidget()),
+              VideoInfoWidget(),
+              VideoChannelSelectorWidget(
+                queue: PlayerState.queue,
+                currentIndex: PlayerState.currentIndex,
+              ),
+              VideoFavoriteWidget(),
+              VideoSettingsWidget(),
+            ],
+            bottomButtonBar: const [MaterialPositionIndicator()],
           ),
-        ),
-      );
+          fullscreen: MaterialVideoControlsThemeData().copyWith(
+            brightnessGesture: _brightnessGesture,
+            volumeGesture: _volumeGesture,
+            seekGesture: _seekGesture,
+            speedUpOnLongPress: _speedUpOnLongPress,
+            seekOnDoubleTap: _seekOnDoubleTap,
+            topButtonBar: [
+              BackButtonWidget(),
+              Expanded(child: VideoTitleWidget()),
+              VideoInfoWidget(),
+              VideoChannelSelectorWidget(
+                queue: PlayerState.queue,
+                currentIndex: PlayerState.currentIndex,
+              ),
+              VideoFavoriteWidget(),
+              VideoSettingsWidget(),
+            ],
+            seekBarMargin: EdgeInsets.fromLTRB(0, 0, 0, 10),
+          ),
+          child: Scaffold(
+            body: Video(
+              controller: widget.controller,
+              resumeUponEnteringForegroundMode: true,
+              pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
+              subtitleViewConfiguration: widget.subtitleViewConfiguration,
+            ),
+          ),
+        );
       case TargetPlatform.macOS:
       case TargetPlatform.windows:
       case TargetPlatform.linux:

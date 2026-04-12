@@ -34,8 +34,9 @@ class MyApp extends StatelessWidget {
 
     return MaterialApp(
       locale: localeProvider.locale,
-      supportedLocales:
-      supportedLanguages.map((lang) => Locale(lang['code'])).toList(),
+      supportedLocales: supportedLanguages
+          .map((lang) => Locale(lang['code']))
+          .toList(),
       localizationsDelegates: const [
         AppLocalizations.delegate,
         GlobalMaterialLocalizations.delegate,

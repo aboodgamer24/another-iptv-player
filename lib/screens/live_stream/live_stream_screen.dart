@@ -122,5 +122,4 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
       ),
     );
   }
-
 }

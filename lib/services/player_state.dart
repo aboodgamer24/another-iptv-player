@@ -27,5 +27,5 @@ abstract class PlayerState {
   static String title = '';
   static bool backgroundPlay = true;
   static SubtitleViewConfiguration subtitleConfiguration =
-  SubtitleViewConfiguration();
+      SubtitleViewConfiguration();
 }

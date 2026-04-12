@@ -115,8 +115,11 @@ class CategoryDetailController extends ChangeNotifier {
       _filteredItems = [];
     } else {
       _filteredItems = _contentItems
-          .where((item) =>
-          (item.name ?? '').toLowerCase().contains(query.trim().toLowerCase()))
+          .where(
+            (item) => (item.name ?? '').toLowerCase().contains(
+              query.trim().toLowerCase(),
+            ),
+          )
           .toList();
     }
     notifyListeners();
@@ -137,11 +140,19 @@ class CategoryDetailController extends ChangeNotifier {
           final dateA;
           final dateB;
           if (a.contentType.name == "series") {
-            dateA = DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ?? DateTime(1970);
-            dateB = DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ?? DateTime(1970);
+            dateA =
+                DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ??
+                DateTime(1970);
+            dateB =
+                DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ??
+                DateTime(1970);
           } else {
-            dateA = a.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ?? 0.0;
-            dateB = b.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ?? 0.0;
+            dateA =
+                a.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ??
+                0.0;
+            dateB =
+                b.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ??
+                0.0;
           }
           return dateB.compareTo(dateA);
         });

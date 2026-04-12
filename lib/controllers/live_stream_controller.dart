@@ -1,5 +1,1 @@
-
-class LiveStreamController {
-
-
-}
+class LiveStreamController {}

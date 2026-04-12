@@ -27,6 +27,13 @@ class UserPreferences {
   static const String _keySpeedUpOnLongPress = 'speed_up_on_long_press';
   static const String _keySeekOnDoubleTap = 'seek_on_double_tap';
 
+  // Live TV settings
+  static const String _keyLiveTvListStyle = 'live_tv_list_style';
+  static const String _keyLiveTvShowLogos = 'live_tv_show_logos';
+  static const String _keyLiveTvRememberChannel = 'live_tv_remember_channel';
+  static const String _keyLiveTvGridColumns = 'live_tv_grid_columns';
+  static const String _keyLiveTvSortOrder = 'live_tv_sort_order';
+
   static Future<void> setLastPlaylist(String playlistId) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyLastPlaylist, playlistId);
@@ -217,7 +224,7 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getStringList(_hiddenCategoriesKey) ?? [];
   }
-  
+
   static Future<void> setThemeMode(ThemeMode mode) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keyThemeMode, mode.toString().split('.').last);
@@ -285,5 +292,56 @@ class UserPreferences {
   static Future<void> setSeekOnDoubleTap(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keySeekOnDoubleTap, value);
+  }
+
+  // Live TV settings getters/setters
+  static Future<String> getLiveTvListStyle() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLiveTvListStyle) ?? 'grid';
+  }
+
+  static Future<void> setLiveTvListStyle(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLiveTvListStyle, value);
+  }
+
+  static Future<bool> getLiveTvShowLogos() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyLiveTvShowLogos) ?? true;
+  }
+
+  static Future<void> setLiveTvShowLogos(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyLiveTvShowLogos, value);
+  }
+
+  static Future<bool> getLiveTvRememberChannel() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyLiveTvRememberChannel) ?? true;
+  }
+
+  static Future<void> setLiveTvRememberChannel(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyLiveTvRememberChannel, value);
+  }
+
+  static Future<int> getLiveTvGridColumns() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_keyLiveTvGridColumns) ?? 0; // 0 means Auto
+  }
+
+  static Future<void> setLiveTvGridColumns(int value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(_keyLiveTvGridColumns, value);
+  }
+
+  static Future<String> getLiveTvSortOrder() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyLiveTvSortOrder) ?? 'default';
+  }
+
+  static Future<void> setLiveTvSortOrder(String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyLiveTvSortOrder, value);
   }
 }

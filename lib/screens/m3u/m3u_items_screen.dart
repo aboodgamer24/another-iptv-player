@@ -112,136 +112,140 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
             maxWidth: ResponsiveHelper.getSettingsMaxWidth(context),
           ),
           child: Column(
-        children: [
-          if (!isSearching && _getUniqueGroups().isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              child: SizedBox(
-                height: 50,
-                child: isDesktop
-                    ? Scrollbar(
-                        controller: _chipScrollController,
-                        thumbVisibility: true,
-                        child: ListView.builder(
-                          controller: _chipScrollController,
-                          scrollDirection: Axis.horizontal,
-                          itemCount: _getUniqueGroups().length + 1,
-                          itemBuilder: (context, index) {
-                            if (index == 0) {
-                              return _buildFilterChip(
-                                context.loc.see_all,
-                                null,
-                              );
-                            }
-                            final group = _getUniqueGroups()[index - 1];
-                            return _buildFilterChip(group, group);
-                          },
-                        ),
-                      )
-                    : ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _getUniqueGroups().length + 1,
-                        itemBuilder: (context, index) {
-                          if (index == 0) {
-                            return _buildFilterChip(context.loc.see_all, null);
-                          }
-                          final group = _getUniqueGroups()[index - 1];
-                          return _buildFilterChip(group, group);
-                        },
-                      ),
-              ),
-            ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: filteredItems.length,
-              itemBuilder: (context, index) {
-                final channel = filteredItems[index];
-
-                return Container(
-                  height: 80,
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.grey.withOpacity(0.1),
-                        spreadRadius: 1,
-                        blurRadius: 2,
-                        offset: const Offset(0, 1),
-                      ),
-                    ],
-                  ),
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: () => _onChannelTap(context, channel),
-                    child: Padding(
-                      padding: const EdgeInsets.all(8),
-                      child: Row(
-                        children: [
-                          _buildSimpleLogo(channel),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  channel.name ?? context.loc.unknown_channel,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                                if (channel.groupTitle != null) ...[
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    channel.groupTitle!,
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 12,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                              ],
+            children: [
+              if (!isSearching && _getUniqueGroups().isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: SizedBox(
+                    height: 50,
+                    child: isDesktop
+                        ? Scrollbar(
+                            controller: _chipScrollController,
+                            thumbVisibility: true,
+                            child: ListView.builder(
+                              controller: _chipScrollController,
+                              scrollDirection: Axis.horizontal,
+                              itemCount: _getUniqueGroups().length + 1,
+                              itemBuilder: (context, index) {
+                                if (index == 0) {
+                                  return _buildFilterChip(
+                                    context.loc.see_all,
+                                    null,
+                                  );
+                                }
+                                final group = _getUniqueGroups()[index - 1];
+                                return _buildFilterChip(group, group);
+                              },
                             ),
+                          )
+                        : ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _getUniqueGroups().length + 1,
+                            itemBuilder: (context, index) {
+                              if (index == 0) {
+                                return _buildFilterChip(
+                                  context.loc.see_all,
+                                  null,
+                                );
+                              }
+                              final group = _getUniqueGroups()[index - 1];
+                              return _buildFilterChip(group, group);
+                            },
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: _getContentTypeColor(
-                                channel,
-                              ).withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              _getContentTypeText(channel),
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: _getContentTypeColor(channel),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
+                  ),
+                ),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: filteredItems.length,
+                  itemBuilder: (context, index) {
+                    final channel = filteredItems[index];
+
+                    return Container(
+                      height: 80,
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.grey.withOpacity(0.1),
+                            spreadRadius: 1,
+                            blurRadius: 2,
+                            offset: const Offset(0, 1),
                           ),
                         ],
                       ),
-                    ),
-                  ),
-                );
-              },
-            ),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(8),
+                        onTap: () => _onChannelTap(context, channel),
+                        child: Padding(
+                          padding: const EdgeInsets.all(8),
+                          child: Row(
+                            children: [
+                              _buildSimpleLogo(channel),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      channel.name ??
+                                          context.loc.unknown_channel,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    if (channel.groupTitle != null) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        channel.groupTitle!,
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
+                                          fontSize: 12,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _getContentTypeColor(
+                                    channel,
+                                  ).withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  _getContentTypeText(channel),
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: _getContentTypeColor(channel),
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
         ),
       ),
     );

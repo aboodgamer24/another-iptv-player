@@ -7,8 +7,8 @@ class WatchHistoryAppBar extends StatelessWidget {
   final VoidCallback? onRefreshFavorites;
 
   const WatchHistoryAppBar({
-    super.key, 
-    this.onRefresh, 
+    super.key,
+    this.onRefresh,
     this.onClearAll,
     this.onRefreshFavorites,
   });

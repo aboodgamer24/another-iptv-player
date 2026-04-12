@@ -131,7 +131,6 @@ class M3UHomeController extends ChangeNotifier {
         if (category.type != CategoryType.series) {
           var m3uItems = await _repository.getM3uItemsByCategoryId(
             categoryId: category.categoryId,
-            top: 10,
           );
 
           late CategoryViewModel categoryViewModel;
@@ -166,7 +165,6 @@ class M3UHomeController extends ChangeNotifier {
         } else {
           var series = await _repository.getSeriesByCategoryId(
             categoryId: category.categoryId,
-            top: 10,
           );
 
           late CategoryViewModel categoryViewModel;

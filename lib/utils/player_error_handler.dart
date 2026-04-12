@@ -6,7 +6,11 @@ class PlayerErrorHandler {
   static const int _maxRetryCount = 5;
   static const int _baseDelayMs = 1000; // 1 saniye başlangıç
 
-  void handleError(String error, Function() onRetry, Function(String) showSnackBar) {
+  void handleError(
+    String error,
+    Function() onRetry,
+    Function(String) showSnackBar,
+  ) {
     _errorTimer?.cancel();
 
     // Exponential backoff (1s, 2s, 4s, 8s, 16s)

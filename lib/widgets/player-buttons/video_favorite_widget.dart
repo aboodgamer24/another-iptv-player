@@ -28,8 +28,8 @@ class _VideoFavoriteWidgetState extends State<VideoFavoriteWidget> {
     _contentItemSubscription = EventBus()
         .on<ContentItem>('player_content_item')
         .listen((ContentItem item) {
-      _checkFavoriteStatus();
-    });
+          _checkFavoriteStatus();
+        });
   }
 
   @override
@@ -81,7 +81,7 @@ class _VideoFavoriteWidgetState extends State<VideoFavoriteWidget> {
   @override
   Widget build(BuildContext context) {
     final currentContent = PlayerState.currentContent;
-    
+
     // Sadece canlı yayın ve filmler için göster
     if (currentContent == null ||
         (currentContent.contentType != ContentType.liveStream &&
@@ -99,4 +99,3 @@ class _VideoFavoriteWidgetState extends State<VideoFavoriteWidget> {
     );
   }
 }
-

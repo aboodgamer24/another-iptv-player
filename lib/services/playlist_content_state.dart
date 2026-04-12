@@ -7,18 +7,18 @@ import '../models/content_type.dart';
 class PlaylistContentState {
   // Kategori bazlı canlı yayınlar
   static Map<String, List<ContentItem>> liveStreamsByCategory = {};
-  
+
   // Kategori bazlı filmler
   static Map<String, List<ContentItem>> moviesByCategory = {};
-  
+
   // Kategori bazlı diziler
   static Map<String, List<ContentItem>> seriesByCategory = {};
-  
+
   // Tüm kategoriler
   static List<Category> liveCategories = [];
   static List<Category> movieCategories = [];
   static List<Category> seriesCategories = [];
-  
+
   // Tüm içerikler (kategori olmadan)
   static List<ContentItem> allLiveStreams = [];
   static List<ContentItem> allMovies = [];
@@ -31,44 +31,60 @@ class PlaylistContentState {
     liveCategories.clear();
 
     try {
-      final repository = AppState.xtreamCodeRepository ?? AppState.m3uRepository;
+      final repository =
+          AppState.xtreamCodeRepository ?? AppState.m3uRepository;
       if (repository == null) return;
 
       // Kategorileri yükle
       if (AppState.xtreamCodeRepository != null) {
-        liveCategories = await AppState.xtreamCodeRepository!.getLiveCategories() ?? [];
+        liveCategories =
+            await AppState.xtreamCodeRepository!.getLiveCategories() ?? [];
       } else if (AppState.m3uRepository != null) {
         final categories = await AppState.m3uRepository!.getCategories();
-        liveCategories = categories?.where((c) => c.type == CategoryType.live).toList() ?? [];
+        liveCategories =
+            categories?.where((c) => c.type == CategoryType.live).toList() ??
+            [];
       }
 
       // Her kategori için kanalları yükle
       for (var category in liveCategories) {
         List<ContentItem> items = [];
-        
+
         if (AppState.xtreamCodeRepository != null) {
-          final streams = await AppState.xtreamCodeRepository!.getLiveChannelsByCategoryId(
-            categoryId: category.categoryId,
-          );
-          items = streams?.map((x) => ContentItem(
-            x.streamId,
-            x.name,
-            x.streamIcon,
-            ContentType.liveStream,
-            liveStream: x,
-          )).toList() ?? [];
+          final streams = await AppState.xtreamCodeRepository!
+              .getLiveChannelsByCategoryId(categoryId: category.categoryId);
+          items =
+              streams
+                  ?.map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.liveStream,
+                      liveStream: x,
+                    ),
+                  )
+                  .toList() ??
+              [];
         } else if (AppState.m3uRepository != null) {
-          final m3uItems = await AppState.m3uRepository!.getM3uItemsByCategoryId(
-            categoryId: category.categoryId,
-            contentType: ContentType.liveStream,
-          );
-          items = m3uItems?.map((x) => ContentItem(
-            x.id,
-            x.name ?? 'NO NAME',
-            x.tvgLogo ?? '',
-            ContentType.liveStream,
-            m3uItem: x,
-          )).toList() ?? [];
+          final m3uItems = await AppState.m3uRepository!
+              .getM3uItemsByCategoryId(
+                categoryId: category.categoryId,
+                contentType: ContentType.liveStream,
+              );
+          items =
+              m3uItems
+                  ?.map(
+                    (x) => ContentItem(
+                      x.id,
+                      x.name ?? 'NO NAME',
+                      x.tvgLogo ?? '',
+                      ContentType.liveStream,
+                      m3uItem: x,
+                    ),
+                  )
+                  .toList() ??
+              [];
         }
 
         liveStreamsByCategory[category.categoryId] = items;
@@ -88,20 +104,27 @@ class PlaylistContentState {
     try {
       if (AppState.xtreamCodeRepository == null) return;
 
-      movieCategories = await AppState.xtreamCodeRepository!.getVodCategories() ?? [];
+      movieCategories =
+          await AppState.xtreamCodeRepository!.getVodCategories() ?? [];
 
       for (var category in movieCategories) {
         final movies = await AppState.xtreamCodeRepository!.getMovies(
           categoryId: category.categoryId,
         );
-        final items = movies?.map((x) => ContentItem(
-          x.streamId,
-          x.name,
-          x.streamIcon,
-          ContentType.vod,
-          containerExtension: x.containerExtension,
-          vodStream: x,
-        )).toList() ?? [];
+        final items =
+            movies
+                ?.map(
+                  (x) => ContentItem(
+                    x.streamId,
+                    x.name,
+                    x.streamIcon,
+                    ContentType.vod,
+                    containerExtension: x.containerExtension,
+                    vodStream: x,
+                  ),
+                )
+                .toList() ??
+            [];
 
         moviesByCategory[category.categoryId] = items;
         allMovies.addAll(items);
@@ -120,19 +143,26 @@ class PlaylistContentState {
     try {
       if (AppState.xtreamCodeRepository == null) return;
 
-      seriesCategories = await AppState.xtreamCodeRepository!.getSeriesCategories() ?? [];
+      seriesCategories =
+          await AppState.xtreamCodeRepository!.getSeriesCategories() ?? [];
 
       for (var category in seriesCategories) {
         final series = await AppState.xtreamCodeRepository!.getSeries(
           categoryId: category.categoryId,
         );
-        final items = series?.map((x) => ContentItem(
-          x.seriesId,
-          x.name,
-          x.cover ?? '',
-          ContentType.series,
-          seriesStream: x,
-        )).toList() ?? [];
+        final items =
+            series
+                ?.map(
+                  (x) => ContentItem(
+                    x.seriesId,
+                    x.name,
+                    x.cover ?? '',
+                    ContentType.series,
+                    seriesStream: x,
+                  ),
+                )
+                .toList() ??
+            [];
 
         seriesByCategory[category.categoryId] = items;
         allSeries.addAll(items);
@@ -177,4 +207,3 @@ class PlaylistContentState {
     return seriesByCategory[categoryId] ?? [];
   }
 }
-

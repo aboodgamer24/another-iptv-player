@@ -21,7 +21,8 @@ class StatusCardWidget extends StatelessWidget {
         leading: Icon(
           SubscriptionUtils.getStatusColor(serverInfo, context) == Colors.green
               ? Icons.check_circle
-              : SubscriptionUtils.getStatusColor(serverInfo, context) == Colors.orange
+              : SubscriptionUtils.getStatusColor(serverInfo, context) ==
+                    Colors.orange
               ? Icons.warning
               : Icons.error,
           color: SubscriptionUtils.getStatusColor(serverInfo, context),
@@ -29,10 +30,14 @@ class StatusCardWidget extends StatelessWidget {
         ),
         title: Text(
           _getServerStatus(context),
-          style: TextStyle(color: SubscriptionUtils.getStatusColor(serverInfo, context)),
+          style: TextStyle(
+            color: SubscriptionUtils.getStatusColor(serverInfo, context),
+          ),
         ),
         subtitle: Text(
-          context.loc.subscription_remaining_day(SubscriptionUtils.getRemainingDays(serverInfo, context)),
+          context.loc.subscription_remaining_day(
+            SubscriptionUtils.getRemainingDays(serverInfo, context),
+          ),
         ),
       ),
     );

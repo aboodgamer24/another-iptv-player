@@ -4,7 +4,10 @@ class CategoryWithContentType {
   final String categoryName;
   final ContentType contentType;
 
-  const CategoryWithContentType({required this.categoryName, required this.contentType});
+  const CategoryWithContentType({
+    required this.categoryName,
+    required this.contentType,
+  });
 
   @override
   bool operator ==(Object other) =>

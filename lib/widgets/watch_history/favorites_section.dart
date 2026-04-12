@@ -20,6 +20,7 @@ class FavoritesSection extends StatelessWidget {
   final double cardHeight;
   final VoidCallback? onSeeAllTap;
   final Function(Favorite)? onFavoriteRemove;
+  final String? title;
 
   const FavoritesSection({
     super.key,
@@ -28,6 +29,7 @@ class FavoritesSection extends StatelessWidget {
     required this.cardHeight,
     this.onSeeAllTap,
     this.onFavoriteRemove,
+    this.title,
   });
 
   @override
@@ -47,7 +49,7 @@ class FavoritesSection extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                context.loc.favorites,
+                title ?? context.loc.favorites,
                 style: Theme.of(
                   context,
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -92,7 +94,7 @@ class FavoritesSection extends StatelessWidget {
                   width: cardWidth,
                   height: cardHeight,
                   decoration: BoxDecoration(
-                    color: Colors.grey.withOpacity(0.1),
+                    color: Colors.grey.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
@@ -188,8 +190,7 @@ class FavoritesSection extends StatelessWidget {
             seriesStream: seriesStream,
           );
       }
-    }
-    else if (isM3u) {
+    } else if (isM3u) {
       final m3uItem = M3uItem(
         id: favorite.m3uItemId ?? favorite.streamId,
         playlistId: favorite.playlistId,
