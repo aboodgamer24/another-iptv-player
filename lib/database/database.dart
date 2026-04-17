@@ -1629,17 +1629,17 @@ class AppDatabase extends _$AppDatabase {
     return result.length;
   }
 
-  // === WATCH LATER İŞLEMLERİ ===
+  // ===  WATCH LATER CRUD ===
 
   Future<List<WatchLaterData>> getWatchLaterItems(String playlistId) async {
-    final query = select(watchLaters)
-      ..where((f) => f.playlistId.equals(playlistId))
-      ..orderBy([(f) => OrderingTerm.desc(f.addedAt)]);
-    return await query.get();
+    return await (select(watchLaters)
+          ..where((tbl) => tbl.playlistId.equals(playlistId))
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.addedAt)]))
+        .get();
   }
 
-  Future<void> insertWatchLater(WatchLaterData data) async {
-    await into(watchLaters).insert(data);
+  Future<void> insertWatchLater(WatchLaterData entry) async {
+    await into(watchLaters).insertOnConflictUpdate(entry);
   }
 
   Future<void> deleteWatchLater(
@@ -1649,10 +1649,10 @@ class AppDatabase extends _$AppDatabase {
   ) async {
     await (delete(watchLaters)
           ..where(
-            (f) =>
-                f.playlistId.equals(playlistId) &
-                f.streamId.equals(streamId) &
-                f.contentType.equals(contentType.index),
+            (tbl) =>
+                tbl.playlistId.equals(playlistId) &
+                tbl.streamId.equals(streamId) &
+                tbl.contentType.equals(contentType.index),
           ))
         .go();
   }

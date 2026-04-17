@@ -121,8 +121,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               value: _controller as M3UHomeController,
             ),
           ChangeNotifierProvider(create: (_) => WatchHistoryController()),
-          ChangeNotifierProvider(create: (_) => FavoritesController()),
-          ChangeNotifierProvider(create: (_) => WatchLaterController()),
           ChangeNotifierProvider(create: (_) => HomeRailsController()..load()),
         ],
         child: _buildContent(),

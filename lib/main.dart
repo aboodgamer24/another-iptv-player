@@ -1,4 +1,6 @@
 import 'package:another_iptv_player/controllers/playlist_controller.dart';
+import 'package:another_iptv_player/controllers/favorites_controller.dart';
+import 'package:another_iptv_player/controllers/watch_later_controller.dart';
 import 'package:another_iptv_player/screens/app_initializer_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
@@ -39,6 +41,8 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => LocaleProvider()),
         ChangeNotifierProvider(create: (_) => PlaylistController()),
         ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => FavoritesController()),
+        ChangeNotifierProvider(create: (_) => WatchLaterController()),
       ],
       child: const MyApp(),
     ),
