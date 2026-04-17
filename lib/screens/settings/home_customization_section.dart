@@ -66,9 +66,9 @@ class HomeCustomizationSection extends StatelessWidget {
           itemBuilder: (context, index) {
             final rail = rails[index];
             return HoverScaleWrapper(
+              key: ValueKey(rail.id),
               hoverScale: 1.02,
               child: ListTile(
-                key: ValueKey(rail.id),
                 leading: const Icon(Icons.drag_handle_rounded),
                 title: Text(_getRailLabel(context, rail.id)),
                 trailing: Switch(
