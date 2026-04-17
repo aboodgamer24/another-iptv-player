@@ -43,7 +43,13 @@ class _VideoWidgetState extends State<VideoWidget> {
     }
 
     // Safely try to get the XtreamCodeHomeController if it exists in the tree
-    final homeController = context.read<XtreamCodeHomeController?>();
+    XtreamCodeHomeController? homeController;
+    try {
+      homeController = context.read<XtreamCodeHomeController>();
+    } catch (_) {
+      // No XtreamCodeHomeController in this part of the tree (e.g. M3U playback)
+      homeController = null;
+    }
 
     return Stack(
       children: [
