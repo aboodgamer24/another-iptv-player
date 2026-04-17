@@ -30,14 +30,66 @@ class _C4DashboardState extends State<C4Dashboard> {
   final TmdbService _tmdbService = TmdbService();
   List<ContentItem> _trendingMovies = [];
   List<ContentItem> _trendingSeries = [];
+  ContentItem? _tmdbHeroItem;
+  bool _heroReady = false;
   String? _lastPrecachedHeroId;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadData();
+      _loadTmdbHeroFirst(); // fast, independent
+      _loadData();          // slow, runs in parallel
     });
+  }
+
+  Future<void> _loadTmdbHeroFirst() async {
+    try {
+      // Fetch trending movies from TMDB
+      final results = await _tmdbService.getTrendingMovies();
+      if (!mounted || results.isEmpty) {
+        if (mounted) setState(() => _heroReady = true);
+        return;
+      }
+
+      // Pick the first result that has a backdrop
+      final pick = results.firstWhere(
+        (m) => m['backdrop_path'] != null &&
+               (m['backdrop_path'] as String).isNotEmpty,
+        orElse: () => results.first,
+      );
+
+      final backdropUrl = _tmdbService.getBackdropUrl(
+        pick['backdrop_path'] as String?,
+      );
+      final title = (pick['title'] ?? pick['name'] ?? '') as String;
+
+      final heroItem = ContentItem(
+        pick['id'].toString(),
+        title,
+        // imageUrl for the hero widget — use backdrop here
+        backdropUrl,
+        ContentType.vod,
+      );
+
+      // Pre-warm into cache immediately
+      if (backdropUrl.isNotEmpty) {
+        await precacheImage(
+          CachedNetworkImageProvider(backdropUrl),
+          context,
+        );
+      }
+
+      if (mounted) {
+        setState(() {
+          _tmdbHeroItem = heroItem;
+          _heroReady = true;
+        });
+      }
+    } catch (e) {
+      debugPrint('TMDB Hero Error: $e');
+      if (mounted) setState(() => _heroReady = true);
+    }
   }
 
   Future<void> _loadData() async {
@@ -103,8 +155,10 @@ class _C4DashboardState extends State<C4Dashboard> {
         return ListView(
           padding: EdgeInsets.zero,
           children: [
-            // Hero Section is always first (not togglable for now based on request)
-            if (xtreamController.heroItem != null)
+            // Hero — always rendered; shimmer until TMDB data arrives
+            if (!_heroReady)
+              const _HeroBannerShimmer()
+            else if (_tmdbHeroItem != null)
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 600),
                 transitionBuilder: (child, animation) => FadeTransition(
@@ -112,8 +166,9 @@ class _C4DashboardState extends State<C4Dashboard> {
                   child: child,
                 ),
                 child: C4DashboardHero(
-                  key: ValueKey(xtreamController.heroItem!.id),
-                  item: xtreamController.heroItem!,
+                  key: ValueKey(_tmdbHeroItem!.id),
+                  item: _tmdbHeroItem!,
+                  onPlay: () => _playTmdbItem(context, _tmdbHeroItem!),
                 ),
               ),
 
@@ -402,5 +457,60 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
       }
     }
+  }
+}
+
+class _HeroBannerShimmer extends StatefulWidget {
+  const _HeroBannerShimmer();
+  @override
+  State<_HeroBannerShimmer> createState() => _HeroBannerShimmerState();
+}
+
+class _HeroBannerShimmerState extends State<_HeroBannerShimmer>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _ctrl;
+  late Animation<double> _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+    _anim = Tween<double>(begin: -2, end: 2).animate(
+      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (_, __) => SizedBox(
+        height: size.height * 0.45,
+        width: double.infinity,
+        child: DecoratedBox(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment(_anim.value - 1, 0),
+              end: Alignment(_anim.value + 1, 0),
+              colors: const [
+                Color(0xFF13161C),
+                Color(0xFF1E2430),
+                Color(0xFF13161C),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

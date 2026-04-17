@@ -5,8 +5,15 @@ import '../../utils/navigate_by_content_type.dart';
 
 class C4DashboardHero extends StatelessWidget {
   final ContentItem item;
+  final VoidCallback? onPlay;
+  final VoidCallback? onInfo;
 
-  const C4DashboardHero({super.key, required this.item});
+  const C4DashboardHero({
+    super.key,
+    required this.item,
+    this.onPlay,
+    this.onInfo,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +32,10 @@ class C4DashboardHero extends StatelessWidget {
               imageUrl: item.imageUrl,
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
-              fadeInDuration: const Duration(milliseconds: 400),
-              placeholder: (context, url) => const _HeroShimmer(),
+              fadeInDuration: const Duration(milliseconds: 300),
+              placeholder: (context, url) => const ColoredBox(
+                color: Color(0xFF13161C),
+              ),
               errorWidget: (context, url, error) => const DecoratedBox(
                 decoration: BoxDecoration(color: Colors.black45),
               ),
@@ -96,7 +105,7 @@ class C4DashboardHero extends StatelessWidget {
                 Row(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: () => navigateByContentType(context, item),
+                      onPressed: onPlay ?? () => navigateByContentType(context, item),
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text('Play'),
                       style: ElevatedButton.styleFrom(
@@ -108,13 +117,13 @@ class C4DashboardHero extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
                     OutlinedButton.icon(
-                      onPressed: () => navigateByContentType(context, item),
+                      onPressed: onInfo ?? () => navigateByContentType(context, item),
                       icon: const Icon(Icons.info_outline_rounded),
                       label: const Text('More Info'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        side: BorderSide(color: Colors.white.withOpacity(0.5)),
+                        side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
                       ),
                     ),
                   ],
