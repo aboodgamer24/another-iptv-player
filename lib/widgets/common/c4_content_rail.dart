@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/controllers/favorites_controller.dart';
 import 'package:another_iptv_player/controllers/watch_later_controller.dart';
+import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import 'c4_card.dart';

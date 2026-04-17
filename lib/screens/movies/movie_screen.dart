@@ -8,12 +8,15 @@ import 'package:another_iptv_player/models/watch_history.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
+import 'package:another_iptv_player/models/playlist_model.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import '../../../controllers/favorites_controller.dart';
 import '../../../controllers/watch_later_controller.dart';
 import '../../../widgets/player_widget.dart';
@@ -40,6 +43,16 @@ class _MovieScreenState extends State<MovieScreen> {
   bool _isFavorite = false;
   bool _isInWatchLater = false;
   List<ContentItem> _categoryMovies = [];
+
+  bool get isXtreamCode {
+    final playlistType = getPlaylistType();
+    return playlistType == PlaylistType.xtream;
+  }
+
+  bool get isM3u {
+    final playlistType = getPlaylistType();
+    return playlistType == PlaylistType.m3u;
+  }
 
   @override
   void initState() {

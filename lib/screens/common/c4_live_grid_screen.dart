@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../controllers/watch_later_controller.dart';
+import '../../controllers/xtream_code_home_controller.dart';
 import '../../widgets/common/c4_card.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';

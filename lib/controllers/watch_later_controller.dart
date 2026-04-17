@@ -2,6 +2,7 @@ import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/repositories/watch_later_repository.dart';
+import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
@@ -133,6 +134,10 @@ class WatchLaterController extends ChangeNotifier {
   }
 
   Future<void> _playMovie(BuildContext context, WatchLaterData item) async {
+    final playlistType = getPlaylistType();
+    final isXtreamCode = playlistType == PlaylistType.xtream;
+    final isM3u = playlistType == PlaylistType.m3u;
+
     if (isXtreamCode) {
       final movie = await _database.findMovieById(
         item.streamId,
@@ -170,10 +175,14 @@ class WatchLaterController extends ChangeNotifier {
   }
 
   Future<void> _playSeries(BuildContext context, WatchLaterData item) async {
+    final playlistType = getPlaylistType();
+    final isXtreamCode = playlistType == PlaylistType.xtream;
+    final isM3u = playlistType == PlaylistType.m3u;
+
     if (isXtreamCode) {
       // Fetch series info directly from repository to ensure latest data
       final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
-        int.parse(item.streamId),
+        item.streamId,
       );
 
       if (seriesResponse == null) {
