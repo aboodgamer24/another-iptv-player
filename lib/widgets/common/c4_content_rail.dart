@@ -187,7 +187,9 @@ class _C4ContentRailState extends State<C4ContentRail> {
                               isInWatchLater: watchLaterController.watchLaterItems.any(
                                 (w) => w.streamId == item.id && w.contentType == item.contentType,
                               ),
-                              onToggleWatchLater: () => watchLaterController.toggleWatchLater(item),
+                              onToggleWatchLater: item.contentType == ContentType.liveStream 
+                                ? null 
+                                : () => watchLaterController.toggleWatchLater(item),
                               onTap: () {
                                 if (widget.onItemTap != null) {
                                   widget.onItemTap!(context, item);

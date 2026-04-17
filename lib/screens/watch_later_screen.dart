@@ -27,10 +27,6 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
     final controller = context.watch<WatchLaterController>();
     final items = controller.watchLaterItems;
 
-    final liveItems = items
-        .where((i) => i.contentType == ContentType.liveStream)
-        .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
-        .toList();
     final movieItems = items
         .where((i) => i.contentType == ContentType.vod)
         .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
@@ -49,13 +45,6 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
               : ListView(
                   padding: const EdgeInsets.only(top: 24, bottom: 64),
                   children: [
-                    if (liveItems.isNotEmpty)
-                      C4ContentRail(
-                        title: context.loc.live_tv,
-                        items: liveItems,
-                        isPortrait: false,
-                        onItemTap: (ctx, item) => _playItem(ctx, item),
-                      ),
                     if (movieItems.isNotEmpty)
                       C4ContentRail(
                         title: context.loc.movies,

@@ -8,6 +8,8 @@ import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/controllers/favorites_controller.dart';
+import 'package:another_iptv_player/controllers/watch_later_controller.dart';
+import 'package:provider/provider.dart';
 import 'package:another_iptv_player/widgets/player_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -27,6 +29,7 @@ class DesktopSeriesDetailScreen extends StatefulWidget {
 class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
   late IptvRepository _repository;
   late FavoritesController _favoritesController;
+  late WatchLaterController _watchLaterController;
   late WatchHistoryService _watchHistoryService;
 
   SeriesInfosData? _seriesInfo;
@@ -35,6 +38,7 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
   bool _isLoading = true;
   String? _error;
   bool _isFavorite = false;
+  bool _isInWatchLater = false;
   int _selectedSeasonIndex = 0;
   EpisodesData? _lastWatchedEpisode;
   Map<String, double> _episodeProgress = {};
@@ -50,7 +54,8 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
       ),
       AppState.currentPlaylist!.id,
     );
-    _favoritesController = FavoritesController();
+    _favoritesController = context.read<FavoritesController>();
+    _watchLaterController = context.read<WatchLaterController>();
     _watchHistoryService = WatchHistoryService();
     _loadAll();
   }
@@ -75,7 +80,7 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
         await Future.wait([
           _loadEpisodeProgress(),
           _loadLastWatched(),
-          _checkFavorite(),
+          _checkStatus(),
         ]);
       } else {
         setState(() {
@@ -132,10 +137,17 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
     }
   }
 
-  Future<void> _checkFavorite() async {
+  Future<void> _checkStatus() async {
     final isFav = await _favoritesController.isFavorite(
         widget.contentItem.id, widget.contentItem.contentType);
-    if (mounted) setState(() => _isFavorite = isFav);
+    final isWL = await _watchLaterController.isWatchLater(
+        widget.contentItem.id, widget.contentItem.contentType);
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFav;
+        _isInWatchLater = isWL;
+      });
+    }
   }
 
   Future<void> _toggleFavorite() async {
@@ -147,6 +159,20 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
         content: Text(result
             ? context.loc.added_to_favorites
             : context.loc.removed_from_favorites),
+        behavior: SnackBarBehavior.floating,
+      ));
+    }
+  }
+
+  Future<void> _toggleWatchLater() async {
+    final result =
+        await _watchLaterController.toggleWatchLater(widget.contentItem);
+    if (mounted) {
+      setState(() => _isInWatchLater = result);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(result
+            ? context.loc.added_to_watch_later
+            : context.loc.removed_from_watch_later),
         behavior: SnackBarBehavior.floating,
       ));
     }
@@ -428,6 +454,13 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
                         color: Color(0xFFA0A5B5), fontSize: 12)),
               ),
             const Spacer(),
+            IconButton(
+              onPressed: _toggleWatchLater,
+              icon: Icon(
+                _isInWatchLater ? Icons.watch_later : Icons.watch_later_outlined,
+                color: _isInWatchLater ? Colors.blueAccent : const Color(0xFF747B8B),
+              ),
+            ),
             IconButton(
               onPressed: _toggleFavorite,
               icon: Icon(

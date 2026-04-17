@@ -9,6 +9,8 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
 import '../../../controllers/favorites_controller.dart';
+import '../../../controllers/watch_later_controller.dart';
+import 'package:provider/provider.dart';
 import 'episode_screen.dart';
 
 class SeriesScreen extends StatefulWidget {
@@ -23,6 +25,7 @@ class SeriesScreen extends StatefulWidget {
 class _SeriesScreenState extends State<SeriesScreen> {
   late IptvRepository _repository;
   late FavoritesController _favoritesController;
+  late WatchLaterController _watchLaterController;
   late WatchHistoryService _watchHistoryService;
 
   SeriesInfosData? seriesInfo;
@@ -31,6 +34,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
   bool isLoading = true;
   String? error;
   bool _isFavorite = false;
+  bool _isInWatchLater = false;
 
   // Last opened episode for this series (for Continue Watching button)
   EpisodesData? _lastOpenedEpisode;
@@ -39,10 +43,11 @@ class _SeriesScreenState extends State<SeriesScreen> {
   void initState() {
     super.initState();
     _initializeRepository();
-    _favoritesController = FavoritesController();
+    _favoritesController = context.read<FavoritesController>();
+    _watchLaterController = context.read<WatchLaterController>();
     _watchHistoryService = WatchHistoryService();
     _loadSeriesDetails();
-    _checkFavoriteStatus();
+    _checkStatus();
   }
 
   void _initializeRepository() {
@@ -124,15 +129,20 @@ class _SeriesScreenState extends State<SeriesScreen> {
     }
   }
 
-  Future<void> _checkFavoriteStatus() async {
-    final isFavorite = await _favoritesController.isFavorite(
+  Future<void> _checkStatus() async {
+    final fav = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    final wl = await _watchLaterController.isWatchLater(
       widget.contentItem.id,
       widget.contentItem.contentType,
     );
 
     if (mounted) {
       setState(() {
-        _isFavorite = isFavorite;
+        _isFavorite = fav;
+        _isInWatchLater = wl;
       });
     }
   }
@@ -153,6 +163,29 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 ? context.loc.added_to_favorites
                 : context.loc.removed_from_favorites,
           ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  Future<void> _toggleWatchLater() async {
+    final result = await _watchLaterController.toggleWatchLater(
+      widget.contentItem,
+    );
+    if (mounted) {
+      setState(() {
+        _isInWatchLater = result;
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_watch_later
+                : context.loc.removed_from_watch_later,
+          ),
+          duration: const Duration(seconds: 2),
         ),
       );
     }
@@ -250,6 +283,19 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                       ],
                                       decoration: TextDecoration.none,
                                     ),
+                                  ),
+                                ),
+                                // Watch Later butonu
+                                IconButton(
+                                  onPressed: _toggleWatchLater,
+                                  icon: Icon(
+                                    _isInWatchLater
+                                        ? Icons.watch_later
+                                        : Icons.watch_later_outlined,
+                                    color: _isInWatchLater
+                                        ? Colors.blueAccent
+                                        : Colors.white,
+                                    size: 28,
                                   ),
                                 ),
                                 // Favori butonu

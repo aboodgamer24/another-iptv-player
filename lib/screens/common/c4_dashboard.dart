@@ -94,7 +94,119 @@ class _C4DashboardState extends State<C4Dashboard> {
 
             const SizedBox(height: 32),
 
-            // 2. Continue watching (VOD/Series) - Moved up for C4-TV feel
+            // 2. Recommended for you
+            if (xtreamController.recommendations.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: C4ContentRail(
+                  title: 'Recommended for you',
+                  items: xtreamController.recommendations,
+                ),
+              ),
+
+            // 3. Favorite Channels
+            if (favoritesController.liveStreamFavorites.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: C4ContentRail(
+                  title: 'Favorite Channels',
+                  items: favoritesController.liveStreamFavorites
+                      .map((f) => ContentItem(
+                            f.streamId,
+                            f.name,
+                            f.imagePath ?? '',
+                            f.contentType,
+                          ))
+                      .toList(),
+                  isPortrait: false,
+                  onItemTap: (ctx, item) {
+                    final fav = favoritesController.liveStreamFavorites.firstWhere(
+                      (f) =>
+                          f.streamId == item.id &&
+                          f.contentType == item.contentType,
+                      orElse: () => throw Exception('Favorite not found'),
+                    );
+                    favoritesController.playFavorite(ctx, fav);
+                  },
+                ),
+              ),
+
+            // 4. Favorite Movies
+            if (favoritesController.movieFavorites.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: C4ContentRail(
+                  title: 'Favorite Movies',
+                  items: favoritesController.movieFavorites
+                      .map((f) => ContentItem(
+                            f.streamId,
+                            f.name,
+                            f.imagePath ?? '',
+                            f.contentType,
+                          ))
+                      .toList(),
+                  onItemTap: (ctx, item) {
+                    final fav = favoritesController.movieFavorites.firstWhere(
+                      (f) =>
+                          f.streamId == item.id &&
+                          f.contentType == item.contentType,
+                      orElse: () => throw Exception('Favorite not found'),
+                    );
+                    favoritesController.playFavorite(ctx, fav);
+                  },
+                ),
+              ),
+
+            // 5. Favorite Series
+            if (favoritesController.seriesFavorites.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: C4ContentRail(
+                  title: 'Favorite Series',
+                  items: favoritesController.seriesFavorites
+                      .map((f) => ContentItem(
+                            f.streamId,
+                            f.name,
+                            f.imagePath ?? '',
+                            f.contentType,
+                          ))
+                      .toList(),
+                  onItemTap: (ctx, item) {
+                    final fav = favoritesController.seriesFavorites.firstWhere(
+                      (f) =>
+                          f.streamId == item.id &&
+                          f.contentType == item.contentType,
+                      orElse: () => throw Exception('Favorite not found'),
+                    );
+                    favoritesController.playFavorite(ctx, fav);
+                  },
+                ),
+              ),
+
+            // 6. Watch later
+            if (watchLaterController.watchLaterItems.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 32),
+                child: C4ContentRail(
+                  title: 'Watch later',
+                  items: watchLaterController.watchLaterItems
+                      .map((h) => ContentItem(
+                            h.streamId,
+                            h.title,
+                            h.imagePath ?? '',
+                            h.contentType,
+                          ))
+                      .toList(),
+                  onItemTap: (ctx, item) {
+                    final data = watchLaterController.watchLaterItems.firstWhere(
+                      (i) => i.streamId == item.id && i.contentType == item.contentType,
+                    );
+                    watchLaterController.playContent(ctx, data);
+                  },
+                ),
+              ),
+
+            // 7. Continue watching
             if (historyController.continueWatching.isNotEmpty)
               Padding(
                 padding: EdgeInsets.only(bottom: 32),
@@ -122,51 +234,7 @@ class _C4DashboardState extends State<C4Dashboard> {
                 ),
               ),
 
-            // 3. Trending this week (TMDB)
-            if (_trendingItems.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Trending this week',
-                  items: _trendingItems,
-                  onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
-                ),
-              ),
-
-            // 4. Recommendations (Local random)
-            if (xtreamController.recommendations.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Recommended for you',
-                  items: xtreamController.recommendations,
-                ),
-              ),
-
-            // 5. Watch later
-            if (watchLaterController.watchLaterItems.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 32),
-                child: C4ContentRail(
-                  title: 'Watch later',
-                  items: watchLaterController.watchLaterItems
-                      .map((h) => ContentItem(
-                            h.streamId,
-                            h.title,
-                            h.imagePath ?? '',
-                            h.contentType,
-                          ))
-                      .toList(),
-                  onItemTap: (ctx, item) {
-                    final data = watchLaterController.watchLaterItems.firstWhere(
-                      (i) => i.streamId == item.id && i.contentType == item.contentType,
-                    );
-                    watchLaterController.playContent(ctx, data);
-                  },
-                ),
-              ),
-
-            // 6. Recent channels (Live TV)
+            // 8. Recent channels
             if (historyController.liveHistory.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 32),
@@ -194,33 +262,18 @@ class _C4DashboardState extends State<C4Dashboard> {
                 ),
               ),
 
-            // 7. Favorites (Live TV)
-            if (favoritesController.favorites.isNotEmpty)
+            // 9. Trending this week (TMDB)
+            if (_trendingItems.isNotEmpty)
               Padding(
                 padding: const EdgeInsets.only(bottom: 32),
                 child: C4ContentRail(
-                  title: 'Favorite channels',
-                  items: favoritesController.favorites
-                      .where((f) => f.contentType == ContentType.liveStream)
-                      .map((f) => ContentItem(
-                            f.streamId,
-                            f.name,
-                            f.imagePath ?? '',
-                            f.contentType,
-                          ))
-                      .toList(),
-                  isPortrait: false,
-                  onItemTap: (ctx, item) {
-                    final fav = favoritesController.favorites.firstWhere(
-                      (f) =>
-                          f.streamId == item.id &&
-                          f.contentType == item.contentType,
-                      orElse: () => throw Exception('Favorite not found for item'),
-                    );
-                    favoritesController.playFavorite(ctx, fav);
-                  },
+                  title: 'Trending this week',
+                  items: _trendingItems,
+                  onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
                 ),
               ),
+
+            const SizedBox(height: 64),
 
             const SizedBox(height: 64),
           ],

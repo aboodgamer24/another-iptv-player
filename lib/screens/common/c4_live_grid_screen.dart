@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../controllers/xtream_code_home_controller.dart';
+import '../../controllers/favorites_controller.dart';
+import '../../controllers/watch_later_controller.dart';
 import '../../widgets/common/c4_card.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';
@@ -84,9 +85,16 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                     itemCount: channels.length,
                     itemBuilder: (context, index) {
                       final channel = channels[index];
+                      final favoritesController = context.watch<FavoritesController>();
+                      
                       return C4Card(
                         title: channel.name,
                         imageUrl: channel.imageUrl,
+                        isFavorite: favoritesController.favorites.any(
+                          (f) => f.streamId == channel.id && f.contentType == channel.contentType,
+                        ),
+                        onToggleFavorite: () => favoritesController.toggleFavorite(channel),
+                        onToggleWatchLater: null, // No Watch Later for Live TV
                         onFocusChanged: (focused) {
                           if (focused) setState(() => _focusedChannel = channel);
                         },

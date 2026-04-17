@@ -8,13 +8,14 @@ import 'package:another_iptv_player/models/watch_history.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
-import 'package:another_iptv_player/utils/get_playlist_type.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../controllers/favorites_controller.dart';
+import '../../../controllers/watch_later_controller.dart';
 import '../../../widgets/player_widget.dart';
 
 class MovieScreen extends StatefulWidget {
@@ -29,17 +30,23 @@ class MovieScreen extends StatefulWidget {
 class _MovieScreenState extends State<MovieScreen> {
   late final WatchHistoryService _watchHistoryService;
   late final IptvRepository? _repository;
+  late final FavoritesController _favoritesController;
+  late final WatchLaterController _watchLaterController;
 
   WatchHistory? _watchHistory;
   Map<String, dynamic>? _vodInfo;
   bool _isLoadingHistory = true;
   bool _isLoadingVodInfo = true;
+  bool _isFavorite = false;
+  bool _isInWatchLater = false;
   List<ContentItem> _categoryMovies = [];
 
   @override
   void initState() {
     super.initState();
     _watchHistoryService = WatchHistoryService();
+    _favoritesController = context.read<FavoritesController>();
+    _watchLaterController = context.read<WatchLaterController>();
 
     if (isXtreamCode && AppState.currentPlaylist != null) {
       _repository = IptvRepository(
@@ -57,6 +64,53 @@ class _MovieScreenState extends State<MovieScreen> {
     _loadWatchHistory();
     _loadVodInfo();
     _loadCategoryMovies();
+    _checkStatus();
+  }
+
+  Future<void> _checkStatus() async {
+    final isFav = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    final isWL = await _watchLaterController.isWatchLater(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    if (mounted) {
+      setState(() {
+        _isFavorite = isFav;
+        _isInWatchLater = isWL;
+      });
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    final result = await _favoritesController.toggleFavorite(widget.contentItem);
+    if (mounted) {
+      setState(() {
+        _isFavorite = result;
+      });
+    }
+  }
+
+  Future<void> _toggleWatchLater() async {
+    final result = await _watchLaterController.toggleWatchLater(widget.contentItem);
+    if (mounted) {
+      setState(() {
+        _isInWatchLater = result;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_watch_later
+                : context.loc.removed_from_watch_later,
+          ),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
   }
 
   Future<void> _loadCategoryMovies() async {
@@ -283,6 +337,38 @@ class _MovieScreenState extends State<MovieScreen> {
             onPressed: () => Navigator.of(context).pop(),
           ),
         ),
+        actions: [
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                _isInWatchLater ? Icons.watch_later : Icons.watch_later_outlined,
+                color: _isInWatchLater ? Colors.blueAccent : Colors.white,
+              ),
+              onPressed: _toggleWatchLater,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.black.withOpacity(0.5),
+              shape: BoxShape.circle,
+            ),
+            child: IconButton(
+              icon: Icon(
+                _isFavorite ? Icons.favorite : Icons.favorite_border,
+                color: _isFavorite ? Colors.red : Colors.white,
+              ),
+              onPressed: _toggleFavorite,
+            ),
+          ),
+          const SizedBox(width: 16),
+        ],
       ),
       body: Stack(
         fit: StackFit.expand,

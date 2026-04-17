@@ -39,6 +39,10 @@ class WatchLaterController extends ChangeNotifier {
   }
 
   Future<bool> addToWatchLater(ContentItem contentItem) async {
+    if (contentItem.contentType == ContentType.liveStream) {
+      _setError('Live TV cannot be added to watch later');
+      return false;
+    }
     try {
       _setError(null);
       await _repository.addWatchLater(contentItem);
@@ -63,13 +67,45 @@ class WatchLaterController extends ChangeNotifier {
   }
 
   Future<bool> toggleWatchLater(ContentItem contentItem) async {
+    if (contentItem.contentType == ContentType.liveStream) {
+      return false;
+    }
+
     try {
       _setError(null);
+      
+      final isCurrentlyIn = _watchLaterItems.any(
+        (i) => i.streamId == contentItem.id && i.contentType == contentItem.contentType,
+      );
+
+      // Optimistic Update
+      if (isCurrentlyIn) {
+        _watchLaterItems.removeWhere(
+          (i) => i.streamId == contentItem.id && i.contentType == contentItem.contentType,
+        );
+      } else {
+        // Temporary entry for optimistic UI
+        _watchLaterItems.insert(0, WatchLaterData(
+          id: 'temp_${contentItem.id}',
+          playlistId: AppState.currentPlaylist?.id ?? '',
+          contentType: contentItem.contentType,
+          streamId: contentItem.id,
+          title: contentItem.name,
+          imagePath: contentItem.imagePath,
+          addedAt: DateTime.now(),
+        ));
+      }
+      notifyListeners();
+
       final result = await _repository.toggleWatchLater(contentItem);
+      
+      // Sync with repository state
       await loadWatchLaterItems();
       return result;
     } catch (e) {
       _setError('Error toggling watch later: $e');
+      // Revert optimistic update on failure
+      await loadWatchLaterItems();
       return false;
     }
   }
@@ -82,54 +118,17 @@ class WatchLaterController extends ChangeNotifier {
     try {
       _setError(null);
       switch (item.contentType) {
-        case ContentType.liveStream:
-          await _playLiveStream(context, item);
-          break;
         case ContentType.vod:
           await _playMovie(context, item);
           break;
         case ContentType.series:
           await _playSeries(context, item);
           break;
+        default:
+          break;
       }
     } catch (e) {
       _setError('Video oynatılırken hata oluştu: $e');
-    }
-  }
-
-  Future<void> _playLiveStream(BuildContext context, WatchLaterData item) async {
-    if (isXtreamCode) {
-      final liveStream = await _database.findLiveStreamById(
-        item.streamId,
-        AppState.currentPlaylist!.id,
-      );
-
-      navigateByContentType(
-        context,
-        ContentItem(
-          item.streamId,
-          item.title,
-          item.imagePath ?? '',
-          item.contentType,
-          liveStream: liveStream,
-        ),
-      );
-    } else if (isM3u) {
-      final liveStream = await _database.getM3uItemsByIdAndPlaylist(
-        AppState.currentPlaylist!.id,
-        item.streamId,
-      );
-
-      navigateByContentType(
-        context,
-        ContentItem(
-          liveStream!.url,
-          item.title,
-          item.imagePath ?? '',
-          item.contentType,
-          m3uItem: liveStream,
-        ),
-      );
     }
   }
 
@@ -172,28 +171,34 @@ class WatchLaterController extends ChangeNotifier {
 
   Future<void> _playSeries(BuildContext context, WatchLaterData item) async {
     if (isXtreamCode) {
-      final series = await _database.findSeriesById(
-        item.streamId,
-        AppState.currentPlaylist!.id,
+      // Fetch series info directly from repository to ensure latest data
+      final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
+        int.parse(item.streamId),
       );
 
-      final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
-        series!.seriesId,
+      if (seriesResponse == null) {
+        _setError('Series info not found');
+        return;
+      }
+
+      final seriesStream = await _database.findSeriesById(
+        item.streamId,
+        AppState.currentPlaylist!.id,
       );
 
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => EpisodeScreen(
-            seriesInfo: seriesResponse!.seriesInfo,
+            seriesInfo: seriesResponse.seriesInfo,
             seasons: seriesResponse.seasons,
             episodes: seriesResponse.episodes,
             contentItem: ContentItem(
-              series.seriesId.toString(),
+              item.streamId,
               item.title,
               item.imagePath ?? "",
               ContentType.series,
-              seriesStream: series,
+              seriesStream: seriesStream,
             ),
           ),
         ),
@@ -204,12 +209,17 @@ class WatchLaterController extends ChangeNotifier {
         item.streamId,
       );
 
+      if (m3uItem == null) {
+        _setError('Series not found');
+        return;
+      }
+
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => M3uPlayerScreen(
             contentItem: ContentItem(
-              m3uItem!.id,
+              m3uItem.id,
               m3uItem.name ?? '',
               m3uItem.tvgLogo ?? '',
               m3uItem.contentType,

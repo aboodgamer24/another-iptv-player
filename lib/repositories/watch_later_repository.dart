@@ -14,12 +14,11 @@ class WatchLaterRepository {
   Future<void> addWatchLater(ContentItem contentItem) async {
     final playlistId = AppState.currentPlaylist!.id;
 
-    final existingItems = await _database.getWatchLaterItems(playlistId);
-    final isAlreadyIn = existingItems.any((e) => e.streamId == contentItem.id && e.contentType == contentItem.contentType);
-
-    if (isAlreadyIn) {
-      throw Exception('Already in watch later');
+    if (contentItem.contentType == ContentType.liveStream) {
+      return; // DO NOT support Watch Later for Live TV
     }
+
+    final existingItems = await _database.getWatchLaterItems(playlistId);
 
     final entry = WatchLaterData(
       id: _uuid.v4(),

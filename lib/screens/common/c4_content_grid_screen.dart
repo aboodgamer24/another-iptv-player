@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../controllers/favorites_controller.dart';
+import '../../controllers/watch_later_controller.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../widgets/common/c4_card.dart';
 import '../../l10n/localization_extension.dart';
@@ -97,9 +99,20 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final item = items[index];
+                      final favoritesController = context.watch<FavoritesController>();
+                      final watchLaterController = context.watch<WatchLaterController>();
+
                       return C4Card(
                         title: item.name,
                         imageUrl: item.imageUrl,
+                        isFavorite: favoritesController.favorites.any(
+                          (f) => f.streamId == item.id && f.contentType == item.contentType,
+                        ),
+                        onToggleFavorite: () => favoritesController.toggleFavorite(item),
+                        isInWatchLater: watchLaterController.watchLaterItems.any(
+                          (w) => w.streamId == item.id && w.contentType == item.contentType,
+                        ),
+                        onToggleWatchLater: () => watchLaterController.toggleWatchLater(item),
                         onFocusChanged: (focused) {
                           if (focused) setState(() => _focusedItem = item);
                         },
