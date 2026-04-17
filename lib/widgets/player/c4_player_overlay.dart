@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:window_manager/window_manager.dart';
+import 'dart:io';
+import 'package:provider/provider.dart';
+import '../../controllers/xtream_code_home_controller.dart';
 import '../../services/player_state.dart' as app_player_state;
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
@@ -22,10 +26,24 @@ class C4PlayerOverlay extends StatefulWidget {
   State<C4PlayerOverlay> createState() => _C4PlayerOverlayState();
 }
 
+enum _SidePanelMode { channels, categories }
+
 class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _isVisible = true;
   bool _showSidePanel = false;
   bool _showInfoPanel = false;
+  _SidePanelMode _sidePanelMode = _SidePanelMode.channels;
+  
+  // Fullscreen state
+  bool _isFullscreen = false;
+  
+  // Stream metadata state
+  int? _resW;
+  int? _resH;
+  double? _fps;
+  int? _bitrate;
+  String? _codec;
+  
   Timer? _hideTimer;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
@@ -46,7 +64,26 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         _volume = v / 100.0;
         _isMuted = v == 0;
       })),
+      widget.player.stream.videoParams.listen((vp) => setState(() {
+        _resW = vp.w ?? _resW;
+        _resH = vp.h ?? _resH;
+      })),
+      widget.player.stream.track.listen((track) => setState(() {
+        final video = track.video;
+        _resW = video.w != null && video.w! > 0 ? video.w : _resW;
+        _resH = video.h != null && video.h! > 0 ? video.h : _resH;
+        _fps = video.fps != null && video.fps! > 0 ? video.fps : _fps;
+        _bitrate = video.bitrate != null && video.bitrate! > 0 ? video.bitrate : _bitrate;
+        _codec = video.codec ?? _codec;
+      })),
     ];
+    
+    // Initial check for fullscreen
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      windowManager.isFullScreen().then((value) {
+        if (mounted) setState(() => _isFullscreen = value);
+      });
+    }
   }
 
   @override
@@ -111,6 +148,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       } else {
         Navigator.pop(context);
       }
+    }
+  }
+
+  Future<void> _toggleFullscreen() async {
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      final isFull = await windowManager.isFullScreen();
+      await windowManager.setFullScreen(!isFull);
+      if (mounted) setState(() => _isFullscreen = !isFull);
     }
   }
 
@@ -228,6 +273,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 _showInfoPanel = false;
                 _startHideTimer();
               }),
+            ),
+            const SizedBox(width: 8),
+            IconButton(
+              icon: Icon(
+                _isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
+                color: Colors.white,
+              ),
+              onPressed: _toggleFullscreen,
             ),
           ],
         ),
@@ -364,10 +417,16 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             ),
             const SizedBox(height: 16),
             _InfoRow(label: 'Title', value: app_player_state.PlayerState.title),
-            _InfoRow(label: 'Resolution', value: '${track.w} x ${track.h}'),
-            _InfoRow(label: 'FPS', value: track.fps?.toStringAsFixed(2) ?? 'N/A'),
-            _InfoRow(label: 'Bitrate', value: track.bitrate != null ? '${(track.bitrate! / 1000).toStringAsFixed(0)} kbps' : 'N/A'),
-            _InfoRow(label: 'Codec', value: track.codec ?? 'N/A'),
+            _InfoRow(
+              label: 'Resolution', 
+              value: (_resW != null && _resH != null && _resW! > 0) ? '${_resW} x ${_resH}' : 'N/A'
+            ),
+            _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
+            _InfoRow(
+              label: 'Bitrate', 
+              value: _bitrate != null ? '${(_bitrate! / 1000).toStringAsFixed(0)} kbps' : 'N/A'
+            ),
+            _InfoRow(label: 'Codec', value: (_codec != null && _codec!.isNotEmpty) ? _codec! : 'N/A'),
           ],
         ),
       ),
@@ -375,7 +434,8 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildSidePanel(ThemeData theme) {
-    final channels = app_player_state.PlayerState.queue ?? [];
+    // Get the home controller to access global categories and channels
+    final homeController = Provider.of<XtreamCodeHomeController>(context, listen: false);
     
     return Positioned(
       top: 0,
@@ -396,7 +456,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    'Channel List',
+                    _sidePanelMode == _SidePanelMode.channels ? 'Channel List' : 'Categories',
                     style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                   ),
                   IconButton(
@@ -408,54 +468,30 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             ),
             const Divider(),
             Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: channels.length,
-                itemBuilder: (context, index) {
-                  final channel = channels[index];
-                  final isPlaying = app_player_state.PlayerState.currentIndex == index;
-                  
-                  return ListTile(
-                    selected: isPlaying,
-                    selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
-                        color: Colors.white10,
-                      ),
-                      child: channel.imageUrl.isNotEmpty
-                          ? Image.network(channel.imageUrl)
-                          : const Icon(Icons.live_tv, size: 20, color: Colors.white24),
-                    ),
-                    title: Text(
-                      channel.name,
-                      style: TextStyle(
-                        color: isPlaying ? theme.colorScheme.primary : Colors.white,
-                        fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    onTap: () {
-                      app_player_state.PlayerState.currentIndex = index;
-                      app_player_state.PlayerState.title = channel.name;
-                      widget.player.open(Media(channel.id));
-                      setState(() => _showSidePanel = false);
-                    },
-                  );
-                },
-              ),
+              child: _sidePanelMode == _SidePanelMode.channels 
+                  ? _buildChannelListView(theme) 
+                  : _buildCategoryListView(theme, homeController),
             ),
             Padding(
               padding: const EdgeInsets.all(24.0),
               child: SizedBox(
                 width: double.infinity,
                 child: OutlinedButton.icon(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.explore_outlined),
-                  label: const Text('Discover other categories'),
+                  onPressed: () {
+                    setState(() {
+                      if (_sidePanelMode == _SidePanelMode.channels) {
+                        _sidePanelMode = _SidePanelMode.categories;
+                      } else {
+                        _sidePanelMode = _SidePanelMode.channels;
+                      }
+                    });
+                  },
+                  icon: Icon(_sidePanelMode == _SidePanelMode.channels 
+                      ? Icons.explore_outlined 
+                      : Icons.arrow_back_rounded),
+                  label: Text(_sidePanelMode == _SidePanelMode.channels 
+                      ? 'Discover other categories' 
+                      : 'Back to channel list'),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.white70,
                     side: const BorderSide(color: Colors.white10),
@@ -467,6 +503,86 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildChannelListView(ThemeData theme) {
+    final channels = app_player_state.PlayerState.queue ?? [];
+    
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: channels.length,
+      itemBuilder: (context, index) {
+        final channel = channels[index];
+        final isPlaying = app_player_state.PlayerState.currentIndex == index;
+        
+        return ListTile(
+          selected: isPlaying,
+          selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(4),
+              color: Colors.white10,
+            ),
+            child: channel.imageUrl.isNotEmpty
+                ? Image.network(
+                    channel.imageUrl,
+                    errorBuilder: (context, error, stackTrace) => 
+                        const Icon(Icons.live_tv, size: 20, color: Colors.white24),
+                  )
+                : const Icon(Icons.live_tv, size: 20, color: Colors.white24),
+          ),
+          title: Text(
+            channel.name,
+            style: TextStyle(
+              color: isPlaying ? theme.colorScheme.primary : Colors.white,
+              fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () {
+            app_player_state.PlayerState.currentIndex = index;
+            app_player_state.PlayerState.title = channel.name;
+            widget.player.open(Media(channel.url));
+            // Keep panel open or close it? Existing behavior was close it.
+            // I'll stick to closing it for a better playback experience.
+            setState(() => _showSidePanel = false);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCategoryListView(ThemeData theme, XtreamCodeHomeController homeController) {
+    final categories = homeController.liveCategories ?? [];
+    
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: categories.length,
+      itemBuilder: (context, index) {
+        final categoryVM = categories[index];
+        
+        return ListTile(
+          title: Text(
+            categoryVM.category.categoryName,
+            style: const TextStyle(color: Colors.white),
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 20),
+          onTap: () {
+            // Update the global queue with the selected category's channels
+            app_player_state.PlayerState.queue = categoryVM.contentItems;
+            app_player_state.PlayerState.currentIndex = 0; // Default to first channel
+            
+            // Switch back to channel view for the new category
+            setState(() {
+              _sidePanelMode = _SidePanelMode.channels;
+            });
+          },
+        );
+      },
     );
   }
 }

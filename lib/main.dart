@@ -9,7 +9,27 @@ import 'controllers/theme_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/supported_languages.dart';
 
+import 'package:window_manager/window_manager.dart';
+import 'dart:io';
+
 Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+    await windowManager.ensureInitialized();
+    WindowOptions windowOptions = const WindowOptions(
+      size: Size(1280, 720),
+      center: true,
+      backgroundColor: Colors.transparent,
+      skipTaskbar: false,
+      titleBarStyle: TitleBarStyle.normal,
+    );
+    windowManager.waitUntilReadyToShow(windowOptions, () async {
+      await windowManager.show();
+      await windowManager.focus();
+    });
+  }
+
   await setupServiceLocator();
   runApp(
     MultiProvider(
