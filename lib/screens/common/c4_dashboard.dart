@@ -83,83 +83,101 @@ class _C4DashboardState extends State<C4Dashboard> {
         if (xtreamController.heroItem != null)
           C4DashboardHero(item: xtreamController.heroItem!),
 
-        const SizedBox(height: 24),
+        const SizedBox(height: 32),
 
-        // 2. Trending this week (TMDB)
-        if (_trendingItems.isNotEmpty)
-          C4ContentRail(
-            title: 'Trending this week',
-            items: _trendingItems,
-          ),
-
-        // 3. Recommendations (Local random)
-        if (xtreamController.recommendations.isNotEmpty)
-          C4ContentRail(
-            title: 'Recommended for you',
-            items: xtreamController.recommendations,
-          ),
-
-        // 4. Continue watching (VOD/Series)
+        // 2. Continue watching (VOD/Series) - Moved up for C4-TV feel
         if (historyController.continueWatching.isNotEmpty)
-          C4ContentRail(
-            title: context.loc.continue_watching,
-            items: historyController.continueWatching
-                .where((h) => h.contentType != ContentType.liveStream)
-                .map((h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ))
-                .toList(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: C4ContentRail(
+              title: context.loc.continue_watching,
+              items: historyController.continueWatching
+                  .where((h) => h.contentType != ContentType.liveStream)
+                  .map((h) => ContentItem(
+                        h.streamId,
+                        h.title,
+                        h.imagePath ?? '',
+                        h.contentType,
+                      ))
+                  .toList(),
+            ),
+          ),
+
+        // 3. Trending this week (TMDB)
+        if (_trendingItems.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: C4ContentRail(
+              title: 'Trending this week',
+              items: _trendingItems,
+            ),
+          ),
+
+        // 4. Recommendations (Local random)
+        if (xtreamController.recommendations.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: C4ContentRail(
+              title: 'Recommended for you',
+              items: xtreamController.recommendations,
+            ),
           ),
 
         // 5. Watch later
         if (watchLaterController.watchLaterItems.isNotEmpty)
-          C4ContentRail(
-            title: 'Watch later',
-            items: watchLaterController.watchLaterItems
-                .map((h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ))
-                .toList(),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: C4ContentRail(
+              title: 'Watch later',
+              items: watchLaterController.watchLaterItems
+                  .map((h) => ContentItem(
+                        h.streamId,
+                        h.title,
+                        h.imagePath ?? '',
+                        h.contentType,
+                      ))
+                  .toList(),
+            ),
           ),
 
         // 6. Recent channels (Live TV)
         if (historyController.liveHistory.isNotEmpty)
-          C4ContentRail(
-            title: 'Recently watched channels',
-            items: historyController.liveHistory
-                .map((h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ))
-                .toList(),
-            isPortrait: false,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: C4ContentRail(
+              title: 'Recently watched channels',
+              items: historyController.liveHistory
+                  .map((h) => ContentItem(
+                        h.streamId,
+                        h.title,
+                        h.imagePath ?? '',
+                        h.contentType,
+                      ))
+                  .toList(),
+              isPortrait: false,
+            ),
           ),
 
         // 7. Favorites (Live TV)
         if (favoritesController.favorites.isNotEmpty)
-          C4ContentRail(
-            title: 'Favorite channels',
-            items: favoritesController.favorites
-                .where((f) => f.contentType == ContentType.liveStream)
-                .map((f) => ContentItem(
-                      f.streamId,
-                      f.name,
-                      f.imagePath ?? '',
-                      f.contentType,
-                    ))
-                .toList(),
-            isPortrait: false,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 32),
+            child: C4ContentRail(
+              title: 'Favorite channels',
+              items: favoritesController.favorites
+                  .where((f) => f.contentType == ContentType.liveStream)
+                  .map((f) => ContentItem(
+                        f.streamId,
+                        f.name,
+                        f.imagePath ?? '',
+                        f.contentType,
+                      ))
+                  .toList(),
+              isPortrait: false,
+            ),
           ),
 
-        const SizedBox(height: 48),
+        const SizedBox(height: 64),
       ],
     );
   }
