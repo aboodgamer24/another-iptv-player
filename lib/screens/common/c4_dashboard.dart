@@ -93,7 +93,17 @@ class _C4DashboardState extends State<C4Dashboard> {
           children: [
             // Hero Section is always first (not togglable for now based on request)
             if (xtreamController.heroItem != null)
-              C4DashboardHero(item: xtreamController.heroItem!),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 600),
+                transitionBuilder: (child, animation) => FadeTransition(
+                  opacity: animation,
+                  child: child,
+                ),
+                child: C4DashboardHero(
+                  key: ValueKey(xtreamController.heroItem!.id),
+                  item: xtreamController.heroItem!,
+                ),
+              ),
 
             const SizedBox(height: 32),
 
