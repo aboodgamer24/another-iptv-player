@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../repositories/user_preferences.dart';
 import '../../services/app_state.dart';
 import '../../services/playlist_service.dart';
+import 'package:another_iptv_player/screens/main_navigation_screen.dart';
 import 'xtream-codes/xtream_code_home_screen.dart';
 
 class AppInitializerScreen extends StatefulWidget {
@@ -49,12 +50,7 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
     if (_lastPlaylist == null) {
       return const PlaylistScreen();
     } else {
-      switch (_lastPlaylist!.type) {
-        case PlaylistType.xtream:
-          return XtreamCodeHomeScreen(playlist: _lastPlaylist!);
-        case PlaylistType.m3u:
-          return M3UHomeScreen(playlist: _lastPlaylist!);
-      }
+      return MainNavigationScreen(playlist: _lastPlaylist!);
     }
   }
 }

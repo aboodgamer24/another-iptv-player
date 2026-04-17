@@ -8,6 +8,7 @@ import 'package:another_iptv_player/models/progress_step.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:provider/provider.dart';
+import 'main_navigation_screen.dart';
 import 'xtream_code_home_screen.dart';
 import '../playlist_screen.dart';
 
@@ -122,10 +123,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => ChangeNotifierProvider.value(
-            value: _controller,
-            child: XtreamCodeHomeScreen(playlist: widget.playlist),
-          ),
+          builder: (context) => MainNavigationScreen(playlist: widget.playlist),
         ),
         (route) => false,
       );

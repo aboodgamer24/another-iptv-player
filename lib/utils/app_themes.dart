@@ -39,64 +39,88 @@ class AppThemes {
     ),
   );
 
+  static const Color midnightBg = Color(0xFF020617);
+  static const Color midnightSurface = Color(0xFF0F172A);
+  static const Color midnightPrimary = Color(0xFF6366F1);
+  static const Color midnightAccent = Color(0xFF10B981);
+  static const Color midnightTextPrimary = Color(0xFFF8FAFC);
+  static const Color midnightTextSecondary = Color(0xFF94A3B8);
+
   static final ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
+    fontFamily: 'DMSans',
     colorScheme: ColorScheme.dark(
-      primary: _primaryColor,
-      onPrimary: const Color(0xFF003731),
-      primaryContainer: const Color(0xFF004D40),
-      onPrimaryContainer: _primaryColor,
-      secondary: const Color(0xFF4DB6AC),
-      onSecondary: const Color(0xFF003731),
-      surface: const Color(0xFF1E1E1E),
-      onSurface: const Color(0xFFE0E0E0),
-      onSurfaceVariant: const Color(0xFF9E9E9E),
-      outline: const Color(0xFF333333),
-      surfaceContainerHighest: const Color(0xFF2C2C2C),
-      surfaceContainerHigh: const Color(0xFF252525),
-      surfaceContainer: const Color(0xFF212121),
-      surfaceContainerLow: const Color(0xFF1A1A1A),
+      primary: midnightPrimary,
+      onPrimary: Colors.white,
+      primaryContainer: midnightPrimary.withValues(alpha: 0.2),
+      onPrimaryContainer: midnightPrimary,
+      secondary: midnightAccent,
+      onSecondary: Colors.white,
+      surface: midnightSurface,
+      onSurface: midnightTextPrimary,
+      onSurfaceVariant: midnightTextSecondary,
+      outline: const Color(0xFF334155),
+      surfaceContainerHighest: const Color(0xFF1E293B),
     ),
-    scaffoldBackgroundColor: const Color(0xFF121212),
+    scaffoldBackgroundColor: midnightBg,
     cardTheme: CardThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
       clipBehavior: Clip.antiAlias,
-      color: const Color(0xFF1E1E1E),
+      color: midnightSurface,
     ),
     appBarTheme: const AppBarTheme(
       centerTitle: false,
       elevation: 0,
-      backgroundColor: Color(0xFF1A1A1A),
+      backgroundColor: midnightBg,
+      titleTextStyle: TextStyle(
+        fontFamily: 'DMSans',
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: midnightTextPrimary,
+      ),
     ),
-    navigationBarTheme: NavigationBarThemeData(
-      backgroundColor: const Color(0xFF1A1A1A),
-      indicatorColor: const Color(0xFF004D40),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: midnightBg,
+      selectedIconTheme: const IconThemeData(color: midnightPrimary),
+      unselectedIconTheme: IconThemeData(color: midnightTextSecondary),
+      selectedLabelTextStyle: const TextStyle(
+        color: midnightPrimary,
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedLabelTextStyle: TextStyle(color: midnightTextSecondary),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: Color(0xFF1A1A1A),
-      selectedItemColor: Color(0xFF64FFDA),
-      unselectedItemColor: Color(0xFF9E9E9E),
+      backgroundColor: midnightBg,
+      selectedItemColor: midnightPrimary,
+      unselectedItemColor: midnightTextSecondary,
     ),
-    dividerColor: const Color(0xFF333333),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF1E293B),
+      thickness: 1,
+    ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
-      fillColor: const Color(0xFF252525),
-    ),
-    chipTheme: ChipThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      backgroundColor: const Color(0xFF252525),
-      selectedColor: const Color(0xFF004D40),
+      fillColor: const Color(0xFF1E293B),
+      hintStyle: TextStyle(color: midnightTextSecondary),
     ),
     dialogTheme: DialogThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      backgroundColor: const Color(0xFF1E1E1E),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: midnightSurface,
     ),
     snackBarTheme: SnackBarThemeData(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       behavior: SnackBarBehavior.floating,
+      backgroundColor: const Color(0xFF1E293B),
+      contentTextStyle: const TextStyle(color: midnightTextPrimary),
+    ),
+    textTheme: const TextTheme(
+      headlineLarge: TextStyle(color: midnightTextPrimary, fontWeight: FontWeight.bold),
+      headlineMedium: TextStyle(color: midnightTextPrimary, fontWeight: FontWeight.bold),
+      bodyLarge: TextStyle(color: midnightTextPrimary),
+      bodyMedium: TextStyle(color: midnightTextSecondary),
     ),
   );
 
