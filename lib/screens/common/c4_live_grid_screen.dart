@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../l10n/localization_extension.dart';
@@ -38,6 +39,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
         SystemUiMode.edgeToEdge,
         overlays: SystemUiOverlay.values,
       );
+      windowManager.setFullScreen(false);
     }
     _searchController.dispose();
     super.dispose();
@@ -49,6 +51,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
       SystemUiMode.immersiveSticky,
       overlays: [],
     );
+    windowManager.setFullScreen(true);
     setState(() => _isFullscreen = true);
   }
 
@@ -57,6 +60,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
       SystemUiMode.edgeToEdge,
       overlays: SystemUiOverlay.values,
     );
+    windowManager.setFullScreen(false);
     setState(() => _isFullscreen = false);
   }
 
@@ -431,9 +435,9 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
         // reparents it without disposal). When false: it stays in the
         // inline slot above.
         if (_selectedChannel != null)
-          Offstage(
-            offstage: !_isFullscreen,
-            child: Positioned.fill(
+          Positioned.fill(
+            child: Offstage(
+              offstage: !_isFullscreen,
               child: ColoredBox(
                 color: Colors.black,
                 child: _isFullscreen
