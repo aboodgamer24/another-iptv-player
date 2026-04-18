@@ -1,13 +1,12 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:window_manager/window_manager.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../widgets/player_widget.dart';
+import '../../screens/live_stream/live_stream_screen.dart';
 
 class C4LiveGridScreen extends StatefulWidget {
   const C4LiveGridScreen({super.key});
@@ -38,9 +37,40 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
   }
 
   Future<void> _enterFullscreen() async {
-    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
-      final isFull = await windowManager.isFullScreen();
-      await windowManager.setFullScreen(!isFull);
+    if (_selectedChannel == null) return;
+
+    // Dispose the inline player by clearing the selected channel.
+    // This triggers PlayerWidget to unmount and calls player.dispose().
+    final channel = _selectedChannel!;
+
+    setState(() {
+      _selectedChannel = null; // Unmounts inline PlayerWidget → disposes player
+    });
+
+    // Small delay to let the player dispose before the new screen opens
+    await Future.delayed(const Duration(milliseconds: 150));
+
+    if (!mounted) {
+      // If unmounted, just restore internal state in case we're still alive
+      _selectedChannel = channel;
+      return;
+    }
+
+    // Navigate to the dedicated full-screen live stream screen.
+    // LiveStreamScreen creates its own PlayerWidget with a fresh player.
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LiveStreamScreen(content: channel),
+      ),
+    );
+
+    // When user presses back, restore the inline player to the same channel
+    if (mounted) {
+      setState(() {
+        _selectedChannel = channel;
+        _playerKey = UniqueKey(); // fresh inline player
+      });
     }
   }
 
