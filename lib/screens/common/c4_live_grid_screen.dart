@@ -5,6 +5,7 @@ import '../../controllers/favorites_controller.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
+import '../../widgets/player_widget.dart';
 
 class C4LiveGridScreen extends StatefulWidget {
   const C4LiveGridScreen({super.key});
@@ -16,6 +17,7 @@ class C4LiveGridScreen extends StatefulWidget {
 class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
   int _selectedCategoryIndex = 0;
   ContentItem? _selectedChannel;
+  Key _playerKey = UniqueKey();
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
@@ -31,6 +33,36 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _enterFullscreen() {
+    if (_selectedChannel == null) return;
+    navigateByContentType(context, _selectedChannel!);
+  }
+
+  List<ContentItem> get _currentCategoryChannels {
+    final controller = context.read<XtreamCodeHomeController>();
+    final categories = controller.liveCategories!;
+    return categories[_selectedCategoryIndex].contentItems;
+  }
+
+  Widget _buildIdlePlaceholder() {
+    return Container(
+      color: Colors.black,
+      child: const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.live_tv, size: 48, color: Colors.white24),
+            SizedBox(height: 12),
+            Text(
+              'Select a channel to start watching',
+              style: TextStyle(color: Colors.white38, fontSize: 14),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
@@ -103,9 +135,9 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
             color: Colors.black.withValues(alpha: 0.1),
             child: Column(
               children: [
-                // Top Half: Player Area (16:9)
+                // Top Half: Player Area (16:7)
                 AspectRatio(
-                  aspectRatio: 16 / 9,
+                  aspectRatio: 16 / 7,
                   child: Container(
                     margin: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -121,66 +153,14 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: _selectedChannel == null
-                        ? Center(
-                            child: Column(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.live_tv_rounded, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.3)),
-                                const SizedBox(height: 16),
-                                Text(
-                                  "Select a channel to start watching",
-                                  style: theme.textTheme.bodyLarge?.copyWith(color: theme.hintColor),
-                                ),
-                              ],
-                            ),
-                          )
-                        : Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              // "Now Playing" background
-                              if (_selectedChannel!.imageUrl.isNotEmpty)
-                                Image.network(_selectedChannel!.imageUrl, fit: BoxFit.contain)
-                              else
-                                const Center(child: Icon(Icons.live_tv_rounded, size: 64, color: Colors.white10)),
-                              
-                              // Scrim overlay
-                              Container(color: Colors.black54),
-
-                              // Play Button and Logo
-                              Center(
-                                child: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (_selectedChannel!.imageUrl.isNotEmpty)
-                                      Container(
-                                        width: 80,
-                                        height: 80,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          boxShadow: [
-                                            BoxShadow(color: theme.colorScheme.primary.withValues(alpha: 0.3), blurRadius: 30),
-                                          ],
-                                        ),
-                                        child: ClipRRect(
-                                          borderRadius: BorderRadius.circular(40),
-                                          child: Image.network(_selectedChannel!.imageUrl, fit: BoxFit.cover),
-                                        ),
-                                      ),
-                                    const SizedBox(height: 24),
-                                    ElevatedButton.icon(
-                                      onPressed: () => navigateByContentType(context, _selectedChannel!),
-                                      icon: const Icon(Icons.play_arrow_rounded),
-                                      label: const Text("Watch Now"),
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: theme.colorScheme.primary,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                        ? _buildIdlePlaceholder()
+                        : PlayerWidget(
+                            key: _playerKey,
+                            contentItem: _selectedChannel!,
+                            showControls: true,
+                            showInfo: false,
+                            onFullscreen: _enterFullscreen,
+                            queue: _currentCategoryChannels,
                           ),
                   ),
                 ),
@@ -230,7 +210,12 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                                       : null,
                                 ),
                                 child: InkWell(
-                                  onTap: () => setState(() => _selectedChannel = channel),
+                                  onTap: () {
+                                    setState(() {
+                                      _selectedChannel = channel;
+                                      _playerKey = UniqueKey(); // forces rebuild & new stream
+                                    });
+                                  },
                                   child: Padding(
                                     padding: const EdgeInsets.symmetric(horizontal: 16),
                                     child: Row(
