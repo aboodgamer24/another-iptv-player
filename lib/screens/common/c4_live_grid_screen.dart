@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:window_manager/window_manager.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../l10n/localization_extension.dart';
@@ -35,16 +37,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
     super.dispose();
   }
 
-  void _enterFullscreen() async {
-    if (_selectedChannel == null) return;
-    await navigateByContentType(context, _selectedChannel!);
-    
-    // When user returns from fullscreen, restart the inline stream
-    // by forcing a fresh PlayerWidget rebuild
-    if (mounted) {
-      setState(() {
-        _playerKey = UniqueKey();
-      });
+  Future<void> _enterFullscreen() async {
+    if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+      final isFull = await windowManager.isFullScreen();
+      await windowManager.setFullScreen(!isFull);
     }
   }
 
@@ -145,19 +141,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
               children: [
                 // Top Half: Player Area (16:7)
                 AspectRatio(
-                  aspectRatio: 16 / 7,
+                  aspectRatio: 16 / 9,
                   child: Container(
-                    margin: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.black,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
                     ),
                     clipBehavior: Clip.antiAlias,
                     child: _selectedChannel == null
@@ -167,7 +154,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                             contentItem: _selectedChannel!,
                             showControls: true,
                             showInfo: false,
-                            onFullscreen: _enterFullscreen,
+                            onFullscreen: () => _enterFullscreen(),
                             queue: _currentCategoryChannels,
                             isInline: true,
                           ),

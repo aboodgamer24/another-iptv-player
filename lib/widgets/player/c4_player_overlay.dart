@@ -312,198 +312,269 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
 
   Widget _buildTopBar(ThemeData theme) {
     return Positioned(
-      top: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        height: 120,
-        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 40),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Colors.black87, Colors.transparent],
-          ),
-        ),
-        child: Row(
-          children: [
-            if (!widget.isInline)
-              IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-                onPressed: () => Navigator.pop(context),
+      top: 0, left: 0, right: 0,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 600;
+          return Container(
+            height: compact ? 52 : 120,
+            padding: EdgeInsets.symmetric(
+              horizontal: compact ? 10 : 40,
+              vertical: compact ? 8 : 40,
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Colors.black87, Colors.transparent],
               ),
-            if (!widget.isInline) const SizedBox(width: 20),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    app_player_state.PlayerState.title,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            ),
+            child: Row(
+              children: [
+                if (!widget.isInline) ...[
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white, size: compact ? 18 : 22),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  if (isXtreamCode)
-                    Text(
-                      'Live TV Stream',
-                      style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70),
-                    ),
+                  SizedBox(width: compact ? 6 : 20),
                 ],
-              ),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        app_player_state.PlayerState.title,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: compact ? 12 : null,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (!compact && isXtreamCode)
+                        Text(
+                          'Live TV Stream',
+                          style: theme.textTheme.bodySmall
+                              ?.copyWith(color: Colors.white70),
+                        ),
+                    ],
+                  ),
+                ),
+                if (!compact)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(
+                      _showInfoPanel
+                          ? Icons.info_rounded
+                          : Icons.info_outline_rounded,
+                      color: _showInfoPanel
+                          ? theme.colorScheme.primary
+                          : Colors.white,
+                    ),
+                    onPressed: () => setState(() {
+                      _showInfoPanel = !_showInfoPanel;
+                      _showSidePanel = false;
+                      _startHideTimer();
+                    }),
+                  ),
+                if (!compact) const SizedBox(width: 8),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  icon: Icon(
+                    _showSidePanel
+                        ? Icons.menu_open_rounded
+                        : Icons.menu_rounded,
+                    color: _showSidePanel
+                        ? theme.colorScheme.primary
+                        : Colors.white,
+                    size: compact ? 20 : 24,
+                  ),
+                  onPressed: () => setState(() {
+                    _showSidePanel = !_showSidePanel;
+                    _showInfoPanel = false;
+                    _startHideTimer();
+                  }),
+                ),
+                if (!compact)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(
+                      Icons.subtitles_rounded,
+                      color: app_player_state.PlayerState.selectedSubtitle ==
+                              SubtitleTrack.no()
+                          ? Colors.white
+                          : theme.colorScheme.primary,
+                    ),
+                    onPressed: _openSubtitleSelector,
+                  ),
+                if (!compact) const SizedBox(width: 8),
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  icon: Icon(
+                    _isFullscreen
+                        ? Icons.fullscreen_exit_rounded
+                        : Icons.fullscreen_rounded,
+                    color: Colors.white,
+                    size: compact ? 20 : 24,
+                  ),
+                  onPressed: _toggleFullscreen,
+                ),
+              ],
             ),
-            IconButton(
-              icon: Icon(
-                _showInfoPanel ? Icons.info_rounded : Icons.info_outline_rounded,
-                color: _showInfoPanel ? theme.colorScheme.primary : Colors.white,
-              ),
-              onPressed: () => setState(() {
-                _showInfoPanel = !_showInfoPanel;
-                _showSidePanel = false;
-                _startHideTimer();
-              }),
-            ),
-            const SizedBox(width: 16),
-            IconButton(
-              icon: Icon(
-                _showSidePanel ? Icons.menu_open_rounded : Icons.menu_rounded,
-                color: _showSidePanel ? theme.colorScheme.primary : Colors.white,
-              ),
-              onPressed: () => setState(() {
-                _showSidePanel = !_showSidePanel;
-                _showInfoPanel = false;
-                _startHideTimer();
-              }),
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.subtitles_rounded,
-                color: app_player_state.PlayerState.selectedSubtitle == SubtitleTrack.no() 
-                    ? Colors.white 
-                    : theme.colorScheme.primary,
-              ),
-              onPressed: _openSubtitleSelector,
-            ),
-            const SizedBox(width: 8),
-            IconButton(
-              icon: Icon(
-                _isFullscreen ? Icons.fullscreen_exit_rounded : Icons.fullscreen_rounded,
-                color: Colors.white,
-              ),
-              onPressed: _toggleFullscreen,
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildBottomBar(ThemeData theme, bool isLive) {
     return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(60, 40, 60, 60),
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.bottomCenter,
-            end: Alignment.topCenter,
-            colors: [Colors.black87, Colors.transparent],
-          ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Progress Slider
-            if (!isLive) ...[
-              SliderTheme(
-                data: SliderTheme.of(context).copyWith(
-                  activeTrackColor: theme.colorScheme.primary,
-                  inactiveTrackColor: Colors.white24,
-                  thumbColor: theme.colorScheme.primary,
-                  overlayColor: theme.colorScheme.primary.withOpacity(0.2),
-                  trackHeight: 4,
-                ),
-                child: Slider(
-                  value: _position.inSeconds.toDouble(),
-                  max: _duration.inSeconds.toDouble() > 0 ? _duration.inSeconds.toDouble() : 1.0,
-                  onChanged: (val) => widget.player.seek(Duration(seconds: val.toInt())),
-                ),
+      bottom: 0, left: 0, right: 0,
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 600;
+          return Container(
+            padding: EdgeInsets.fromLTRB(
+              compact ? 12 : 60,
+              compact ? 16 : 40,
+              compact ? 12 : 60,
+              compact ? 12 : 60,
+            ),
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.bottomCenter,
+                end: Alignment.topCenter,
+                colors: [Colors.black87, Colors.transparent],
               ),
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(_formatDuration(_position), style: const TextStyle(color: Colors.white70)),
-                  Text(_formatDuration(_duration), style: const TextStyle(color: Colors.white70)),
-                ],
-              ),
-            ] else 
-              const Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Icon(Icons.circle, color: Colors.red, size: 10),
-                  SizedBox(width: 8),
-                  Text('LIVE', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)),
-                ],
-              ),
-            
-            const SizedBox(height: 24),
-            
-            // Bottom Controls Row
-            Row(
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                _PlayerControlBtn(
-                  icon: widget.player.state.playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
-                  isLarge: true,
-                  onPressed: () => widget.player.playOrPause(),
-                ),
-                const SizedBox(width: 32),
-                
-                // Volume Controls
-                Icon(
-                  _isMuted || _volume == 0 ? Icons.volume_off_rounded : 
-                  _volume < 0.5 ? Icons.volume_down_rounded : Icons.volume_up_rounded,
-                  color: Colors.white70,
-                  size: 24,
-                ),
-                SizedBox(
-                  width: 150,
-                  child: SliderTheme(
+                if (!isLive) ...[
+                  SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: Colors.white,
-                      inactiveTrackColor: Colors.white12,
-                      thumbColor: Colors.white,
-                      trackHeight: 2,
-                      thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+                      activeTrackColor: theme.colorScheme.primary,
+                      inactiveTrackColor: Colors.white24,
+                      thumbColor: theme.colorScheme.primary,
+                      overlayColor:
+                          theme.colorScheme.primary.withValues(alpha: 0.2),
+                      trackHeight: compact ? 2 : 4,
+                      thumbShape: RoundSliderThumbShape(
+                        enabledThumbRadius: compact ? 4 : 6,
+                      ),
                     ),
                     child: Slider(
-                      value: _volume,
-                      onChanged: (val) => widget.player.setVolume(val * 100),
+                      value: _position.inSeconds.toDouble(),
+                      max: _duration.inSeconds.toDouble() > 0
+                          ? _duration.inSeconds.toDouble()
+                          : 1.0,
+                      onChanged: (val) =>
+                          widget.player.seek(Duration(seconds: val.toInt())),
                     ),
                   ),
+                  if (!compact) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(_formatDuration(_position),
+                            style: const TextStyle(color: Colors.white70)),
+                        Text(_formatDuration(_duration),
+                            style: const TextStyle(color: Colors.white70)),
+                      ],
+                    ),
+                  ],
+                ] else
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Icon(Icons.circle,
+                          color: Colors.red, size: compact ? 8 : 10),
+                      SizedBox(width: compact ? 4 : 8),
+                      Text(
+                        'LIVE',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: compact ? 10 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                SizedBox(height: compact ? 8 : 24),
+                Row(
+                  children: [
+                    _PlayerControlBtn(
+                      icon: widget.player.state.playing
+                          ? Icons.pause_rounded
+                          : Icons.play_arrow_rounded,
+                      isLarge: !compact,
+                      size: compact ? 32 : 64,
+                      iconSize: compact ? 20 : 40,
+                      onPressed: () => widget.player.playOrPause(),
+                    ),
+                    SizedBox(width: compact ? 8 : 32),
+                    Icon(
+                      _isMuted || _volume == 0
+                          ? Icons.volume_off_rounded
+                          : _volume < 0.5
+                              ? Icons.volume_down_rounded
+                              : Icons.volume_up_rounded,
+                      color: Colors.white70,
+                      size: compact ? 18 : 24,
+                    ),
+                    if (!compact)
+                      SizedBox(
+                        width: 150,
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            activeTrackColor: Colors.white,
+                            inactiveTrackColor: Colors.white12,
+                            thumbColor: Colors.white,
+                            trackHeight: 2,
+                            thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 6),
+                          ),
+                          child: Slider(
+                            value: _volume,
+                            onChanged: (val) =>
+                                widget.player.setVolume(val * 100),
+                          ),
+                        ),
+                      ),
+                    const Spacer(),
+                    if (!isLive && !compact) ...[
+                      _PlayerControlBtn(
+                        icon: Icons.replay_10_rounded,
+                        size: 48,
+                        iconSize: 24,
+                        onPressed: () => widget.player
+                            .seek(_position - const Duration(seconds: 10)),
+                      ),
+                      const SizedBox(width: 16),
+                      _PlayerControlBtn(
+                        icon: Icons.forward_10_rounded,
+                        size: 48,
+                        iconSize: 24,
+                        onPressed: () => widget.player
+                            .seek(_position + const Duration(seconds: 10)),
+                      ),
+                    ],
+                  ],
                 ),
-                const Spacer(),
-                
-                if (!isLive) ...[
-                   _PlayerControlBtn(
-                    icon: Icons.replay_10_rounded,
-                    onPressed: () => widget.player.seek(_position - const Duration(seconds: 10)),
-                  ),
-                  const SizedBox(width: 16),
-                  _PlayerControlBtn(
-                    icon: Icons.forward_10_rounded,
-                    onPressed: () => widget.player.seek(_position + const Duration(seconds: 10)),
-                  ),
-                ],
               ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -747,11 +818,15 @@ class _PlayerControlBtn extends StatelessWidget {
   final IconData icon;
   final VoidCallback onPressed;
   final bool isLarge;
+  final double size;
+  final double iconSize;
 
   const _PlayerControlBtn({
     required this.icon,
     required this.onPressed,
     this.isLarge = false,
+    this.size = 48,
+    this.iconSize = 24,
   });
 
   @override
@@ -765,23 +840,29 @@ class _PlayerControlBtn extends StatelessWidget {
             onTap: onPressed,
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 200),
-              width: isLarge ? 64 : 48,
-              height: isLarge ? 64 : 48,
+              width: size,
+              height: size,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: focused ? theme.colorScheme.primary : Colors.white10,
-                boxShadow: focused ? [
-                  BoxShadow(color: theme.colorScheme.primary.withOpacity(0.5), blurRadius: 15, spreadRadius: 1)
-                ] : [],
+                boxShadow: focused
+                    ? [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                          blurRadius: 15,
+                          spreadRadius: 1,
+                        )
+                      ]
+                    : [],
               ),
               child: Icon(
                 icon,
                 color: focused ? Colors.white : Colors.white70,
-                size: isLarge ? 40 : 24,
+                size: iconSize,
               ),
             ),
           );
-        }
+        },
       ),
     );
   }
