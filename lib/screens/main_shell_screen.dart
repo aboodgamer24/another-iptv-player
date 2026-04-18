@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/fullscreen_notifier.dart';
 import '../widgets/common/c4_rail.dart';
 import '../widgets/common/c4_header.dart';
 
@@ -35,43 +36,50 @@ class _MainShellScreenState extends State<MainShellScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Row(
-        children: [
-          // Sidebar
-          FocusScope(
-            node: FocusScopeNode(),
-            child: C4Rail(
-              items: const [
-                C4RailItem(icon: Icons.home_outlined, label: 'Home', route: '/home'),
-                C4RailItem(icon: Icons.live_tv_outlined, label: 'Live', route: '/live'),
-                C4RailItem(icon: Icons.movie_outlined, label: 'Movies', route: '/movies'),
-                C4RailItem(icon: Icons.tv_outlined, label: 'Series', route: '/series'),
-                C4RailItem(icon: Icons.favorite_outline, label: 'Favorites', route: '/favorites'),
-                C4RailItem(icon: Icons.schedule_rounded, label: 'Watch Later', route: '/watch_later'),
-                C4RailItem(icon: Icons.settings_outlined, label: 'Settings', route: '/settings'),
-              ],
-              selectedIndex: widget.selectedIndex,
-              onItemSelected: widget.onItemSelected,
-            ),
-          ),
-
-          // Main Content
-          Expanded(
-            child: Column(
-              children: [
-                C4Header(
-                  title: widget.currentTitle,
-                  onSearchTap: widget.onSearchTap,
+    return ValueListenableBuilder<bool>(
+      valueListenable: fullscreenNotifier,
+      builder: (context, isFullscreen, _) {
+        if (isFullscreen) {
+          return Scaffold(body: widget.child);
+        }
+        return Scaffold(
+          body: Row(
+            children: [
+              // Sidebar
+              FocusScope(
+                node: FocusScopeNode(),
+                child: C4Rail(
+                  items: const [
+                    C4RailItem(icon: Icons.home_outlined, label: 'Home', route: '/home'),
+                    C4RailItem(icon: Icons.live_tv_outlined, label: 'Live', route: '/live'),
+                    C4RailItem(icon: Icons.movie_outlined, label: 'Movies', route: '/movies'),
+                    C4RailItem(icon: Icons.tv_outlined, label: 'Series', route: '/series'),
+                    C4RailItem(icon: Icons.favorite_outline, label: 'Favorites', route: '/favorites'),
+                    C4RailItem(icon: Icons.schedule_rounded, label: 'Watch Later', route: '/watch_later'),
+                    C4RailItem(icon: Icons.settings_outlined, label: 'Settings', route: '/settings'),
+                  ],
+                  selectedIndex: widget.selectedIndex,
+                  onItemSelected: widget.onItemSelected,
                 ),
-                Expanded(
-                  child: widget.child,
+              ),
+              // Main Content
+              Expanded(
+                child: Column(
+                  children: [
+                    C4Header(
+                      title: widget.currentTitle,
+                      onSearchTap: widget.onSearchTap,
+                    ),
+                    Expanded(
+                      child: widget.child,
+                    ),
+                  ],
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
