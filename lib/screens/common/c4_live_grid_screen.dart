@@ -41,7 +41,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
         overlays: SystemUiOverlay.values,
       );
       windowManager.setFullScreen(false);
-      fullscreenNotifier.value = false;
+      // Use addPostFrameCallback to avoid "setState() or markNeedsBuild() called when widget tree was locked"
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) fullscreenNotifier.value = false;
+      });
     }
     _searchController.dispose();
     super.dispose();
@@ -179,8 +182,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                           clipBehavior: Clip.antiAlias,
                           child: _selectedChannel == null
                               ? _buildIdlePlaceholder()
+                              // When fullscreen, we move the player to the overlay.
+                              // We MUST remove it from here so GlobalKey can reparent it.
                               : _isFullscreen 
-                                  ? const SizedBox.shrink()
+                                  ? const SizedBox.shrink() 
                                   : PlayerWidget(
                                       key: _playerKey,
                                       contentItem: _selectedChannel!,
@@ -438,23 +443,18 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
         // When _isFullscreen = true: the widget moves here (GlobalKey
         // reparents it without disposal). When false: it stays in the
         // inline slot above.
-        if (_selectedChannel != null)
+        if (_selectedChannel != null && _isFullscreen)
           Positioned.fill(
-            child: Offstage(
-              offstage: !_isFullscreen,
-              child: ColoredBox(
-                color: Colors.black,
-                child: _isFullscreen
-                    ? PlayerWidget(
-                        key: _playerKey,
-                        contentItem: _selectedChannel!,
-                        showControls: true,
-                        showInfo: false,
-                        onFullscreen: _exitFullscreen,
-                        queue: _currentCategoryChannels,
-                        isInline: true,
-                      )
-                    : const SizedBox.shrink(),
+            child: ColoredBox(
+              color: Colors.black,
+              child: PlayerWidget(
+                key: _playerKey,
+                contentItem: _selectedChannel!,
+                showControls: true,
+                showInfo: false,
+                onFullscreen: _exitFullscreen,
+                queue: _currentCategoryChannels,
+                isInline: true,
               ),
             ),
           ),
