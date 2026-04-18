@@ -16,7 +16,7 @@ bool _isDesktop(BuildContext context) {
   return MediaQuery.of(context).size.width >= 900;
 }
 
-void navigateByContentType(BuildContext context, ContentItem content) {
+Future<void> navigateByContentType(BuildContext context, ContentItem content) async {
   XtreamCodeHomeController? xtreamHomeController;
   try {
     xtreamHomeController = context.read<XtreamCodeHomeController>();
@@ -37,7 +37,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
   if (isM3u &&
       ((content.m3uItem != null && content.m3uItem!.groupTitle == null) ||
           content.contentType == ContentType.series)) {
-    Navigator.push(
+    await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => M3uPlayerScreen(
@@ -59,7 +59,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
 
   switch (content.contentType) {
     case ContentType.liveStream:
-      Navigator.push(
+      await Navigator.push(
         context,
         MaterialPageRoute(
           builder: (context) => wrapWithProvider(LiveStreamScreen(content: content)),
@@ -67,7 +67,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
       );
     case ContentType.vod:
       if (desktop && isXtreamCode) {
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) =>
@@ -75,7 +75,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
           ),
         );
       } else {
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => wrapWithProvider(MovieScreen(contentItem: content)),
@@ -85,7 +85,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
     case ContentType.series:
       if (isXtreamCode) {
         if (desktop) {
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) =>
@@ -93,7 +93,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
             ),
           );
         } else {
-          Navigator.push(
+          await Navigator.push(
             context,
             MaterialPageRoute(
               builder: (context) => wrapWithProvider(SeriesScreen(contentItem: content)),
@@ -101,7 +101,7 @@ void navigateByContentType(BuildContext context, ContentItem content) {
           );
         }
       } else if (isM3u) {
-        Navigator.push(
+        await Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => wrapWithProvider(M3uSeriesScreen(contentItem: content)),

@@ -16,12 +16,16 @@ class C4PlayerOverlay extends StatefulWidget {
   final VideoController controller;
 
   final XtreamCodeHomeController? homeController;
+  final VoidCallback? onFullscreenOverride;
+  final bool isInline;
 
   const C4PlayerOverlay({
     super.key,
     required this.player,
     required this.controller,
     this.homeController,
+    this.onFullscreenOverride,
+    this.isInline = false,
   });
 
   @override
@@ -156,13 +160,20 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         setState(() => _showSidePanel = false);
       } else if (_showInfoPanel) {
         setState(() => _showInfoPanel = false);
-      } else {
+      } else if (!widget.isInline) {
         Navigator.pop(context);
       }
     }
   }
 
   Future<void> _toggleFullscreen() async {
+    // If an override is provided (e.g. inline Live TV player),
+    // delegate to the caller instead of toggling OS fullscreen.
+    if (widget.onFullscreenOverride != null) {
+      widget.onFullscreenOverride!();
+      return;
+    }
+
     if (_isTogglingFullscreen) return;
 
     if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
@@ -316,11 +327,12 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         ),
         child: Row(
           children: [
-            IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
-              onPressed: () => Navigator.pop(context),
-            ),
-            const SizedBox(width: 20),
+            if (!widget.isInline)
+              IconButton(
+                icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+                onPressed: () => Navigator.pop(context),
+              ),
+            if (!widget.isInline) const SizedBox(width: 20),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -520,7 +532,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             _InfoRow(label: 'Title', value: app_player_state.PlayerState.title),
             _InfoRow(
               label: 'Resolution', 
-              value: (_resW != null && _resH != null && _resW! > 0) ? '${_resW} x ${_resH}' : 'N/A'
+              value: (_resW != null && _resH != null && _resW! > 0) ? '$_resW x $_resH' : 'N/A'
             ),
             _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
             _InfoRow(

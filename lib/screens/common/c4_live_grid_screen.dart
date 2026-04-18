@@ -35,9 +35,17 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
     super.dispose();
   }
 
-  void _enterFullscreen() {
+  void _enterFullscreen() async {
     if (_selectedChannel == null) return;
-    navigateByContentType(context, _selectedChannel!);
+    await navigateByContentType(context, _selectedChannel!);
+    
+    // When user returns from fullscreen, restart the inline stream
+    // by forcing a fresh PlayerWidget rebuild
+    if (mounted) {
+      setState(() {
+        _playerKey = UniqueKey();
+      });
+    }
   }
 
   List<ContentItem> get _currentCategoryChannels {
@@ -161,6 +169,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen> {
                             showInfo: false,
                             onFullscreen: _enterFullscreen,
                             queue: _currentCategoryChannels,
+                            isInline: true,
                           ),
                   ),
                 ),

@@ -11,7 +11,6 @@ import 'package:another_iptv_player/widgets/video_widget.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 import 'package:media_kit_video/media_kit_video.dart';
 import '../../models/content_type.dart';
@@ -27,6 +26,7 @@ class PlayerWidget extends StatefulWidget {
   final bool showInfo;
   final VoidCallback? onFullscreen;
   final List<ContentItem>? queue;
+  final bool isInline;
 
   const PlayerWidget({
     super.key,
@@ -36,6 +36,7 @@ class PlayerWidget extends StatefulWidget {
     this.showInfo = false,
     this.onFullscreen,
     this.queue,
+    this.isInline = false,
   });
 
   @override
@@ -686,7 +687,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
+              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
               : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
           border: isSelected
@@ -811,16 +812,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  String _formatDuration(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-
-    if (hours > 0) {
-      return '${hours}s ${minutes}dk';
-    } else {
-      return '${minutes}dk';
-    }
-  }
 
   String _getContentTypeDisplayName() {
     switch (widget.contentItem.contentType) {
@@ -956,25 +947,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
             context,
             _videoController!,
             PlayerState.subtitleConfiguration,
+            onFullscreenOverride: widget.onFullscreen,
+            isInline: widget.isInline,
           ),
-
-          if (widget.onFullscreen != null &&
-              (Theme.of(context).platform == TargetPlatform.macOS ||
-                  Theme.of(context).platform == TargetPlatform.windows ||
-                  Theme.of(context).platform == TargetPlatform.linux))
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                onPressed: widget.onFullscreen,
-                icon: const Icon(
-                  Icons.fullscreen,
-                  color: Colors.white,
-                  size: 24,
-                ),
-                style: IconButton.styleFrom(backgroundColor: Colors.black54),
-              ),
-            ),
 
           // Kanal listesi overlay - normal mod için
           if (_showChannelList && _queue != null && _queue!.length > 1)

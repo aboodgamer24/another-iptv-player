@@ -8,11 +8,15 @@ import 'package:provider/provider.dart';
 class VideoWidget extends StatefulWidget {
   final VideoController controller;
   final SubtitleViewConfiguration subtitleViewConfiguration;
+  final VoidCallback? onFullscreenOverride;
+  final bool isInline;
 
   const VideoWidget({
     super.key,
     required this.controller,
     required this.subtitleViewConfiguration,
+    this.onFullscreenOverride,
+    this.isInline = false,
   });
 
   @override
@@ -64,6 +68,8 @@ class _VideoWidgetState extends State<VideoWidget> {
           player: widget.controller.player,
           controller: widget.controller,
           homeController: homeController,
+          onFullscreenOverride: widget.onFullscreenOverride,
+          isInline: widget.isInline,
         ),
       ],
     );
@@ -74,10 +80,14 @@ class _VideoWidgetState extends State<VideoWidget> {
 Widget getVideo(
   BuildContext context,
   VideoController controller,
-  SubtitleViewConfiguration subtitleViewConfiguration,
-) {
+  SubtitleViewConfiguration subtitleViewConfiguration, {
+  VoidCallback? onFullscreenOverride,
+  bool isInline = false,
+}) {
   return VideoWidget(
     controller: controller,
     subtitleViewConfiguration: subtitleViewConfiguration,
+    onFullscreenOverride: onFullscreenOverride,
+    isInline: isInline,
   );
 }
