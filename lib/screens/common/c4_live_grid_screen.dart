@@ -24,10 +24,6 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
   static const double _minSidebarWidth = 140.0;
   static const double _maxSidebarWidth = 350.0;
 
-  double _channelPanelWidth = 320.0;
-  static const double _minChannelPanelWidth = 180.0;
-  static const double _maxChannelPanelWidth = 520.0;
-
   int _selectedCategoryIndex = 0;
   ContentItem? _selectedChannel;
   final TextEditingController _searchController = TextEditingController();
@@ -153,6 +149,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     );
   }
 
+// ignore: unused_element
   Widget _buildSearchAndChannelList(
     ThemeData theme,
     FavoritesController favoritesController,
@@ -267,6 +264,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     );
   }
 
+// ignore: unused_element
   Widget _buildInfoPanel(
       ThemeData theme, FavoritesController favoritesController) {
     if (_selectedChannel == null) {
@@ -421,6 +419,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     super.build(context);
     final theme = Theme.of(context);
     final controller = context.watch<XtreamCodeHomeController>();
+    // ignore: unused_local_variable
     final favoritesController = context.watch<FavoritesController>();
 
     if (controller.liveCategories == null ||
@@ -431,12 +430,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     final categories = controller.liveCategories!;
     final selectedCategory = categories[_selectedCategoryIndex];
     final channels = selectedCategory.contentItems;
-
     final filteredChannels = channels
         .where((c) => c.name.toLowerCase().contains(_searchQuery))
         .toList();
 
-    // Auto-select first channel if none selected
     if (_selectedChannel == null && filteredChannels.isNotEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _selectedChannel == null) {
@@ -448,123 +445,57 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     return ValueListenableBuilder<bool>(
       valueListenable: fullscreenNotifier,
       builder: (context, isFullscreen, _) {
-        return LayoutBuilder(
-          builder: (context, constraints) {
-            final totalW = constraints.maxWidth;
-            final playerW = (totalW - _sidebarWidth - _channelPanelWidth)
-                .clamp(0.0, double.infinity);
-            final playerH = playerW * 9.0 / 16.0;
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: Row(
+            children: [
+              // ── LEFT: Resizable categories sidebar ──────────────
+              if (!isFullscreen) ...[
+                SizedBox(
+                  width: _sidebarWidth,
+                  child: _buildCategorySidebar(
+                      theme, controller, categories),
+                ),
 
-            return Scaffold(
-              backgroundColor: Colors.black,
-              body: Stack(
-                children: [
-                  // ── LEFT: Categories sidebar ──────────────────────
-                  if (!isFullscreen)
-                    Positioned(
-                      left: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: _sidebarWidth,
-                      child: _buildCategorySidebar(
-                          theme, controller, categories),
-                    ),
-
-                  // ── CENTER: 16:9 placeholder background ───────────
-                  if (!isFullscreen)
-                    Positioned(
-                      left: _sidebarWidth,
-                      right: _channelPanelWidth,
-                      top: 0,
-                      bottom: 0,
-                      child: const ColoredBox(color: Colors.black),
-                    ),
-
-                  // ── RIGHT: Channel list ───────────────────────────
-                  if (!isFullscreen)
-                    Positioned(
-                      right: 0,
-                      top: 0,
-                      bottom: 0,
-                      width: _channelPanelWidth,
-                      child: _buildSearchAndChannelList(
-                        theme,
-                        favoritesController,
-                        filteredChannels,
-                      ),
-                    ),
-
-                  // ── SPLITTER: sidebar ←→ player ───────────────────
-                  if (!isFullscreen)
-                    Positioned(
-                      left: _sidebarWidth - 4,
-                      top: 0,
-                      bottom: 0,
+                // Sidebar splitter
+                MouseRegion(
+                  cursor: SystemMouseCursors.resizeColumn,
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onHorizontalDragUpdate: (d) {
+                      setState(() {
+                        _sidebarWidth =
+                            (_sidebarWidth + d.delta.dx)
+                                .clamp(_minSidebarWidth,
+                                    _maxSidebarWidth);
+                      });
+                    },
+                    child: Container(
                       width: 8,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.resizeColumn,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onHorizontalDragUpdate: (d) {
-                            setState(() {
-                              _sidebarWidth =
-                                  (_sidebarWidth + d.delta.dx)
-                                      .clamp(_minSidebarWidth,
-                                          _maxSidebarWidth);
-                            });
-                          },
-                        ),
-                      ),
+                      color: Colors.transparent,
                     ),
-
-                  // ── SPLITTER: player ←→ channel list ─────────────
-                  if (!isFullscreen)
-                    Positioned(
-                      right: _channelPanelWidth - 4,
-                      top: 0,
-                      bottom: 0,
-                      width: 8,
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.resizeColumn,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.translucent,
-                          onHorizontalDragUpdate: (d) {
-                            setState(() {
-                              _channelPanelWidth =
-                                  (_channelPanelWidth - d.delta.dx)
-                                      .clamp(_minChannelPanelWidth,
-                                          _maxChannelPanelWidth);
-                            });
-                          },
-                        ),
-                      ),
-                    ),
-
-                  // ── PLAYER (always present, never recreated) ──────
-                  // Uses left/right so bounds change without changing
-                  // the widget's key — stream never restarts.
-                  Positioned(
-                    left: isFullscreen ? 0 : _sidebarWidth,
-                    top: 0,
-                    right: isFullscreen ? 0 : _channelPanelWidth,
-                    bottom: isFullscreen ? 0 : null,
-                    height: isFullscreen ? null : playerH,
-                    child: _selectedChannel == null
-                        ? _buildIdlePlaceholder()
-                        : PlayerWidget(
-                            key: ValueKey(_selectedChannel!.id),
-                            contentItem: _selectedChannel!,
-                            showControls: true,
-                            showInfo: false,
-                            onFullscreen: _toggleFullscreen,
-                            queue: _currentCategoryChannels,
-                            isInline: true,
-                          ),
                   ),
-                ],
+                ),
+              ],
+
+              // ── CENTER+RIGHT: Player + Channel list ─────────────
+              // This Expanded NEVER changes flex. PlayerWidget
+              // always fills this space. No constraint change = no reload.
+              Expanded(
+                child: _selectedChannel == null
+                    ? _buildIdlePlaceholder()
+                    : PlayerWidget(
+                        key: ValueKey(_selectedChannel!.id),
+                        contentItem: _selectedChannel!,
+                        showControls: true,
+                        showInfo: false,
+                        onFullscreen: _toggleFullscreen,
+                        queue: _currentCategoryChannels,
+                        isInline: true,
+                      ),
               ),
-            );
-          },
+            ],
+          ),
         );
       },
     );
