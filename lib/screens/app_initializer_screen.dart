@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import '../../repositories/user_preferences.dart';
 import '../../services/app_state.dart';
 import '../../services/playlist_service.dart';
-import '../controllers/xtream_code_home_controller.dart';
 import 'package:another_iptv_player/screens/main_navigation_screen.dart';
 import 'xtream-codes/xtream_code_home_screen.dart';
 
@@ -46,7 +45,6 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
             ),
             playlist.id,
           );
-          AppState.preloadedController = XtreamCodeHomeController(false);
         }
       }
     }

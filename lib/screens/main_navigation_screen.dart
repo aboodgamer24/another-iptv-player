@@ -9,7 +9,6 @@ import '../controllers/favorites_controller.dart';
 import '../controllers/watch_later_controller.dart';
 import '../controllers/home_rails_controller.dart';
 import '../l10n/localization_extension.dart';
-import '../services/app_state.dart';
 import 'main_shell_screen.dart';
 import 'common/c4_dashboard.dart';
 import 'common/c4_live_grid_screen.dart';
@@ -38,8 +37,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     if (widget.playlist.type == PlaylistType.xtream) {
-      _controller = AppState.preloadedController ?? XtreamCodeHomeController(false);
-      AppState.preloadedController = null;
+      _controller = XtreamCodeHomeController(false);
     } else {
       _controller = M3UHomeController();
     }
@@ -74,6 +72,11 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Widget _buildContent() {
     if (widget.playlist.type == PlaylistType.xtream) {
+      final controller = _controller as XtreamCodeHomeController;
+      if (controller.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+
       switch (_selectedIndex) {
         case 0:
           return C4Dashboard(playlistId: widget.playlist.id);
