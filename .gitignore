@@ -130,3 +130,6 @@ docs/.vitepress/cache/
 docs/.vitepress/dist/
 
 node_modules/
+
+# Installer output
+release_bundle/
