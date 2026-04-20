@@ -1,9 +1,8 @@
-import 'package:another_iptv_player/screens/m3u/m3u_home_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import '../models/playlist_model.dart';
-import '../screens/xtream-codes/xtream_code_home_screen.dart';
+import '../screens/main_navigation_screen.dart';
 import '../services/playlist_service.dart';
 
 class PlaylistController extends ChangeNotifier {
@@ -51,22 +50,13 @@ class PlaylistController extends ChangeNotifier {
     AppState.currentPlaylist = playlist;
 
     if (context.mounted) {
-      switch (playlist.type) {
-        case PlaylistType.xtream:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => XtreamCodeHomeScreen(playlist: playlist),
-            ),
-          );
-        case PlaylistType.m3u:
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => M3UHomeScreen(playlist: playlist),
-            ),
-          );
-      }
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainNavigationScreen(playlist: playlist),
+        ),
+        (route) => false,
+      );
     }
   }
 
