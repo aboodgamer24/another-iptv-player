@@ -9,6 +9,7 @@ import '../../../services/event_bus.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/player_widget.dart';
 import 'package:another_iptv_player/services/fullscreen_notifier.dart';
+import 'package:window_manager/window_manager.dart';
 
 class EpisodeScreen extends StatefulWidget {
   final SeriesInfosData? seriesInfo;
@@ -36,57 +37,53 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
   bool allContentsLoaded = false;
   int selectedContentItemIndex = 0;
   late StreamSubscription contentItemIndexChangedSubscription;
-  bool _isFullscreen = false;
+  bool _isFullscreen = true;
 
   @override
   void initState() {
     super.initState();
     contentItem = widget.contentItem;
-    _enterFullscreen();
+    _applyFullscreen(true);
     _initializeQueue();
   }
 
   @override
   void dispose() {
     contentItemIndexChangedSubscription.cancel();
-    _exitFullscreen();
+    _applyFullscreen(false);
     super.dispose();
   }
 
-  void _enterFullscreen() {
-    fullscreenNotifier.value = true;
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-      overlays: [],
-    );
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    if (mounted) setState(() => _isFullscreen = true);
-  }
-
-  void _exitFullscreen() {
-    fullscreenNotifier.value = false;
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-      overlays: SystemUiOverlay.values,
-    );
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    if (mounted) setState(() => _isFullscreen = false);
+  void _applyFullscreen(bool fullscreen) {
+    if (fullscreen) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.immersiveSticky,
+        overlays: [],
+      );
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      windowManager.setFullScreen(true);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+        overlays: SystemUiOverlay.values,
+      );
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      windowManager.setFullScreen(false);
+    }
+    fullscreenNotifier.value = fullscreen;
+    if (mounted) setState(() => _isFullscreen = fullscreen);
   }
 
   void _toggleFullscreen() {
-    if (_isFullscreen) {
-      _exitFullscreen();
-    } else {
-      _enterFullscreen();
-    }
+    _applyFullscreen(!_isFullscreen);
   }
 
   Future<void> _initializeQueue() async {

@@ -21,6 +21,7 @@ import '../../../controllers/favorites_controller.dart';
 import '../../../controllers/watch_later_controller.dart';
 import '../../../widgets/player_widget.dart';
 import 'package:another_iptv_player/services/fullscreen_notifier.dart';
+import 'package:window_manager/window_manager.dart';
 
 class MovieScreen extends StatefulWidget {
   final ContentItem contentItem;
@@ -1065,6 +1066,7 @@ class _MoviePlayerPageState extends State<_MoviePlayerPage> {
         DeviceOrientation.landscapeLeft,
         DeviceOrientation.landscapeRight,
       ]);
+      windowManager.setFullScreen(true);
     } else {
       SystemChrome.setEnabledSystemUIMode(
         SystemUiMode.edgeToEdge,
@@ -1076,6 +1078,7 @@ class _MoviePlayerPageState extends State<_MoviePlayerPage> {
         DeviceOrientation.landscapeLeft,
         DeviceOrientation.landscapeRight,
       ]);
+      windowManager.setFullScreen(false);
     }
     fullscreenNotifier.value = fullscreen;
     if (mounted) setState(() => _isFullscreen = fullscreen);
