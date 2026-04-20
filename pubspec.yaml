@@ -57,6 +57,10 @@ dev_dependencies:
 
   build: any
   mockito: ^5.4.6
+
+msix_config:
+  output_name: "AnotherIPTVPlayer"
+
 flutter:
   uses-material-design: true
   generate: true
