@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart';
 import 'package:media_kit/media_kit.dart';
 import 'package:media_kit_video/media_kit_video.dart';
+import 'package:window_manager/window_manager.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../services/player_state.dart' as app_player_state;
 import '../../models/content_type.dart';
@@ -148,11 +150,17 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     }
     _keyboardFocusNode.dispose();
     if (_nativeFullscreen) {
-      SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]);
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      if (defaultTargetPlatform == TargetPlatform.windows ||
+          defaultTargetPlatform == TargetPlatform.linux ||
+          defaultTargetPlatform == TargetPlatform.macOS) {
+        windowManager.setFullScreen(false);
+      } else {
+        SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ]);
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      }
     }
     super.dispose();
   }
@@ -220,18 +228,28 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Future<void> _toggleNativeFullscreen() async {
-    if (_nativeFullscreen) {
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.portraitUp,
-        DeviceOrientation.portraitDown,
-      ]);
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    if (defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.linux ||
+        defaultTargetPlatform == TargetPlatform.macOS) {
+      if (_nativeFullscreen) {
+        await windowManager.setFullScreen(false);
+      } else {
+        await windowManager.setFullScreen(true);
+      }
     } else {
-      await SystemChrome.setPreferredOrientations([
-        DeviceOrientation.landscapeLeft,
-        DeviceOrientation.landscapeRight,
-      ]);
-      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      if (_nativeFullscreen) {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.portraitUp,
+          DeviceOrientation.portraitDown,
+        ]);
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      } else {
+        await SystemChrome.setPreferredOrientations([
+          DeviceOrientation.landscapeLeft,
+          DeviceOrientation.landscapeRight,
+        ]);
+        await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      }
     }
     if (mounted) setState(() => _nativeFullscreen = !_nativeFullscreen);
   }
