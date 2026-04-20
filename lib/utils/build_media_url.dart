@@ -43,7 +43,7 @@ String buildMediaUrl(ContentItem contentItem) {
     case ContentType.series:
       final ext = _ext(
         contentItem.containerExtension,
-        contentItem.seriesStream?.containerExtension,
+        null,
       );
       return '$baseUrl/series/${playlist.username}/${playlist.password}/${contentItem.id}.$ext';
   }
