@@ -23,6 +23,10 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
   int _selectedCategoryIndex = 0;
   ContentItem? _focusedItem;
 
+  double _sidebarWidth = 200;
+  static const double _minSidebarWidth = 120;
+  static const double _maxSidebarWidth = 400;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -43,7 +47,7 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
       children: [
         // 1. Categories Sidebar (Left)
         Container(
-          width: 200,
+          width: _sidebarWidth,
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
             border: Border(right: BorderSide(color: theme.dividerColor, width: 0.5)),
@@ -72,6 +76,30 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+
+        // Sidebar splitter
+        MouseRegion(
+          cursor: SystemMouseCursors.resizeColumn,
+          child: GestureDetector(
+            behavior: HitTestBehavior.translucent,
+            onHorizontalDragUpdate: (details) {
+              setState(() {
+                _sidebarWidth = (_sidebarWidth + details.delta.dx)
+                    .clamp(_minSidebarWidth, _maxSidebarWidth);
+              });
+            },
+            child: Container(
+              width: 8,
+              color: Colors.transparent,
+              child: Center(
+                child: Container(
+                  width: 1,
+                  color: Theme.of(context).dividerColor,
+                ),
+              ),
+            ),
           ),
         ),
 
@@ -211,7 +239,7 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
     double width = MediaQuery.of(context).size.width;
     // Sidebar(200) + InfoPanel(320 if active) + Padding(48)
     double infoPanelWidth = _focusedItem != null ? 320 : 0;
-    double availableWidth = width - 200 - infoPanelWidth - 48;
+    double availableWidth = width - _sidebarWidth - infoPanelWidth - 48;
 
     if (availableWidth > 1400) return 6;
     if (availableWidth > 1100) return 5;
@@ -237,37 +265,28 @@ class _CategoryTile extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-      child: Focus(
-        onFocusChange: (focused) {
-          if (focused) onTap();
-        },
-        child: Builder(
-          builder: (context) {
-            final focused = Focus.of(context).hasFocus;
-            return GestureDetector(
-              onTap: onTap,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected 
-                      ? theme.colorScheme.primary.withOpacity(0.15) 
-                      : (focused ? theme.colorScheme.surface : Colors.transparent),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isSelected || focused ? Colors.white : theme.hintColor,
-                    fontWeight: isSelected || focused ? FontWeight.bold : FontWeight.normal,
-                    fontSize: 13,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            );
-          }
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            title,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isSelected ? Colors.white : theme.hintColor,
+              fontWeight:
+                  isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 13,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );
