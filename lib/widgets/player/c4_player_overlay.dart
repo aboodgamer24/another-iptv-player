@@ -11,6 +11,7 @@ import '../../models/content_type.dart';
 import '../../models/category_view_model.dart';
 import '../../services/fullscreen_notifier.dart';
 import '../../utils/get_playlist_type.dart';
+import '../../services/event_bus.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -806,9 +807,11 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             overflow: TextOverflow.ellipsis,
           ),
           onTap: () {
-            app_player_state.PlayerState.currentIndex = index;
-            app_player_state.PlayerState.title = channel.name;
-            widget.player.open(Media(channel.url));
+            // Emit the index-change event so PlayerWidget's
+            // contentItemIndexChangedSubscription handles the
+            // full channel switch (updates contentItem, _queue,
+            // PlayerState, and calls _player.open).
+            EventBus().emit('player_content_item_index_changed', index);
             
             // Ensure overlay is visible while new stream loads
             setState(() {

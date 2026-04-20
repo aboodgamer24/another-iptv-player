@@ -480,16 +480,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
             _currentItemIndex = index;
             // -------------------------------------------
 
-            await _player.open(Playlist([Media(item.url)]), play: true);
+            // Use bare Media (not Playlist) to match initial open pattern
+            // and avoid recreating the entire video pipeline.
+            await _player.open(Media(item.url));
             await _applyUpscaler();
             EventBus().emit('player_content_item', item);
             EventBus().emit('player_content_item_index', index);
             _errorHandler.reset();
 
-            // Kanal listesi açıksa güncelle
-            if (_showChannelList && mounted) {
-              setState(() {});
-            }
+            if (mounted) setState(() {});
           } else {
             // Update contentItem immediately so playlist.listen does not overwrite
             // it with the stale index before the new media begins playing.
