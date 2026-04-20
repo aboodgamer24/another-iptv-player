@@ -16,24 +16,26 @@ bool get isHighQualitySupported =>
 /// Returns empty list on unsupported platforms (iOS, web).
 List<String> get availableUpscalePresets {
   if (!isMpvSupported) return [];
-  if (isHighQualitySupported) return ['standard', 'enhanced', 'high_quality'];
+  if (isHighQualitySupported) return ['standard', 'enhanced', 'high_quality', 'ewa_lanczossharp'];
   // Android: only standard + enhanced (ewa_lanczos is too GPU-heavy)
   return ['standard', 'enhanced'];
 }
 
 String upscalePresetLabel(String preset) {
   switch (preset) {
-    case 'enhanced':    return 'Enhanced (spline36)';
-    case 'high_quality': return 'High Quality (ewa_lanczos)';
-    default:            return 'Standard (bilinear)';
+    case 'enhanced':         return 'Enhanced (spline36)';
+    case 'high_quality':      return 'High Quality (ewa_lanczos)';
+    case 'ewa_lanczossharp':  return 'Sharp (Sport/Live)';
+    default:                  return 'Standard (bilinear)';
   }
 }
 
 String upscalePresetDescription(String preset) {
   switch (preset) {
-    case 'enhanced':    return 'Recommended — smoother edges, minimal GPU cost';
-    case 'high_quality': return 'Best quality — requires a dedicated GPU';
-    default:            return 'Default — no processing, works on all hardware';
+    case 'enhanced':         return 'Recommended — smoother edges, minimal GPU cost';
+    case 'high_quality':      return 'Best quality — requires a dedicated GPU';
+    case 'ewa_lanczossharp':  return 'Extra sharpness — ideal for sport and live broadcasts';
+    default:                  return 'Default — no processing, works on all hardware';
   }
 }
 
@@ -59,6 +61,11 @@ Future<void> applyUpscalePreset(Player player, String preset) async {
         await native.setProperty('scale-antiring', '0.7');
         await native.setProperty('sigmoid-upscaling', 'yes');
         await native.setProperty('linear-upscaling', 'yes');
+        break;
+      case 'ewa_lanczossharp':
+        await native.setProperty('scale', 'ewa_lanczossharp');
+        await native.setProperty('cscale', 'ewa_lanczossharp');
+        await native.setProperty('scale-blur', '0.981251');
         break;
       default: // 'standard'
         await native.setProperty('scale', 'bilinear');
