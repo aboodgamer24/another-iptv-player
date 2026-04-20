@@ -508,7 +508,30 @@ class _PlayerWidgetState extends State<PlayerWidget>
               setState(() {});
             }
           } else {
-            _player.jump(index);
+            // Update contentItem immediately so playlist.listen does not overwrite
+            // it with the stale index before the new media begins playing.
+            if (_queue == null || index >= _queue!.length) return;
+            final item = _queue![index];
+            contentItem = item;
+            _currentItemIndex = index;
+            PlayerState.currentContent = item;
+            PlayerState.currentIndex = index;
+            PlayerState.title = item.name;
+            // Look up resume position from watch history and open directly.
+            final itemHistory = await watchHistoryService.getWatchHistory(
+              AppState.currentPlaylist!.id,
+              isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
+            );
+            final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
+            await _player.open(
+              Media(item.url, start: Duration(milliseconds: startMs)),
+              play: true,
+            );
+            await _applyUpscaler();
+            EventBus().emit('player_content_item', item);
+            EventBus().emit('player_content_item_index', index);
+            _errorHandler.reset();
+            if (mounted) setState(() {});
           }
         });
 

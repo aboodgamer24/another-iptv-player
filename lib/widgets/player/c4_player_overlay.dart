@@ -154,6 +154,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
           defaultTargetPlatform == TargetPlatform.linux ||
           defaultTargetPlatform == TargetPlatform.macOS) {
         windowManager.setFullScreen(false);
+        windowManager.setTitleBarStyle(TitleBarStyle.normal);
       } else {
         SystemChrome.setPreferredOrientations([
           DeviceOrientation.portraitUp,
@@ -222,18 +223,23 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Future<void> _toggleFullscreen() async {
-    // We delegate exclusively to the override now, which manages
-    // the global fullscreenNotifier.
-    widget.onFullscreenOverride?.call();
+    if (widget.onFullscreenOverride != null) {
+      widget.onFullscreenOverride!.call();
+    } else {
+      await _toggleNativeFullscreen();
+    }
   }
 
   Future<void> _toggleNativeFullscreen() async {
-    if (defaultTargetPlatform == TargetPlatform.windows ||
+    final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux ||
-        defaultTargetPlatform == TargetPlatform.macOS) {
+        defaultTargetPlatform == TargetPlatform.macOS;
+    if (isDesktop) {
       if (_nativeFullscreen) {
         await windowManager.setFullScreen(false);
+        await windowManager.setTitleBarStyle(TitleBarStyle.normal);
       } else {
+        await windowManager.setTitleBarStyle(TitleBarStyle.hidden);
         await windowManager.setFullScreen(true);
       }
     } else {
@@ -493,32 +499,18 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     onPressed: _openSubtitleSelector,
                   ),
                 if (!compact) const SizedBox(width: 8),
-                if (widget.contentType == ContentType.liveStream || widget.contentType == null)
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(
-                      isFullscreen
-                          ? Icons.fullscreen_exit_rounded
-                          : Icons.fullscreen_rounded,
-                      color: Colors.white,
-                      size: compact ? 20 : 24,
-                    ),
-                    onPressed: _toggleFullscreen,
-                  )
-                else
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(
-                      _nativeFullscreen
-                          ? Icons.fullscreen_exit_rounded
-                          : Icons.fullscreen_rounded,
-                      color: Colors.white,
-                      size: compact ? 20 : 24,
-                    ),
-                    onPressed: _toggleNativeFullscreen,
+                IconButton(
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                  icon: Icon(
+                    (_nativeFullscreen || isFullscreen)
+                        ? Icons.fullscreen_exit_rounded
+                        : Icons.fullscreen_rounded,
+                    color: Colors.white,
+                    size: compact ? 20 : 24,
                   ),
+                  onPressed: _toggleFullscreen,
+                ),
               ],
             ),
           );
