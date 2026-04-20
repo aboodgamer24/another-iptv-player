@@ -4,12 +4,14 @@ import 'package:another_iptv_player/widgets/player/c4_player_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:provider/provider.dart';
+import 'package:another_iptv_player/models/content_type.dart';
 
 class VideoWidget extends StatefulWidget {
   final VideoController controller;
   final SubtitleViewConfiguration subtitleViewConfiguration;
   final VoidCallback? onFullscreenOverride;
   final bool isInline;
+  final ContentType? contentType;
 
   const VideoWidget({
     super.key,
@@ -17,6 +19,7 @@ class VideoWidget extends StatefulWidget {
     required this.subtitleViewConfiguration,
     this.onFullscreenOverride,
     this.isInline = false,
+    this.contentType,
   });
 
   @override
@@ -70,6 +73,7 @@ class _VideoWidgetState extends State<VideoWidget> {
           homeController: homeController,
           onFullscreenOverride: widget.onFullscreenOverride,
           isInline: widget.isInline,
+          contentType: widget.contentType,
         ),
       ],
     );
@@ -83,11 +87,13 @@ Widget getVideo(
   SubtitleViewConfiguration subtitleViewConfiguration, {
   VoidCallback? onFullscreenOverride,
   bool isInline = false,
+  ContentType? contentType,
 }) {
   return VideoWidget(
     controller: controller,
     subtitleViewConfiguration: subtitleViewConfiguration,
     onFullscreenOverride: onFullscreenOverride,
     isInline: isInline,
+    contentType: contentType,
   );
 }

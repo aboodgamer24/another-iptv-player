@@ -972,6 +972,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           PlayerState.subtitleConfiguration,
           onFullscreenOverride: widget.onFullscreen,
           isInline: widget.isInline,
+          contentType: widget.contentItem.contentType,
         ),
         if (!usePersistentSidebar &&
             _showChannelList &&

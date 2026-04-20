@@ -17,6 +17,7 @@ class C4PlayerOverlay extends StatefulWidget {
   final XtreamCodeHomeController? homeController;
   final VoidCallback? onFullscreenOverride;
   final bool isInline;
+  final ContentType? contentType;
 
   const C4PlayerOverlay({
     super.key,
@@ -25,6 +26,7 @@ class C4PlayerOverlay extends StatefulWidget {
     this.homeController,
     this.onFullscreenOverride,
     this.isInline = false,
+    this.contentType,
   });
 
   @override
@@ -37,6 +39,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _isVisible = true;
   bool _showSidePanel = false;
   bool _showInfoPanel = false;
+  bool _nativeFullscreen = false;
   _SidePanelMode _sidePanelMode = _SidePanelMode.channels;
   
   // Stream metadata state
@@ -144,6 +147,13 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       sub.cancel();
     }
     _keyboardFocusNode.dispose();
+    if (_nativeFullscreen) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     super.dispose();
   }
 
@@ -207,6 +217,23 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     // We delegate exclusively to the override now, which manages
     // the global fullscreenNotifier.
     widget.onFullscreenOverride?.call();
+  }
+
+  Future<void> _toggleNativeFullscreen() async {
+    if (_nativeFullscreen) {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    } else {
+      await SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+      await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    }
+    if (mounted) setState(() => _nativeFullscreen = !_nativeFullscreen);
   }
 
   void _openSubtitleSelector() {
@@ -448,18 +475,32 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     onPressed: _openSubtitleSelector,
                   ),
                 if (!compact) const SizedBox(width: 8),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  icon: Icon(
-                    isFullscreen
-                        ? Icons.fullscreen_exit_rounded
-                        : Icons.fullscreen_rounded,
-                    color: Colors.white,
-                    size: compact ? 20 : 24,
+                if (widget.contentType == ContentType.liveStream || widget.contentType == null)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(
+                      isFullscreen
+                          ? Icons.fullscreen_exit_rounded
+                          : Icons.fullscreen_rounded,
+                      color: Colors.white,
+                      size: compact ? 20 : 24,
+                    ),
+                    onPressed: _toggleFullscreen,
+                  )
+                else
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(
+                      _nativeFullscreen
+                          ? Icons.fullscreen_exit_rounded
+                          : Icons.fullscreen_rounded,
+                      color: Colors.white,
+                      size: compact ? 20 : 24,
+                    ),
+                    onPressed: _toggleNativeFullscreen,
                   ),
-                  onPressed: _toggleFullscreen,
-                ),
               ],
             ),
           );
