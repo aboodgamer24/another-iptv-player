@@ -1041,54 +1041,48 @@ class _MoviePlayerPage extends StatefulWidget {
 }
 
 class _MoviePlayerPageState extends State<_MoviePlayerPage> {
-  bool _isFullscreen = false;
+  bool _isFullscreen = true;
 
   @override
   void initState() {
     super.initState();
-    _enterFullscreen();
+    _applyFullscreen(true);
   }
 
   @override
   void dispose() {
-    _exitFullscreen();
+    _applyFullscreen(false);
     super.dispose();
   }
 
-  void _enterFullscreen() {
-    fullscreenNotifier.value = true;
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.immersiveSticky,
-      overlays: [],
-    );
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    if (mounted) setState(() => _isFullscreen = true);
-  }
-
-  void _exitFullscreen() {
-    fullscreenNotifier.value = false;
-    SystemChrome.setEnabledSystemUIMode(
-      SystemUiMode.edgeToEdge,
-      overlays: SystemUiOverlay.values,
-    );
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.portraitUp,
-      DeviceOrientation.portraitDown,
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
-    if (mounted) setState(() => _isFullscreen = false);
+  void _applyFullscreen(bool fullscreen) {
+    if (fullscreen) {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.immersiveSticky,
+        overlays: [],
+      );
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    } else {
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.edgeToEdge,
+        overlays: SystemUiOverlay.values,
+      );
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
+    fullscreenNotifier.value = fullscreen;
+    if (mounted) setState(() => _isFullscreen = fullscreen);
   }
 
   void _toggleFullscreen() {
-    if (_isFullscreen) {
-      _exitFullscreen();
-    } else {
-      _enterFullscreen();
-    }
+    _applyFullscreen(!_isFullscreen);
   }
 
   @override
