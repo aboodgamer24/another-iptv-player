@@ -12,6 +12,7 @@ import '../../models/category_view_model.dart';
 import '../../services/fullscreen_notifier.dart';
 import '../../utils/get_playlist_type.dart';
 import '../../services/event_bus.dart';
+import '../../repositories/user_preferences.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -51,6 +52,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   double? _fps;
   int? _bitrate;
   String? _codec;
+  String? _upscalerPreset;
   
   Timer? _hideTimer;
   Timer? _statsTimer;
@@ -131,6 +133,13 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       final vp = widget.player.state.videoParams;
       if (vp.w != null && vp.w! > 0) _resW = vp.w;
       if (vp.h != null && vp.h! > 0) _resH = vp.h;
+      UserPreferences.getUpscalePreset().then((preset) {
+        if (mounted) setState(() => _upscalerPreset = preset);
+      });
+    });
+
+    UserPreferences.getUpscalePreset().then((preset) {
+      if (mounted) setState(() => _upscalerPreset = preset);
     });
 
     // Request focus once so keyboard shortcuts work,
@@ -691,6 +700,12 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             ),
             _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
             _InfoRow(label: 'Codec', value: (_codec != null && _codec!.isNotEmpty) ? _codec! : 'N/A'),
+            _InfoRow(
+              label: 'Upscaler',
+              value: (_upscalerPreset == null || _upscalerPreset!.isEmpty || _upscalerPreset == 'none')
+                  ? 'Disabled'
+                  : _upscalerPreset!,
+            ),
           ],
         ),
       ),
