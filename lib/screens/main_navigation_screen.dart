@@ -74,11 +74,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Widget _buildContent() {
     if (widget.playlist.type == PlaylistType.xtream) {
-      final controller = _controller as XtreamCodeHomeController;
-      if (controller.isLoading) {
-        return const Center(child: CircularProgressIndicator());
-      }
-
       switch (_selectedIndex) {
         case 0:
           return C4Dashboard(playlistId: widget.playlist.id);
