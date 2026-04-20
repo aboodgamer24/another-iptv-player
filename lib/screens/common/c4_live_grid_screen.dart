@@ -741,19 +741,9 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     }
 
     final categories = controller.liveCategories!;
-    final selectedCategory = categories[_selectedCategoryIndex];
-    final channels = selectedCategory.contentItems;
-    final filteredChannels = channels
-        .where((c) => c.name.toLowerCase().contains(_searchQuery))
-        .toList();
 
-    if (_selectedChannel == null && filteredChannels.isNotEmpty) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _selectedChannel == null) {
-          setState(() => _selectedChannel = filteredChannels.first);
-        }
-      });
-    }
+
+
 
     return ValueListenableBuilder<bool>(
       valueListenable: fullscreenNotifier,
@@ -793,12 +783,13 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
 
               // ── CENTER+RIGHT: Player + channel list splitter ─────
               Expanded(
-                child: _selectedChannel == null
-                    ? _buildIdlePlaceholder()
-                    : Row(
-                        children: [
-                          Expanded(
-                            child: PlayerWidget(
+                child: Row(
+                  children: [
+                    // Video area — idle placeholder until a channel is picked
+                    Expanded(
+                      child: _selectedChannel == null
+                          ? _buildIdlePlaceholder()
+                          : PlayerWidget(
                               key: ValueKey(_selectedChannel!.id),
                               contentItem: _selectedChannel!,
                               showControls: true,
@@ -808,39 +799,40 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                               isInline: true,
                               showPersistentSidebar: false,
                             ),
+                    ),
+
+                    // Channel list — always visible (hidden only in fullscreen)
+                    if (!isFullscreen) ...[
+                      // Splitter
+                      MouseRegion(
+                        cursor: SystemMouseCursors.resizeColumn,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.translucent,
+                          onHorizontalDragUpdate: (d) {
+                            setState(() {
+                              _channelListWidth =
+                                  (_channelListWidth - d.delta.dx).clamp(
+                                    _minChannelListWidth,
+                                    _maxChannelListWidth,
+                                  );
+                            });
+                          },
+                          child: Container(
+                            width: 8,
+                            color: Colors.transparent,
                           ),
-                          if (!isFullscreen) ...[
-                            // Channel list splitter
-                            MouseRegion(
-                              cursor: SystemMouseCursors.resizeColumn,
-                              child: GestureDetector(
-                                behavior: HitTestBehavior.translucent,
-                                onHorizontalDragUpdate: (d) {
-                                  setState(() {
-                                    _channelListWidth =
-                                        (_channelListWidth - d.delta.dx)
-                                            .clamp(
-                                              _minChannelListWidth,
-                                              _maxChannelListWidth,
-                                            );
-                                  });
-                                },
-                                child: Container(
-                                  width: 8,
-                                  color: Colors.transparent,
-                                ),
-                              ),
-                            ),
-                            SizedBox(
-                              width: _channelListWidth,
-                              child: _buildInlineChannelList(
-                                theme,
-                                context.watch<FavoritesController>(),
-                              ),
-                            ),
-                          ],
-                        ],
+                        ),
                       ),
+                      SizedBox(
+                        width: _channelListWidth,
+                        child: _buildInlineChannelList(
+                          theme,
+                          context.watch<FavoritesController>(),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -866,51 +858,34 @@ class _CategoryTile extends StatelessWidget {
     final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      child: Focus(
-        onFocusChange: (focused) {
-          if (focused) onTap();
-        },
-        child: Builder(
-          builder: (context) {
-            final focused = Focus.of(context).hasFocus;
-            return GestureDetector(
-              onTap: onTap,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? theme.colorScheme.primary.withValues(alpha: 0.2)
-                      : (focused
-                          ? theme.colorScheme.surface
-                          : Colors.transparent),
-                  borderRadius: BorderRadius.circular(8),
-                  border: Border.all(
-                    color: isSelected
-                        ? theme.colorScheme.primary.withValues(alpha: 0.5)
-                        : (focused
-                            ? theme.colorScheme.primary
-                                .withValues(alpha: 0.3)
-                            : Colors.transparent),
-                  ),
-                ),
-                child: Text(
-                  title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: isSelected || focused
-                        ? Colors.white
-                        : theme.hintColor,
-                    fontWeight: isSelected || focused
-                        ? FontWeight.bold
-                        : FontWeight.normal,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            );
-          },
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(
+              horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: isSelected
+                ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                : Colors.transparent,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.5)
+                  : Colors.transparent,
+            ),
+          ),
+          child: Text(
+            title,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: isSelected ? Colors.white : theme.hintColor,
+              fontWeight: isSelected
+                  ? FontWeight.bold
+                  : FontWeight.normal,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ),
     );
