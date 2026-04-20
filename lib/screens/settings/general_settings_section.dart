@@ -55,6 +55,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   final TextEditingController _tmdbKeyController = TextEditingController();
   bool _obscureTmdbKey = true;
   String _upscalePreset = 'standard';
+  bool _streamEnhancement = false;
 
   @override
   void initState() {
@@ -73,6 +74,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       final seekOnDoubleTap = await UserPreferences.getSeekOnDoubleTap();
       final packageInfo = await PackageInfo.fromPlatform();
       final upscalePreset = await UserPreferences.getUpscalePreset();
+      final streamEnhancement = await UserPreferences.getStreamEnhancement();
       setState(() {
         _backgroundPlayEnabled = backgroundPlay;
         _selectedTheme = themeName;
@@ -84,6 +86,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         _appVersion = packageInfo.version;
         _tmdbKeyController.text = AppConfig.tmdbApiKey;
         _upscalePreset = upscalePreset;
+        _streamEnhancement = streamEnhancement;
         _isLoading = false;
       });
     } catch (e) {
@@ -148,6 +151,33 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
             await UserPreferences.setUpscalePreset(value);
           },
         )),
+        const Divider(),
+      ],
+    );
+  }
+
+  Widget _buildStreamEnhancementSection(ThemeData theme) {
+    // Only show on MPV-supported platforms
+    if (!isMpvSupported) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SwitchListTile(
+          title: const Text('Stream Enhancement'),
+          subtitle: Text(
+            'Reduces banding, blocking, and compression blur in IPTV streams. '
+            'Most effective on SD and low-bitrate channels.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+          value: _streamEnhancement,
+          onChanged: (value) async {
+            setState(() => _streamEnhancement = value);
+            await UserPreferences.setStreamEnhancement(value);
+          },
+        ),
         const Divider(),
       ],
     );
@@ -353,6 +383,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                       ),
                     ),
                     _buildUpscalerSection(Theme.of(context)),
+                    _buildStreamEnhancementSection(Theme.of(context)),
                     // Player gesture settings - Only show on mobile platforms (Android & iOS)
                     if (Theme.of(context).platform == TargetPlatform.android ||
                         Theme.of(context).platform == TargetPlatform.iOS) ...[

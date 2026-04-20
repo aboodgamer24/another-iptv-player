@@ -104,6 +104,18 @@ class UserPreferences {
     return prefs.getString(_keyUpscalePreset) ?? 'standard';
   }
 
+  static const String _keyStreamEnhancement = 'stream_enhancement';
+
+  static Future<void> setStreamEnhancement(bool enabled) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyStreamEnhancement, enabled);
+  }
+
+  static Future<bool> getStreamEnhancement() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyStreamEnhancement) ?? false;
+  }
+
   static Future<void> setBackgroundPlay(bool backgroundPlay) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyBackgroundPlay, backgroundPlay);

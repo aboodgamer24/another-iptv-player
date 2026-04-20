@@ -73,3 +73,32 @@ Future<void> applyUpscalePreset(Player player, String preset) async {
     // Silently ignore — platform may not support a specific property
   }
 }
+
+Future<void> applyStreamEnhancement(Player player, bool enabled) async {
+  if (!isMpvSupported) return;
+  final native = player.platform;
+  if (native is! NativePlayer) return;
+
+  try {
+    if (enabled) {
+      // Deband — removes banding/blocking from low-bitrate IPTV streams
+      await native.setProperty('deband', 'yes');
+      await native.setProperty('deband-iterations', '2');
+      await native.setProperty('deband-threshold', '48');
+      await native.setProperty('deband-range', '16');
+      await native.setProperty('deband-grain', '12');
+      // Subtle unsharp mask — recovers softness from compression
+      await native.setProperty(
+        'vf',
+        'lavfi=[unsharp=3:3:0.5:3:3:0.0]',
+      );
+    } else {
+      // Reset to defaults
+      await native.setProperty('deband', 'no');
+      await native.setProperty('vf', '');
+    }
+  } catch (_) {
+    // Silently ignore unsupported properties
+  }
+}
+

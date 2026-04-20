@@ -142,6 +142,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Future<void> _applyUpscaler() async {
     final preset = await UserPreferences.getUpscalePreset();
     await applyUpscalePreset(_player, preset);
+
+    final enhancementEnabled = await UserPreferences.getStreamEnhancement();
+    await applyStreamEnhancement(_player, enhancementEnabled);
   }
 
   Future<void> _saveWatchHistory() async {
