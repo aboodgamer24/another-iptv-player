@@ -448,7 +448,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _player.stream.playlist.listen((playlist) {
       if (!mounted) return;
 
-      if (contentItem.contentType == ContentType.liveStream) {
+      if (contentItem.contentType == ContentType.liveStream ||
+          contentItem.contentType == ContentType.series) {
         return;
       }
 
