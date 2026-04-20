@@ -102,6 +102,7 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                 _liveOrder!.isEmpty
                     ? _buildEmpty(context.loc.no_favorites_found)
                     : ReorderableListView.builder(
+                        buildDefaultDragHandles: false,
                         padding: const EdgeInsets.symmetric(
                             vertical: 8, horizontal: 16),
                         itemCount: _liveOrder!.length,
@@ -114,55 +115,49 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                         },
                         itemBuilder: (context, index) {
                           final item = _liveOrder![index];
-                          return ListTile(
+                          return ReorderableDragStartListener(
                             key: ValueKey(item.id),
-                            contentPadding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            leading: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                // Drag handle
-                                const Icon(Icons.drag_handle_rounded,
-                                    color: Colors.white24, size: 20),
-                                const SizedBox(width: 8),
-                                // Channel logo
-                                ClipRRect(
-                                  borderRadius: BorderRadius.circular(4),
-                                  child: item.imageUrl.isNotEmpty
-                                      ? Image.network(
-                                          item.imageUrl,
-                                          width: 40,
-                                          height: 40,
-                                          fit: BoxFit.cover,
-                                          errorBuilder: (_, __, ___) =>
-                                              const Icon(Icons.live_tv,
-                                                  size: 20,
-                                                  color: Colors.white24),
-                                        )
-                                      : const SizedBox(
-                                          width: 40,
-                                          height: 40,
-                                          child: Icon(Icons.live_tv,
-                                              size: 20,
-                                              color: Colors.white24),
-                                        ),
-                                ),
-                              ],
+                            index: index,
+                            child: ListTile(
+                              key: ValueKey('tile_${item.id}'),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              leading: ClipRRect(
+                                borderRadius: BorderRadius.circular(4),
+                                child: item.imageUrl.isNotEmpty
+                                    ? Image.network(
+                                        item.imageUrl,
+                                        width: 40,
+                                        height: 40,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            const Icon(Icons.live_tv,
+                                                size: 20,
+                                                color: Colors.white24),
+                                      )
+                                    : const SizedBox(
+                                        width: 40,
+                                        height: 40,
+                                        child: Icon(Icons.live_tv,
+                                            size: 20,
+                                            color: Colors.white24),
+                                      ),
+                              ),
+                              title: Text(
+                                item.name,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.favorite_rounded,
+                                    color: Colors.redAccent, size: 20),
+                                tooltip: 'Remove from favourites',
+                                onPressed: () =>
+                                    favCtrl.toggleFavorite(item),
+                              ),
+                              onTap: () =>
+                                  navigateByContentType(context, item),
                             ),
-                            title: Text(
-                              item.name,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            trailing: IconButton(
-                              icon: const Icon(Icons.favorite_rounded,
-                                  color: Colors.redAccent, size: 20),
-                              tooltip: 'Remove from favourites',
-                              onPressed: () =>
-                                  favCtrl.toggleFavorite(item),
-                            ),
-                            onTap: () =>
-                                navigateByContentType(context, item),
                           );
                         },
                       ),
