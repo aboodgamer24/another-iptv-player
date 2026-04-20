@@ -578,69 +578,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
     );
   }
 
-  // Single-column (mobile/narrow) — full settings top to bottom
-  Widget _buildSettingsContent(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: _allSections(context),
-    );
-  }
-
-  // Left column on wide screens: Playlist, General, Player, Integration
-  Widget _buildLeftColumn(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildPlaylistCard(context),
-        const SizedBox(height: 10),
-        SectionTitleWidget(title: context.loc.general_settings, icon: Icons.settings_outlined),
-        _buildGeneralCard(context),
-        const SizedBox(height: 10),
-        SectionTitleWidget(title: context.loc.player_settings, icon: Icons.play_arrow_outlined),
-        _buildPlayerCard(context),
-        const SizedBox(height: 10),
-        SectionTitleWidget(title: context.loc.integration, icon: Icons.api_outlined),
-        _buildIntegrationCard(context),
-      ],
-    );
-  }
-
-  Widget _buildRightColumn(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SectionTitleWidget(
-          title: context.loc.home_customization,
-          icon: Icons.home_outlined,
-        ),
-        const HomeCustomizationSection(),
-        const SizedBox(height: 10),
-        SectionTitleWidget(title: context.loc.about, icon: Icons.info_outline),
-        _buildAboutCard(context),
-      ],
-    );
-  }
-
-  // Full single-column list of all sections
-  List<Widget> _allSections(BuildContext context) => [
-    _buildPlaylistCard(context),
-    const SizedBox(height: 10),
-    SectionTitleWidget(title: context.loc.general_settings, icon: Icons.settings_outlined),
-    _buildGeneralCard(context),
-    const SizedBox(height: 10),
-    SectionTitleWidget(title: context.loc.player_settings, icon: Icons.play_arrow_outlined),
-    _buildPlayerCard(context),
-    const SizedBox(height: 10),
-    SectionTitleWidget(title: context.loc.integration, icon: Icons.api_outlined),
-    _buildIntegrationCard(context),
-    const SizedBox(height: 10),
-    SectionTitleWidget(title: context.loc.home_customization, icon: Icons.home_outlined),
-    const HomeCustomizationSection(),
-    const SizedBox(height: 10),
-    SectionTitleWidget(title: context.loc.about, icon: Icons.info_outline),
-    _buildAboutCard(context),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return _isLoading
@@ -649,17 +586,80 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             opacity: _fadeAnimation,
             child: LayoutBuilder(
               builder: (context, constraints) {
-                final isWide = constraints.maxWidth >= 900;
-                final content = _buildSettingsContent(context);
-                if (!isWide) return content;
+                final isWide = constraints.maxWidth >= 720;
 
-                // Two-column layout on wide screens
-                return Row(
+                // All section widgets in order
+                final playlist       = _buildPlaylistCard(context);
+                final generalTitle   = SectionTitleWidget(title: context.loc.general_settings);
+                final generalCard    = _buildGeneralCard(context);
+                final playerTitle    = SectionTitleWidget(title: context.loc.player_settings);
+                final playerCard     = _buildPlayerCard(context);
+                final integrationTitle = SectionTitleWidget(title: context.loc.integration);
+                final integrationCard  = _buildIntegrationCard(context);
+                final homeTitle      = SectionTitleWidget(title: context.loc.home_customization);
+                final homeSection    = const HomeCustomizationSection();
+                final aboutTitle     = SectionTitleWidget(title: context.loc.about);
+                final aboutCard      = _buildAboutCard(context);
+
+                if (!isWide) {
+                  // Single column — original layout
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      playlist,
+                      const SizedBox(height: 10),
+                      generalTitle, generalCard,
+                      const SizedBox(height: 10),
+                      playerTitle, playerCard,
+                      const SizedBox(height: 10),
+                      integrationTitle, integrationCard,
+                      const SizedBox(height: 10),
+                      homeTitle, homeSection,
+                      const SizedBox(height: 10),
+                      aboutTitle, aboutCard,
+                    ],
+                  );
+                }
+
+                // Two-column layout
+                return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: _buildLeftColumn(context)),
-                    const SizedBox(width: 16),
-                    Expanded(child: _buildRightColumn(context)),
+                    // Playlist card spans full width
+                    playlist,
+                    const SizedBox(height: 10),
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Left column: General + Player
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                generalTitle, generalCard,
+                                const SizedBox(height: 10),
+                                playerTitle, playerCard,
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Right column: Integration + Home Customization + About
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                integrationTitle, integrationCard,
+                                const SizedBox(height: 10),
+                                homeTitle, homeSection,
+                                const SizedBox(height: 10),
+                                aboutTitle, aboutCard,
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ],
                 );
               },
