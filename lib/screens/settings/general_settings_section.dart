@@ -29,6 +29,7 @@ import 'category_settings_section.dart';
 import 'home_customization_section.dart';
 import '../../utils/app_config.dart';
 import '../../services/upscale_service.dart';
+import '../../services/player_state.dart';
 
 
 
@@ -163,6 +164,10 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             if (value == null) return;
             setState(() => _upscalePreset = value);
             await UserPreferences.setUpscalePreset(value);
+            final player = PlayerState.activePlayer;
+            if (player != null) {
+              await applyUpscalePreset(player, value);
+            }
           },
         )),
         const Divider(),
@@ -190,6 +195,10 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           onChanged: (value) async {
             setState(() => _streamEnhancement = value);
             await UserPreferences.setStreamEnhancement(value);
+            final player = PlayerState.activePlayer;
+            if (player != null) {
+              await applyStreamEnhancement(player, value);
+            }
           },
         ),
         const Divider(),

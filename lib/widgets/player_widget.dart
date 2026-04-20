@@ -95,6 +95,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     PlayerState.title = widget.contentItem.name;
     _player = Player(configuration: PlayerConfiguration());
+    PlayerState.activePlayer = _player;
     watchHistoryService = WatchHistoryService();
 
     super.initState();
@@ -133,6 +134,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
     }
 
+    PlayerState.activePlayer = null;
     _player.dispose();
     _audioHandler.setPlayer(null);
     _audioHandler.stop();
