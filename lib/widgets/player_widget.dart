@@ -464,8 +464,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
         .listen((int index) async {
           if (contentItem.contentType == ContentType.liveStream) {
             // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
-            final updatedQueue = PlayerState.queue ?? _queue;
+            final updatedQueue = _queue ?? PlayerState.queue;
             if (updatedQueue == null || index >= updatedQueue.length) return;
+            // sync PlayerState so it matches the active session
+            PlayerState.queue = updatedQueue;
 
             final item = updatedQueue[index];
             contentItem = item;
