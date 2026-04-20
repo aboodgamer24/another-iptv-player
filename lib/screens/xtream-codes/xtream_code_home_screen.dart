@@ -80,9 +80,14 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     BuildContext context,
     XtreamCodeHomeController controller,
   ) {
-    if (controller.isLoading) {
+    // True cold start (DB was empty) — show full loading screen once
+    if (controller.isLoading &&
+        controller.liveCategories!.isEmpty &&
+        controller.movieCategories.isEmpty &&
+        controller.seriesCategories.isEmpty) {
       return _buildLoadingScreen(context);
     }
+
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= _desktopBreakpoint) {

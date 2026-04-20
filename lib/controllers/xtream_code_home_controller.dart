@@ -143,6 +143,18 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final db = AppState.database;
       final playlistId = AppState.currentPlaylist!.id;
 
+      // Check if DB has any data — only show loading spinner on true cold start
+      if (!all) {
+        final hasData = (await db.getCategoriesByTypeAndPlaylist(
+              playlistId, CategoryType.live)).isNotEmpty ||
+            (await db.getCategoriesByTypeAndPlaylist(
+              playlistId, CategoryType.vod)).isNotEmpty ||
+            (await db.getCategoriesByTypeAndPlaylist(
+              playlistId, CategoryType.series)).isNotEmpty;
+        _isLoading = !hasData;
+        if (_isLoading) notifyListeners();
+      }
+
       if (all) {
         // Use existing forceRefresh API methods — they fetch AND save to DB
         await _repository.getLiveCategories(forceRefresh: true);
