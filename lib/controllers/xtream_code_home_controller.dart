@@ -9,6 +9,12 @@ import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import '../repositories/user_preferences.dart';
 import '../screens/xtream-codes/xtream_code_data_loader_screen.dart';
+import '../database/database.dart';
+import '../models/category.dart';
+import '../models/category_type.dart';
+import '../models/live_stream.dart';
+import '../models/vod_streams.dart';
+import '../models/series.dart';
 
 class XtreamCodeHomeController extends ChangeNotifier {
   late PageController _pageController;
@@ -17,7 +23,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
   ViewState _viewState = ViewState.idle;
 
   int _currentIndex = 0;
-  final bool _isLoading = false;
+  bool _isLoading = false;
 
   final List<CategoryViewModel> _liveCategories = [];
   final List<CategoryViewModel> _movieCategories = [];
@@ -137,135 +143,166 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
   Future<void> _loadCategories(bool all) async {
     try {
-      var liveCategories = await _repository.getLiveCategories();
-      if (liveCategories != null && liveCategories.isNotEmpty) {
-        for (var liveCategory in liveCategories) {
-          var liveStreams = await _repository.getLiveChannelsByCategoryId(
-            categoryId: liveCategory.categoryId,
-          );
+      final db = AppState.database;
+      final playlistId = AppState.currentPlaylist!.id;
 
-          if (liveStreams == null || liveStreams.isEmpty) continue;
+      if (all) {
+        // ── MANUAL REFRESH: fetch from server, save to DB ──────────────────
 
-          var categoryViewModel = CategoryViewModel(
-            category: liveCategory,
-            contentItems: liveStreams
-                .map(
-                  (x) => ContentItem(
-                    x.streamId,
-                    x.name,
-                    x.streamIcon,
-                    ContentType.liveStream,
-                    liveStream: x,
-                  ),
-                )
-                .toList(),
-          );
-          if (!all) {
-            if (!await UserPreferences.getHiddenCategory(
-              liveCategory.categoryId,
-            )) {
-              _liveCategories.add(categoryViewModel);
-            }
-          } else {
-            _liveCategories.add(categoryViewModel);
-          }
+        // 1. Fetch all categories from server
+        final liveCats = await _repository.getLiveCategories() ?? [];
+        final vodCats = await _repository.getVodCategories() ?? [];
+        final seriesCats = await _repository.getSeriesCategories() ?? [];
+
+        // 2. Save categories to DB (replace old)
+        await db.deleteAllCategoriesByPlaylist(playlistId);
+        final allCategories = [
+          ...liveCats.map((c) => Category(
+            categoryId: c.categoryId,
+            categoryName: c.categoryName,
+            parentId: int.tryParse(c.parentId ?? '0') ?? 0,
+            playlistId: playlistId,
+            type: CategoryType.live,
+          )),
+          ...vodCats.map((c) => Category(
+            categoryId: c.categoryId,
+            categoryName: c.categoryName,
+            parentId: int.tryParse(c.parentId ?? '0') ?? 0,
+            playlistId: playlistId,
+            type: CategoryType.vod,
+          )),
+          ...seriesCats.map((c) => Category(
+            categoryId: c.categoryId,
+            categoryName: c.categoryName,
+            parentId: int.tryParse(c.parentId ?? '0') ?? 0,
+            playlistId: playlistId,
+            type: CategoryType.series,
+          )),
+        ];
+        await db.insertCategories(allCategories);
+
+        // 3. Fetch all streams in parallel and save to DB (replace old)
+        await db.deleteLiveStreamsByPlaylistId(playlistId);
+        await db.deleteVodStreamsByPlaylistId(playlistId);
+        await db.deleteSeriesStreamsByPlaylistId(playlistId);
+
+        final liveResults = await Future.wait(
+          liveCats.map((cat) => _repository.getLiveChannelsByCategoryId(
+            categoryId: cat.categoryId,
+          )),
+        );
+        final vodResults = await Future.wait(
+          vodCats.map((cat) => _repository.getMovies(categoryId: cat.categoryId)),
+        );
+        final seriesResults = await Future.wait(
+          seriesCats.map((cat) => _repository.getSeries(categoryId: cat.categoryId)),
+        );
+
+        final allLive = liveResults
+            .whereType<List>().expand((x) => x).cast<dynamic>().toList();
+        final allVod = vodResults
+            .whereType<List>().expand((x) => x).cast<dynamic>().toList();
+        final allSeries = seriesResults
+            .whereType<List>().expand((x) => x).cast<dynamic>().toList();
+
+        if (allLive.isNotEmpty) {
+          await db.insertLiveStreams(allLive.map((x) {
+            x.playlistId = playlistId;
+            return x as LiveStream;
+          }).toList());
+        }
+        if (allVod.isNotEmpty) {
+          await db.insertVodStreams(allVod.map((x) {
+            x.playlistId = playlistId;
+            return x as VodStream;
+          }).toList());
+        }
+        if (allSeries.isNotEmpty) {
+          await db.insertSeriesStreams(allSeries.map((x) {
+            x.playlistId = playlistId;
+            return x as SeriesStream;
+          }).toList());
         }
       }
 
-      var movieCategories = await _repository.getVodCategories();
-      if (movieCategories != null && movieCategories.isNotEmpty) {
-        for (var movieCategory in movieCategories) {
-          var movies = await _repository.getMovies(
-            categoryId: movieCategory.categoryId,
-          );
+      // ── LOAD FROM DB (both startup and after refresh) ──────────────────
 
-          if (movies == null || movies.isEmpty) {
-            continue;
-          }
+      final liveCats = await db.getCategoriesByTypeAndPlaylist(
+        playlistId, CategoryType.live,
+      );
+      final vodCats = await db.getCategoriesByTypeAndPlaylist(
+        playlistId, CategoryType.vod,
+      );
+      final seriesCats = await db.getCategoriesByTypeAndPlaylist(
+        playlistId, CategoryType.series,
+      );
 
-          var categoryViewModel = CategoryViewModel(
-            category: movieCategory,
-            contentItems: movies
-                .map(
-                  (x) => ContentItem(
-                    x.streamId,
-                    x.name,
-                    x.streamIcon,
-                    ContentType.vod,
-                    containerExtension: x.containerExtension,
-                    vodStream: x,
-                  ),
-                )
-                .toList(),
-          );
-          if (!all) {
-            if (!await UserPreferences.getHiddenCategory(
-              movieCategory.categoryId,
-            )) {
-              _movieCategories.add(categoryViewModel);
-            }
-          } else {
-            _movieCategories.add(categoryViewModel);
-          }
-        }
+      // Live
+      for (final cat in liveCats) {
+        final streams = await db.getLiveStreamsByCategoryId(
+          playlistId, cat.categoryId,
+        );
+        if (streams.isEmpty) continue;
+        if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) continue;
+        _liveCategories.add(CategoryViewModel(
+          category: cat,
+          contentItems: streams.map((x) => ContentItem(
+            x.streamId, x.name, x.streamIcon, ContentType.liveStream,
+            liveStream: x,
+          )).toList(),
+        ));
       }
 
-      var seriesCategories = await _repository.getSeriesCategories();
-      if (seriesCategories != null && seriesCategories.isNotEmpty) {
-        for (var seriesCategory in seriesCategories) {
-          var series = await _repository.getSeries(
-            categoryId: seriesCategory.categoryId,
-          );
+      // Movies
+      for (final cat in vodCats) {
+        final streams = await db.getVodStreamsByCategoryAndPlaylistId(
+          categoryId: cat.categoryId, playlistId: playlistId,
+        );
+        if (streams.isEmpty) continue;
+        if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) continue;
+        _movieCategories.add(CategoryViewModel(
+          category: cat,
+          contentItems: streams.map((x) => ContentItem(
+            x.streamId, x.name, x.streamIcon, ContentType.vod,
+            containerExtension: x.containerExtension, vodStream: x,
+          )).toList(),
+        ));
+      }
 
-          if (series == null || series.isEmpty) {
-            continue;
-          }
-
-          var categoryViewModel = CategoryViewModel(
-            category: seriesCategory,
-            contentItems: series
-                .map(
-                  (x) => ContentItem(
-                    x.seriesId,
-                    x.name,
-                    x.cover ?? '',
-                    ContentType.series,
-                    seriesStream: x,
-                  ),
-                )
-                .toList(),
-          );
-          if (!all) {
-            if (!await UserPreferences.getHiddenCategory(
-              seriesCategory.categoryId,
-            )) {
-              _seriesCategories.add(categoryViewModel);
-            }
-          } else {
-            _seriesCategories.add(categoryViewModel);
-          }
-        }
+      // Series
+      for (final cat in seriesCats) {
+        final streams = await db.getSeriesStreamsByCategoryAndPlaylistId(
+          categoryId: cat.categoryId, playlistId: playlistId,
+        );
+        if (streams.isEmpty) continue;
+        if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) continue;
+        _seriesCategories.add(CategoryViewModel(
+          category: cat,
+          contentItems: streams.map((x) => ContentItem(
+            x.seriesId, x.name, x.cover ?? '', ContentType.series,
+            seriesStream: x,
+          )).toList(),
+        ));
       }
 
       _generateDashboardContent();
+      _isLoading = false;
       notifyListeners();
     } catch (e, st) {
       debugPrint(st.toString());
-      _errorMessage = 'Kategoriler yüklenemedi: $e';
+      _errorMessage = 'Veri yüklenemedi: $e';
+      _isLoading = false;
       _setViewState(ViewState.error);
     }
   }
 
-  refreshAllData(BuildContext context) {
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => XtreamCodeDataLoaderScreen(
-          playlist: AppState.currentPlaylist!,
-          refreshAll: true,
-        ),
-      ),
-    );
+  Future<void> refreshAllData(BuildContext context) async {
+    _liveCategories.clear();
+    _movieCategories.clear();
+    _seriesCategories.clear();
+    _isLoading = true;
+    notifyListeners();
+    await _loadCategories(true);
   }
 
   void _generateDashboardContent() {
