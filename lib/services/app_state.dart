@@ -10,4 +10,5 @@ abstract class AppState {
   static M3uRepository? m3uRepository;
   static List<M3uItem>? m3uItems;
   static XtreamCodeHomeController? preloadedController;
+  static bool playlistDataLoaded = false;
 }

@@ -136,129 +136,90 @@ class XtreamCodeHomeController extends ChangeNotifier {
   }
 
   Future<void> _loadCategories(bool all) async {
+    // Skip if already loaded and this is not a manual refresh
+    if (!all && AppState.playlistDataLoaded) {
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
+
     try {
-      var liveCategories = await _repository.getLiveCategories();
+      // ── LIVE ──────────────────────────────────────────────────────────────
+      final liveCategories = await _repository.getLiveCategories();
       if (liveCategories != null && liveCategories.isNotEmpty) {
-        for (var liveCategory in liveCategories) {
-          var liveStreams = await _repository.getLiveChannelsByCategoryId(
-            categoryId: liveCategory.categoryId,
-          );
-
-          if (liveStreams == null || liveStreams.isEmpty) continue;
-
-          var categoryViewModel = CategoryViewModel(
-            category: liveCategory,
-            contentItems: liveStreams
-                .map(
-                  (x) => ContentItem(
-                    x.streamId,
-                    x.name,
-                    x.streamIcon,
-                    ContentType.liveStream,
-                    liveStream: x,
-                  ),
-                )
-                .toList(),
-          );
-          if (!all) {
-            if (!await UserPreferences.getHiddenCategory(
-              liveCategory.categoryId,
-            )) {
-              _liveCategories.add(categoryViewModel);
-            }
-          } else {
-            _liveCategories.add(categoryViewModel);
-          }
-        }
+        final results = await Future.wait(
+          liveCategories.map((cat) async {
+            final streams = await _repository.getLiveChannelsByCategoryId(
+              categoryId: cat.categoryId,
+            );
+            if (streams == null || streams.isEmpty) return null;
+            if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) return null;
+            return CategoryViewModel(
+              category: cat,
+              contentItems: streams.map((x) => ContentItem(
+                x.streamId, x.name, x.streamIcon, ContentType.liveStream,
+                liveStream: x,
+              )).toList(),
+            );
+          }),
+        );
+        _liveCategories.addAll(results.whereType<CategoryViewModel>());
       }
 
-      var movieCategories = await _repository.getVodCategories();
+      // ── MOVIES ────────────────────────────────────────────────────────────
+      final movieCategories = await _repository.getVodCategories();
       if (movieCategories != null && movieCategories.isNotEmpty) {
-        for (var movieCategory in movieCategories) {
-          var movies = await _repository.getMovies(
-            categoryId: movieCategory.categoryId,
-          );
-
-          if (movies == null || movies.isEmpty) {
-            continue;
-          }
-
-          var categoryViewModel = CategoryViewModel(
-            category: movieCategory,
-            contentItems: movies
-                .map(
-                  (x) => ContentItem(
-                    x.streamId,
-                    x.name,
-                    x.streamIcon,
-                    ContentType.vod,
-                    containerExtension: x.containerExtension,
-                    vodStream: x,
-                  ),
-                )
-                .toList(),
-          );
-          if (!all) {
-            if (!await UserPreferences.getHiddenCategory(
-              movieCategory.categoryId,
-            )) {
-              _movieCategories.add(categoryViewModel);
-            }
-          } else {
-            _movieCategories.add(categoryViewModel);
-          }
-        }
+        final results = await Future.wait(
+          movieCategories.map((cat) async {
+            final movies = await _repository.getMovies(categoryId: cat.categoryId);
+            if (movies == null || movies.isEmpty) return null;
+            if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) return null;
+            return CategoryViewModel(
+              category: cat,
+              contentItems: movies.map((x) => ContentItem(
+                x.streamId, x.name, x.streamIcon, ContentType.vod,
+                containerExtension: x.containerExtension, vodStream: x,
+              )).toList(),
+            );
+          }),
+        );
+        _movieCategories.addAll(results.whereType<CategoryViewModel>());
       }
 
-      var seriesCategories = await _repository.getSeriesCategories();
+      // ── SERIES ────────────────────────────────────────────────────────────
+      final seriesCategories = await _repository.getSeriesCategories();
       if (seriesCategories != null && seriesCategories.isNotEmpty) {
-        for (var seriesCategory in seriesCategories) {
-          var series = await _repository.getSeries(
-            categoryId: seriesCategory.categoryId,
-          );
-
-          if (series == null || series.isEmpty) {
-            continue;
-          }
-
-          var categoryViewModel = CategoryViewModel(
-            category: seriesCategory,
-            contentItems: series
-                .map(
-                  (x) => ContentItem(
-                    x.seriesId,
-                    x.name,
-                    x.cover ?? '',
-                    ContentType.series,
-                    seriesStream: x,
-                  ),
-                )
-                .toList(),
-          );
-          if (!all) {
-            if (!await UserPreferences.getHiddenCategory(
-              seriesCategory.categoryId,
-            )) {
-              _seriesCategories.add(categoryViewModel);
-            }
-          } else {
-            _seriesCategories.add(categoryViewModel);
-          }
-        }
+        final results = await Future.wait(
+          seriesCategories.map((cat) async {
+            final series = await _repository.getSeries(categoryId: cat.categoryId);
+            if (series == null || series.isEmpty) return null;
+            if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) return null;
+            return CategoryViewModel(
+              category: cat,
+              contentItems: series.map((x) => ContentItem(
+                x.seriesId, x.name, x.cover ?? '', ContentType.series,
+                seriesStream: x,
+              )).toList(),
+            );
+          }),
+        );
+        _seriesCategories.addAll(results.whereType<CategoryViewModel>());
       }
 
       _generateDashboardContent();
+      AppState.playlistDataLoaded = true; // mark as loaded
       _isLoading = false;
       notifyListeners();
     } catch (e, st) {
       debugPrint(st.toString());
       _errorMessage = 'Kategoriler yüklenemedi: $e';
-      _setViewState(ViewState.error);
       _isLoading = false;
+      _setViewState(ViewState.error);
     }
   }
 
   refreshAllData(BuildContext context) {
+    AppState.playlistDataLoaded = false;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
