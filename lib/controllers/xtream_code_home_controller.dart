@@ -12,9 +12,6 @@ import '../screens/xtream-codes/xtream_code_data_loader_screen.dart';
 import '../database/database.dart';
 import '../models/category.dart';
 import '../models/category_type.dart';
-import '../models/live_stream.dart';
-import '../models/vod_streams.dart';
-import '../models/series.dart';
 
 class XtreamCodeHomeController extends ChangeNotifier {
   late PageController _pageController;
@@ -147,82 +144,13 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final playlistId = AppState.currentPlaylist!.id;
 
       if (all) {
-        // ── MANUAL REFRESH: fetch from server, save to DB ──────────────────
-
-        // 1. Fetch all categories from server
-        final liveCats = await _repository.getLiveCategories() ?? [];
-        final vodCats = await _repository.getVodCategories() ?? [];
-        final seriesCats = await _repository.getSeriesCategories() ?? [];
-
-        // 2. Save categories to DB (replace old)
-        await db.deleteAllCategoriesByPlaylist(playlistId);
-        final allCategories = [
-          ...liveCats.map((c) => Category(
-            categoryId: c.categoryId,
-            categoryName: c.categoryName,
-            parentId: int.tryParse(c.parentId ?? '0') ?? 0,
-            playlistId: playlistId,
-            type: CategoryType.live,
-          )),
-          ...vodCats.map((c) => Category(
-            categoryId: c.categoryId,
-            categoryName: c.categoryName,
-            parentId: int.tryParse(c.parentId ?? '0') ?? 0,
-            playlistId: playlistId,
-            type: CategoryType.vod,
-          )),
-          ...seriesCats.map((c) => Category(
-            categoryId: c.categoryId,
-            categoryName: c.categoryName,
-            parentId: int.tryParse(c.parentId ?? '0') ?? 0,
-            playlistId: playlistId,
-            type: CategoryType.series,
-          )),
-        ];
-        await db.insertCategories(allCategories);
-
-        // 3. Fetch all streams in parallel and save to DB (replace old)
-        await db.deleteLiveStreamsByPlaylistId(playlistId);
-        await db.deleteVodStreamsByPlaylistId(playlistId);
-        await db.deleteSeriesStreamsByPlaylistId(playlistId);
-
-        final liveResults = await Future.wait(
-          liveCats.map((cat) => _repository.getLiveChannelsByCategoryId(
-            categoryId: cat.categoryId,
-          )),
-        );
-        final vodResults = await Future.wait(
-          vodCats.map((cat) => _repository.getMovies(categoryId: cat.categoryId)),
-        );
-        final seriesResults = await Future.wait(
-          seriesCats.map((cat) => _repository.getSeries(categoryId: cat.categoryId)),
-        );
-
-        final allLive = liveResults
-            .whereType<List>().expand((x) => x).cast<dynamic>().toList();
-        final allVod = vodResults
-            .whereType<List>().expand((x) => x).cast<dynamic>().toList();
-        final allSeries = seriesResults
-            .whereType<List>().expand((x) => x).cast<dynamic>().toList();
-
-        if (allLive.isNotEmpty) {
-          await db.insertLiveStreams(allLive.map((x) {
-            x.playlistId = playlistId;
-            return x as LiveStream;
-          }).toList());
-        }
-        if (allVod.isNotEmpty) {
-          await db.insertVodStreams(allVod.map((x) {
-            x.playlistId = playlistId;
-            return x as VodStream;
-          }).toList());
-        }
-        if (allSeries.isNotEmpty) {
-          await db.insertSeriesStreams(allSeries.map((x) {
-            x.playlistId = playlistId;
-            return x as SeriesStream;
-          }).toList());
-        }
+        // Use existing forceRefresh API methods — they fetch AND save to DB
+        await _repository.getLiveCategories(forceRefresh: true);
+        await _repository.getVodCategories(forceRefresh: true);
+        await _repository.getSeriesCategories(forceRefresh: true);
+        await _repository.getLiveChannelsFromApi();
+        await _repository.getMoviesFromApi();
+        await _repository.getSeriesFromApi();
       }
 
       // ── LOAD FROM DB (both startup and after refresh) ──────────────────
