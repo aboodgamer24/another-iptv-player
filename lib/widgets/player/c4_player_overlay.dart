@@ -638,10 +638,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
               value: (_resW != null && _resH != null && _resW! > 0) ? '$_resW x $_resH' : 'N/A'
             ),
             _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
-            _InfoRow(
-              label: 'Bitrate', 
-              value: _bitrate != null ? '${(_bitrate! / 1000).toStringAsFixed(0)} kbps' : 'N/A'
-            ),
             _InfoRow(label: 'Codec', value: (_codec != null && _codec!.isNotEmpty) ? _codec! : 'N/A'),
           ],
         ),
