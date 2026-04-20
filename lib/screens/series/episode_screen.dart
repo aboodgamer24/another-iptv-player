@@ -8,6 +8,7 @@ import '../../../models/content_type.dart';
 import '../../../services/event_bus.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/player_widget.dart';
+import 'package:another_iptv_player/services/fullscreen_notifier.dart';
 
 class EpisodeScreen extends StatefulWidget {
   final SeriesInfosData? seriesInfo;
@@ -35,40 +36,57 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
   bool allContentsLoaded = false;
   int selectedContentItemIndex = 0;
   late StreamSubscription contentItemIndexChangedSubscription;
+  bool _isFullscreen = false;
 
   @override
   void initState() {
     super.initState();
     contentItem = widget.contentItem;
-    _hideSystemUI();
+    _enterFullscreen();
     _initializeQueue();
   }
 
   @override
   void dispose() {
     contentItemIndexChangedSubscription.cancel();
-    _showSystemUI();
+    _exitFullscreen();
     super.dispose();
   }
 
-  void _hideSystemUI() {
+  void _enterFullscreen() {
+    fullscreenNotifier.value = true;
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
       overlays: [],
     );
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-      ),
-    );
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    if (mounted) setState(() => _isFullscreen = true);
   }
 
-  void _showSystemUI() {
+  void _exitFullscreen() {
+    fullscreenNotifier.value = false;
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
       overlays: SystemUiOverlay.values,
     );
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    if (mounted) setState(() => _isFullscreen = false);
+  }
+
+  void _toggleFullscreen() {
+    if (_isFullscreen) {
+      _exitFullscreen();
+    } else {
+      _enterFullscreen();
+    }
   }
 
   Future<void> _initializeQueue() async {
@@ -115,6 +133,7 @@ class _EpisodeScreenState extends State<EpisodeScreen> {
             child: PlayerWidget(
               contentItem: widget.contentItem,
               queue: allContents,
+              onFullscreen: _toggleFullscreen,
             ),
           ),
         ),

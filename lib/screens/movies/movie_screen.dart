@@ -20,6 +20,7 @@ import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import '../../../controllers/favorites_controller.dart';
 import '../../../controllers/watch_later_controller.dart';
 import '../../../widgets/player_widget.dart';
+import 'package:another_iptv_player/services/fullscreen_notifier.dart';
 
 class MovieScreen extends StatefulWidget {
   final ContentItem contentItem;
@@ -1040,36 +1041,54 @@ class _MoviePlayerPage extends StatefulWidget {
 }
 
 class _MoviePlayerPageState extends State<_MoviePlayerPage> {
+  bool _isFullscreen = false;
+
   @override
   void initState() {
     super.initState();
-    _hideSystemUI();
+    _enterFullscreen();
   }
 
   @override
   void dispose() {
-    _showSystemUI();
+    _exitFullscreen();
     super.dispose();
   }
 
-  void _hideSystemUI() {
+  void _enterFullscreen() {
+    fullscreenNotifier.value = true;
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.immersiveSticky,
       overlays: [],
     );
-    SystemChrome.setSystemUIOverlayStyle(
-      const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-      ),
-    );
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    if (mounted) setState(() => _isFullscreen = true);
   }
 
-  void _showSystemUI() {
+  void _exitFullscreen() {
+    fullscreenNotifier.value = false;
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.edgeToEdge,
       overlays: SystemUiOverlay.values,
     );
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    if (mounted) setState(() => _isFullscreen = false);
+  }
+
+  void _toggleFullscreen() {
+    if (_isFullscreen) {
+      _exitFullscreen();
+    } else {
+      _enterFullscreen();
+    }
   }
 
   @override
@@ -1081,6 +1100,7 @@ class _MoviePlayerPageState extends State<_MoviePlayerPage> {
           child: PlayerWidget(
             contentItem: widget.contentItem,
             queue: widget.queue,
+            onFullscreen: _toggleFullscreen,
           ),
         ),
       ),
