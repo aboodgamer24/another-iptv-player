@@ -5,7 +5,7 @@
 ;--------------------------------
 ; Includes
 
-!define APP_EXE "iptv_player.exe"
+!define APP_EXE "C4-TV.exe"
 
 !include "MUI2.nsh"
 !include "FileFunc.nsh"
