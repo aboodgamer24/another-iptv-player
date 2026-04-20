@@ -213,7 +213,6 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                         onTap: () {
                           setState(() {
                             _selectedCategoryIndex = origIndex;
-                            _selectedChannel = null;
                           });
                         },
                       );
