@@ -150,6 +150,7 @@ class _C4SearchModalState extends State<C4SearchModal> {
                         return C4Card(
                           title: item.name,
                           imageUrl: item.imageUrl,
+                          contentType: item.contentType,
                           onTap: () {
                             Navigator.pop(context);
                             navigateByContentType(context, item);

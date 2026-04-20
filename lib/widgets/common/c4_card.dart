@@ -2,6 +2,7 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:another_iptv_player/models/content_type.dart';
 import 'c4_gradient_placeholder.dart';
 
 class C4Card extends StatefulWidget {
@@ -22,6 +23,7 @@ class C4Card extends StatefulWidget {
   final Future<void> Function()? onToggleFavorite;
   final bool? isInWatchLater;
   final Future<void> Function()? onToggleWatchLater;
+  final ContentType? contentType;
 
   const C4Card({
     super.key,
@@ -40,6 +42,7 @@ class C4Card extends StatefulWidget {
     this.onToggleFavorite,
     this.isInWatchLater,
     this.onToggleWatchLater,
+    this.contentType,
   });
 
   @override
@@ -284,6 +287,40 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                       ),
 
                       // Badges
+                      // Content type badge — top left
+                      if (widget.contentType != null)
+                        Positioned(
+                          top: 8,
+                          left: 8,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: _contentTypeBadgeColor(widget.contentType!).withOpacity(0.85),
+                              borderRadius: BorderRadius.circular(5),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  _contentTypeIcon(widget.contentType!),
+                                  size: 10,
+                                  color: Colors.white,
+                                ),
+                                const SizedBox(width: 3),
+                                Text(
+                                  _contentTypeLabel(widget.contentType!),
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.w600,
+                                    letterSpacing: 0.3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        
                       if (widget.badges != null)
                         Positioned(
                           top: 8,
@@ -386,6 +423,30 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
       );
     }
     return const C4GradientPlaceholder();
+  }
+
+  Color _contentTypeBadgeColor(ContentType type) {
+    switch (type) {
+      case ContentType.liveStream: return const Color(0xFFE53935);
+      case ContentType.vod:        return const Color(0xFF1565C0);
+      case ContentType.series:     return const Color(0xFF2E7D32);
+    }
+  }
+
+  IconData _contentTypeIcon(ContentType type) {
+    switch (type) {
+      case ContentType.liveStream: return Icons.circle;
+      case ContentType.vod:        return Icons.movie_rounded;
+      case ContentType.series:     return Icons.tv_rounded;
+    }
+  }
+
+  String _contentTypeLabel(ContentType type) {
+    switch (type) {
+      case ContentType.liveStream: return 'LIVE';
+      case ContentType.vod:        return 'MOVIE';
+      case ContentType.series:     return 'SHOW';
+    }
   }
 }
 

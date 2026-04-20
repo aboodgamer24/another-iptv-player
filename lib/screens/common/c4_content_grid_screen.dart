@@ -133,6 +133,7 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                       return C4Card(
                         title: item.name,
                         imageUrl: item.imageUrl,
+                        contentType: item.contentType,
                         isFavorite: favoritesController.favorites.any(
                           (f) => f.streamId == item.id && f.contentType == item.contentType,
                         ),

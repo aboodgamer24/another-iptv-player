@@ -10,6 +10,7 @@ import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import '../screens/m3u/m3u_player_screen.dart';
 import '../services/service_locator.dart';
 import '../screens/series/episode_screen.dart';
+import 'package:another_iptv_player/widgets/player_widget.dart';
 
 class WatchHistoryController extends ChangeNotifier {
   late WatchHistoryService _historyService;
@@ -167,15 +168,27 @@ class WatchHistoryController extends ChangeNotifier {
         history.streamId,
         AppState.currentPlaylist!.id,
       );
-
-      navigateByContentType(
+      final contentItem = ContentItem(
+        history.streamId,
+        history.title,
+        history.imagePath ?? '',
+        history.contentType,
+        liveStream: liveStream,
+      );
+      Navigator.push(
         context,
-        ContentItem(
-          history.streamId,
-          history.title,
-          history.imagePath ?? '',
-          history.contentType,
-          liveStream: liveStream,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(
+              child: SizedBox.expand(
+                child: PlayerWidget(
+                  key: ValueKey(history.streamId),
+                  contentItem: contentItem,
+                ),
+              ),
+            ),
+          ),
         ),
       );
     } else if (isM3u) {
@@ -183,15 +196,27 @@ class WatchHistoryController extends ChangeNotifier {
         AppState.currentPlaylist!.id,
         history.streamId,
       );
-
-      navigateByContentType(
+      final contentItem = ContentItem(
+        liveStream!.url,
+        history.title,
+        history.imagePath ?? '',
+        history.contentType,
+        m3uItem: liveStream,
+      );
+      Navigator.push(
         context,
-        ContentItem(
-          liveStream!.url,
-          history.title,
-          history.imagePath ?? '',
-          history.contentType,
-          m3uItem: liveStream!,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            backgroundColor: Colors.black,
+            body: SafeArea(
+              child: SizedBox.expand(
+                child: PlayerWidget(
+                  key: ValueKey(history.streamId),
+                  contentItem: contentItem,
+                ),
+              ),
+            ),
+          ),
         ),
       );
     }

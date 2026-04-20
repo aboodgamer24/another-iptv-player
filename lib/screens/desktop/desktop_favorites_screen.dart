@@ -166,10 +166,14 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                   MaterialPageRoute(
                                     builder: (context) => Scaffold(
                                       backgroundColor: Colors.black,
-                                      body: PlayerWidget(
-                                        key: ValueKey(item.id),
-                                        contentItem: item.toContentItem(),
-                                        queue: _liveOrder!.map((e) => e.toContentItem()).toList(),
+                                      body: SafeArea(
+                                        child: SizedBox.expand(
+                                          child: PlayerWidget(
+                                            key: ValueKey(item.id),
+                                            contentItem: item.toContentItem(),
+                                            queue: _liveOrder!.map((e) => e.toContentItem()).toList(),
+                                          ),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -229,6 +233,7 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
           return C4Card(
             title: item.name,
             imageUrl: item.imageUrl,
+            contentType: item.contentType,
             isFavorite: true,
             onToggleFavorite: () => favCtrl.toggleFavorite(item),
             isInWatchLater: watchLaterCtrl.watchLaterItems.any(

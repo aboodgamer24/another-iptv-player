@@ -22,6 +22,11 @@ import '../services/fullscreen_notifier.dart';
 import '../utils/responsive_helper.dart';
 import '../services/upscale_service.dart';
 
+class _SeriesEpisodePanelConfig {
+  final List<ContentItem> allEpisodes;
+  _SeriesEpisodePanelConfig({required this.allEpisodes});
+}
+
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
   final double? aspectRatio;
@@ -575,6 +580,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Widget _buildChannelListOverlay(BuildContext context) {
+    // For series, use the dedicated episode panel
+    if (contentItem.contentType == ContentType.series) {
+      return _buildSeriesEpisodePanel(context);
+    }
     final items = _queue!;
     final currentContent = PlayerState.currentContent;
     final screenWidth = MediaQuery.of(context).size.width;
@@ -817,6 +826,167 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 size: 20,
               ),
           ],
+        ),
+      ),
+    );
+  }
+  Widget _buildSeriesEpisodePanel(BuildContext context) {
+    final items = _queue ?? [];
+    // Group by season
+    final Map<int, List<ContentItem>> bySeason = {};
+    for (final ep in items) {
+      final s = ep.season ?? 1;
+      bySeason.putIfAbsent(s, () => []).add(ep);
+    }
+    final seasons = bySeason.keys.toList()..sort();
+    // Find current episode's season for initial tab
+    final currentSeason = contentItem.season ?? seasons.first;
+    int initialTab = seasons.indexOf(currentSeason).clamp(0, seasons.length - 1);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final panelWidth = (screenWidth / 3).clamp(200.0, 380.0);
+    return Positioned.fill(
+      child: GestureDetector(
+        onTap: () => setState(() => _showChannelList = false),
+        child: Container(
+          color: Colors.black.withOpacity(0.3),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: GestureDetector(
+              onTap: () {}, // prevent dismiss on panel tap
+              child: SizedBox(
+                width: panelWidth,
+                height: double.infinity,
+                child: DefaultTabController(
+                  length: seasons.length,
+                  initialIndex: initialTab,
+                  child: Container(
+                    color: Colors.black.withOpacity(0.95),
+                    child: Column(
+                      children: [
+                        // Header
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.8),
+                            border: Border(bottom: BorderSide(color: Colors.grey!, width: 1)),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.tv_rounded, size: 16, color: Colors.white54),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  'Episodes',
+                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                                onPressed: () => setState(() => _showChannelList = false),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Season tabs
+                        if (seasons.length > 1)
+                          Container(
+                            color: Colors.grey,
+                            child: TabBar(
+                              isScrollable: true,
+                              labelColor: Colors.white,
+                              unselectedLabelColor: Colors.white54,
+                              indicatorColor: Theme.of(context).colorScheme.primary,
+                              tabs: seasons.map((s) => Tab(text: 'S$s')).toList(),
+                            ),
+                          ),
+                        // Episode list per season tab
+                        Expanded(
+                          child: TabBarView(
+                            children: seasons.map((season) {
+                              final eps = bySeason[season]!;
+                              return ListView.builder(
+                                padding: const EdgeInsets.all(8),
+                                itemCount: eps.length,
+                                itemBuilder: (context, idx) {
+                                  final ep = eps[idx];
+                                  // Find the TRUE index in the full queue
+                                  final queueIndex = items.indexWhere((q) => q.id == ep.id);
+                                  final isSelected = ep.id == contentItem.id;
+                                  return InkWell(
+                                    onTap: () {
+                                      if (queueIndex != -1) {
+                                        EventBus().emit('player_content_item_index_changed', queueIndex);
+                                      }
+                                    },
+                                    child: Container(
+                                      margin: const EdgeInsets.only(bottom: 6),
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: isSelected
+                                            ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
+                                            : Colors.white.withOpacity(0.05),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: isSelected
+                                            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
+                                            : Border.all(color: Colors.grey!, width: 1),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          if (ep.imagePath.isNotEmpty)
+                                            ClipRRect(
+                                              borderRadius: BorderRadius.circular(4),
+                                              child: Image.network(
+                                                ep.imagePath,
+                                                width: 60,
+                                                height: 36,
+                                                fit: BoxFit.cover,
+                                                errorBuilder: (_, __, ___) => Container(
+                                                  width: 60, height: 36,
+                                                  color: Colors.grey,
+                                                  child: const Icon(Icons.tv, size: 18, color: Colors.white38),
+                                                ),
+                                              ),
+                                            )
+                                          else
+                                            Container(
+                                              width: 60, height: 36,
+                                              decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(4)),
+                                              child: const Icon(Icons.tv, size: 18, color: Colors.white38),
+                                            ),
+                                          const SizedBox(width: 10),
+                                          Expanded(
+                                            child: Text(
+                                              ep.name,
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: isSelected ? Colors.white : Colors.white70,
+                                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                              ),
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          if (isSelected)
+                                            Icon(Icons.play_circle_fill_rounded,
+                                                color: Theme.of(context).colorScheme.primary, size: 20),
+                                        ],
+                                      ),
+                                    ),
+                                  );
+                                },
+                              );
+                            }).toList(),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
     );

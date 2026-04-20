@@ -179,6 +179,7 @@ class _C4ContentRailState extends State<C4ContentRail> {
                             child: C4Card(
                               title: item.name,
                               imageUrl: item.imageUrl,
+                              contentType: item.contentType,
                               width: cardWidth,
                               height: cardHeight,
                               isFavorite: favoritesController.favorites.any(
