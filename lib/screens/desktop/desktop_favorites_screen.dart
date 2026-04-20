@@ -7,7 +7,6 @@ import 'package:another_iptv_player/models/favorite.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/widgets/common/c4_card.dart';
-import 'package:another_iptv_player/screens/desktop/desktop_live_tv_screen.dart';
 import 'package:another_iptv_player/widgets/player_widget.dart';
 import 'package:provider/provider.dart';
 
@@ -161,6 +160,9 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                     favCtrl.toggleFavorite(item.toContentItem()),
                               ),
                               onTap: () {
+                                final liveQueue = _liveOrder!
+                                    .map((e) => e.toContentItem())
+                                    .toList();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
@@ -171,7 +173,9 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                           child: PlayerWidget(
                                             key: ValueKey(item.id),
                                             contentItem: item.toContentItem(),
-                                            queue: _liveOrder!.map((e) => e.toContentItem()).toList(),
+                                            queue: liveQueue.isNotEmpty
+                                                ? liveQueue
+                                                : null,
                                           ),
                                         ),
                                       ),
