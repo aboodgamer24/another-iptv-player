@@ -12,7 +12,6 @@ import '../../models/category_view_model.dart';
 import '../../services/fullscreen_notifier.dart';
 import '../../utils/get_playlist_type.dart';
 import '../../services/event_bus.dart';
-import '../../repositories/user_preferences.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -133,14 +132,21 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       final vp = widget.player.state.videoParams;
       if (vp.w != null && vp.w! > 0) _resW = vp.w;
       if (vp.h != null && vp.h! > 0) _resH = vp.h;
-      UserPreferences.getUpscalePreset().then((preset) {
-        if (mounted) setState(() => _upscalerPreset = preset);
-      });
+      final nativeP = widget.player.platform;
+      if (nativeP is NativePlayer) {
+        nativeP.getProperty('scale').then((liveValue) {
+          if (mounted) setState(() => _upscalerPreset = liveValue);
+        }).catchError((_) {});
+      }
     });
 
-    UserPreferences.getUpscalePreset().then((preset) {
-      if (mounted) setState(() => _upscalerPreset = preset);
-    });
+    // Read the actual live value from MPV so we show what is truly applied
+    final nativeInit = widget.player.platform;
+    if (nativeInit is NativePlayer) {
+      nativeInit.getProperty('scale').then((liveValue) {
+        if (mounted) setState(() => _upscalerPreset = liveValue);
+      }).catchError((_) {});
+    }
 
     // Request focus once so keyboard shortcuts work,
     // but never steal it again after that.

@@ -79,6 +79,18 @@ Future<void> applyUpscalePreset(Player player, String preset) async {
   } catch (_) {
     // Silently ignore — platform may not support a specific property
   }
+
+  // Verify MPV actually applied the scale value
+  await Future.delayed(const Duration(milliseconds: 200));
+  try {
+    final applied = await native.getProperty('scale');
+    debugPrint('[Upscaler] Requested: $preset | MPV applied: $applied');
+    if (applied.trim() != preset.trim()) {
+      debugPrint('[Upscaler] WARNING: scale mismatch — upscaler may not be active');
+    }
+  } catch (e) {
+    debugPrint('[Upscaler] Could not verify scale property: $e');
+  }
 }
 
 Future<void> applyStreamEnhancement(Player player, bool enabled) async {
