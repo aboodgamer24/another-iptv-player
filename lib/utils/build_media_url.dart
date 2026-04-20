@@ -19,12 +19,32 @@ String _normalizeStreamBaseUrl(String? rawUrl) {
 String buildMediaUrl(ContentItem contentItem) {
   final playlist = AppState.currentPlaylist!;
   final baseUrl = _normalizeStreamBaseUrl(playlist.url);
+
+  // Resolve extension: prefer the item's own field, then fall back to
+  // the VodStream / SeriesStream extension, then default to 'mkv'.
+  String _ext(String? direct, String? fallback) {
+    final e = (direct ?? '').trim().isNotEmpty
+        ? direct!.trim()
+        : (fallback ?? '').trim();
+    return e.isNotEmpty ? e : 'mkv';
+  }
+
   switch (contentItem.contentType) {
     case ContentType.liveStream:
       return '$baseUrl/${playlist.username}/${playlist.password}/${contentItem.id}';
+
     case ContentType.vod:
-      return '$baseUrl/movie/${playlist.username}/${playlist.password}/${contentItem.id}.${contentItem.containerExtension}';
+      final ext = _ext(
+        contentItem.containerExtension,
+        contentItem.vodStream?.containerExtension,
+      );
+      return '$baseUrl/movie/${playlist.username}/${playlist.password}/${contentItem.id}.$ext';
+
     case ContentType.series:
-      return '$baseUrl/series/${playlist.username}/${playlist.password}/${contentItem.id}.${contentItem.containerExtension}';
+      final ext = _ext(
+        contentItem.containerExtension,
+        contentItem.seriesStream?.containerExtension,
+      );
+      return '$baseUrl/series/${playlist.username}/${playlist.password}/${contentItem.id}.$ext';
   }
 }
