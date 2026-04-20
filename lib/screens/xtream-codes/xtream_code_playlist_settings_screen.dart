@@ -42,42 +42,36 @@ class _XtreamCodePlaylistSettingsScreenState
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 900;
+    // On wide screens: add side padding so content has breathing room.
+    // On narrow screens: original 12px padding.
+    final hPad = isWide ? ((screenWidth - 860).clamp(0.0, 200.0) / 2) + 12.0 : 12.0;
+
     return Scaffold(
       appBar: AppBar(
         title: SelectableText(
           context.loc.settings,
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
-        actions: [],
+        actions: const [],
       ),
-      body: LayoutBuilder(
-        builder: (context, constraints) {
-          final isWide = constraints.maxWidth >= 860;
-          final horizontalPadding = isWide
-              ? (constraints.maxWidth - 840) / 2   // center with 840px content area
-              : 12.0;                               // narrow: original padding
-
-          return ListView(
-            padding: EdgeInsets.symmetric(
-              vertical: 8,
-              horizontal: horizontalPadding,
-            ),
-            children: [
-              StatusCardWidget(serverInfo: _serverInfo),
-              const SizedBox(height: 12),
-              const GeneralSettingsWidget(),
-              const SizedBox(height: 16),
-              PlaylistInfoWidget(playlist: widget.playlist),
-              const SizedBox(height: 16),
-              SubscriptionInfoWidget(serverInfo: _serverInfo),
-              const SizedBox(height: 16),
-              if (_serverInfo?.serverInfo != null) ...[
-                ServerInfoWidget(serverInfo: _serverInfo!),
-                const SizedBox(height: 16),
-              ],
-            ],
-          );
-        },
+      body: ListView(
+        padding: EdgeInsets.symmetric(vertical: 8, horizontal: hPad),
+        children: [
+          StatusCardWidget(serverInfo: _serverInfo),
+          const SizedBox(height: 12),
+          const GeneralSettingsWidget(),
+          const SizedBox(height: 16),
+          PlaylistInfoWidget(playlist: widget.playlist),
+          const SizedBox(height: 16),
+          SubscriptionInfoWidget(serverInfo: _serverInfo),
+          const SizedBox(height: 16),
+          if (_serverInfo?.serverInfo != null) ...[
+            ServerInfoWidget(serverInfo: _serverInfo!),
+            const SizedBox(height: 16),
+          ],
+        ],
       ),
     );
   }
