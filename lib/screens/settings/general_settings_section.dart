@@ -28,6 +28,7 @@ import '../xtream-codes/xtream_code_data_loader_screen.dart';
 import 'category_settings_section.dart';
 import 'home_customization_section.dart';
 import '../../utils/app_config.dart';
+import '../../services/upscale_service.dart';
 
 final controller = XtreamCodeHomeController(true);
 
@@ -53,6 +54,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
   String _appVersion = '';
   final TextEditingController _tmdbKeyController = TextEditingController();
   bool _obscureTmdbKey = true;
+  String _upscalePreset = 'standard';
 
   @override
   void initState() {
@@ -70,6 +72,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
       final speedUpOnLongPress = await UserPreferences.getSpeedUpOnLongPress();
       final seekOnDoubleTap = await UserPreferences.getSeekOnDoubleTap();
       final packageInfo = await PackageInfo.fromPlatform();
+      final upscalePreset = await UserPreferences.getUpscalePreset();
       setState(() {
         _backgroundPlayEnabled = backgroundPlay;
         _selectedTheme = themeName;
@@ -80,6 +83,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         _seekOnDoubleTap = seekOnDoubleTap;
         _appVersion = packageInfo.version;
         _tmdbKeyController.text = AppConfig.tmdbApiKey;
+        _upscalePreset = upscalePreset;
         _isLoading = false;
       });
     } catch (e) {
@@ -106,6 +110,47 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
         _backgroundPlayEnabled = !value;
       });
     }
+  }
+
+  Widget _buildUpscalerSection(ThemeData theme) {
+    final presets = availableUpscalePresets;
+    // Hide entirely on unsupported platforms (iOS, web)
+    if (presets.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section header — match the style of other section headers in this file
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+          child: Text(
+            'Video Upscaling',
+            style: theme.textTheme.titleSmall?.copyWith(
+              color: theme.colorScheme.primary,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ),
+        ...presets.map((preset) => RadioListTile<String>(
+          title: Text(upscalePresetLabel(preset)),
+          subtitle: Text(
+            upscalePresetDescription(preset),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+            ),
+          ),
+          value: preset,
+          groupValue: _upscalePreset,
+          onChanged: (value) async {
+            if (value == null) return;
+            setState(() => _upscalePreset = value);
+            await UserPreferences.setUpscalePreset(value);
+          },
+        )),
+        const Divider(),
+      ],
+    );
   }
 
   @override
@@ -307,6 +352,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget> {
                         },
                       ),
                     ),
+                    _buildUpscalerSection(Theme.of(context)),
                     // Player gesture settings - Only show on mobile platforms (Android & iOS)
                     if (Theme.of(context).platform == TargetPlatform.android ||
                         Theme.of(context).platform == TargetPlatform.iOS) ...[

@@ -20,6 +20,7 @@ import '../../utils/audio_handler.dart';
 import '../utils/player_error_handler.dart';
 import '../services/fullscreen_notifier.dart';
 import '../utils/responsive_helper.dart';
+import '../services/upscale_service.dart';
 
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
@@ -138,6 +139,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
     super.dispose();
   }
 
+  Future<void> _applyUpscaler() async {
+    final preset = await UserPreferences.getUpscalePreset();
+    await applyUpscalePreset(_player, preset);
+  }
+
   Future<void> _saveWatchHistory() async {
     if (_pendingWatchDuration == null || !mounted) return;
 
@@ -249,8 +255,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
           Playlist(playlist, index: currentItemIndex),
           play: true,
         );
+        await _applyUpscaler();
       } else {
         await _player.open(Media(contentItem.url));
+        await _applyUpscaler();
       }
     } else {
       final mediaItem = MediaItem(
@@ -281,6 +289,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ]),
         play: true,
       );
+      await _applyUpscaler();
     }
 
     _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
@@ -319,6 +328,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
             // TODO: Implement watch history duration for vod and series
             await _player.open(Media(contentItem.url));
+            await _applyUpscaler();
           } catch (e) {
             print('Error opening media: $e');
           }
@@ -411,6 +421,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           () async {
             if (contentItem.contentType == ContentType.liveStream) {
               await _player.open(Media(contentItem.url));
+              await _applyUpscaler();
             }
           },
           (errorMessage) {
@@ -454,6 +465,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _player.stream.completed.listen((playlist) async {
       if (contentItem.contentType == ContentType.liveStream) {
         await _player.open(Media(contentItem.url));
+        await _applyUpscaler();
       }
     });
 
@@ -477,6 +489,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             // -------------------------------------------
 
             await _player.open(Playlist([Media(item.url)]), play: true);
+            await _applyUpscaler();
             EventBus().emit('player_content_item', item);
             EventBus().emit('player_content_item_index', index);
             _errorHandler.reset();

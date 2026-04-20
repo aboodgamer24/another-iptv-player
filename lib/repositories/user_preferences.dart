@@ -92,6 +92,18 @@ class UserPreferences {
     return prefs.getString(_keyVideoQuality) ?? 'auto';
   }
 
+  static const String _keyUpscalePreset = 'upscale_preset';
+
+  static Future<void> setUpscalePreset(String preset) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUpscalePreset, preset);
+  }
+
+  static Future<String> getUpscalePreset() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUpscalePreset) ?? 'standard';
+  }
+
   static Future<void> setBackgroundPlay(bool backgroundPlay) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyBackgroundPlay, backgroundPlay);
