@@ -178,6 +178,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Future<void> _initializePlayer() async {
     if (!mounted) return;
 
+    try {
     PlayerState.subtitleConfiguration = await getSubtitleConfiguration();
 
     PlayerState.backgroundPlay = await UserPreferences.getBackgroundPlay();
@@ -538,6 +539,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
       setState(() {
         isLoading = false;
       });
+    }
+    } catch (e, st) {
+      debugPrint('_initializePlayer error: $e\n$st');
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          hasError = true;
+          errorMessage = 'Failed to initialize player: $e';
+        });
+      }
     }
   }
 

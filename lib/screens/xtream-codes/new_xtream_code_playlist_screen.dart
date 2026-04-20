@@ -496,8 +496,10 @@ class NewXtreamCodePlaylistScreenState
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                XtreamCodeDataLoaderScreen(playlist: playlist),
+            builder: (context) => XtreamCodeDataLoaderScreen(
+              playlist: playlist,
+              refreshAll: true,
+            ),
           ),
         );
       }

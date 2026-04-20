@@ -262,22 +262,15 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
               trailing: const Icon(Icons.cloud_download),
               onTap: () async {
                 if (isXtreamCode) {
-                  try {
-                    final ctrl = Provider.of<XtreamCodeHomeController>(
-                      context, listen: false);
-                    await ctrl.refreshAllData(context);
-                  } catch (_) {
-                    // If provider not in tree, navigate as fallback
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => XtreamCodeDataLoaderScreen(
-                          playlist: AppState.currentPlaylist!,
-                          refreshAll: true,
-                        ),
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => XtreamCodeDataLoaderScreen(
+                        playlist: AppState.currentPlaylist!,
+                        refreshAll: true,
                       ),
-                    );
-                  }
+                    ),
+                  );
                 }
 
                 if (isM3u) {
@@ -329,26 +322,17 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                     ),
                   );
 
-                  if (result == true) {
-                    if (isXtreamCode && ctrl != null) {
-                      await ctrl.refreshAllData(context);
-                    } else if (isXtreamCode) {
+                    if (isXtreamCode) {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              XtreamCodeDataLoaderScreen(
-                                playlist: AppState.currentPlaylist!,
-                                refreshAll: true,
-                              ),
+                          builder: (context) => XtreamCodeDataLoaderScreen(
+                            playlist: AppState.currentPlaylist!,
+                            refreshAll: true,
+                          ),
                         ),
                       );
                     }
-
-                    if (isM3u) {
-                      refreshM3uPlaylist();
-                    }
-                  }
                 },
               ),
             ),
