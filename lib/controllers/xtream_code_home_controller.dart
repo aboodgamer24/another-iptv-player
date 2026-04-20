@@ -17,7 +17,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
   ViewState _viewState = ViewState.idle;
 
   int _currentIndex = 0;
-  final bool _isLoading = false;
+  bool _isLoading = true;
 
   final List<CategoryViewModel> _liveCategories = [];
   final List<CategoryViewModel> _movieCategories = [];
@@ -248,11 +248,13 @@ class XtreamCodeHomeController extends ChangeNotifier {
       }
 
       _generateDashboardContent();
+      _isLoading = false;
       notifyListeners();
     } catch (e, st) {
       debugPrint(st.toString());
       _errorMessage = 'Kategoriler yüklenemedi: $e';
       _setViewState(ViewState.error);
+      _isLoading = false;
     }
   }
 

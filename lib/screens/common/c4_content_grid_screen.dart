@@ -36,8 +36,24 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
         ? controller.movieCategories 
         : controller.seriesCategories;
 
+    if (controller.isLoading) {
+      return const _ContentGridSkeleton();
+    }
+
     if (categories.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.inbox_outlined, size: 64, color: theme.hintColor),
+            const SizedBox(height: 16),
+            Text(
+              widget.contentType == ContentType.vod ? 'No movies found' : 'No series found',
+              style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor),
+            ),
+          ],
+        ),
+      );
     }
 
     final selectedCategory = categories[_selectedCategoryIndex];
@@ -289,6 +305,58 @@ class _CategoryTile extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _ContentGridSkeleton extends StatelessWidget {
+  const _ContentGridSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        // Sidebar skeleton
+        Container(
+          width: 200,
+          padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: List.generate(10, (i) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              child: Container(
+                height: 16,
+                width: i % 3 == 0 ? 120 : (i % 2 == 0 ? 150 : 100),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+              ),
+            )),
+          ),
+        ),
+        // Grid skeleton
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 4,
+                childAspectRatio: 2 / 3,
+                crossAxisSpacing: 16,
+                mainAxisSpacing: 16,
+              ),
+              itemCount: 16,
+              itemBuilder: (context, index) => Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
