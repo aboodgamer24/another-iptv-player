@@ -87,15 +87,15 @@ Future<void> applyStreamEnhancement(Player player, bool enabled) async {
       await native.setProperty('deband-threshold', '48');
       await native.setProperty('deband-range', '16');
       await native.setProperty('deband-grain', '12');
-      // Subtle unsharp mask — recovers softness from compression
-      await native.setProperty(
-        'vf',
-        'lavfi=[unsharp=3:3:0.5:3:3:0.0]',
-      );
+      // Native MPV sharpening (safe at runtime, no vf pipeline needed)
+      await native.setProperty('video-sharpness', '0.3');
     } else {
-      // Reset to defaults
       await native.setProperty('deband', 'no');
-      await native.setProperty('vf', '');
+      await native.setProperty('deband-iterations', '1');
+      await native.setProperty('deband-threshold', '48');
+      await native.setProperty('deband-range', '16');
+      await native.setProperty('deband-grain', '0');
+      await native.setProperty('video-sharpness', '0');
     }
   } catch (_) {
     // Silently ignore unsupported properties
