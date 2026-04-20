@@ -52,6 +52,13 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   int? _bitrate;
   String? _codec;
   String? _upscalerPreset;
+  bool _showEnhancementPanel = false;
+
+  // Enhancement values — MPV ranges
+  double _sharpness = 0.0;      // range: -1.0 to 1.0, default 0
+  double _contrast = 0.0;       // range: -1.0 to 1.0, default 0
+  double _saturation = 0.0;     // range: -1.0 to 1.0, default 0
+  double _noiseReduction = 0.0; // range: 0.0 to 1.0, default 0
   
   Timer? _hideTimer;
   Timer? _statsTimer;
@@ -232,6 +239,8 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         setState(() => _showSidePanel = false);
       } else if (_showInfoPanel) {
         setState(() => _showInfoPanel = false);
+      } else if (_showEnhancementPanel) {
+        setState(() => _showEnhancementPanel = false);
       } else if (!widget.isInline) {
         Navigator.pop(context);
       }
@@ -394,6 +403,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
 
                         // Info Panel (Metadata overlay)
                         if (_showInfoPanel) _buildInfoPanel(theme, videoTrack),
+                        if (_showEnhancementPanel) _buildEnhancementPanel(theme),
                       ],
                     ),
                   ),
@@ -469,6 +479,24 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                     icon: Icon(
+                      Icons.tune_rounded,
+                      color: _showEnhancementPanel
+                          ? theme.colorScheme.primary
+                          : Colors.white,
+                    ),
+                    onPressed: () => setState(() {
+                      _showEnhancementPanel = !_showEnhancementPanel;
+                      _showInfoPanel = false;
+                      _showSidePanel = false;
+                      _startHideTimer();
+                    }),
+                  ),
+                if (!compact) const SizedBox(width: 8),
+                if (!compact)
+                  IconButton(
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    icon: Icon(
                       _showInfoPanel
                           ? Icons.info_rounded
                           : Icons.info_outline_rounded,
@@ -479,6 +507,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     onPressed: () => setState(() {
                       _showInfoPanel = !_showInfoPanel;
                       _showSidePanel = false;
+                      _showEnhancementPanel = false;
                       _startHideTimer();
                     }),
                   ),
@@ -498,6 +527,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   onPressed: () => setState(() {
                     _showSidePanel = !_showSidePanel;
                     _showInfoPanel = false;
+                    _showEnhancementPanel = false;
                     _startHideTimer();
                   }),
                 ),
@@ -674,6 +704,182 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  Future<void> _applyEnhancement() async {
+    final native = widget.player.platform;
+    if (native is! NativePlayer) return;
+
+    // MPV sharpen uses lavfi — map -1..1 to -5..5
+    final sharpVal = (_sharpness * 5).clamp(-5.0, 5.0);
+    // MPV contrast/saturation use -100 to 100 integer scale
+    final contrastVal = (_contrast * 100).round();
+    final saturationVal = (_saturation * 100).round();
+    // denoise maps 0..1 to 0..10 for hqdn3d strength
+    final denoiseVal = (_noiseReduction * 10).clamp(0.0, 10.0);
+
+    try {
+      await native.setProperty('sharpen', sharpVal.toStringAsFixed(3));
+      await native.setProperty('contrast', contrastVal.toString());
+      await native.setProperty('saturation', saturationVal.toString());
+      if (_noiseReduction > 0.01) {
+        await native.setProperty(
+          'vf', 'hqdn3d=${denoiseVal.toStringAsFixed(1)}:${denoiseVal.toStringAsFixed(1)}:6:6',
+        );
+      } else {
+        await native.setProperty('vf', '');
+      }
+    } catch (e) {
+      debugPrint('[Enhancement] Failed to apply: $e');
+    }
+  }
+
+  Widget _buildEnhancementPanel(ThemeData theme) {
+    return Positioned(
+      top: 130,
+      right: 40,
+      child: Container(
+        width: 320,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.black.withValues(alpha: 0.85),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.white10),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Enhancement',
+              style: theme.textTheme.titleMedium?.copyWith(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 20),
+            _buildEnhancementSlider(
+              theme,
+              label: 'Sharpness',
+              icon: Icons.landscape_rounded,
+              value: _sharpness,
+              min: -1.0,
+              max: 1.0,
+              onChanged: (val) {
+                setState(() => _sharpness = val);
+                _applyEnhancement();
+              },
+            ),
+            _buildEnhancementSlider(
+              theme,
+              label: 'Contrast',
+              icon: Icons.contrast_rounded,
+              value: _contrast,
+              min: -1.0,
+              max: 1.0,
+              onChanged: (val) {
+                setState(() => _contrast = val);
+                _applyEnhancement();
+              },
+            ),
+            _buildEnhancementSlider(
+              theme,
+              label: 'Saturation',
+              icon: Icons.color_lens_rounded,
+              value: _saturation,
+              min: -1.0,
+              max: 1.0,
+              onChanged: (val) {
+                setState(() => _saturation = val);
+                _applyEnhancement();
+              },
+            ),
+            _buildEnhancementSlider(
+              theme,
+              label: 'Noise Reduction',
+              icon: Icons.grain_rounded,
+              value: _noiseReduction,
+              min: 0.0,
+              max: 1.0,
+              onChanged: (val) {
+                setState(() => _noiseReduction = val);
+                _applyEnhancement();
+              },
+            ),
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _sharpness = 0.0;
+                  _contrast = 0.0;
+                  _saturation = 0.0;
+                  _noiseReduction = 0.0;
+                });
+                _applyEnhancement();
+              },
+              icon: const Icon(Icons.restart_alt_rounded, size: 16),
+              label: const Text('Reset All'),
+              style: TextButton.styleFrom(foregroundColor: Colors.white38),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEnhancementSlider(
+    ThemeData theme, {
+    required String label,
+    required IconData icon,
+    required double value,
+    required double min,
+    required double max,
+    required ValueChanged<double> onChanged,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: Colors.white54, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(color: Colors.white70, fontSize: 13),
+              ),
+              const Spacer(),
+              Text(
+                value.toStringAsFixed(2),
+                style: TextStyle(
+                  color: value == 0.0 ? Colors.white38 : theme.colorScheme.primary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: theme.colorScheme.primary,
+              inactiveTrackColor: Colors.white12,
+              thumbColor: theme.colorScheme.primary,
+              overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+              trackHeight: 3,
+              thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6),
+            ),
+            child: Slider(
+              value: value,
+              min: min,
+              max: max,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
       ),
     );
   }
