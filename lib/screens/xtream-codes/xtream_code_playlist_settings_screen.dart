@@ -50,11 +50,18 @@ class _XtreamCodePlaylistSettingsScreenState
         ),
         actions: [],
       ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 700),
-          child: ListView(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth >= 860;
+          final horizontalPadding = isWide
+              ? (constraints.maxWidth - 840) / 2   // center with 840px content area
+              : 12.0;                               // narrow: original padding
+
+          return ListView(
+            padding: EdgeInsets.symmetric(
+              vertical: 8,
+              horizontal: horizontalPadding,
+            ),
             children: [
               StatusCardWidget(serverInfo: _serverInfo),
               const SizedBox(height: 12),
@@ -69,8 +76,8 @@ class _XtreamCodePlaylistSettingsScreenState
                 const SizedBox(height: 16),
               ],
             ],
-          ),
-        ),
+          );
+        },
       ),
     );
   }
