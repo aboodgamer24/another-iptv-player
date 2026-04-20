@@ -5,6 +5,7 @@ import '../controllers/watch_later_controller.dart';
 import '../models/content_type.dart';
 import '../models/playlist_content_model.dart';
 import '../widgets/common/c4_content_rail.dart';
+import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 
 class WatchLaterScreen extends StatefulWidget {
   const WatchLaterScreen({super.key});
@@ -65,6 +66,10 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
   }
 
   void _playItem(BuildContext context, ContentItem item) {
+    if (item.contentType == ContentType.series) {
+      navigateByContentType(context, item);
+      return;
+    }
     final controller = context.read<WatchLaterController>();
     final data = controller.watchLaterItems.firstWhere(
       (i) => i.streamId == item.id && i.contentType == item.contentType,

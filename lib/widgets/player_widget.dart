@@ -221,7 +221,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           currentItemIndex = i;
           _currentItemIndex = i;
 
-          if (contentItem.contentType == ContentType.liveStream) {
+          if (item.contentType == ContentType.liveStream) {
             currentItemIndex = 0;
             _currentItemIndex = 0;
             contentItem = item;
