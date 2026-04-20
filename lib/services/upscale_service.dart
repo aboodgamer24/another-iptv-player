@@ -39,30 +39,34 @@ String upscalePresetDescription(String preset) {
 
 Future<void> applyUpscalePreset(Player player, String preset) async {
   if (!isMpvSupported) return;
+  // Access the underlying NativePlayer to call MPV properties
+  final native = player.platform;
+  if (native is! NativePlayer) return;
+
   try {
     switch (preset) {
       case 'enhanced':
-        await player.setProperty('scale', 'spline36');
-        await player.setProperty('cscale', 'spline36');
-        await player.setProperty('dscale', 'mitchell');
-        await player.setProperty('scale-antiring', '0.6');
-        await player.setProperty('sigmoid-upscaling', 'yes');
+        await native.setProperty('scale', 'spline36');
+        await native.setProperty('cscale', 'spline36');
+        await native.setProperty('dscale', 'mitchell');
+        await native.setProperty('scale-antiring', '0.6');
+        await native.setProperty('sigmoid-upscaling', 'yes');
         break;
       case 'high_quality':
-        await player.setProperty('scale', 'ewa_lanczos');
-        await player.setProperty('cscale', 'ewa_lanczos');
-        await player.setProperty('dscale', 'mitchell');
-        await player.setProperty('scale-antiring', '0.7');
-        await player.setProperty('sigmoid-upscaling', 'yes');
-        await player.setProperty('linear-upscaling', 'yes');
+        await native.setProperty('scale', 'ewa_lanczos');
+        await native.setProperty('cscale', 'ewa_lanczos');
+        await native.setProperty('dscale', 'mitchell');
+        await native.setProperty('scale-antiring', '0.7');
+        await native.setProperty('sigmoid-upscaling', 'yes');
+        await native.setProperty('linear-upscaling', 'yes');
         break;
       default: // 'standard'
-        await player.setProperty('scale', 'bilinear');
-        await player.setProperty('cscale', 'bilinear');
-        await player.setProperty('dscale', 'bilinear');
-        await player.setProperty('scale-antiring', '0.0');
-        await player.setProperty('sigmoid-upscaling', 'no');
-        await player.setProperty('linear-upscaling', 'no');
+        await native.setProperty('scale', 'bilinear');
+        await native.setProperty('cscale', 'bilinear');
+        await native.setProperty('dscale', 'bilinear');
+        await native.setProperty('scale-antiring', '0.0');
+        await native.setProperty('sigmoid-upscaling', 'no');
+        await native.setProperty('linear-upscaling', 'no');
         break;
     }
   } catch (_) {
