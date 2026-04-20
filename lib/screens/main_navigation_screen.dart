@@ -9,6 +9,7 @@ import '../controllers/favorites_controller.dart';
 import '../controllers/watch_later_controller.dart';
 import '../controllers/home_rails_controller.dart';
 import '../l10n/localization_extension.dart';
+import '../services/app_state.dart';
 import 'main_shell_screen.dart';
 import 'common/c4_dashboard.dart';
 import 'common/c4_live_grid_screen.dart';
@@ -37,7 +38,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void initState() {
     super.initState();
     if (widget.playlist.type == PlaylistType.xtream) {
-      _controller = XtreamCodeHomeController(false);
+      _controller = AppState.preloadedController ?? XtreamCodeHomeController(false);
+      AppState.preloadedController = null;
     } else {
       _controller = M3UHomeController();
     }
