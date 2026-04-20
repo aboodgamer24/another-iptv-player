@@ -47,6 +47,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   String? _codec;
   
   Timer? _hideTimer;
+  Timer? _statsTimer;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
   double _volume = 1.0;
@@ -67,27 +68,64 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         _volume = v / 100.0;
         _isMuted = v == 0;
       })),
-      widget.player.stream.videoParams.listen((vp) => setState(() {
-        _resW = vp.w ?? _resW;
-        _resH = vp.h ?? _resH;
-      })),
-      widget.player.stream.track.listen((track) => setState(() {
-        final video = track.video;
-        _resW = video.w != null && video.w! > 0 ? video.w : _resW;
-        _resH = video.h != null && video.h! > 0 ? video.h : _resH;
-        _fps = video.fps != null && video.fps! > 0 ? video.fps : _fps;
-        _bitrate = video.bitrate != null && video.bitrate! > 0 ? video.bitrate : _bitrate;
-        _codec = video.codec ?? _codec;
-      })),
-      widget.player.stream.track.listen((track) {
-        if (mounted) {
+      // videoParams for resolution
+      widget.player.stream.videoParams.listen((vp) {
+        if (!mounted) return;
+        setState(() {
+          if (vp.w != null && vp.w! > 0) _resW = vp.w;
+          if (vp.h != null && vp.h! > 0) _resH = vp.h;
+        });
+      }),
+
+      // Available tracks list carries demuxer metadata (fps, bitrate, codec)
+      widget.player.stream.tracks.listen((tracks) {
+        if (!mounted) return;
+        for (final vt in tracks.video) {
+          // Skip pseudo-tracks ('auto', 'no')
+          if (vt.id == 'auto' || vt.id == 'no') continue;
           setState(() {
-            app_player_state.PlayerState.subtitles = widget.player.state.tracks.subtitle;
-            app_player_state.PlayerState.selectedSubtitle = widget.player.state.track.subtitle;
+            if (vt.fps != null && vt.fps! > 0) _fps = vt.fps;
+            if (vt.bitrate != null && vt.bitrate! > 0) _bitrate = vt.bitrate;
+            if (vt.codec != null && vt.codec!.isNotEmpty) _codec = vt.codec;
+            if (vt.w != null && vt.w! > 0) _resW = vt.w;
+            if (vt.h != null && vt.h! > 0) _resH = vt.h;
           });
+          break; // use the first real video track
         }
       }),
+
+      // Selected track subscription — subtitle state
+      widget.player.stream.track.listen((track) {
+        if (!mounted) return;
+        setState(() {
+          app_player_state.PlayerState.subtitles =
+              widget.player.state.tracks.subtitle;
+          app_player_state.PlayerState.selectedSubtitle =
+              widget.player.state.track.subtitle;
+        });
+      }),
     ];
+
+    // Periodic poll for live stats (tracks metadata may update over time)
+    _statsTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted || !_showInfoPanel) return;
+      final tracks = widget.player.state.tracks;
+      for (final vt in tracks.video) {
+        if (vt.id == 'auto' || vt.id == 'no') continue;
+        setState(() {
+          if (vt.fps != null && vt.fps! > 0) _fps = vt.fps;
+          if (vt.bitrate != null && vt.bitrate! > 0) _bitrate = vt.bitrate;
+          if (vt.codec != null && vt.codec!.isNotEmpty) _codec = vt.codec;
+          if (vt.w != null && vt.w! > 0) _resW = vt.w;
+          if (vt.h != null && vt.h! > 0) _resH = vt.h;
+        });
+        break;
+      }
+      // Also refresh resolution from videoParams
+      final vp = widget.player.state.videoParams;
+      if (vp.w != null && vp.w! > 0) _resW = vp.w;
+      if (vp.h != null && vp.h! > 0) _resH = vp.h;
+    });
 
     // Request focus once so keyboard shortcuts work,
     // but never steal it again after that.
@@ -101,6 +139,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   @override
   void dispose() {
     _hideTimer?.cancel();
+    _statsTimer?.cancel();
     for (var sub in _subscriptions) {
       sub.cancel();
     }
