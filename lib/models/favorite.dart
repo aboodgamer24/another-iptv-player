@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/models/content_type.dart';
+import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:drift/drift.dart';
 import 'package:another_iptv_player/database/database.dart';
 
@@ -11,6 +12,7 @@ class Favorite {
   final String? m3uItemId;
   final String name;
   final String? imagePath;
+  final int sortOrder;
   final DateTime createdAt;
   final DateTime updatedAt;
 
@@ -23,6 +25,7 @@ class Favorite {
     this.m3uItemId,
     required this.name,
     this.imagePath,
+    this.sortOrder = 0,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -37,6 +40,7 @@ class Favorite {
       m3uItemId: driftObject.m3uItemId,
       name: driftObject.name,
       imagePath: driftObject.imagePath,
+      sortOrder: driftObject.sortOrder,
       createdAt: driftObject.createdAt,
       updatedAt: driftObject.updatedAt,
     );
@@ -67,9 +71,15 @@ class Favorite {
       m3uItemId: Value(m3uItemId),
       name: Value(name),
       imagePath: Value(imagePath),
+      sortOrder: Value(sortOrder),
       updatedAt: Value(DateTime.now()),
     );
   }
+
+  /// Convert this Favorite back to a ContentItem for navigation/toggling.
+  ContentItem toContentItem() => ContentItem(
+    streamId, name, imagePath ?? '', contentType,
+  );
 
   @override
   String toString() {

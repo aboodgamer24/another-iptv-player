@@ -437,6 +437,8 @@ class Favorites extends Table {
 
   TextColumn get imagePath => text().nullable()();
 
+  IntColumn get sortOrder => integer().withDefault(const Constant(0))();
+
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 
   DateTimeColumn get updatedAt => dateTime().withDefault(currentDateAndTime)();
@@ -510,7 +512,7 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   // === PLAYLIST İŞLEMLERİ ===
 
@@ -1554,19 +1556,41 @@ class AppDatabase extends _$AppDatabase {
     )..where((f) => f.id.equals(favorite.id))).write(favorite.toCompanion());
   }
 
+  /// Saves a new sort order for a list of live-TV favorite IDs.
+  /// Call with the ids in the desired display order (index = new sortOrder).
+  Future<void> reorderLiveFavorites(List<String> orderedIds) async {
+    await batch((b) {
+      for (int i = 0; i < orderedIds.length; i++) {
+        b.update(
+          favorites,
+          FavoritesCompanion(sortOrder: Value(i)),
+          where: (f) => f.id.equals(orderedIds[i]),
+        );
+      }
+    });
+  }
+
   Future<void> deleteFavorite(String id) async {
     await (delete(favorites)..where((f) => f.id.equals(id))).go();
   }
 
   Future<List<Favorite>> getAllFavorites() async {
-    final favoritesData = await select(favorites).get();
+    final favoritesData = await (select(favorites)
+          ..orderBy([
+            (f) => OrderingTerm.asc(f.sortOrder),
+            (f) => OrderingTerm.desc(f.createdAt),
+          ]))
+        .get();
     return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
   }
 
   Future<List<Favorite>> getFavoritesByPlaylist(String playlistId) async {
     final query = select(favorites)
       ..where((f) => f.playlistId.equals(playlistId))
-      ..orderBy([(f) => OrderingTerm.desc(f.createdAt)]);
+      ..orderBy([
+        (f) => OrderingTerm.asc(f.sortOrder),
+        (f) => OrderingTerm.desc(f.createdAt),
+      ]);
     final favoritesData = await query.get();
     return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
   }
@@ -1679,6 +1703,9 @@ class AppDatabase extends _$AppDatabase {
       if (from < 9) {
         await m.createTable(watchLaters);
       }
+      if (from < 10) {
+        await m.addColumn(favorites, favorites.sortOrder);
+      }
     },
     beforeOpen: (OpeningDetails details) async {
       // Safety net: create tables if they somehow don't exist yet
@@ -1703,10 +1730,15 @@ class AppDatabase extends _$AppDatabase {
         '  m3u_item_id TEXT,'
         '  name TEXT NOT NULL,'
         '  image_path TEXT,'
+        '  sort_order INTEGER NOT NULL DEFAULT 0,'
         '  created_at INTEGER NOT NULL,'
         '  updated_at INTEGER NOT NULL'
         ');',
       );
+      // Add sort_order column if upgrading from schema < 10
+      await customStatement(
+        'ALTER TABLE favorites ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;'
+      ).catchError((_) {}); // ignore if column already exists
     },
   );
 

@@ -22,7 +22,7 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
 
   // Local mutable list for Live TV drag-and-drop order.
   // Initialized from controller on first build.
-  List<ContentItem>? _liveOrder;
+  List<Favorite>? _liveOrder;
 
   @override
   void initState() {
@@ -54,7 +54,6 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
 
     final liveItems = favCtrl.favorites
         .where((f) => f.contentType == ContentType.liveStream)
-        .map(_favToContentItem)
         .toList();
 
     final movieItems = favCtrl.favorites
@@ -112,6 +111,10 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                             final item = _liveOrder!.removeAt(oldIndex);
                             _liveOrder!.insert(newIndex, item);
                           });
+                          // Persist new order to DB
+                          final orderedIds = _liveOrder!.map((f) => f.id).toList();
+                          context.read<FavoritesController>()
+                              .reorderLiveFavorites(orderedIds);
                         },
                         itemBuilder: (context, index) {
                           final item = _liveOrder![index];
@@ -124,9 +127,9 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                   horizontal: 8, vertical: 4),
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
-                                child: item.imageUrl.isNotEmpty
+                                child: (item.imagePath ?? '').isNotEmpty
                                     ? Image.network(
-                                        item.imageUrl,
+                                        item.imagePath!,
                                         width: 40,
                                         height: 40,
                                         fit: BoxFit.cover,
@@ -153,10 +156,10 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                     color: Colors.redAccent, size: 20),
                                 tooltip: 'Remove from favourites',
                                 onPressed: () =>
-                                    favCtrl.toggleFavorite(item),
+                                    favCtrl.toggleFavorite(item.toContentItem()),
                               ),
                               onTap: () =>
-                                  navigateByContentType(context, item),
+                                  navigateByContentType(context, item.toContentItem()),
                             ),
                           );
                         },

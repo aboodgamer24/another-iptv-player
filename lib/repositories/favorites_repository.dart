@@ -135,6 +135,10 @@ class FavoritesRepository {
     await _database.updateFavorite(favorite);
   }
 
+  Future<void> reorderLiveFavorites(List<String> orderedIds) async {
+    await _database.reorderLiveFavorites(orderedIds);
+  }
+
   Future<void> clearAllFavorites() async {
     final playlistId = AppState.currentPlaylist!.id;
     final favorites = await _database.getFavoritesByPlaylist(playlistId);

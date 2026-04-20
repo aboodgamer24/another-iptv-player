@@ -9753,6 +9753,18 @@ class $FavoritesTable extends Favorites
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _sortOrderMeta = const VerificationMeta(
+    'sortOrder',
+  );
+  @override
+  late final GeneratedColumn<int> sortOrder = GeneratedColumn<int>(
+    'sort_order',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
   static const VerificationMeta _createdAtMeta = const VerificationMeta(
     'createdAt',
   );
@@ -9787,6 +9799,7 @@ class $FavoritesTable extends Favorites
     m3uItemId,
     name,
     imagePath,
+    sortOrder,
     createdAt,
     updatedAt,
   ];
@@ -9860,6 +9873,12 @@ class $FavoritesTable extends Favorites
         imagePath.isAcceptableOrUnknown(data['image_path']!, _imagePathMeta),
       );
     }
+    if (data.containsKey('sort_order')) {
+      context.handle(
+        _sortOrderMeta,
+        sortOrder.isAcceptableOrUnknown(data['sort_order']!, _sortOrderMeta),
+      );
+    }
     if (data.containsKey('created_at')) {
       context.handle(
         _createdAtMeta,
@@ -9913,6 +9932,10 @@ class $FavoritesTable extends Favorites
         DriftSqlType.string,
         data['${effectivePrefix}image_path'],
       ),
+      sortOrder: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}sort_order'],
+      )!,
       createdAt: attachedDatabase.typeMapping.read(
         DriftSqlType.dateTime,
         data['${effectivePrefix}created_at'],
@@ -9939,6 +9962,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
   final String? m3uItemId;
   final String name;
   final String? imagePath;
+  final int sortOrder;
   final DateTime createdAt;
   final DateTime updatedAt;
   const FavoritesData({
@@ -9950,6 +9974,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
     this.m3uItemId,
     required this.name,
     this.imagePath,
+    required this.sortOrder,
     required this.createdAt,
     required this.updatedAt,
   });
@@ -9970,6 +9995,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
     if (!nullToAbsent || imagePath != null) {
       map['image_path'] = Variable<String>(imagePath);
     }
+    map['sort_order'] = Variable<int>(sortOrder);
     map['created_at'] = Variable<DateTime>(createdAt);
     map['updated_at'] = Variable<DateTime>(updatedAt);
     return map;
@@ -9991,6 +10017,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
       imagePath: imagePath == null && nullToAbsent
           ? const Value.absent()
           : Value(imagePath),
+      sortOrder: Value(sortOrder),
       createdAt: Value(createdAt),
       updatedAt: Value(updatedAt),
     );
@@ -10010,6 +10037,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
       m3uItemId: serializer.fromJson<String?>(json['m3uItemId']),
       name: serializer.fromJson<String>(json['name']),
       imagePath: serializer.fromJson<String?>(json['imagePath']),
+      sortOrder: serializer.fromJson<int>(json['sortOrder']),
       createdAt: serializer.fromJson<DateTime>(json['createdAt']),
       updatedAt: serializer.fromJson<DateTime>(json['updatedAt']),
     );
@@ -10026,6 +10054,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
       'm3uItemId': serializer.toJson<String?>(m3uItemId),
       'name': serializer.toJson<String>(name),
       'imagePath': serializer.toJson<String?>(imagePath),
+      'sortOrder': serializer.toJson<int>(sortOrder),
       'createdAt': serializer.toJson<DateTime>(createdAt),
       'updatedAt': serializer.toJson<DateTime>(updatedAt),
     };
@@ -10040,6 +10069,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
     Value<String?> m3uItemId = const Value.absent(),
     String? name,
     Value<String?> imagePath = const Value.absent(),
+    int? sortOrder,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) => FavoritesData(
@@ -10051,6 +10081,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
     m3uItemId: m3uItemId.present ? m3uItemId.value : this.m3uItemId,
     name: name ?? this.name,
     imagePath: imagePath.present ? imagePath.value : this.imagePath,
+    sortOrder: sortOrder ?? this.sortOrder,
     createdAt: createdAt ?? this.createdAt,
     updatedAt: updatedAt ?? this.updatedAt,
   );
@@ -10068,6 +10099,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
       m3uItemId: data.m3uItemId.present ? data.m3uItemId.value : this.m3uItemId,
       name: data.name.present ? data.name.value : this.name,
       imagePath: data.imagePath.present ? data.imagePath.value : this.imagePath,
+      sortOrder: data.sortOrder.present ? data.sortOrder.value : this.sortOrder,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
       updatedAt: data.updatedAt.present ? data.updatedAt.value : this.updatedAt,
     );
@@ -10084,6 +10116,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
           ..write('m3uItemId: $m3uItemId, ')
           ..write('name: $name, ')
           ..write('imagePath: $imagePath, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt')
           ..write(')'))
@@ -10100,6 +10133,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
     m3uItemId,
     name,
     imagePath,
+    sortOrder,
     createdAt,
     updatedAt,
   );
@@ -10115,6 +10149,7 @@ class FavoritesData extends DataClass implements Insertable<FavoritesData> {
           other.m3uItemId == this.m3uItemId &&
           other.name == this.name &&
           other.imagePath == this.imagePath &&
+          other.sortOrder == this.sortOrder &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt);
 }
@@ -10128,6 +10163,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
   final Value<String?> m3uItemId;
   final Value<String> name;
   final Value<String?> imagePath;
+  final Value<int> sortOrder;
   final Value<DateTime> createdAt;
   final Value<DateTime> updatedAt;
   final Value<int> rowid;
@@ -10140,6 +10176,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
     this.m3uItemId = const Value.absent(),
     this.name = const Value.absent(),
     this.imagePath = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -10153,6 +10190,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
     this.m3uItemId = const Value.absent(),
     required String name,
     this.imagePath = const Value.absent(),
+    this.sortOrder = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rowid = const Value.absent(),
@@ -10170,6 +10208,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
     Expression<String>? m3uItemId,
     Expression<String>? name,
     Expression<String>? imagePath,
+    Expression<int>? sortOrder,
     Expression<DateTime>? createdAt,
     Expression<DateTime>? updatedAt,
     Expression<int>? rowid,
@@ -10183,6 +10222,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
       if (m3uItemId != null) 'm3u_item_id': m3uItemId,
       if (name != null) 'name': name,
       if (imagePath != null) 'image_path': imagePath,
+      if (sortOrder != null) 'sort_order': sortOrder,
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rowid != null) 'rowid': rowid,
@@ -10198,6 +10238,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
     Value<String?>? m3uItemId,
     Value<String>? name,
     Value<String?>? imagePath,
+    Value<int>? sortOrder,
     Value<DateTime>? createdAt,
     Value<DateTime>? updatedAt,
     Value<int>? rowid,
@@ -10211,6 +10252,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
       m3uItemId: m3uItemId ?? this.m3uItemId,
       name: name ?? this.name,
       imagePath: imagePath ?? this.imagePath,
+      sortOrder: sortOrder ?? this.sortOrder,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rowid: rowid ?? this.rowid,
@@ -10244,6 +10286,9 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
     if (imagePath.present) {
       map['image_path'] = Variable<String>(imagePath.value);
     }
+    if (sortOrder.present) {
+      map['sort_order'] = Variable<int>(sortOrder.value);
+    }
     if (createdAt.present) {
       map['created_at'] = Variable<DateTime>(createdAt.value);
     }
@@ -10267,6 +10312,7 @@ class FavoritesCompanion extends UpdateCompanion<FavoritesData> {
           ..write('m3uItemId: $m3uItemId, ')
           ..write('name: $name, ')
           ..write('imagePath: $imagePath, ')
+          ..write('sortOrder: $sortOrder, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rowid: $rowid')
@@ -15408,6 +15454,7 @@ typedef $$FavoritesTableCreateCompanionBuilder =
       Value<String?> m3uItemId,
       required String name,
       Value<String?> imagePath,
+      Value<int> sortOrder,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -15422,6 +15469,7 @@ typedef $$FavoritesTableUpdateCompanionBuilder =
       Value<String?> m3uItemId,
       Value<String> name,
       Value<String?> imagePath,
+      Value<int> sortOrder,
       Value<DateTime> createdAt,
       Value<DateTime> updatedAt,
       Value<int> rowid,
@@ -15473,6 +15521,11 @@ class $$FavoritesTableFilterComposer
 
   ColumnFilters<String> get imagePath => $composableBuilder(
     column: $table.imagePath,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -15536,6 +15589,11 @@ class $$FavoritesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get sortOrder => $composableBuilder(
+    column: $table.sortOrder,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<DateTime> get createdAt => $composableBuilder(
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
@@ -15584,6 +15642,9 @@ class $$FavoritesTableAnnotationComposer
   GeneratedColumn<String> get imagePath =>
       $composableBuilder(column: $table.imagePath, builder: (column) => column);
 
+  GeneratedColumn<int> get sortOrder =>
+      $composableBuilder(column: $table.sortOrder, builder: (column) => column);
+
   GeneratedColumn<DateTime> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
 
@@ -15630,6 +15691,7 @@ class $$FavoritesTableTableManager
                 Value<String?> m3uItemId = const Value.absent(),
                 Value<String> name = const Value.absent(),
                 Value<String?> imagePath = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15642,6 +15704,7 @@ class $$FavoritesTableTableManager
                 m3uItemId: m3uItemId,
                 name: name,
                 imagePath: imagePath,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,
@@ -15656,6 +15719,7 @@ class $$FavoritesTableTableManager
                 Value<String?> m3uItemId = const Value.absent(),
                 required String name,
                 Value<String?> imagePath = const Value.absent(),
+                Value<int> sortOrder = const Value.absent(),
                 Value<DateTime> createdAt = const Value.absent(),
                 Value<DateTime> updatedAt = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
@@ -15668,6 +15732,7 @@ class $$FavoritesTableTableManager
                 m3uItemId: m3uItemId,
                 name: name,
                 imagePath: imagePath,
+                sortOrder: sortOrder,
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rowid: rowid,

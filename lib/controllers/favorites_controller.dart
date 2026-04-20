@@ -163,6 +163,17 @@ class FavoritesController extends ChangeNotifier {
     }
   }
 
+  /// Persists a new live-TV sort order.
+  /// [orderedIds] is the list of Favorite.id values in the new display order.
+  Future<void> reorderLiveFavorites(List<String> orderedIds) async {
+    try {
+      await _repository.reorderLiveFavorites(orderedIds);
+      await loadFavorites();
+    } catch (e) {
+      _setError('Sıralama kaydedilirken hata oluştu: $e');
+    }
+  }
+
   Future<bool> clearAllFavorites() async {
     try {
       _setError(null);
