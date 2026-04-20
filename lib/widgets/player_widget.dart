@@ -76,6 +76,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   bool _isFirstCheck = true;
   int _currentItemIndex = 0;
   bool _showChannelList = false;
+  bool _isSwitchingChannel = false;
   Timer? _watchHistoryTimer;
   Duration? _pendingWatchDuration;
   Duration? _pendingTotalDuration;
@@ -408,6 +409,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         _errorHandler.handleError(
           error,
           () async {
+            if (_isSwitchingChannel) return;
             if (contentItem.contentType == ContentType.liveStream) {
               await _player.open(Media(contentItem.url));
               await _applyUpscaler();
@@ -453,6 +455,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     });
 
     _player.stream.completed.listen((playlist) async {
+      if (_isSwitchingChannel) return;
       if (contentItem.contentType == ContentType.liveStream) {
         await _player.open(Media(contentItem.url));
         await _applyUpscaler();
@@ -463,32 +466,44 @@ class _PlayerWidgetState extends State<PlayerWidget>
         .on<int>('player_content_item_index_changed')
         .listen((int index) async {
           if (contentItem.contentType == ContentType.liveStream) {
-            // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
-            final updatedQueue = _queue ?? PlayerState.queue;
-            if (updatedQueue == null || index >= updatedQueue.length) return;
-            // sync PlayerState so it matches the active session
-            PlayerState.queue = updatedQueue;
+            // Guard against concurrent open() calls — rapid taps can
+            // overlap and crash the native D3D/ANGLE video pipeline.
+            if (_isSwitchingChannel) return;
+            _isSwitchingChannel = true;
 
-            final item = updatedQueue[index];
-            contentItem = item;
-            _queue = updatedQueue; // Queue'yu güncelle
+            try {
+              // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
+              final updatedQueue = _queue ?? PlayerState.queue;
+              if (updatedQueue == null || index >= updatedQueue.length) return;
+              // sync PlayerState so it matches the active session
+              PlayerState.queue = updatedQueue;
 
-            // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
-            PlayerState.currentContent = contentItem;
-            PlayerState.currentIndex = index;
-            PlayerState.title = item.name;
-            _currentItemIndex = index;
-            // -------------------------------------------
+              final item = updatedQueue[index];
+              contentItem = item;
+              _queue = updatedQueue; // Queue'yu güncelle
 
-            // Use bare Media (not Playlist) to match initial open pattern
-            // and avoid recreating the entire video pipeline.
-            await _player.open(Media(item.url));
-            await _applyUpscaler();
-            EventBus().emit('player_content_item', item);
-            EventBus().emit('player_content_item_index', index);
-            _errorHandler.reset();
+              // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
+              PlayerState.currentContent = contentItem;
+              PlayerState.currentIndex = index;
+              PlayerState.title = item.name;
+              _currentItemIndex = index;
+              // -------------------------------------------
 
-            if (mounted) setState(() {});
+              // Cancel any pending retry timers before opening new stream
+              _errorHandler.reset();
+
+              // Use bare Media (not Playlist) to match initial open pattern
+              // and avoid recreating the entire video pipeline.
+              await _player.open(Media(item.url));
+              await _applyUpscaler();
+              EventBus().emit('player_content_item', item);
+              EventBus().emit('player_content_item_index', index);
+              _errorHandler.reset();
+
+              if (mounted) setState(() {});
+            } finally {
+              _isSwitchingChannel = false;
+            }
           } else {
             // Update contentItem immediately so playlist.listen does not overwrite
             // it with the stale index before the new media begins playing.
