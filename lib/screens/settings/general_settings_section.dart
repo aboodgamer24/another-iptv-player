@@ -30,7 +30,7 @@ import 'home_customization_section.dart';
 import '../../utils/app_config.dart';
 import '../../services/upscale_service.dart';
 
-final controller = XtreamCodeHomeController(true);
+
 
 class GeneralSettingsWidget extends StatefulWidget {
   const GeneralSettingsWidget({super.key});
@@ -260,17 +260,24 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
               leading: const Icon(Icons.refresh),
               title: Text(context.loc.refresh_contents),
               trailing: const Icon(Icons.cloud_download),
-              onTap: () {
+              onTap: () async {
                 if (isXtreamCode) {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => XtreamCodeDataLoaderScreen(
-                        playlist: AppState.currentPlaylist!,
-                        refreshAll: true,
+                  try {
+                    final ctrl = Provider.of<XtreamCodeHomeController>(
+                      context, listen: false);
+                    await ctrl.refreshAllData(context);
+                  } catch (_) {
+                    // If provider not in tree, navigate as fallback
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => XtreamCodeDataLoaderScreen(
+                          playlist: AppState.currentPlaylist!,
+                          refreshAll: true,
+                        ),
                       ),
-                    ),
-                  );
+                    );
+                  }
                 }
 
                 if (isM3u) {
@@ -288,11 +295,17 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                 title: Text(context.loc.hide_category),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
+                  XtreamCodeHomeController? ctrl;
+                  try {
+                    ctrl = Provider.of<XtreamCodeHomeController>(
+                      context, listen: false);
+                  } catch (_) {}
+
                   final result = await Navigator.push(
                     context,
                     PageRouteBuilder(
                       pageBuilder: (_, __, ___) => CategorySettingsScreen(
-                        controller: controller,
+                        controller: ctrl ?? XtreamCodeHomeController(false),
                       ),
                       transitionsBuilder: (_, animation, __, child) {
                         return FadeTransition(
@@ -317,7 +330,9 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   );
 
                   if (result == true) {
-                    if (isXtreamCode) {
+                    if (isXtreamCode && ctrl != null) {
+                      await ctrl.refreshAllData(context);
+                    } else if (isXtreamCode) {
                       Navigator.pushReplacement(
                         context,
                         MaterialPageRoute(

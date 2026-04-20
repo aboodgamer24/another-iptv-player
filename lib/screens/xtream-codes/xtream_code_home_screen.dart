@@ -33,6 +33,7 @@ class XtreamCodeHomeScreen extends StatefulWidget {
 
 class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   late XtreamCodeHomeController _controller;
+  XtreamCodeHomeController get controller => _controller;
   static const double _desktopBreakpoint = 900.0;
   final ScrollController _scrollController = ScrollController();
 
@@ -80,14 +81,6 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     BuildContext context,
     XtreamCodeHomeController controller,
   ) {
-    // True cold start (DB was empty) — show full loading screen once
-    if (controller.isLoading &&
-        controller.liveCategories!.isEmpty &&
-        controller.movieCategories.isEmpty &&
-        controller.seriesCategories.isEmpty) {
-      return _buildLoadingScreen(context);
-    }
-
     return LayoutBuilder(
       builder: (context, constraints) {
         if (constraints.maxWidth >= _desktopBreakpoint) {
@@ -95,21 +88,6 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
         }
         return _buildMobileLayout(context, controller);
       },
-    );
-  }
-
-  Widget _buildLoadingScreen(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const CircularProgressIndicator(),
-            const SizedBox(height: 16),
-            Text(context.loc.loading_playlists),
-          ],
-        ),
-      ),
     );
   }
 

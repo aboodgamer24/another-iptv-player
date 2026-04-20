@@ -8,10 +8,10 @@ import 'package:another_iptv_player/models/view_state.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import '../repositories/user_preferences.dart';
-import '../screens/xtream-codes/xtream_code_data_loader_screen.dart';
-import '../database/database.dart';
-import '../models/category.dart';
 import '../models/category_type.dart';
+import '../models/live_stream.dart';
+import '../models/vod_streams.dart';
+import '../models/series.dart';
 
 class XtreamCodeHomeController extends ChangeNotifier {
   late PageController _pageController;
@@ -143,18 +143,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final db = AppState.database;
       final playlistId = AppState.currentPlaylist!.id;
 
-      // Check if DB has any data — only show loading spinner on true cold start
-      if (!all) {
-        final hasData = (await db.getCategoriesByTypeAndPlaylist(
-              playlistId, CategoryType.live)).isNotEmpty ||
-            (await db.getCategoriesByTypeAndPlaylist(
-              playlistId, CategoryType.vod)).isNotEmpty ||
-            (await db.getCategoriesByTypeAndPlaylist(
-              playlistId, CategoryType.series)).isNotEmpty;
-        _isLoading = !hasData;
-        if (_isLoading) notifyListeners();
-      }
-
       if (all) {
         // Use existing forceRefresh API methods — they fetch AND save to DB
         await _repository.getLiveCategories(forceRefresh: true);
@@ -165,25 +153,39 @@ class XtreamCodeHomeController extends ChangeNotifier {
         await _repository.getSeriesFromApi();
       }
 
-      // ── LOAD FROM DB (both startup and after refresh) ──────────────────
+      // ── LOAD FROM DB — single bulk fetch per type, group in memory ────────
 
-      final liveCats = await db.getCategoriesByTypeAndPlaylist(
-        playlistId, CategoryType.live,
-      );
-      final vodCats = await db.getCategoriesByTypeAndPlaylist(
-        playlistId, CategoryType.vod,
-      );
-      final seriesCats = await db.getCategoriesByTypeAndPlaylist(
-        playlistId, CategoryType.series,
-      );
+      final allLiveCats = await db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.live);
+      final allVodCats  = await db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.vod);
+      final allSerCats  = await db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.series);
 
-      // Live
-      for (final cat in liveCats) {
-        final streams = await db.getLiveStreamsByCategoryId(
-          playlistId, cat.categoryId,
-        );
+      // Bulk fetch all streams at once
+      final allLiveStreams = await db.getLiveStreams(playlistId);
+      final allVodStreams  = await db.getVodStreamsByPlaylistId(playlistId);
+      final allSerStreams  = await db.getSeriesStreamsByPlaylistId(playlistId);
+
+      // Group by categoryId in memory
+      final liveMap = <String, List<LiveStream>>{};
+      for (final s in allLiveStreams) {
+        liveMap.putIfAbsent(s.categoryId, () => []).add(s);
+      }
+      final vodMap = <String, List<VodStream>>{};
+      for (final s in allVodStreams) {
+        vodMap.putIfAbsent(s.categoryId, () => []).add(s);
+      }
+      final serMap = <String, List<SeriesStream>>{};
+      for (final s in allSerStreams) {
+        if (s.categoryId == null) continue;
+        serMap.putIfAbsent(s.categoryId!, () => []).add(s);
+      }
+
+      // Load hidden categories once
+      final hiddenSet = (await UserPreferences.getHiddenCategories()).toSet();
+
+      for (final cat in allLiveCats) {
+        final streams = liveMap[cat.categoryId] ?? [];
         if (streams.isEmpty) continue;
-        if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) continue;
+        if (!all && hiddenSet.contains(cat.categoryId)) continue;
         _liveCategories.add(CategoryViewModel(
           category: cat,
           contentItems: streams.map((x) => ContentItem(
@@ -193,13 +195,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
         ));
       }
 
-      // Movies
-      for (final cat in vodCats) {
-        final streams = await db.getVodStreamsByCategoryAndPlaylistId(
-          categoryId: cat.categoryId, playlistId: playlistId,
-        );
+      for (final cat in allVodCats) {
+        final streams = vodMap[cat.categoryId] ?? [];
         if (streams.isEmpty) continue;
-        if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) continue;
+        if (!all && hiddenSet.contains(cat.categoryId)) continue;
         _movieCategories.add(CategoryViewModel(
           category: cat,
           contentItems: streams.map((x) => ContentItem(
@@ -209,13 +208,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
         ));
       }
 
-      // Series
-      for (final cat in seriesCats) {
-        final streams = await db.getSeriesStreamsByCategoryAndPlaylistId(
-          categoryId: cat.categoryId, playlistId: playlistId,
-        );
+      for (final cat in allSerCats) {
+        final streams = serMap[cat.categoryId] ?? [];
         if (streams.isEmpty) continue;
-        if (!all && await UserPreferences.getHiddenCategory(cat.categoryId)) continue;
+        if (!all && hiddenSet.contains(cat.categoryId)) continue;
         _seriesCategories.add(CategoryViewModel(
           category: cat,
           contentItems: streams.map((x) => ContentItem(
