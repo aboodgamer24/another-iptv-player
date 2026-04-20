@@ -225,29 +225,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (item.id == contentItem.id) {
           currentItemIndex = i;
           _currentItemIndex = i;
-
-          if (item.contentType == ContentType.liveStream) {
-            currentItemIndex = 0;
-            _currentItemIndex = 0;
-            contentItem = item;
-
-            mediaItems.add(
-              MediaItem(
-                id: item.id.toString(),
-                title: item.name,
-                artist: _getContentTypeDisplayName(),
-                album: AppState.currentPlaylist?.name ?? '',
-                artUri: item.imagePath != null
-                    ? Uri.parse(item.imagePath!)
-                    : null,
-                playable: true,
-                extras: {'url': item.url, 'startPosition': 0},
-              ),
-            );
-
-            EventBus().emit('player_content_item', item);
-            EventBus().emit('player_content_item_index', i);
-          }
+          contentItem = item;
+          EventBus().emit('player_content_item', item);
+          EventBus().emit('player_content_item_index', i);
         }
       }
 
