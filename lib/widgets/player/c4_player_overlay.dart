@@ -52,6 +52,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   double _volume = 1.0;
   bool _isMuted = false;
   late List<StreamSubscription> _subscriptions;
+  final FocusNode _keyboardFocusNode = FocusNode(debugLabel: 'player_overlay');
 
   @override
   void initState() {
@@ -87,6 +88,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         }
       }),
     ];
+
+    // Request focus once so keyboard shortcuts work,
+    // but never steal it again after that.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_keyboardFocusNode.hasFocus) {
+        FocusScope.of(context).requestFocus(_keyboardFocusNode);
+      }
+    });
   }
 
   @override
@@ -95,6 +104,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     for (var sub in _subscriptions) {
       sub.cancel();
     }
+    _keyboardFocusNode.dispose();
     super.dispose();
   }
 
@@ -249,8 +259,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       valueListenable: fullscreenNotifier,
       builder: (context, isFullscreen, _) {
         return KeyboardListener(
-          focusNode: FocusNode()..requestFocus(),
-          onKeyEvent: _onKey,
+          focusNode: _keyboardFocusNode,
+          onKeyEvent: (event) {
+            // Only handle keys when no TextField has focus
+            if (FocusManager.instance.primaryFocus?.context
+                    ?.widget is! EditableText) {
+              _onKey(event);
+            }
+          },
           child: GestureDetector(
             onTap: _toggleVisibility,
             behavior: HitTestBehavior.translucent,
