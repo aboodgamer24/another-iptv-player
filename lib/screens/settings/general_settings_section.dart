@@ -628,37 +628,35 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                     // Playlist card spans full width
                     playlist,
                     const SizedBox(height: 10),
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Left column: General + Player
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                generalTitle, generalCard,
-                                const SizedBox(height: 10),
-                                playerTitle, playerCard,
-                              ],
-                            ),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Left column: General + Player
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              generalTitle, generalCard,
+                              const SizedBox(height: 10),
+                              playerTitle, playerCard,
+                            ],
                           ),
-                          const SizedBox(width: 16),
-                          // Right column: Integration + Home Customization + About
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                integrationTitle, integrationCard,
-                                const SizedBox(height: 10),
-                                homeTitle, homeSection,
-                                const SizedBox(height: 10),
-                                aboutTitle, aboutCard,
-                              ],
-                            ),
+                        ),
+                        const SizedBox(width: 16),
+                        // Right column: Integration + Home Customization + About
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              integrationTitle, integrationCard,
+                              const SizedBox(height: 10),
+                              homeTitle, homeSection,
+                              const SizedBox(height: 10),
+                              aboutTitle, aboutCard,
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                   ],
                 );
