@@ -693,9 +693,6 @@ class AppLocalizationsTr extends AppLocalizations {
   String get dark => 'Koyu';
 
   @override
-  String get system_default => 'Sistem Varsayılanı';
-
-  @override
   String get trailer => 'Fragman';
 
   @override
