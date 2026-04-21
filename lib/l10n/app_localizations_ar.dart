@@ -693,6 +693,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dark => 'داكن';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => 'الإعلان';
 
   @override

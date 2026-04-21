@@ -702,6 +702,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get dark => 'Sombre';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => 'Bande-annonce';
 
   @override

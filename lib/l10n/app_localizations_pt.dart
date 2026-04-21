@@ -699,6 +699,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get dark => 'Escuro';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => 'Reboque';
 
   @override

@@ -696,6 +696,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get dark => 'Темный';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => 'трейлер';
 
   @override

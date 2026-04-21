@@ -702,6 +702,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get dark => 'Oscuro';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => 'Tráiler';
 
   @override

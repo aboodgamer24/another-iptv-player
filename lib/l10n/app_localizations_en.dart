@@ -694,6 +694,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dark => 'Dark';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => 'Trailer';
 
   @override

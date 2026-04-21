@@ -1386,6 +1386,12 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get dark;
 
+  /// No description provided for @system_default.
+  ///
+  /// In en, this message translates to:
+  /// **'System Default'**
+  String get system_default;
+
   /// No description provided for @trailer.
   ///
   /// In en, this message translates to:

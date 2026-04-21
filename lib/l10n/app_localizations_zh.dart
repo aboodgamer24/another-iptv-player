@@ -675,6 +675,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dark => '深色';
 
   @override
+  String get system_default => 'System Default';
+
+  @override
   String get trailer => '拖車';
 
   @override
