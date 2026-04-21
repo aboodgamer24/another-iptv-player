@@ -15,23 +15,27 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - syncnet
 
   server:
-    build:
-      context: .
-      no_cache: true
+    image: iptv-sync-server
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     env_file:
       - stack.env
-    environment:
-      - DOCKER_BUILDKIT=0
     ports:
-      - "${PORT:-7000}:${PORT:-7000}"
+      - "${PORT:-7000}:7000"
     command: >
       sh -c "node src/migrate.js && node src/index.js"
+    networks:
+      - syncnet
 
 volumes:
   pgdata:
+
+networks:
+  syncnet:
+    driver: bridge
