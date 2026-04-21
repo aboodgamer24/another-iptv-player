@@ -8,6 +8,7 @@ import '../../services/sync_service.dart';
 import '../../repositories/user_preferences.dart';
 import '../welcome_screen.dart';
 import '../../utils/app_config.dart';
+import '../../utils/app_transitions.dart';
 
 
 class AccountScreen extends StatefulWidget {
@@ -97,7 +98,7 @@ class _AccountScreenState extends State<AccountScreen> {
       // 4. Navigate to Welcome screen, removing all routes
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          fadeRoute(builder: (_) => const WelcomeScreen()),
           (_) => false,
         );
       }

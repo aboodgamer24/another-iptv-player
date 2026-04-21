@@ -185,78 +185,90 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   Widget _buildTmdbSection(String title, List<Map<String, dynamic>> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              const Icon(Icons.local_fire_department, color: Colors.orange, size: 18),
-              const SizedBox(width: 6),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeOutCubic,
+      builder: (_, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 14 * (1 - value)),
+          child: child,
         ),
-        SizedBox(
-          height: 180,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: items.length,
-            itemExtent: 118.0,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              final posterPath = item['poster_path'] as String?;
-              final name = (item['title'] ?? item['name'] ?? '') as String;
-              return GestureDetector(
-                onTap: () {/* TMDB detail navigation if available */},
-                child: Container(
-                  width: 110,
-                  margin: const EdgeInsets.symmetric(horizontal: 4),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(8),
-                    color: Colors.grey[900],
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Expanded(
-                        child: CachedNetworkImage(
-                          imageUrl: _tmdb.getPosterUrl(posterPath),
-                          fit: BoxFit.cover,
-                          memCacheWidth: 220,
-                          memCacheHeight: 330,
-                          fadeInDuration: const Duration(milliseconds: 150),
-                          errorWidget: (_, __, ___) =>
-                              const Icon(Icons.movie, color: Colors.white24),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.all(4),
-                        child: Text(
-                          name,
-                          style: const TextStyle(color: Colors.white, fontSize: 10),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              children: [
+                const Icon(Icons.local_fire_department, color: Colors.orange, size: 18),
+                const SizedBox(width: 6),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-        ),
-      ],
+          SizedBox(
+            height: 180,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: items.length,
+              itemExtent: 118.0,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                final posterPath = item['poster_path'] as String?;
+                final name = (item['title'] ?? item['name'] ?? '') as String;
+                return GestureDetector(
+                  onTap: () {/* TMDB detail navigation if available */},
+                  child: Container(
+                    width: 110,
+                    margin: const EdgeInsets.symmetric(horizontal: 4),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.grey[900],
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Expanded(
+                          child: CachedNetworkImage(
+                            imageUrl: _tmdb.getPosterUrl(posterPath),
+                            fit: BoxFit.cover,
+                            memCacheWidth: 220,
+                            memCacheHeight: 330,
+                            fadeInDuration: const Duration(milliseconds: 150),
+                            errorWidget: (_, __, ___) =>
+                                const Icon(Icons.movie, color: Colors.white24),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: Text(
+                            name,
+                            style: const TextStyle(color: Colors.white, fontSize: 10),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -281,88 +293,106 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   Widget _buildHero(ContentItem item) {
-    return AspectRatio(
-      aspectRatio: 16 / 9,
-      child: GestureDetector(
-        onTap: () => navigateByContentType(context, item),
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            CachedNetworkImage(
-              imageUrl: item.imageUrl,
-              fit: BoxFit.cover,
-              memCacheWidth: 780,
-              memCacheHeight: 440,
-              fadeInDuration: const Duration(milliseconds: 200),
-              errorWidget: (_, __, ___) => Container(color: Colors.grey[900]),
-            ),
-            Container(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black87],
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 500),
+      curve: Curves.easeOut,
+      builder: (_, value, child) => Opacity(opacity: value, child: child),
+      child: AspectRatio(
+        aspectRatio: 16 / 9,
+        child: GestureDetector(
+          onTap: () => navigateByContentType(context, item),
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              CachedNetworkImage(
+                imageUrl: item.imageUrl,
+                fit: BoxFit.cover,
+                memCacheWidth: 780,
+                memCacheHeight: 440,
+                fadeInDuration: const Duration(milliseconds: 200),
+                errorWidget: (_, __, ___) => Container(color: Colors.grey[900]),
+              ),
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Colors.transparent, Colors.black87],
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 16,
-              left: 16,
-              right: 16,
-              child: Text(
-                item.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Text(
+                  item.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildSection(String title, List<ContentItem> items) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.0, end: 1.0),
+      duration: const Duration(milliseconds: 450),
+      curve: Curves.easeOutCubic,
+      builder: (_, value, child) => Opacity(
+        opacity: value,
+        child: Transform.translate(
+          offset: Offset(0, 14 * (1 - value)),
+          child: child,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              TextButton(
-                onPressed: () {}, // See all
-                child: const Text('See all'),
-              ),
-            ],
+                TextButton(
+                  onPressed: () {}, // See all
+                  child: const Text('See all'),
+                ),
+              ],
+            ),
           ),
-        ),
-        SizedBox(
-          height: 160,
-          child: ListView.builder(
-            cacheExtent: 500,
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            itemCount: items.length,
-            itemExtent: 120.0,
-            itemBuilder: (context, index) {
-              final item = items[index];
-              return _buildPosterCard(item);
-            },
+          SizedBox(
+            height: 160,
+            child: ListView.builder(
+              cacheExtent: 500,
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: items.length,
+              itemExtent: 120.0,
+              itemBuilder: (context, index) {
+                final item = items[index];
+                return _buildPosterCard(item);
+              },
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 

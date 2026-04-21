@@ -3,6 +3,7 @@ import '../repositories/user_preferences.dart';
 import '../services/sync_service.dart';
 import 'playlist_screen.dart';
 import 'post_login_choice_screen.dart';
+import '../utils/app_transitions.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -98,7 +99,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void _proceedAfterAuth() {
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const PostLoginChoiceScreen()),
+      fadeRoute(builder: (_) => const PostLoginChoiceScreen()),
     );
   }
 
@@ -106,7 +107,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     await UserPreferences.setHasSeenWelcome(true);
     if (mounted) {
       Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const PlaylistScreen()),
+        slideRoute(builder: (_) => const PlaylistScreen()),
       );
     }
   }

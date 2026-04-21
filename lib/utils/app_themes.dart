@@ -1,4 +1,15 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
+
+// Smooth fade-through for all platform-default MaterialPageRoute pushes.
+// Only applied to Android; other platforms keep their native feel.
+final _androidFadeThrough = PageTransitionsTheme(
+  builders: {
+    if (Platform.isAndroid)
+      TargetPlatform.android: _FadeThroughPageTransitionsBuilder(),
+    // Windows/macOS/Linux keep their default (no entry = system default)
+  },
+);
 
 class AppThemes {
   // Refined teal accent color
@@ -11,6 +22,7 @@ class AppThemes {
 
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
+    pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.light(
       primary: _primaryDark,
       onPrimary: Colors.white,
@@ -50,6 +62,7 @@ class AppThemes {
     useMaterial3: true,
     brightness: Brightness.dark,
     fontFamily: 'DMSans',
+    pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.dark(
       primary: midnightPrimary,
       onPrimary: Colors.white,
@@ -127,6 +140,7 @@ class AppThemes {
   static final ThemeData skyBlueTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
+    pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.light(
       primary: _skyBluePrimary,
       onPrimary: Colors.white,
@@ -205,5 +219,33 @@ class AppThemes {
   /// Check if a theme name represents a dark theme
   static bool isDarkTheme(String name) {
     return name == 'dark';
+  }
+}
+
+class _FadeThroughPageTransitionsBuilder extends PageTransitionsBuilder {
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    // Incoming: fade + tiny scale up (1.0 → 1.0 with no distortion)
+    final fadeIn = CurvedAnimation(
+      parent: animation,
+      curve: const Interval(0.0, 1.0, curve: Curves.easeOutCubic),
+    );
+    // Outgoing: fade out slightly
+    final fadeOut = Tween<double>(begin: 1.0, end: 0.88).animate(
+      CurvedAnimation(
+        parent: secondaryAnimation,
+        curve: const Interval(0.0, 0.6, curve: Curves.easeInCubic),
+      ),
+    );
+    return FadeTransition(
+      opacity: fadeOut,
+      child: FadeTransition(opacity: fadeIn, child: child),
+    );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:io';
 import '../../services/fullscreen_notifier.dart';
 
 class MobileShellScreen extends StatefulWidget {
@@ -75,7 +76,21 @@ class _MobileShellScreenState extends State<MobileShellScreen> {
                     ),
                   ],
                 ),
-          body: SafeArea(child: widget.child),
+          body: Platform.isAndroid
+              ? AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 220),
+                  switchInCurve: Curves.easeOutCubic,
+                  switchOutCurve: Curves.easeInCubic,
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
+                  child: KeyedSubtree(
+                    key: ValueKey(widget.selectedIndex),
+                    child: SafeArea(child: widget.child),
+                  ),
+                )
+              : SafeArea(child: widget.child),
           // BOTTOM BAR: only the 4 main navigation tabs
           bottomNavigationBar: isFullscreen
               ? null

@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
@@ -23,6 +24,7 @@ import '../mobile/mobile_watch_later_screen.dart';
 import '../mobile/mobile_watch_later_screen.dart';
 import '../mobile/mobile_global_search_screen.dart';
 import 'xtream_code_playlist_settings_screen.dart';
+import '../../utils/app_transitions.dart';
 
 class XtreamCodeHomeScreen extends StatefulWidget {
   final Playlist playlist;
@@ -104,14 +106,14 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       onSearchTap: showSearch
           ? () => Navigator.push(
                 context,
-                MaterialPageRoute(builder: (_) => const MobileGlobalSearchScreen()),
+                slideUpRoute(builder: (_) => const MobileGlobalSearchScreen()),
               )
           : null,
 
       // Favorites → pushed as a full screen route
       onFavoritesTap: () => Navigator.push(
         context,
-        MaterialPageRoute(
+        slideUpRoute(
           builder: (_) => Scaffold(
             appBar: AppBar(
               title: Text(context.loc.favorites),
@@ -125,7 +127,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       // Watch Later → pushed as a full screen route
       onWatchLaterTap: () => Navigator.push(
         context,
-        MaterialPageRoute(
+        slideUpRoute(
           builder: (_) => Scaffold(
             appBar: AppBar(
               title: Text(context.loc.rail_watch_later),
@@ -139,7 +141,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       // Settings → pushed as a full screen route
       onSettingsTap: () => Navigator.push(
         context,
-        MaterialPageRoute(
+        slideUpRoute(
           builder: (_) => XtreamCodePlaylistSettingsScreen(
             playlist: widget.playlist,
           ),
@@ -149,7 +151,13 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       // PageView now only has 4 children matching the 4 bottom-nav tabs
       child: PageView(
         controller: _mobilePageController,
-        physics: const NeverScrollableScrollPhysics(),
+        physics: Platform.isAndroid
+            ? const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics())
+            : const NeverScrollableScrollPhysics(),
+        onPageChanged: (index) {
+          // Sync the bottom NavigationBar when user swipes
+          setState(() => _mobileIndex = index);
+        },
         children: [
           // 0 - Home
           _KeepAlivePage(child: MobileHomeScreen(playlistId: widget.playlist.id)),

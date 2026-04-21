@@ -7,6 +7,7 @@ import '../../models/playlist_model.dart';
 import '../../widgets/playlist_card.dart';
 import '../../widgets/playlist_states.dart';
 import 'playlist_type_screen.dart';
+import '../utils/app_transitions.dart';
 
 class PlaylistScreen extends StatefulWidget {
   const PlaylistScreen({super.key});
@@ -129,7 +130,7 @@ class _PlaylistScreenBody extends StatelessWidget {
   void _navigateToCreatePlaylist(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const PlaylistTypeScreen()),
+      slideRoute(builder: (context) => const PlaylistTypeScreen()),
     );
   }
 

@@ -2,6 +2,7 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/screens/m3u/new_m3u_playlist_screen.dart';
 import 'package:flutter/material.dart';
 import 'xtream-codes/new_xtream_code_playlist_screen.dart';
+import '../utils/app_transitions.dart';
 
 class PlaylistTypeScreen extends StatelessWidget {
   const PlaylistTypeScreen({super.key});
@@ -54,7 +55,7 @@ class PlaylistTypeScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
+                                slideRoute(
                                   builder: (context) =>
                                       NewXtreamCodePlaylistScreen(),
                                 ),
@@ -72,7 +73,7 @@ class PlaylistTypeScreen extends StatelessWidget {
                             onTap: () {
                               Navigator.push(
                                 context,
-                                MaterialPageRoute(
+                                slideRoute(
                                   builder: (context) => NewM3uPlaylistScreen(),
                                 ),
                               );
