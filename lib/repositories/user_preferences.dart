@@ -516,6 +516,10 @@ class UserPreferences {
   // Build a snapshot of all current settings to push to server
   static Future<Map<String, dynamic>> buildSettingsSnapshot() async {
     final prefs = await SharedPreferences.getInstance();
+
+    // Serialize home rails config
+    final homeRailsRaw = prefs.getString(_homeRailsKey);
+
     return {
       'upscalePreset': prefs.getString('upscale_preset') ?? 'none',
       'streamEnhancement': prefs.getBool('stream_enhancement') ?? false,
@@ -523,6 +527,7 @@ class UserPreferences {
       'subtitleSize': prefs.getDouble('subtitle_size') ?? 1.0,
       'subtitleColor': prefs.getInt('subtitle_color') ?? 0xFFFFFFFF,
       'last_playlist_id': prefs.getString(_keyLastPlaylist) ?? '',
+      'homeRailsConfig': homeRailsRaw ?? '', // raw JSON string — no re-encoding
     };
   }
 
@@ -537,6 +542,11 @@ class UserPreferences {
     // Restore last used playlist
     if (settings['last_playlist_id'] != null && (settings['last_playlist_id'] as String).isNotEmpty) {
       await prefs.setString(_keyLastPlaylist, settings['last_playlist_id']);
+    }
+    // Restore home rails customization
+    if (settings['homeRailsConfig'] != null && (settings['homeRailsConfig'] as String).isNotEmpty) {
+      await prefs.setString(_homeRailsKey, settings['homeRailsConfig']);
+      debugPrint('[UserPreferences] Restored homeRailsConfig from sync');
     }
   }
 }

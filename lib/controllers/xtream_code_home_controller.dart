@@ -140,6 +140,9 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
   Future<void> _loadCategories(bool all) async {
     try {
+      _isLoading = true;
+      notifyListeners();
+
       final db = AppState.database;
       final playlistId = AppState.currentPlaylist!.id;
 
@@ -164,6 +167,13 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final allVodStreams  = await db.getVodStreamsByPlaylistId(playlistId);
       final allSerStreams  = await db.getSeriesStreamsByPlaylistId(playlistId);
 
+      // ── AUTO-FETCH if DB is empty and we haven't already fetched ─────
+      if (!all && allLiveStreams.isEmpty && allVodStreams.isEmpty && allSerStreams.isEmpty) {
+        debugPrint('[XtreamController] DB is empty — triggering initial content fetch');
+        await _loadCategories(true);
+        return; // _loadCategories(true) will call notifyListeners() on completion
+      }
+
       // Group by categoryId in memory
       final liveMap = <String, List<LiveStream>>{};
       for (final s in allLiveStreams) {
@@ -181,6 +191,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
       // Load hidden categories once
       final hiddenSet = (await UserPreferences.getHiddenCategories()).toSet();
+
+      _liveCategories.clear();
+      _movieCategories.clear();
+      _seriesCategories.clear();
 
       for (final cat in allLiveCats) {
         final streams = liveMap[cat.categoryId] ?? [];
