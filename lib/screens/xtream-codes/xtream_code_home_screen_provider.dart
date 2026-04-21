@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/xtream_code_home_controller.dart';
+import '../../controllers/home_rails_controller.dart';
 import '../../models/api_configuration_model.dart';
 import '../../models/playlist_model.dart';
 import '../../repositories/iptv_repository.dart';
@@ -45,8 +46,11 @@ class _XtreamCodeHomeScreenProviderState extends State<XtreamCodeHomeScreenProvi
 
   @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _controller,
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider.value(value: _controller),
+        ChangeNotifierProvider(create: (_) => HomeRailsController()),
+      ],
       child: XtreamCodeHomeScreen(playlist: widget.playlist),
     );
   }

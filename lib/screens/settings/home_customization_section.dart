@@ -147,61 +147,61 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
               final isDragging = _draggingIndex == index;
               final iconName = _getRailIcon(rail.id);
 
-              return AnimatedContainer(
-                key: ValueKey(rail.id),
-                duration: const Duration(milliseconds: 200),
-                curve: Curves.easeOut,
-                decoration: BoxDecoration(
-                  color: isDragging
-                      ? colorScheme.primary.withValues(alpha: 0.08)
-                      : Colors.transparent,
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 4),
-                      leading: AnimatedContainer(
-                        duration: const Duration(milliseconds: 200),
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: rail.visible
-                              ? colorScheme.primary.withValues(alpha: 0.12)
-                              : colorScheme.onSurface.withValues(alpha: 0.06),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Icon(
-                          _getIcon(iconName),
-                          size: 18,
-                          color: rail.visible
-                              ? colorScheme.primary
-                              : colorScheme.onSurface.withValues(alpha: 0.35),
-                        ),
-                      ),
-                      title: AnimatedDefaultTextStyle(
-                        duration: const Duration(milliseconds: 200),
-                        style: theme.textTheme.bodyMedium!.copyWith(
-                          fontWeight: FontWeight.w500,
-                          color: rail.visible
-                              ? colorScheme.onSurface
-                              : colorScheme.onSurface.withValues(alpha: 0.4),
-                        ),
-                        child: Text(_getRailLabel(context, rail.id)),
-                      ),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Switch(
-                            value: rail.visible,
-                            onChanged: (val) =>
-                                controller.toggleRail(rail.id, val),
+              return ReorderableDragStartListener(
+                index: index,
+                child: AnimatedContainer(
+                  key: ValueKey(rail.id),
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOut,
+                  decoration: BoxDecoration(
+                    color: isDragging
+                        ? colorScheme.primary.withValues(alpha: 0.08)
+                        : Colors.transparent,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 4),
+                        leading: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: rail.visible
+                                ? colorScheme.primary.withValues(alpha: 0.12)
+                                : colorScheme.onSurface.withValues(alpha: 0.06),
+                            borderRadius: BorderRadius.circular(8),
                           ),
-                          const SizedBox(width: 4),
-                          // Drag handle
-                          ReorderableDragStartListener(
-                            index: index,
-                            child: MouseRegion(
+                          child: Icon(
+                            _getIcon(iconName),
+                            size: 18,
+                            color: rail.visible
+                                ? colorScheme.primary
+                                : colorScheme.onSurface.withValues(alpha: 0.35),
+                          ),
+                        ),
+                        title: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: theme.textTheme.bodyMedium!.copyWith(
+                            fontWeight: FontWeight.w500,
+                            color: rail.visible
+                                ? colorScheme.onSurface
+                                : colorScheme.onSurface.withValues(alpha: 0.4),
+                          ),
+                          child: Text(_getRailLabel(context, rail.id)),
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Switch(
+                              value: rail.visible,
+                              onChanged: (val) =>
+                                  controller.toggleRail(rail.id, val),
+                            ),
+                            const SizedBox(width: 4),
+                            // Drag handle — visual affordance only
+                            MouseRegion(
                               cursor: SystemMouseCursors.grab,
                               child: Icon(
                                 Icons.drag_handle_rounded,
@@ -210,19 +210,19 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
                                 size: 22,
                               ),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                        ],
+                            const SizedBox(width: 8),
+                          ],
+                        ),
                       ),
-                    ),
-                    if (index < rails.length - 1)
-                      Divider(
-                        height: 1,
-                        indent: 56,
-                        endIndent: 16,
-                        color: colorScheme.onSurface.withValues(alpha: 0.08),
-                      ),
-                  ],
+                      if (index < rails.length - 1)
+                        Divider(
+                          height: 1,
+                          indent: 56,
+                          endIndent: 16,
+                          color: colorScheme.onSurface.withValues(alpha: 0.08),
+                        ),
+                    ],
+                  ),
                 ),
               );
             },

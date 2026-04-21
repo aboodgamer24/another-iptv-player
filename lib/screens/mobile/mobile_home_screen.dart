@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../controllers/watch_history_controller.dart';
 import '../../controllers/favorites_controller.dart';
+import '../../controllers/home_rails_controller.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../l10n/localization_extension.dart';
@@ -116,68 +117,114 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
         children: [
           if (heroItem != null) _buildHero(heroItem),
           const SizedBox(height: 16),
-          if (continueWatchingFiltered.isNotEmpty)
-            _buildSection(
-              context.loc.continue_watching,
-              continueWatchingFiltered
-                  .map(
-                    (h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ),
-                  )
-                  .toList(),
-            ),
-          if (favItems.isNotEmpty)
-            _buildSection(
-              context.loc.favorites,
-              favItems
-                  .map(
-                    (f) => ContentItem(
-                      f.streamId,
-                      f.name,
-                      f.imagePath ?? '',
-                      f.contentType,
-                    ),
-                  )
-                  .toList(),
-            ),
-
-          if (_trendingMovies.isNotEmpty)
-            _buildTmdbSection('Trending Movies', _trendingMovies),
-          if (_trendingSeries.isNotEmpty)
-            _buildTmdbSection('Trending Series', _trendingSeries),
-
-          if (movieHistory.isNotEmpty)
-            _buildSection(
-              'Recent Movies',
-              movieHistory
-                  .map(
-                    (WatchHistory h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ),
-                  )
-                  .toList(),
-            ),
-          if (seriesHistory.isNotEmpty)
-            _buildSection(
-              'Recent Series',
-              seriesHistory
-                  .map(
-                    (WatchHistory h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ),
-                  )
-                  .toList(),
-            ),
+          ...context.watch<HomeRailsController>().visibleRails.map((rail) {
+            switch (rail.id) {
+              case 'continue_watching':
+                if (continueWatchingFiltered.isEmpty) return const SizedBox.shrink();
+                return _buildSection(
+                  context.loc.continue_watching,
+                  continueWatchingFiltered
+                      .map(
+                        (h) => ContentItem(
+                          h.streamId,
+                          h.title,
+                          h.imagePath ?? '',
+                          h.contentType,
+                        ),
+                      )
+                      .toList(),
+                );
+              case 'favorites_live':
+                final liveItems = favItems
+                    .where((f) => f.contentType == ContentType.liveStream)
+                    .toList();
+                if (liveItems.isEmpty) return const SizedBox.shrink();
+                return _buildSection(
+                  context.loc.rail_favorites_live,
+                  liveItems
+                      .map(
+                        (f) => ContentItem(
+                          f.streamId,
+                          f.name,
+                          f.imagePath ?? '',
+                          f.contentType,
+                        ),
+                      )
+                      .toList(),
+                );
+              case 'favorites_movies':
+                final movieFavs = favItems
+                    .where((f) => f.contentType == ContentType.vod)
+                    .toList();
+                if (movieFavs.isEmpty) return const SizedBox.shrink();
+                return _buildSection(
+                  context.loc.rail_favorites_movies,
+                  movieFavs
+                      .map(
+                        (f) => ContentItem(
+                          f.streamId,
+                          f.name,
+                          f.imagePath ?? '',
+                          f.contentType,
+                        ),
+                      )
+                      .toList(),
+                );
+              case 'favorites_series':
+                final seriesFavs = favItems
+                    .where((f) => f.contentType == ContentType.series)
+                    .toList();
+                if (seriesFavs.isEmpty) return const SizedBox.shrink();
+                return _buildSection(
+                  context.loc.rail_favorites_series,
+                  seriesFavs
+                      .map(
+                        (f) => ContentItem(
+                          f.streamId,
+                          f.name,
+                          f.imagePath ?? '',
+                          f.contentType,
+                        ),
+                      )
+                      .toList(),
+                );
+              case 'watch_later':
+                // Watch later controller implementation pending
+                return const SizedBox.shrink();
+              case 'live_history':
+                // For now reuse movieHistory or similar if live history is not separate
+                if (movieHistory.isEmpty) return const SizedBox.shrink();
+                return _buildSection(
+                  context.loc.rail_live_history,
+                  movieHistory
+                      .map(
+                        (h) => ContentItem(
+                          h.streamId,
+                          h.title,
+                          h.imagePath ?? '',
+                          h.contentType,
+                        ),
+                      )
+                      .toList(),
+                );
+              case 'trending_movies':
+                if (_trendingMovies.isEmpty) return const SizedBox.shrink();
+                return _buildTmdbSection(
+                  context.loc.rail_trending_movies,
+                  _trendingMovies,
+                );
+              case 'trending_series':
+                if (_trendingSeries.isEmpty) return const SizedBox.shrink();
+                return _buildTmdbSection(
+                  context.loc.rail_trending_series,
+                  _trendingSeries,
+                );
+              case 'recommended':
+                return const SizedBox.shrink();
+              default:
+                return const SizedBox.shrink();
+            }
+          }).where((w) => w is! SizedBox),
           const SizedBox(height: 32),
         ],
       ),

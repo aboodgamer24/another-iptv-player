@@ -13,6 +13,7 @@ import '../../services/fullscreen_notifier.dart';
 import '../../utils/get_playlist_type.dart';
 import '../../services/event_bus.dart';
 import '../../models/playlist_content_model.dart';
+import '../../repositories/user_preferences.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -55,6 +56,13 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   String? _upscalerPreset;
   bool _showEnhancementPanel = false;
 
+  // Gesture flags
+  bool _brightnessGesture = false;
+  bool _volumeGesture = false;
+  bool _seekGesture = false;
+  bool _speedUpOnLongPress = true;
+  bool _seekOnDoubleTap = true;
+
   // Enhancement values — MPV ranges
   double _sharpness = 0.0;      // range: -1.0 to 1.0, default 0
   double _contrast = 0.0;       // range: -1.0 to 1.0, default 0
@@ -79,6 +87,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     super.initState();
     _volume = widget.player.state.volume / 100.0;
     _isMuted = widget.player.state.volume == 0;
+    _loadGesturePrefs();
     _startHideTimer();
     _panelQueue = app_player_state.PlayerState.queue;
     _subscriptions = [
@@ -218,6 +227,23 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     _positionNotifier.dispose();
     _durationNotifier.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadGesturePrefs() async {
+    final b = await UserPreferences.getBrightnessGesture();
+    final v = await UserPreferences.getVolumeGesture();
+    final s = await UserPreferences.getSeekGesture();
+    final lp = await UserPreferences.getSpeedUpOnLongPress();
+    final dt = await UserPreferences.getSeekOnDoubleTap();
+    if (mounted) {
+      setState(() {
+        _brightnessGesture = b;
+        _volumeGesture = v;
+        _seekGesture = s;
+        _speedUpOnLongPress = lp;
+        _seekOnDoubleTap = dt;
+      });
+    }
   }
 
   void _startHideTimer() {
@@ -416,6 +442,45 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
           child: GestureDetector(
             onTap: _toggleVisibility,
             behavior: HitTestBehavior.translucent,
+            // Volume / Brightness — vertical swipe on halves
+            onVerticalDragUpdate: (_volumeGesture || _brightnessGesture) ? (details) {
+              final width = MediaQuery.sizeOf(context).width;
+              final isLeft = details.localPosition.dx < width / 2;
+              if (isLeft && _brightnessGesture) {
+                // Brightness placeholder (requires package, for now just show overlay)
+                _showOverlay();
+              } else if (!isLeft && _volumeGesture) {
+                final delta = -details.primaryDelta! / 200;
+                _adjustVolume(delta);
+                _showOverlay();
+              }
+            } : null,
+            // Seek — horizontal swipe
+            onHorizontalDragUpdate: _seekGesture ? (details) {
+              final delta = details.primaryDelta! * 0.5;
+              final newPos = _position + Duration(seconds: delta.toInt());
+              widget.player.seek(newPos);
+              _showOverlay();
+            } : null,
+            // Speed up on long press
+            onLongPressStart: _speedUpOnLongPress ? (_) {
+              widget.player.setRate(2.0);
+              _showOverlay();
+            } : null,
+            onLongPressEnd: _speedUpOnLongPress ? (_) {
+              widget.player.setRate(1.0);
+            } : null,
+            // Seek on double tap (halves)
+            onDoubleTapDown: _seekOnDoubleTap ? (details) {
+              final width = MediaQuery.sizeOf(context).width;
+              final isLeft = details.localPosition.dx < width / 2;
+              if (isLeft) {
+                widget.player.seek(_position - const Duration(seconds: 10));
+              } else {
+                widget.player.seek(_position + const Duration(seconds: 10));
+              }
+              _showOverlay();
+            } : null,
             child: Stack(
               children: [
                 // Overlay Content
