@@ -20,8 +20,9 @@ import '../mobile/mobile_live_tv_screen.dart';
 import '../mobile/mobile_content_screen.dart';
 import '../mobile/mobile_favorites_screen.dart';
 import '../mobile/mobile_watch_later_screen.dart';
-import '../mobile/mobile_settings_screen.dart';
+import '../mobile/mobile_watch_later_screen.dart';
 import '../mobile/mobile_global_search_screen.dart';
+import 'xtream_code_playlist_settings_screen.dart';
 
 class XtreamCodeHomeScreen extends StatefulWidget {
   final Playlist playlist;
@@ -33,48 +34,16 @@ class XtreamCodeHomeScreen extends StatefulWidget {
 }
 
 class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
-  late XtreamCodeHomeController _controller;
-  XtreamCodeHomeController get controller => _controller;
   static const double _desktopBreakpoint = 900.0;
 
-  // Desktop sidebar uses indices 0-6:
-  // 0=Home, 1=LiveTV, 2=Movies, 3=Series, 4=Search, 5=Favorites, 6=Settings
   int _desktopIndex = 0;
   int _mobileIndex = 0; // 0=Home, 1=Live, 2=Movies, 3=Series
 
   @override
-  void initState() {
-    super.initState();
-    _initializeController();
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  void _initializeController() {
-    final repository = IptvRepository(
-      ApiConfig(
-        baseUrl: widget.playlist.url!,
-        username: widget.playlist.username!,
-        password: widget.playlist.password!,
-      ),
-      widget.playlist.id,
-    );
-    AppState.xtreamCodeRepository = repository;
-    _controller = XtreamCodeHomeController(false);
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return ChangeNotifierProvider.value(
-      value: _controller,
-      child: Consumer<XtreamCodeHomeController>(
-        builder: (context, controller, child) =>
-            _buildMainContent(context, controller),
-      ),
+    return Consumer<XtreamCodeHomeController>(
+      builder: (context, controller, child) =>
+          _buildMainContent(context, controller),
     );
   }
 
@@ -153,12 +122,8 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       onSettingsTap: () => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) => Scaffold(
-            appBar: AppBar(
-              title: Text(context.loc.settings),
-              centerTitle: true,
-            ),
-            body: MobileSettingsScreen(playlist: widget.playlist),
+          builder: (_) => XtreamCodePlaylistSettingsScreen(
+            playlist: widget.playlist,
           ),
         ),
       ),

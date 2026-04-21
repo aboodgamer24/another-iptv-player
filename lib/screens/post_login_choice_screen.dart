@@ -8,7 +8,7 @@ import '../models/api_configuration_model.dart';
 import '../repositories/iptv_repository.dart';
 import '../services/app_state.dart';
 import '../services/playlist_service.dart';
-import 'main_navigation_screen.dart';
+import 'main_navigation_screen_provider.dart';
 import 'playlist_screen.dart';
 
 
@@ -143,7 +143,7 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
     if (playlist != null) {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => MainNavigationScreen(playlist: playlist!),
+          builder: (_) => MainNavigationScreenProvider(playlist: playlist!),
         ),
       );
     } else {

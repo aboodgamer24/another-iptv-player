@@ -4,7 +4,7 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/sync_service.dart';
 import 'package:another_iptv_player/services/settings_sync.dart';
 import '../models/playlist_model.dart';
-import '../screens/main_navigation_screen.dart';
+import '../screens/main_navigation_screen_provider.dart';
 import '../services/playlist_service.dart';
 
 class PlaylistController extends ChangeNotifier {
@@ -56,7 +56,7 @@ class PlaylistController extends ChangeNotifier {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => MainNavigationScreen(playlist: playlist),
+          builder: (context) => MainNavigationScreenProvider(playlist: playlist),
         ),
         (route) => false,
       );

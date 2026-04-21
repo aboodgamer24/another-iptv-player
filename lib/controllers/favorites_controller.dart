@@ -40,11 +40,11 @@ class FavoritesController extends ChangeNotifier {
       _setError(null);
 
       _favorites.clear();
-      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
       _favorites = await _repository.getAllFavorites();
       print('FavoritesController: ${_favorites.length} favori yüklendi');
-      notifyListeners();
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     } catch (e) {
       print('FavoritesController: Hata: $e');
       _setError('Favoriler yüklenirken hata oluştu: $e');
@@ -284,12 +284,12 @@ class FavoritesController extends ChangeNotifier {
 
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
 
   void _setError(String? error) {
     _error = error;
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
 
   /// Fire-and-forget push of the current favorites list to the sync server.

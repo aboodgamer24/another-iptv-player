@@ -10,7 +10,7 @@ import '../../services/app_state.dart';
 import '../../services/playlist_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/sync_applier.dart';
-import 'package:another_iptv_player/screens/main_navigation_screen.dart';
+import 'package:another_iptv_player/screens/main_navigation_screen_provider.dart';
 
 class AppInitializerScreen extends StatefulWidget {
   const AppInitializerScreen({super.key});
@@ -116,7 +116,7 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
     if (_lastPlaylist == null) {
       return const PlaylistScreen();
     } else {
-      return MainNavigationScreen(playlist: _lastPlaylist!);
+      return MainNavigationScreenProvider(playlist: _lastPlaylist!);
     }
   }
 }

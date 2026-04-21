@@ -9,7 +9,7 @@ import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/services/settings_sync.dart';
-import '../main_navigation_screen.dart';
+import '../main_navigation_screen_provider.dart';
 import '../playlist_screen.dart';
 
 class XtreamCodeDataLoaderScreen extends StatefulWidget {
@@ -125,7 +125,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => MainNavigationScreen(playlist: widget.playlist),
+          builder: (context) => MainNavigationScreenProvider(playlist: widget.playlist),
         ),
         (route) => false,
       );

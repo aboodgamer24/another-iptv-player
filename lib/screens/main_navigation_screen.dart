@@ -25,7 +25,6 @@ import 'mobile/mobile_live_tv_screen.dart';
 import 'mobile/mobile_content_screen.dart';
 import 'mobile/mobile_favorites_screen.dart';
 import 'mobile/mobile_watch_later_screen.dart';
-import 'mobile/mobile_settings_screen.dart';
 import 'mobile/mobile_global_search_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -39,23 +38,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
-  late dynamic _controller; // Can be XtreamCodeHomeController or M3UHomeController
-
-  @override
-  void initState() {
-    super.initState();
-    if (widget.playlist.type == PlaylistType.xtream) {
-      _controller = XtreamCodeHomeController(false);
-    } else {
-      _controller = M3UHomeController();
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
 
   String _getTitle(BuildContext context) {
     switch (_selectedIndex) {
@@ -79,8 +61,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   }
 
   Widget _buildContent() {
-    if (widget.playlist.type == PlaylistType.xtream) {
-      final controller = _controller as XtreamCodeHomeController;
+    final isXtream = widget.playlist.type == PlaylistType.xtream;
+    
+    if (isXtream) {
+      final controller = Provider.of<XtreamCodeHomeController>(context);
 
       if (PlatformUtils.isMobile) {
         switch (_selectedIndex) {
@@ -141,22 +125,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final providers = [
-      if (widget.playlist.type == PlaylistType.xtream)
-        ChangeNotifierProvider<XtreamCodeHomeController>.value(
-          value: _controller as XtreamCodeHomeController,
-        )
-      else
-        ChangeNotifierProvider<M3UHomeController>.value(
-          value: _controller as M3UHomeController,
-        ),
-      ChangeNotifierProvider(create: (_) => WatchHistoryController()),
-    ];
-
-    final content = MultiProvider(
-      providers: providers,
-      child: _buildContent(),
-    );
+    final content = _buildContent();
 
     if (PlatformUtils.isMobile) {
       return MobileShellScreen(
@@ -198,12 +167,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onSettingsTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => Scaffold(
-              appBar: AppBar(
-                title: Text(context.loc.settings),
-                centerTitle: true,
-              ),
-              body: MobileSettingsScreen(playlist: widget.playlist),
+            builder: (_) => XtreamCodePlaylistSettingsScreen(
+              playlist: widget.playlist,
             ),
           ),
         ),
@@ -222,4 +187,5 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
+
 

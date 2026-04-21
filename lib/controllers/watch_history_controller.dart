@@ -62,7 +62,7 @@ class WatchHistoryController extends ChangeNotifier {
     _liveHistory.clear();
     _movieHistory.clear();
     _seriesHistory.clear();
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     if (AppState.currentPlaylist == null) {
       print('WatchHistoryController: Aktif playlist bulunamadı');
@@ -148,17 +148,17 @@ class WatchHistoryController extends ChangeNotifier {
   // Private methods
   void _setLoading(bool loading) {
     _isLoading = loading;
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
 
   void _setError(String error) {
     _errorMessage = error;
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
 
   void _clearError() {
     _errorMessage = null;
-    notifyListeners();
+    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
   }
 
   Future<void> _playLiveStream(
