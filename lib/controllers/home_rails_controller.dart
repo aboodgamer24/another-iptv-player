@@ -16,9 +16,19 @@ class HomeRailsController extends ChangeNotifier {
   ];
 
   List<HomeRailConfig> _rails = List.from(defaultRails);
+  bool _loaded = false;
+
+  HomeRailsController() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    await load();
+  }
 
   List<HomeRailConfig> get rails => _rails;
   List<HomeRailConfig> get visibleRails => _rails.where((r) => r.visible).toList();
+  bool get isLoaded => _loaded;
 
   Future<void> load() async {
     final savedRails = await UserPreferences.getHomeRails();
@@ -46,7 +56,12 @@ class HomeRailsController extends ChangeNotifier {
       
       _rails = merged;
     }
-    notifyListeners();
+    _loaded = true;
+    
+    // Safe notify: defer if we are currently in a build phase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 
   Future<void> updateRails(List<HomeRailConfig> newOrder) async {
@@ -64,3 +79,4 @@ class HomeRailsController extends ChangeNotifier {
     }
   }
 }
+
