@@ -1,4 +1,9 @@
 import 'package:flutter/material.dart';
+import '../../database/database.dart';
+import '../../services/database_service.dart';
+import '../../services/playlist_service.dart';
+import '../../services/service_locator.dart';
+import '../../services/sync_applier.dart';
 import '../../services/sync_service.dart';
 import '../../repositories/user_preferences.dart';
 
@@ -61,28 +66,9 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _pullAndApply() async {
-    final data = await SyncService.instance.pullSync();
-    if (data == null) return;
-    // Apply playlists
-    if (data['playlists'] != null) {
-      await UserPreferences.setSyncedPlaylists(List<Map>.from(data['playlists']));
-    }
-    // Apply favorites
-    if (data['favorites'] != null) {
-      await UserPreferences.setSyncedFavorites(List<Map>.from(data['favorites']));
-    }
-    // Apply watch later
-    if (data['watch_later'] != null) {
-      await UserPreferences.setSyncedWatchLater(List<Map>.from(data['watch_later']));
-    }
-    // Apply continue watching
-    if (data['continue_watching'] != null) {
-      await UserPreferences.setSyncedContinueWatching(List<Map>.from(data['continue_watching']));
-    }
-    // Apply settings (TMDB key, upscaler, etc.)
-    if (data['settings'] != null && (data['settings'] as Map).isNotEmpty) {
-      await UserPreferences.applySyncedSettings(Map<String, dynamic>.from(data['settings']));
-    }
+    // Delegate entirely to SyncApplier which correctly writes to Drift DB
+    final success = await SyncApplier.pullAndApply();
+    debugPrint('[AccountScreen] _pullAndApply: success=$success');
   }
 
   Future<void> _logout() async {
@@ -93,18 +79,56 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _pushAll() async {
-    final playlists = await UserPreferences.getSyncedPlaylists();
-    final favorites = await UserPreferences.getSyncedFavorites();
-    final watchLater = await UserPreferences.getSyncedWatchLater();
-    final continueWatching = await UserPreferences.getSyncedContinueWatching();
-    final settings = await UserPreferences.buildSettingsSnapshot();
-    await SyncService.instance.pushAll({
-      'playlists': playlists,
-      'favorites': favorites,
-      'watch_later': watchLater,
-      'continue_watching': continueWatching,
-      'settings': settings,
-    });
+    try {
+      // Read playlists from Drift DB (the real source of truth)
+      final playlists = await PlaylistService.getPlaylists();
+      final playlistsJson = playlists.map((p) => p.toJson()).toList();
+
+      // Read favorites from Drift DB
+      final db = getIt<AppDatabase>();
+      final favorites = await db.getAllFavorites();
+      final favoritesJson = favorites.map((f) => {
+        'id': f.id,
+        'playlistId': f.playlistId,
+        'contentType': f.contentType.toString(),
+        'streamId': f.streamId,
+        'episodeId': f.episodeId,
+        'name': f.name,
+        'imagePath': f.imagePath,
+        'sortOrder': f.sortOrder,
+      }).toList();
+
+      // Read watch later from Drift DB
+      final watchLaterItems = await db.getAllWatchLater();
+      final watchLaterJson = watchLaterItems.map((w) => {
+        'id': w.id,
+        'playlistId': w.playlistId,
+        'contentType': w.contentType.toString(),
+        'streamId': w.streamId,
+        'title': w.title,
+        'imagePath': w.imagePath,
+      }).toList();
+
+      // Build settings snapshot
+      final settings = await _buildSettings();
+
+      await SyncService.instance.pushAll({
+        'playlists': playlistsJson,
+        'favorites': favoritesJson,
+        'watch_later': watchLaterJson,
+        'continue_watching': [],
+        'settings': settings,
+      });
+
+      debugPrint('[AccountScreen] pushAll: pushed ${playlistsJson.length} playlists, ${favoritesJson.length} favorites, ${watchLaterJson.length} watch later items');
+    } catch (e) {
+      debugPrint('[AccountScreen] _pushAll error: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> _buildSettings() async {
+    return await UserPreferences.buildSettingsSnapshot();
   }
 
   @override

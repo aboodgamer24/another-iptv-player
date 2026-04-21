@@ -1662,6 +1662,12 @@ class AppDatabase extends _$AppDatabase {
         .get();
   }
 
+  Future<List<WatchLaterData>> getAllWatchLater() async {
+    return await (select(watchLaters)
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.addedAt)]))
+        .get();
+  }
+
   Future<void> insertWatchLater(WatchLaterData entry) async {
     await into(watchLaters).insertOnConflictUpdate(
       WatchLatersCompanion(

@@ -5,10 +5,12 @@ import 'package:another_iptv_player/repositories/m3u_repository.dart';
 
 import '../database/database.dart';
 
+import 'service_locator.dart';
+
 abstract class AppState {
   static Playlist? currentPlaylist;
   static IptvRepository? xtreamCodeRepository;
   static M3uRepository? m3uRepository;
   static List<M3uItem>? m3uItems;
-  static final AppDatabase database = AppDatabase();
+  static final AppDatabase database = getIt<AppDatabase>();
 }

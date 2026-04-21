@@ -16,32 +16,32 @@ class SyncApplier {
     try {
       final data = await SyncService.instance.pullSync();
       if (data == null) {
-        debugPrint('[SyncApplier] pullSync returned null — server unreachable or not logged in');
+        debugPrint('[SyncApplier] pullSync returned null');
         return false;
       }
 
-      debugPrint('[SyncApplier] Received data keys: ${data.keys.toList()}');
-      debugPrint('[SyncApplier] Playlists count: ${(data['playlists'] as List?)?.length ?? 0}');
+      debugPrint('[SyncApplier] Server data: playlists=${(data['playlists'] as List?)?.length ?? 0}, favorites=${(data['favorites'] as List?)?.length ?? 0}, watch_later=${(data['watch_later'] as List?)?.length ?? 0}');
 
-      // 1. Apply Settings first (so last_playlist_id is available)
+      // 1. Apply settings first (populates last_playlist_id, tmdb key, etc.)
       await _applySettings(data['settings']);
 
-      // 2. Apply last playlist selection from settings (before playlist apply)
+      // 2. Apply last playlist selection from settings
       final rawLastPlaylistId = data['settings']?['last_playlist_id'];
-      if (rawLastPlaylistId != null && rawLastPlaylistId is String && rawLastPlaylistId.isNotEmpty) {
+      if (rawLastPlaylistId is String && rawLastPlaylistId.isNotEmpty) {
         await UserPreferences.setLastPlaylist(rawLastPlaylistId);
+        debugPrint('[SyncApplier] Set last_playlist_id from settings: $rawLastPlaylistId');
       }
 
-      // 3. Apply Playlists (will set lastPlaylist if not already set above)
+      // 3. Restore playlists (will set fallback last_playlist_id if not set above)
       await _applyPlaylists(data['playlists']);
 
-      // 4. Apply Favorites
+      // 4. Restore favorites
       await _applyFavorites(data['favorites']);
 
-      // 5. Apply Watch Later
+      // 5. Restore watch later
       await _applyWatchLater(data['watch_later']);
 
-      debugPrint('[SyncApplier] Sync applied successfully');
+      debugPrint('[SyncApplier] ✅ Sync applied successfully');
       return true;
     } catch (e, stack) {
       debugPrint('[SyncApplier] pullAndApply error: $e\n$stack');
@@ -53,6 +53,7 @@ class SyncApplier {
   /// Uses DatabaseService directly to avoid triggering auto-push during restore.
   static Future<void> _applyPlaylists(dynamic rawPlaylists) async {
     if (rawPlaylists == null || rawPlaylists is! List || rawPlaylists.isEmpty) {
+      debugPrint('[SyncApplier] No playlists to restore');
       return;
     }
 
@@ -60,15 +61,16 @@ class SyncApplier {
 
     for (final p in rawPlaylists) {
       try {
-        final map = Map<String, dynamic>.from(p);
-        final playlist = Playlist.fromJson(map);
+        final playlist = Playlist.fromJson(Map<String, dynamic>.from(p));
         final existing = await PlaylistService.getPlaylistById(playlist.id);
         if (existing == null) {
-          // Use DatabaseService directly to avoid triggering auto-push during restore
+          // Write directly to DB — skip PlaylistService to avoid triggering
+          // another pushField during bulk restore
           await DatabaseService.savePlaylist(playlist);
-          debugPrint('[SyncApplier] Restored playlist: ${playlist.name}');
+          debugPrint('[SyncApplier] Restored playlist: ${playlist.name} (${playlist.type})');
           firstRestoredId ??= playlist.id;
         } else {
+          debugPrint('[SyncApplier] Playlist already exists locally: ${playlist.name}');
           firstRestoredId ??= existing.id;
         }
       } catch (e) {
@@ -76,11 +78,11 @@ class SyncApplier {
       }
     }
 
-    // If no last_playlist_id was set by settings, use the first restored playlist
+    // Set last_playlist_id to first restored playlist if not already set
     final currentLast = await UserPreferences.getLastPlaylist();
     if ((currentLast == null || currentLast.isEmpty) && firstRestoredId != null) {
       await UserPreferences.setLastPlaylist(firstRestoredId);
-      debugPrint('[SyncApplier] Set last playlist to: $firstRestoredId');
+      debugPrint('[SyncApplier] Set last playlist fallback to: $firstRestoredId');
     }
   }
 

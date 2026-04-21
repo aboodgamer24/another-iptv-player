@@ -468,6 +468,7 @@ class UserPreferences {
     try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
   }
 
+  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
   static Future<void> setSyncedPlaylists(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedPlaylists, jsonEncode(data));
@@ -480,6 +481,7 @@ class UserPreferences {
     try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
   }
 
+  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
   static Future<void> setSyncedFavorites(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedFavorites, jsonEncode(data));
@@ -492,6 +494,7 @@ class UserPreferences {
     try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
   }
 
+  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
   static Future<void> setSyncedWatchLater(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedWatchLater, jsonEncode(data));
@@ -504,6 +507,7 @@ class UserPreferences {
     try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
   }
 
+  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
   static Future<void> setSyncedContinueWatching(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedContinueWatching, jsonEncode(data));
@@ -518,6 +522,7 @@ class UserPreferences {
       'tmdbApiKey': prefs.getString('tmdb_api_key') ?? '',
       'subtitleSize': prefs.getDouble('subtitle_size') ?? 1.0,
       'subtitleColor': prefs.getInt('subtitle_color') ?? 0xFFFFFFFF,
+      'last_playlist_id': prefs.getString(_keyLastPlaylist) ?? '',
     };
   }
 
@@ -529,6 +534,10 @@ class UserPreferences {
     if (settings['tmdbApiKey'] != null) await prefs.setString('tmdb_api_key', settings['tmdbApiKey']);
     if (settings['subtitleSize'] != null) await prefs.setDouble('subtitle_size', (settings['subtitleSize'] as num).toDouble());
     if (settings['subtitleColor'] != null) await prefs.setInt('subtitle_color', settings['subtitleColor']);
+    // Restore last used playlist
+    if (settings['last_playlist_id'] != null && (settings['last_playlist_id'] as String).isNotEmpty) {
+      await prefs.setString(_keyLastPlaylist, settings['last_playlist_id']);
+    }
   }
 }
 

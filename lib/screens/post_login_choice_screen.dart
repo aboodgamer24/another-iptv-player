@@ -52,9 +52,20 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
   Future<void> _restoreFromCloud() async {
     setState(() => _isRestoring = true);
 
-    await SyncApplier.pullAndApply();
+    final success = await SyncApplier.pullAndApply();
 
     if (!mounted) return;
+
+    if (!success) {
+      setState(() => _isRestoring = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Sync failed — check your server connection'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
 
     // Refresh playlist controller with synced data
     try {
