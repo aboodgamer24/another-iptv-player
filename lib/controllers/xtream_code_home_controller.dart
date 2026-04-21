@@ -147,46 +147,58 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final playlistId = AppState.currentPlaylist!.id;
 
       if (all) {
-        // Use existing forceRefresh API methods — they fetch AND save to DB
-        await _repository.getLiveCategories(forceRefresh: true);
-        await _repository.getVodCategories(forceRefresh: true);
-        await _repository.getSeriesCategories(forceRefresh: true);
-        await _repository.getLiveChannelsFromApi();
-        await _repository.getMoviesFromApi();
-        await _repository.getSeriesFromApi();
+        // Run categories+streams fetches in parallel per type
+        await Future.wait([
+          _repository.getLiveCategories(forceRefresh: true)
+              .then((_) => _repository.getLiveChannelsFromApi()),
+          _repository.getVodCategories(forceRefresh: true)
+              .then((_) => _repository.getMoviesFromApi()),
+          _repository.getSeriesCategories(forceRefresh: true)
+              .then((_) => _repository.getSeriesFromApi()),
+        ]);
       }
 
-      // ── LOAD FROM DB — single bulk fetch per type, group in memory ────────
+      // ── LOAD FROM DB — parallel bulk fetch ─────────────────────────
+      final results = await Future.wait([
+        db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.live),
+        db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.vod),
+        db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.series),
+        db.getLiveStreams(playlistId),
+        db.getVodStreamsByPlaylistId(playlistId),
+        db.getSeriesStreamsByPlaylistId(playlistId),
+      ]);
 
-      final allLiveCats = await db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.live);
-      final allVodCats  = await db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.vod);
-      final allSerCats  = await db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.series);
+      final allLiveCats = results[0] as List<dynamic>;
+      final allVodCats  = results[1] as List<dynamic>;
+      final allSerCats  = results[2] as List<dynamic>;
+      final allLiveStreams = results[3] as List<dynamic>;
+      final allVodStreams  = results[4] as List<dynamic>;
+      final allSerStreams  = results[5] as List<dynamic>;
 
-      // Bulk fetch all streams at once
-      final allLiveStreams = await db.getLiveStreams(playlistId);
-      final allVodStreams  = await db.getVodStreamsByPlaylistId(playlistId);
-      final allSerStreams  = await db.getSeriesStreamsByPlaylistId(playlistId);
-
-      // ── AUTO-FETCH if DB is empty and we haven't already fetched ─────
+      // ── AUTO-FETCH if DB is empty ──────────────────────────────────
       if (!all && allLiveStreams.isEmpty && allVodStreams.isEmpty && allSerStreams.isEmpty) {
-        debugPrint('[XtreamController] DB is empty — triggering initial content fetch');
+        debugPrint('[XtreamController] DB is empty — triggering parallel content fetch');
+        // Re-trigger with 'all: true' set
         await _loadCategories(true);
-        return; // _loadCategories(true) will call notifyListeners() on completion
+        return;
       }
 
       // Group by categoryId in memory
       final liveMap = <String, List<LiveStream>>{};
       for (final s in allLiveStreams) {
-        liveMap.putIfAbsent(s.categoryId, () => []).add(s);
+        final stream = s as LiveStream;
+        liveMap.putIfAbsent(stream.categoryId, () => []).add(stream);
       }
       final vodMap = <String, List<VodStream>>{};
       for (final s in allVodStreams) {
-        vodMap.putIfAbsent(s.categoryId, () => []).add(s);
+        final stream = s as VodStream;
+        vodMap.putIfAbsent(stream.categoryId, () => []).add(stream);
       }
       final serMap = <String, List<SeriesStream>>{};
       for (final s in allSerStreams) {
-        if (s.categoryId == null) continue;
-        serMap.putIfAbsent(s.categoryId!, () => []).add(s);
+        final stream = s as SeriesStream;
+        if (stream.categoryId == null) continue;
+        serMap.putIfAbsent(stream.categoryId!, () => []).add(stream);
       }
 
       // Load hidden categories once

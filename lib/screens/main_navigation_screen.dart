@@ -5,8 +5,6 @@ import '../models/content_type.dart';
 import '../controllers/xtream_code_home_controller.dart';
 import '../controllers/m3u_home_controller.dart';
 import '../controllers/watch_history_controller.dart';
-import '../controllers/favorites_controller.dart';
-import '../controllers/watch_later_controller.dart';
 import '../controllers/home_rails_controller.dart';
 import '../l10n/localization_extension.dart';
 import 'main_shell_screen.dart';
@@ -15,7 +13,6 @@ import 'common/c4_live_grid_screen.dart';
 import 'common/c4_content_grid_screen.dart';
 import '../widgets/common/c4_search_modal.dart';
 import 'm3u/m3u_home_screen.dart';
-import 'watch_history_screen.dart';
 import 'watch_later_screen.dart';
 import 'desktop/desktop_favorites_screen.dart';
 import 'xtream-codes/xtream_code_playlist_settings_screen.dart';
@@ -73,25 +70,42 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   Widget _buildContent() {
     if (widget.playlist.type == PlaylistType.xtream) {
       final controller = _controller as XtreamCodeHomeController;
-      if (controller.isLoading) {
-        return const Center(child: CircularProgressIndicator());
-      }
 
       switch (_selectedIndex) {
         case 0:
+          // Dashboard has its own independent loading — never block it
           return C4Dashboard(playlistId: widget.playlist.id);
+
         case 1:
+          // Live TV — needs categories, show spinner while loading
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return const C4LiveGridScreen();
+
         case 2:
+          // Movies — needs categories, show spinner while loading
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return const C4ContentGridScreen(contentType: ContentType.vod);
+
         case 3:
+          // Series — needs categories, show spinner while loading
+          if (controller.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
           return const C4ContentGridScreen(contentType: ContentType.series);
+
         case 4:
           return const DesktopFavoritesScreen();
+
         case 5:
           return const WatchLaterScreen();
+
         case 6:
           return XtreamCodePlaylistSettingsScreen(playlist: widget.playlist);
+
         default:
           return const SizedBox.shrink();
       }

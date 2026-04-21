@@ -12,7 +12,7 @@ class SettingsSync {
 
         // TMDB API key
         final tmdbKey = AppConfig.tmdbApiKey;
-        if (tmdbKey.isNotEmpty) settings['tmdb_api_key'] = tmdbKey;
+        if (tmdbKey.isNotEmpty) settings['tmdbApiKey'] = tmdbKey;
 
         // Language / locale
         final locale = await UserPreferences.getLocale();

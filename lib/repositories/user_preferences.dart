@@ -523,7 +523,7 @@ class UserPreferences {
     return {
       'upscalePreset': prefs.getString('upscale_preset') ?? 'none',
       'streamEnhancement': prefs.getBool('stream_enhancement') ?? false,
-      'tmdbApiKey': prefs.getString('tmdb_api_key') ?? '',
+      'tmdbApiKey': prefs.getString('tmdb_api_key') ?? prefs.getString('tmdbApiKey') ?? '',
       'subtitleSize': prefs.getDouble('subtitle_size') ?? 1.0,
       'subtitleColor': prefs.getInt('subtitle_color') ?? 0xFFFFFFFF,
       'last_playlist_id': prefs.getString(_keyLastPlaylist) ?? '',
@@ -536,7 +536,13 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     if (settings['upscalePreset'] != null) await prefs.setString('upscale_preset', settings['upscalePreset']);
     if (settings['streamEnhancement'] != null) await prefs.setBool('stream_enhancement', settings['streamEnhancement']);
-    if (settings['tmdbApiKey'] != null) await prefs.setString('tmdb_api_key', settings['tmdbApiKey']);
+    // Restore TMDB API key (handle both key variants)
+    final tmdbKey = settings['tmdbApiKey'] ?? settings['tmdb_api_key'];
+    if (tmdbKey != null && (tmdbKey as String).isNotEmpty) {
+      await prefs.setString('tmdb_api_key', tmdbKey);
+      await prefs.setString('tmdbApiKey', tmdbKey);
+      debugPrint('[UserPreferences] Restored TMDB API key from sync');
+    }
     if (settings['subtitleSize'] != null) await prefs.setDouble('subtitle_size', (settings['subtitleSize'] as num).toDouble());
     if (settings['subtitleColor'] != null) await prefs.setInt('subtitle_color', settings['subtitleColor']);
     // Restore last used playlist

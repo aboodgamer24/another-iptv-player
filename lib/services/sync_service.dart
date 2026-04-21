@@ -17,8 +17,8 @@ class SyncService {
     if (_serverUrl != null && _serverUrl!.isNotEmpty) {
       _dio = Dio(BaseOptions(
         baseUrl: _serverUrl!,
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 60),
       ));
       _dio!.interceptors.add(InterceptorsWrapper(
         onRequest: (options, handler) {
