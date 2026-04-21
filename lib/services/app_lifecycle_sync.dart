@@ -58,6 +58,7 @@ class _AppLifecycleSyncState extends State<AppLifecycleSync>
       final playlists = await PlaylistService.getPlaylists();
       final favorites = await db.getAllFavorites();
       final watchLaterItems = await db.getAllWatchLater();
+      final watchHistories = await db.getAllWatchHistories();
       final settings = await UserPreferences.buildSettingsSnapshot();
 
       await SyncService.instance.pushAll({
@@ -80,7 +81,17 @@ class _AppLifecycleSyncState extends State<AppLifecycleSync>
           'title': w.title,
           'imagePath': w.imagePath,
         }).toList(),
-        'continue_watching': [],
+        'continue_watching': watchHistories.map((w) => {
+          'playlistId':    w.playlistId,
+          'contentType':   w.contentType.toString(),
+          'streamId':      w.streamId,
+          'seriesId':      w.seriesId,
+          'watchDuration': w.watchDuration,
+          'totalDuration': w.totalDuration,
+          'lastWatched':   w.lastWatched.toIso8601String(),
+          'imagePath':     w.imagePath,
+          'title':         w.title,
+        }).toList(),
         'settings': settings,
       });
       debugPrint('[AppLifecycleSync] Background push complete');

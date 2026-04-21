@@ -85,6 +85,7 @@ class _AccountScreenState extends State<AccountScreen> {
       await db.deleteAllPlaylists();          // wipe all playlists
       await db.deleteAllFavorites();          // wipe all favorites (all playlists)
       await db.deleteAllWatchLater();         // wipe all watch later (all playlists)
+      await db.deleteAllWatchHistories();      // wipe all continue watching (all playlists)
       await UserPreferences.removeLastPlaylist();
       await AppConfig.setTmdbApiKey('');
       await UserPreferences.clearSyncedSettings();
@@ -138,6 +139,20 @@ class _AccountScreenState extends State<AccountScreen> {
         'imagePath': w.imagePath,
       }).toList();
 
+      // Read watch history from Drift DB
+      final watchHistories = await db.getAllWatchHistories();
+      final watchHistoriesJson = watchHistories.map((w) => {
+        'playlistId':    w.playlistId,
+        'contentType':   w.contentType.toString(),
+        'streamId':      w.streamId,
+        'seriesId':      w.seriesId,
+        'watchDuration': w.watchDuration,
+        'totalDuration': w.totalDuration,
+        'lastWatched':   w.lastWatched.toIso8601String(),
+        'imagePath':     w.imagePath,
+        'title':         w.title,
+      }).toList();
+
       // Build settings snapshot
       final settings = await _buildSettings();
 
@@ -145,11 +160,11 @@ class _AccountScreenState extends State<AccountScreen> {
         'playlists': playlistsJson,
         'favorites': favoritesJson,
         'watch_later': watchLaterJson,
-        'continue_watching': [],
+        'continue_watching': watchHistoriesJson,
         'settings': settings,
       });
 
-      debugPrint('[AccountScreen] pushAll: pushed ${playlistsJson.length} playlists, ${favoritesJson.length} favorites, ${watchLaterJson.length} watch later items');
+      debugPrint('[AccountScreen] pushAll: pushed ${playlistsJson.length} playlists, ${favoritesJson.length} favorites, ${watchLaterJson.length} watch later items, ${watchHistoriesJson.length} watch histories');
     } catch (e) {
       debugPrint('[AccountScreen] _pushAll error: $e');
       rethrow;

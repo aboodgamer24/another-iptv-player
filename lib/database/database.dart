@@ -1699,9 +1699,32 @@ class AppDatabase extends _$AppDatabase {
 
   // === DATA WIPE OPERATIONS ===
 
+  Future<List<WatchHistoriesData>> getAllWatchHistories() async {
+    return await (select(watchHistories)
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.lastWatched)]))
+        .get();
+  }
+
+  Future<void> insertOrUpdateWatchHistory(WatchHistoriesData entry) async {
+    await into(watchHistories).insertOnConflictUpdate(
+      WatchHistoriesCompanion(
+        playlistId: Value(entry.playlistId),
+        contentType: Value(entry.contentType),
+        streamId: Value(entry.streamId),
+        seriesId: Value(entry.seriesId),
+        watchDuration: Value(entry.watchDuration),
+        totalDuration: Value(entry.totalDuration),
+        lastWatched: Value(entry.lastWatched),
+        imagePath: Value(entry.imagePath),
+        title: Value(entry.title),
+      ),
+    );
+  }
+
   Future<void> deleteAllPlaylists() => delete(playlists).go();
   Future<void> deleteAllFavorites() => delete(favorites).go();
   Future<void> deleteAllWatchLater() => delete(watchLaters).go();
+  Future<void> deleteAllWatchHistories() => delete(watchHistories).go();
 
   @override
   MigrationStrategy get migration => MigrationStrategy(

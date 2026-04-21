@@ -41,6 +41,9 @@ class SyncApplier {
       // 5. Restore watch later
       await _applyWatchLater(data['watch_later']);
 
+      // 6. Restore continue watching
+      await _applyContinueWatching(data['continue_watching']);
+
       debugPrint('[SyncApplier] ✅ Sync applied successfully');
       return true;
     } catch (e, stack) {
@@ -167,6 +170,44 @@ class SyncApplier {
         await db.insertWatchLater(entry);
       } catch (e) {
         debugPrint('[SyncApplier] Failed to apply watch later item: $e');
+      }
+    }
+  }
+
+  /// Apply continue watching — insert into Drift DB, handle upserts.
+  static Future<void> _applyContinueWatching(dynamic rawItems) async {
+    if (rawItems == null || rawItems is! List || rawItems.isEmpty) return;
+
+    final db = getIt<AppDatabase>();
+
+    for (final item in rawItems) {
+      try {
+        final map = Map<String, dynamic>.from(item);
+        final contentType = _parseContentType(map['contentType']);
+        if (contentType == null) continue;
+
+        final playlistId = map['playlistId'] as String? ?? '';
+        final streamId = map['streamId'] as String? ?? '';
+        final title = map['title'] as String? ?? '';
+        if (playlistId.isEmpty || streamId.isEmpty) continue;
+
+        final entry = WatchHistoriesData(
+          playlistId: playlistId,
+          contentType: contentType,
+          streamId: streamId,
+          seriesId: map['seriesId'] as String?,
+          watchDuration: map['watchDuration'] as int?,
+          totalDuration: map['totalDuration'] as int?,
+          lastWatched: map['lastWatched'] != null
+              ? DateTime.tryParse(map['lastWatched'].toString()) ?? DateTime.now()
+              : DateTime.now(),
+          imagePath: map['imagePath'] as String?,
+          title: title,
+        );
+
+        await db.insertOrUpdateWatchHistory(entry);
+      } catch (e) {
+        debugPrint('[SyncApplier] Failed to apply continue_watching item: $e');
       }
     }
   }
