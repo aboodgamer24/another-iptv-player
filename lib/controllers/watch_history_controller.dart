@@ -6,6 +6,7 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/watch_history.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
+import 'package:another_iptv_player/services/sync_service.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import '../screens/m3u/m3u_player_screen.dart';
 import '../services/service_locator.dart';
@@ -98,6 +99,7 @@ class WatchHistoryController extends ChangeNotifier {
       _seriesHistory = futures[4];
 
       _setLoading(false);
+      _syncContinueWatchingToServer();
     } catch (e) {
       _setError('İzleme geçmişi yüklenirken hata oluştu: $e');
       _setLoading(false);
@@ -310,5 +312,20 @@ class WatchHistoryController extends ChangeNotifier {
         ),
       );
     }
+  }
+
+  /// Fire-and-forget push of the continue_watching list to the sync server.
+  void _syncContinueWatchingToServer() {
+    final data = _continueWatching.map((h) => {
+      'streamId': h.streamId,
+      'title': h.title,
+      'imagePath': h.imagePath,
+      'contentType': h.contentType.toString(),
+      'playlistId': h.playlistId,
+      'lastWatched': h.lastWatched.toIso8601String(),
+      'watchDuration': h.watchDuration?.inMilliseconds,
+      'totalDuration': h.totalDuration?.inMilliseconds,
+    }).toList();
+    SyncService.instance.pushField('continue_watching', data);
   }
 }

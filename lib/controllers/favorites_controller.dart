@@ -6,6 +6,7 @@ import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/screens/series/episode_screen.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart';
+import 'package:another_iptv_player/services/sync_service.dart';
 import 'package:flutter/material.dart';
 
 class FavoritesController extends ChangeNotifier {
@@ -59,6 +60,7 @@ class FavoritesController extends ChangeNotifier {
 
       await _repository.addFavorite(contentItem);
       await loadFavorites();
+      _syncFavoritesToServer();
 
       return true;
     } catch (e) {
@@ -81,10 +83,11 @@ class FavoritesController extends ChangeNotifier {
         episodeId: episodeId,
       );
       await loadFavorites();
+      _syncFavoritesToServer();
 
       return true;
     } catch (e) {
-      _setError('Favori kaldırılırken hata oluştu: $e');
+      _setError('Favori kaldırılırken hata oluştu: \$e');
       return false;
     }
   }
@@ -95,10 +98,11 @@ class FavoritesController extends ChangeNotifier {
 
       final result = await _repository.toggleFavorite(contentItem);
       await loadFavorites();
+      _syncFavoritesToServer();
 
       return result;
     } catch (e) {
-      _setError('Favori işlemi sırasında hata oluştu: $e');
+      _setError('Favori işlemi sırasında hata oluştu: \$e');
       return false;
     }
   }
@@ -169,8 +173,9 @@ class FavoritesController extends ChangeNotifier {
     try {
       await _repository.reorderLiveFavorites(orderedIds);
       await loadFavorites();
+      _syncFavoritesToServer();
     } catch (e) {
-      _setError('Sıralama kaydedilirken hata oluştu: $e');
+      _setError('Sıralama kaydedilirken hata oluştu: \$e');
     }
   }
 
@@ -181,10 +186,11 @@ class FavoritesController extends ChangeNotifier {
       await _repository.clearAllFavorites();
       _favorites.clear();
       notifyListeners();
+      _syncFavoritesToServer();
 
       return true;
     } catch (e) {
-      _setError('Favoriler temizlenirken hata oluştu: $e');
+      _setError('Favoriler temizlenirken hata oluştu: \$e');
       return false;
     }
   }
@@ -253,5 +259,19 @@ class FavoritesController extends ChangeNotifier {
   void _setError(String? error) {
     _error = error;
     notifyListeners();
+  }
+
+  /// Fire-and-forget push of the current favorites list to the sync server.
+  void _syncFavoritesToServer() {
+    final data = _favorites.map((f) => {
+      'id': f.id,
+      'streamId': f.streamId,
+      'name': f.name,
+      'imagePath': f.imagePath,
+      'contentType': f.contentType.toString(),
+      'episodeId': f.episodeId,
+      'sortOrder': f.sortOrder,
+    }).toList();
+    SyncService.instance.pushField('favorites', data);
   }
 }

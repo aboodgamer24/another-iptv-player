@@ -1,0 +1,38 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-iptv_sync}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-yourpassword}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-iptv_sync}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  server:
+    image: node:20-alpine
+    restart: unless-stopped
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    volumes:
+      - .:/app:ro
+      - server_modules:/app/node_modules
+    ports:
+      - "${PORT:-7000}:${PORT:-7000}"
+    command: >
+      sh -c "npm install --production && node src/migrate.js && node src/index.js"
+
+volumes:
+  pgdata:
+  server_modules:

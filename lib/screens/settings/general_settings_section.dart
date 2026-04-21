@@ -30,6 +30,8 @@ import 'home_customization_section.dart';
 import '../../utils/app_config.dart';
 import '../../services/upscale_service.dart';
 import '../../services/player_state.dart';
+import '../../services/sync_service.dart';
+import '../account/account_screen.dart';
 
 
 
@@ -595,6 +597,32 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             child: LayoutBuilder(
               builder: (context, constraints) {
                 final isWide = constraints.maxWidth >= 720;
+                final theme = Theme.of(context);
+
+                // Account entry tile
+                final accountTile = Card(
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      radius: 18,
+                      backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+                      child: Icon(
+                        SyncService.instance.isLoggedIn ? Icons.account_circle_rounded : Icons.person_outline_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 20,
+                      ),
+                    ),
+                    title: Text(
+                      SyncService.instance.isLoggedIn ? 'Account & Sync' : 'Sign In / Register',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: Text(
+                      SyncService.instance.isLoggedIn ? 'Manage your account and cloud sync' : 'Connect to your sync server',
+                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
+                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
+                  ),
+                );
 
                 // All section widgets in order
                 final playlist       = _buildPlaylistCard(context);
@@ -614,6 +642,8 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      accountTile,
+                      const SizedBox(height: 10),
                       playlist,
                       const SizedBox(height: 10),
                       generalTitle, generalCard,
@@ -633,6 +663,9 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                 return Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Account tile spans full width
+                    accountTile,
+                    const SizedBox(height: 10),
                     // Playlist card spans full width
                     playlist,
                     const SizedBox(height: 10),

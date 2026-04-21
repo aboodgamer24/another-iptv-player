@@ -10,6 +10,7 @@ import 'controllers/locale_provider.dart';
 import 'controllers/theme_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/supported_languages.dart';
+import 'services/sync_service.dart';
 
 import 'package:another_iptv_player/utils/app_config.dart';
 import 'package:window_manager/window_manager.dart';
@@ -18,6 +19,7 @@ import 'dart:io';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppConfig.load();
+  await SyncService.instance.init();
   
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();

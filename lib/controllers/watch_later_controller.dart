@@ -9,6 +9,7 @@ import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart';
 import 'package:another_iptv_player/screens/series/episode_screen.dart';
+import 'package:another_iptv_player/services/sync_service.dart';
 import 'package:flutter/material.dart';
 
 class WatchLaterController extends ChangeNotifier {
@@ -48,9 +49,10 @@ class WatchLaterController extends ChangeNotifier {
       _setError(null);
       await _repository.addWatchLater(contentItem);
       await loadWatchLaterItems();
+      _syncWatchLaterToServer();
       return true;
     } catch (e) {
-      _setError('Error adding to watch later: $e');
+      _setError('Error adding to watch later: \$e');
       return false;
     }
   }
@@ -60,9 +62,10 @@ class WatchLaterController extends ChangeNotifier {
       _setError(null);
       await _repository.removeWatchLater(streamId, contentType);
       await loadWatchLaterItems();
+      _syncWatchLaterToServer();
       return true;
     } catch (e) {
-      _setError('Error removing from watch later: $e');
+      _setError('Error removing from watch later: \$e');
       return false;
     }
   }
@@ -102,6 +105,7 @@ class WatchLaterController extends ChangeNotifier {
       
       // Sync with repository state
       await loadWatchLaterItems();
+      _syncWatchLaterToServer();
       return result;
     } catch (e) {
       _setError('Error toggling watch later: $e');
@@ -248,5 +252,18 @@ class WatchLaterController extends ChangeNotifier {
   void _setError(String? value) {
     _error = value;
     notifyListeners();
+  }
+
+  /// Fire-and-forget push of the current watch later list to the sync server.
+  void _syncWatchLaterToServer() {
+    final data = _watchLaterItems.map((i) => {
+      'id': i.id,
+      'streamId': i.streamId,
+      'title': i.title,
+      'imagePath': i.imagePath,
+      'contentType': i.contentType.toString(),
+      'playlistId': i.playlistId,
+    }).toList();
+    SyncService.instance.pushField('watch_later', data);
   }
 }

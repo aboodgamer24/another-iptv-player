@@ -1,0 +1,304 @@
+import 'package:flutter/material.dart';
+import '../../services/sync_service.dart';
+import '../../repositories/user_preferences.dart';
+
+class AccountScreen extends StatefulWidget {
+  const AccountScreen({super.key});
+  @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  final _serverCtrl = TextEditingController(text: 'http://');
+  final _emailCtrl = TextEditingController();
+  final _passwordCtrl = TextEditingController();
+  final _nameCtrl = TextEditingController();
+  bool _isRegister = false;
+  bool _loading = false;
+  String? _error;
+  Map<String, dynamic> _user = {};
+  bool _loggedIn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadState();
+  }
+
+  Future<void> _loadState() async {
+    _user = await UserPreferences.getSyncUser();
+    final serverUrl = await UserPreferences.getSyncServerUrl();
+    if (serverUrl != null) _serverCtrl.text = serverUrl;
+    setState(() => _loggedIn = SyncService.instance.isLoggedIn);
+  }
+
+  Future<void> _submit() async {
+    setState(() { _loading = true; _error = null; });
+    try {
+      if (_isRegister) {
+        await SyncService.instance.register(
+          _serverCtrl.text.trim(),
+          _emailCtrl.text.trim(),
+          _passwordCtrl.text,
+          _nameCtrl.text.trim(),
+        );
+      } else {
+        await SyncService.instance.login(
+          _serverCtrl.text.trim(),
+          _emailCtrl.text.trim(),
+          _passwordCtrl.text,
+        );
+      }
+      // Pull all synced data and apply locally
+      await _pullAndApply();
+      _user = await UserPreferences.getSyncUser();
+      setState(() => _loggedIn = true);
+    } on Exception catch (e) {
+      setState(() => _error = e.toString().replaceAll('DioException', 'Connection error'));
+    } finally {
+      setState(() => _loading = false);
+    }
+  }
+
+  Future<void> _pullAndApply() async {
+    final data = await SyncService.instance.pullSync();
+    if (data == null) return;
+    // Apply playlists
+    if (data['playlists'] != null) {
+      await UserPreferences.setSyncedPlaylists(List<Map>.from(data['playlists']));
+    }
+    // Apply favorites
+    if (data['favorites'] != null) {
+      await UserPreferences.setSyncedFavorites(List<Map>.from(data['favorites']));
+    }
+    // Apply watch later
+    if (data['watch_later'] != null) {
+      await UserPreferences.setSyncedWatchLater(List<Map>.from(data['watch_later']));
+    }
+    // Apply continue watching
+    if (data['continue_watching'] != null) {
+      await UserPreferences.setSyncedContinueWatching(List<Map>.from(data['continue_watching']));
+    }
+    // Apply settings (TMDB key, upscaler, etc.)
+    if (data['settings'] != null && (data['settings'] as Map).isNotEmpty) {
+      await UserPreferences.applySyncedSettings(Map<String, dynamic>.from(data['settings']));
+    }
+  }
+
+  Future<void> _logout() async {
+    // Push everything before logging out
+    await _pushAll();
+    await SyncService.instance.logout();
+    setState(() { _loggedIn = false; _user = {}; });
+  }
+
+  Future<void> _pushAll() async {
+    final playlists = await UserPreferences.getSyncedPlaylists();
+    final favorites = await UserPreferences.getSyncedFavorites();
+    final watchLater = await UserPreferences.getSyncedWatchLater();
+    final continueWatching = await UserPreferences.getSyncedContinueWatching();
+    final settings = await UserPreferences.buildSettingsSnapshot();
+    await SyncService.instance.pushAll({
+      'playlists': playlists,
+      'favorites': favorites,
+      'watch_later': watchLater,
+      'continue_watching': continueWatching,
+      'settings': settings,
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: const Text('Account')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: _loggedIn ? _buildProfile(theme) : _buildLoginForm(theme),
+      ),
+    );
+  }
+
+  Widget _buildProfile(ThemeData theme) {
+    final name = _user['display_name'] ?? _user['email'] ?? 'User';
+    final email = _user['email'] ?? '';
+    final color = Color(int.tryParse((_user['avatar_color'] ?? '#01696f').replaceAll('#', '0xFF')) ?? 0xFF01696f);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            CircleAvatar(
+              radius: 32,
+              backgroundColor: color,
+              child: Text(
+                name.substring(0, 1).toUpperCase(),
+                style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(name, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
+                Text(email, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+              ],
+            ),
+          ],
+        ),
+        const SizedBox(height: 32),
+        _SyncTile(
+          icon: Icons.sync_rounded,
+          title: 'Sync Now',
+          subtitle: 'Push all local data to server',
+          onTap: () async {
+            await _pushAll();
+            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Synced successfully')));
+          },
+        ),
+        _SyncTile(
+          icon: Icons.download_rounded,
+          title: 'Pull from Server',
+          subtitle: 'Overwrite local data with server data',
+          onTap: () async {
+            await _pullAndApply();
+            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data pulled from server')));
+          },
+        ),
+        const SizedBox(height: 24),
+        const Divider(),
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _logout,
+            icon: const Icon(Icons.logout_rounded),
+            label: const Text('Sign Out'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: theme.colorScheme.error,
+              side: BorderSide(color: theme.colorScheme.error.withOpacity(0.4)),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginForm(ThemeData theme) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          _isRegister ? 'Create Account' : 'Sign In',
+          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Connect to your self-hosted sync server',
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+        ),
+        const SizedBox(height: 32),
+        TextField(
+          controller: _serverCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Server URL',
+            hintText: 'http://192.168.1.100:7000',
+            prefixIcon: Icon(Icons.dns_rounded),
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.url,
+        ),
+        const SizedBox(height: 16),
+        if (_isRegister) ...[
+          TextField(
+            controller: _nameCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Display Name',
+              prefixIcon: Icon(Icons.person_rounded),
+              border: OutlineInputBorder(),
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
+        TextField(
+          controller: _emailCtrl,
+          decoration: const InputDecoration(
+            labelText: 'Email',
+            prefixIcon: Icon(Icons.email_rounded),
+            border: OutlineInputBorder(),
+          ),
+          keyboardType: TextInputType.emailAddress,
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _passwordCtrl,
+          obscureText: true,
+          decoration: const InputDecoration(
+            labelText: 'Password',
+            prefixIcon: Icon(Icons.lock_rounded),
+            border: OutlineInputBorder(),
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.error.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.error_outline_rounded, color: theme.colorScheme.error, size: 18),
+                const SizedBox(width: 8),
+                Expanded(child: Text(_error!, style: TextStyle(color: theme.colorScheme.error, fontSize: 13))),
+              ],
+            ),
+          ),
+        ],
+        const SizedBox(height: 24),
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: _loading ? null : _submit,
+            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            child: _loading
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                : Text(_isRegister ? 'Create Account' : 'Sign In'),
+          ),
+        ),
+        const SizedBox(height: 16),
+        Center(
+          child: TextButton(
+            onPressed: () => setState(() { _isRegister = !_isRegister; _error = null; }),
+            child: Text(_isRegister ? 'Already have an account? Sign In' : 'No account? Register'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SyncTile extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _SyncTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Container(
+        width: 40, height: 40,
+        decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        child: Icon(icon, color: theme.colorScheme.primary, size: 20),
+      ),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
+      subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13)),
+      onTap: onTap,
+    );
+  }
+}

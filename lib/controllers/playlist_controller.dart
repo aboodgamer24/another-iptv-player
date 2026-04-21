@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
+import 'package:another_iptv_player/services/sync_service.dart';
 import '../models/playlist_model.dart';
 import '../screens/main_navigation_screen.dart';
 import '../services/playlist_service.dart';
@@ -88,6 +89,7 @@ class PlaylistController extends ChangeNotifier {
       await PlaylistService.savePlaylist(playlist);
       _playlists.add(playlist);
       _sortPlaylists();
+      _syncPlaylistsToServer();
 
       return playlist;
     } catch (e) {
@@ -103,6 +105,7 @@ class PlaylistController extends ChangeNotifier {
       await PlaylistService.deletePlaylist(id);
       _playlists.removeWhere((playlist) => playlist.id == id);
       notifyListeners();
+      _syncPlaylistsToServer();
       return true;
     } catch (e) {
       setError('Playlist silinemedi: ${e.toString()}');
@@ -120,6 +123,7 @@ class PlaylistController extends ChangeNotifier {
         _playlists.removeWhere((playlist) => playlist.id == id);
       }
       notifyListeners();
+      _syncPlaylistsToServer();
       return true;
     } catch (e) {
       setError('Playlistler silinemedi: ${e.toString()}');
@@ -146,6 +150,7 @@ class PlaylistController extends ChangeNotifier {
         _playlists[index] = updatedPlaylist;
         _sortPlaylists();
       }
+      _syncPlaylistsToServer();
 
       return true;
     } catch (e) {
@@ -312,5 +317,11 @@ class PlaylistController extends ChangeNotifier {
   void dispose() {
     _playlists.clear();
     super.dispose();
+  }
+
+  /// Fire-and-forget push of the current playlists to the sync server.
+  void _syncPlaylistsToServer() {
+    final data = _playlists.map((p) => p.toJson()).toList();
+    SyncService.instance.pushField('playlists', data);
   }
 }

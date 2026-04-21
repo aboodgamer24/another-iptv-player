@@ -403,4 +403,120 @@ class UserPreferences {
     final jsonString = json.encode(rails.map((r) => r.toJson()).toList());
     await prefs.setString(_homeRailsKey, jsonString);
   }
+
+  // ── Sync session keys ──────────────────────────────────────────────
+  static const _keySyncToken = 'sync_token';
+  static const _keySyncServerUrl = 'sync_server_url';
+  static const _keySyncUser = 'sync_user';
+
+  static Future<String?> getSyncToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    final val = prefs.getString(_keySyncToken);
+    return (val == null || val.isEmpty) ? null : val;
+  }
+
+  static Future<void> setSyncToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncToken, token);
+  }
+
+  static Future<String?> getSyncServerUrl() async {
+    final prefs = await SharedPreferences.getInstance();
+    final val = prefs.getString(_keySyncServerUrl);
+    return (val == null || val.isEmpty) ? null : val;
+  }
+
+  static Future<void> setSyncServerUrl(String url) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncServerUrl, url);
+  }
+
+  static Future<Map<String, dynamic>> getSyncUser() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncUser);
+    if (raw == null || raw.isEmpty) return {};
+    try { return Map<String, dynamic>.from(jsonDecode(raw)); } catch (_) { return {}; }
+  }
+
+  static Future<void> setSyncUser(Map user) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncUser, jsonEncode(user));
+  }
+
+  // ── Synced collections ─────────────────────────────────────────────
+  static const _keySyncedPlaylists = 'synced_playlists';
+  static const _keySyncedFavorites = 'synced_favorites';
+  static const _keySyncedWatchLater = 'synced_watch_later';
+  static const _keySyncedContinueWatching = 'synced_continue_watching';
+
+  static Future<List<Map>> getSyncedPlaylists() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncedPlaylists);
+    if (raw == null) return [];
+    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+  }
+
+  static Future<void> setSyncedPlaylists(List<Map> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncedPlaylists, jsonEncode(data));
+  }
+
+  static Future<List<Map>> getSyncedFavorites() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncedFavorites);
+    if (raw == null) return [];
+    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+  }
+
+  static Future<void> setSyncedFavorites(List<Map> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncedFavorites, jsonEncode(data));
+  }
+
+  static Future<List<Map>> getSyncedWatchLater() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncedWatchLater);
+    if (raw == null) return [];
+    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+  }
+
+  static Future<void> setSyncedWatchLater(List<Map> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncedWatchLater, jsonEncode(data));
+  }
+
+  static Future<List<Map>> getSyncedContinueWatching() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getString(_keySyncedContinueWatching);
+    if (raw == null) return [];
+    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+  }
+
+  static Future<void> setSyncedContinueWatching(List<Map> data) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keySyncedContinueWatching, jsonEncode(data));
+  }
+
+  // Build a snapshot of all current settings to push to server
+  static Future<Map<String, dynamic>> buildSettingsSnapshot() async {
+    final prefs = await SharedPreferences.getInstance();
+    return {
+      'upscalePreset': prefs.getString('upscale_preset') ?? 'none',
+      'streamEnhancement': prefs.getBool('stream_enhancement') ?? false,
+      'tmdbApiKey': prefs.getString('tmdb_api_key') ?? '',
+      'subtitleSize': prefs.getDouble('subtitle_size') ?? 1.0,
+      'subtitleColor': prefs.getInt('subtitle_color') ?? 0xFFFFFFFF,
+    };
+  }
+
+  // Apply synced settings snapshot back to SharedPreferences
+  static Future<void> applySyncedSettings(Map<String, dynamic> settings) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (settings['upscalePreset'] != null) await prefs.setString('upscale_preset', settings['upscalePreset']);
+    if (settings['streamEnhancement'] != null) await prefs.setBool('stream_enhancement', settings['streamEnhancement']);
+    if (settings['tmdbApiKey'] != null) await prefs.setString('tmdb_api_key', settings['tmdbApiKey']);
+    if (settings['subtitleSize'] != null) await prefs.setDouble('subtitle_size', (settings['subtitleSize'] as num).toDouble());
+    if (settings['subtitleColor'] != null) await prefs.setInt('subtitle_color', settings['subtitleColor']);
+  }
 }
+

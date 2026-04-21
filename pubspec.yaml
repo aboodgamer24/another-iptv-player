@@ -23,6 +23,7 @@ dependencies:
   sqlite3_flutter_libs: ^0.5.34
   cupertino_icons: ^1.0.8
   http: ^1.4.0
+  dio: ^5.4.0
   cached_network_image: ^3.4.1
   audio_service: ^0.18.18
   just_audio: ^0.10.4
