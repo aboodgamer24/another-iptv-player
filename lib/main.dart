@@ -11,6 +11,8 @@ import 'controllers/theme_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/supported_languages.dart';
 import 'services/sync_service.dart';
+import 'services/app_lifecycle_sync.dart';
+
 
 import 'package:another_iptv_player/utils/app_config.dart';
 import 'package:window_manager/window_manager.dart';
@@ -46,10 +48,19 @@ Future<void> main() async {
         ChangeNotifierProvider(create: (_) => FavoritesController()),
         ChangeNotifierProvider(create: (_) => WatchLaterController()),
       ],
-      child: const MyApp(),
+      child: const AppLifecycleSyncWrapper(),
     ),
   );
 }
+
+class AppLifecycleSyncWrapper extends StatelessWidget {
+  const AppLifecycleSyncWrapper({super.key});
+  @override
+  Widget build(BuildContext context) {
+    return const AppLifecycleSync(child: MyApp());
+  }
+}
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

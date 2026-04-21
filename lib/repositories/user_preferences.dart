@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/home_rail_config.dart';
 import '../utils/app_config.dart';
+
 
 
 class UserPreferences {
@@ -541,9 +541,10 @@ class UserPreferences {
     // Restore TMDB API key (handle both key variants)
     final tmdbKey = settings['tmdbApiKey'] ?? settings['tmdb_api_key'];
     if (tmdbKey != null && (tmdbKey as String).isNotEmpty) {
-      await AppConfig.setTmdbApiKey(tmdbKey as String);
+      await AppConfig.setTmdbApiKey(tmdbKey);
       debugPrint('[UserPreferences] Restored TMDB API key from sync');
     }
+
     if (settings['subtitleSize'] != null) await prefs.setDouble('subtitle_size', (settings['subtitleSize'] as num).toDouble());
     if (settings['subtitleColor'] != null) await prefs.setInt('subtitle_color', settings['subtitleColor']);
     // Restore last used playlist
@@ -555,6 +556,31 @@ class UserPreferences {
       await prefs.setString(_homeRailsKey, settings['homeRailsConfig']);
       debugPrint('[UserPreferences] Restored homeRailsConfig from sync');
     }
+  }
+
+  static Future<void> clearSyncedSettings() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_keyBackgroundPlay);
+    await prefs.remove(_keyThemeName);
+    await prefs.remove(_keyThemeMode);
+    await prefs.remove(_keyBrightnessGesture);
+    await prefs.remove(_keyVolumeGesture);
+    await prefs.remove(_keySeekGesture);
+    await prefs.remove(_keySpeedUpOnLongPress);
+    await prefs.remove(_keySeekOnDoubleTap);
+    await prefs.remove(_keyUpscalePreset);
+    await prefs.remove(_keyStreamEnhancement);
+
+    // Also clear the specific keys used in sync apply/build
+    await prefs.remove('subtitle_size');
+    await prefs.remove('subtitle_color');
+    await prefs.remove('upscale_preset');
+    await prefs.remove('stream_enhancement');
+    await prefs.remove('tmdb_api_key');
+    await prefs.remove('tmdbApiKey');
+    await prefs.remove(_homeRailsKey);
+
+    debugPrint('[UserPreferences] clearSyncedSettings: all settings reset');
   }
 }
 

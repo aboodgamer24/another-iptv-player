@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../database/database.dart';
-import '../../services/database_service.dart';
 import '../../services/playlist_service.dart';
+
 import '../../services/service_locator.dart';
 import '../../services/sync_applier.dart';
 import '../../services/sync_service.dart';
 import '../../repositories/user_preferences.dart';
+import '../welcome_screen.dart';
+import '../../utils/app_config.dart';
+
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -72,10 +75,36 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _logout() async {
-    // Push everything before logging out
-    await _pushAll();
-    await SyncService.instance.logout();
-    setState(() { _loggedIn = false; _user = {}; });
+    setState(() => _loading = true);
+    try {
+      // 1. Push everything before logging out (existing behaviour)
+      await _pushAll();
+      
+      // 2. Wipe all local data
+      final db = getIt<AppDatabase>();
+      await db.deleteAllPlaylists();          // wipe all playlists
+      await db.deleteAllFavorites();          // wipe all favorites (all playlists)
+      await db.deleteAllWatchLater();         // wipe all watch later (all playlists)
+      await UserPreferences.removeLastPlaylist();
+      await AppConfig.setTmdbApiKey('');
+      await UserPreferences.clearSyncedSettings();
+      await UserPreferences.setHasSeenWelcome(false);
+
+      // 3. Clear auth session
+      await SyncService.instance.logout();
+      
+      // 4. Navigate to Welcome screen, removing all routes
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+          (_) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint('[AccountScreen] logout error: $e');
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
   }
 
   Future<void> _pushAll() async {

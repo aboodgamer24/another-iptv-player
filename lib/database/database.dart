@@ -1697,6 +1697,12 @@ class AppDatabase extends _$AppDatabase {
         .go();
   }
 
+  // === DATA WIPE OPERATIONS ===
+
+  Future<void> deleteAllPlaylists() => delete(playlists).go();
+  Future<void> deleteAllFavorites() => delete(favorites).go();
+  Future<void> deleteAllWatchLater() => delete(watchLaters).go();
+
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (Migrator m) async {
