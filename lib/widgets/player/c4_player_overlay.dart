@@ -191,7 +191,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
 
   void _startHideTimer() {
     _hideTimer?.cancel();
-    if (_showSidePanel || _showInfoPanel) return;
+    if (_showSidePanel || _showInfoPanel || _showEnhancementPanel) return;
     _hideTimer = Timer(const Duration(seconds: 5), () {
       if (mounted) setState(() => _isVisible = false);
     });
