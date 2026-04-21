@@ -34,7 +34,17 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     _tmdb = TmdbService();
     _historyController = context.read<WatchHistoryController>();
     _favoritesController = context.read<FavoritesController>();
-    _loadData();
+
+    // Only load if controllers have no data yet — avoids re-fetching on every mount
+    if (_historyController.isAllEmpty) {
+      _historyController.loadWatchHistory();
+    }
+    if (_favoritesController.favorites.isEmpty) {
+      _favoritesController.loadFavorites();
+    }
+
+    // TMDB always fetches fresh on first mount
+    if (_trendingMovies.isEmpty) _fetchTmdb();
   }
 
   Future<void> _loadData() async {
@@ -71,15 +81,32 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final history = context.watch<WatchHistoryController>();
-    final favorites = context.watch<FavoritesController>();
+    final isHistoryLoading = context.select<WatchHistoryController, bool>(
+      (c) => c.isLoading,
+    );
+    final isFavLoading = context.select<FavoritesController, bool>(
+      (c) => c.isLoading,
+    );
 
-    if (history.isLoading || favorites.isLoading) {
+    if (isHistoryLoading || isFavLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
+    final continueWatching = context.select<WatchHistoryController, List<WatchHistory>>(
+      (c) => c.continueWatching,
+    );
+    final movieHistory = context.select<WatchHistoryController, List<WatchHistory>>(
+      (c) => c.movieHistory,
+    );
+    final seriesHistory = context.select<WatchHistoryController, List<WatchHistory>>(
+      (c) => c.seriesHistory,
+    );
+    final favItems = context.select<FavoritesController, List<Favorite>>(
+      (c) => c.favorites,
+    );
+
     final heroItem = _getHeroItem();
-    final continueWatchingFiltered = history.continueWatching
+    final continueWatchingFiltered = continueWatching
         .where((WatchHistory h) => h.contentType != ContentType.liveStream)
         .toList();
 
@@ -103,10 +130,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
-          if (favorites.favorites.isNotEmpty)
+          if (favItems.isNotEmpty)
             _buildSection(
               context.loc.favorites,
-              favorites.favorites
+              favItems
                   .map(
                     (f) => ContentItem(
                       f.streamId,
@@ -123,10 +150,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
           if (_trendingSeries.isNotEmpty)
             _buildTmdbSection('Trending Series', _trendingSeries),
 
-          if (history.movieHistory.isNotEmpty)
+          if (movieHistory.isNotEmpty)
             _buildSection(
               'Recent Movies',
-              history.movieHistory
+              movieHistory
                   .map(
                     (WatchHistory h) => ContentItem(
                       h.streamId,
@@ -137,10 +164,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
-          if (history.seriesHistory.isNotEmpty)
+          if (seriesHistory.isNotEmpty)
             _buildSection(
               'Recent Series',
-              history.seriesHistory
+              seriesHistory
                   .map(
                     (WatchHistory h) => ContentItem(
                       h.streamId,

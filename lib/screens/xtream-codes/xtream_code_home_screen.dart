@@ -39,6 +39,21 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   int _desktopIndex = 0;
   int _mobileIndex = 0; // 0=Home, 1=Live, 2=Movies, 3=Series
 
+  late final PageController _mobilePageController;
+  List<Widget>? _desktopPages;
+
+  @override
+  void initState() {
+    super.initState();
+    _mobilePageController = PageController(initialPage: _mobileIndex);
+  }
+
+  @override
+  void dispose() {
+    _mobilePageController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<XtreamCodeHomeController>(
@@ -81,7 +96,10 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
 
     return MobileShellScreen(
       selectedIndex: _mobileIndex,
-      onItemSelected: (index) => setState(() => _mobileIndex = index),
+      onItemSelected: (index) {
+        setState(() => _mobileIndex = index);
+        _mobilePageController.jumpToPage(index);
+      },
       currentTitle: currentTitle,
       onSearchTap: showSearch
           ? () => Navigator.push(
@@ -128,30 +146,37 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
         ),
       ),
 
-      // IndexedStack now only has 4 children matching the 4 bottom-nav tabs
-      child: IndexedStack(
-        index: _mobileIndex,
+      // PageView now only has 4 children matching the 4 bottom-nav tabs
+      child: PageView(
+        controller: _mobilePageController,
+        physics: const NeverScrollableScrollPhysics(),
         children: [
           // 0 - Home
-          MobileHomeScreen(playlistId: widget.playlist.id),
+          _KeepAlivePage(child: MobileHomeScreen(playlistId: widget.playlist.id)),
           // 1 - Live TV
-          MobileLiveTvScreen(
-            categories: controller.liveCategories ?? [],
-            title: context.loc.live_streams,
+          _KeepAlivePage(
+            child: MobileLiveTvScreen(
+              categories: controller.liveCategories ?? [],
+              title: context.loc.live_streams,
+            ),
           ),
           // 2 - Movies
-          MobileContentScreen(
-            key: ValueKey('mobile_movies_${controller.movieCategories.length}'),
-            categories: controller.movieCategories,
-            contentType: ContentType.vod,
-            title: context.loc.movies,
+          _KeepAlivePage(
+            child: MobileContentScreen(
+              key: ValueKey('mobile_movies_${controller.movieCategories.length}'),
+              categories: controller.movieCategories,
+              contentType: ContentType.vod,
+              title: context.loc.movies,
+            ),
           ),
           // 3 - Series
-          MobileContentScreen(
-            key: ValueKey('mobile_series_${controller.seriesCategories.length}'),
-            categories: controller.seriesCategories,
-            contentType: ContentType.series,
-            title: context.loc.series_plural,
+          _KeepAlivePage(
+            child: MobileContentScreen(
+              key: ValueKey('mobile_series_${controller.seriesCategories.length}'),
+              categories: controller.seriesCategories,
+              contentType: ContentType.series,
+              title: context.loc.series_plural,
+            ),
           ),
         ],
       ),
@@ -188,9 +213,10 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   }
 
   Widget _buildDesktopPageView(XtreamCodeHomeController controller) {
+    _desktopPages ??= _buildDesktopPages(controller);
     return IndexedStack(
       index: _desktopIndex,
-      children: _buildDesktopPages(controller),
+      children: _desktopPages!,
     );
   }
 
@@ -226,5 +252,22 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       XtreamCodePlaylistSettingsScreen(playlist: widget.playlist),
     ];
   }
+}
 
+class _KeepAlivePage extends StatefulWidget {
+  final Widget child;
+  const _KeepAlivePage({required this.child});
+  @override
+  State<_KeepAlivePage> createState() => _KeepAlivePageState();
+}
+
+class _KeepAlivePageState extends State<_KeepAlivePage>
+    with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+  @override
+  Widget build(BuildContext context) {
+    super.build(context); // required by mixin
+    return widget.child;
+  }
 }

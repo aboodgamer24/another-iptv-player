@@ -52,7 +52,7 @@ class WatchHistoryController extends ChangeNotifier {
       _seriesHistory.isEmpty;
 
   Future<void> loadWatchHistory() async {
-    print('WatchHistoryController: loadWatchHistory başladı');
+    debugPrint('[WatchHistoryController] loadWatchHistory başladı');
     
     _isLoading = true;
     _errorMessage = null;
@@ -66,7 +66,7 @@ class WatchHistoryController extends ChangeNotifier {
     WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     if (AppState.currentPlaylist == null) {
-      print('WatchHistoryController: Aktif playlist bulunamadı');
+      debugPrint('[WatchHistoryController] Aktif playlist bulunamadı');
       _errorMessage = 'Aktif playlist bulunamadı';
       _isLoading = false;
       WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
@@ -74,7 +74,7 @@ class WatchHistoryController extends ChangeNotifier {
     }
 
     final playlistId = AppState.currentPlaylist!.id;
-    print('WatchHistoryController: Playlist ID: $playlistId');
+    debugPrint('[WatchHistoryController] Playlist ID: $playlistId');
 
     try {
       final futures = await Future.wait([

@@ -34,7 +34,7 @@ class FavoritesController extends ChangeNotifier {
   int get seriesFavoriteCount => seriesFavorites.length;
 
   Future<void> loadFavorites() async {
-    print('FavoritesController: loadFavorites başladı');
+    debugPrint('[FavoritesController] loadFavorites başladı');
     try {
       _setLoading(true);
       _setError(null);
@@ -43,10 +43,10 @@ class FavoritesController extends ChangeNotifier {
       WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
       _favorites = await _repository.getAllFavorites();
-      print('FavoritesController: ${_favorites.length} favori yüklendi');
+      debugPrint('[FavoritesController] ${_favorites.length} favori yüklendi');
       WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     } catch (e) {
-      print('FavoritesController: Hata: $e');
+      debugPrint('[FavoritesController] Hata: $e');
       _setError('Favoriler yüklenirken hata oluştu: $e');
     } finally {
       _setLoading(false);
