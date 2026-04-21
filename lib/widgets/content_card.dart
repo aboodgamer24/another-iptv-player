@@ -25,7 +25,7 @@ class ContentCard extends StatefulWidget {
 }
 
 class _ContentCardState extends State<ContentCard> {
-  bool _isHovered = false;
+  final bool _isHovered = false;
 
   @override
   Widget build(BuildContext context) {
@@ -174,10 +174,7 @@ class _ContentCardState extends State<ContentCard> {
 
     // Desktop: wrap with hover effects
     if (isDesktop) {
-      return HoverScaleWrapper(
-        hoverScale: 1.02,
-        child: cardWidget,
-      );
+      return HoverScaleWrapper(hoverScale: 1.02, child: cardWidget);
     }
 
     return cardWidget;

@@ -36,19 +36,17 @@ class _VideoInfoWidgetState extends State<VideoInfoWidget> {
 
     _globalContext = context;
 
-    if (_globalToggleSubscription == null) {
-      _globalToggleSubscription = EventBus()
-          .on<bool>('toggle_video_info')
-          .listen((bool show) {
-            if (show) {
-              if (_globalContext != null) {
-                _showVideoInfo(_globalContext!);
-              }
-            } else {
-              _hideVideoInfo();
+    _globalToggleSubscription ??= EventBus()
+        .on<bool>('toggle_video_info')
+        .listen((bool show) {
+          if (show) {
+            if (_globalContext != null) {
+              _showVideoInfo(_globalContext!);
             }
-          });
-    }
+          } else {
+            _hideVideoInfo();
+          }
+        });
   }
 
   @override

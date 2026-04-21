@@ -49,9 +49,9 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
 
                 return TabBarView(
                   children: [
-                    _buildLiveTab(live, favCtrl),
-                    _buildContentTab(movies, favCtrl),
-                    _buildContentTab(series, favCtrl),
+                    _LiveTab(items: live, favCtrl: favCtrl),
+                    _ContentTab(items: movies, favCtrl: favCtrl),
+                    _ContentTab(items: series, favCtrl: favCtrl),
                   ],
                 );
               },
@@ -62,13 +62,44 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
     );
   }
 
-  Widget _buildLiveTab(List<Favorite> items, FavoritesController favCtrl) {
-    if (items.isEmpty) return _buildEmptyState();
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Icon(Icons.favorite_border, size: 64, color: Colors.white24),
+          const SizedBox(height: 16),
+          Text(context.loc.no_favorites_found, style: const TextStyle(color: Colors.white54)),
+        ],
+      ),
+    );
+  }
+}
+
+class _LiveTab extends StatefulWidget {
+  final List<Favorite> items;
+  final FavoritesController favCtrl;
+  const _LiveTab({required this.items, required this.favCtrl});
+
+  @override
+  State<_LiveTab> createState() => _LiveTabState();
+}
+
+class _LiveTabState extends State<_LiveTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    if (widget.items.isEmpty) return const _EmptyState();
+    
     return ListView.builder(
+      cacheExtent: 500,
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: items.length,
+      itemCount: widget.items.length,
       itemBuilder: (context, index) {
-        final item = items[index];
+        final item = widget.items[index];
         return Dismissible(
           key: ValueKey(item.id),
           direction: DismissDirection.endToStart,
@@ -78,7 +109,7 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
             padding: const EdgeInsets.only(right: 20),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          onDismissed: (_) => favCtrl.toggleFavorite(item.toContentItem()),
+          onDismissed: (_) => widget.favCtrl.toggleFavorite(item.toContentItem()),
           child: ListTile(
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -97,10 +128,28 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
       },
     );
   }
+}
 
-  Widget _buildContentTab(List<Favorite> items, FavoritesController favCtrl) {
-    if (items.isEmpty) return _buildEmptyState();
+class _ContentTab extends StatefulWidget {
+  final List<Favorite> items;
+  final FavoritesController favCtrl;
+  const _ContentTab({required this.items, required this.favCtrl});
+
+  @override
+  State<_ContentTab> createState() => _ContentTabState();
+}
+
+class _ContentTabState extends State<_ContentTab> with AutomaticKeepAliveClientMixin {
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    if (widget.items.isEmpty) return const _EmptyState();
+
     return GridView.builder(
+      cacheExtent: 500,
       padding: const EdgeInsets.all(12),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
@@ -108,9 +157,9 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
         mainAxisSpacing: 12,
         crossAxisSpacing: 12,
       ),
-      itemCount: items.length,
+      itemCount: widget.items.length,
       itemBuilder: (context, index) {
-        final item = items[index];
+        final item = widget.items[index];
         return Dismissible(
           key: ValueKey(item.id),
           direction: DismissDirection.endToStart,
@@ -119,14 +168,20 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
             alignment: Alignment.center,
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          onDismissed: (_) => favCtrl.toggleFavorite(item.toContentItem()),
-          child: _buildPosterCard(item.toContentItem()),
+          onDismissed: (_) => widget.favCtrl.toggleFavorite(item.toContentItem()),
+          child: _PosterCard(item: item.toContentItem()),
         );
       },
     );
   }
+}
 
-  Widget _buildPosterCard(ContentItem item) {
+class _PosterCard extends StatelessWidget {
+  final ContentItem item;
+  const _PosterCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () => navigateByContentType(context, item),
       child: Container(
@@ -161,15 +216,23 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
       ),
     );
   }
+}
 
-  Widget _buildEmptyState() {
+class _EmptyState extends StatelessWidget {
+  const _EmptyState();
+
+  @override
+  Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const Icon(Icons.favorite_border, size: 64, color: Colors.white24),
           const SizedBox(height: 16),
-          Text(context.loc.no_favorites_found, style: const TextStyle(color: Colors.white54)),
+          Text(
+            context.loc.no_favorites_found,
+            style: const TextStyle(color: Colors.white54),
+          ),
         ],
       ),
     );

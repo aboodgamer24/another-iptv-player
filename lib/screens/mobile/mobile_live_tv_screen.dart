@@ -69,6 +69,7 @@ class _MobileLiveTvScreenState extends State<MobileLiveTvScreen> {
           child: _displayItems.isEmpty
               ? _buildEmptyState()
               : GridView.builder(
+                  cacheExtent: 500,
                   padding: const EdgeInsets.all(8),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,
@@ -111,6 +112,7 @@ class _MobileLiveTvScreenState extends State<MobileLiveTvScreen> {
     return SizedBox(
       height: 50,
       child: ListView.builder(
+        cacheExtent: 500,
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 8),
         itemCount: widget.categories.length + 1,

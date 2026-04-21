@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../controllers/watch_history_controller.dart';
 import '../../controllers/favorites_controller.dart';
-import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../l10n/localization_extension.dart';
@@ -57,42 +56,58 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
           if (history.continueWatching.isNotEmpty)
             _buildSection(
               context.loc.continue_watching,
-              history.continueWatching.map((h) => ContentItem(
-                h.streamId,
-                h.title,
-                h.imagePath ?? '',
-                h.contentType,
-              )).toList(),
+              history.continueWatching
+                  .map(
+                    (h) => ContentItem(
+                      h.streamId,
+                      h.title,
+                      h.imagePath ?? '',
+                      h.contentType,
+                    ),
+                  )
+                  .toList(),
             ),
           if (favorites.favorites.isNotEmpty)
             _buildSection(
               context.loc.favorites,
-              favorites.favorites.map((f) => ContentItem(
-                f.streamId,
-                f.name,
-                f.imagePath ?? '',
-                f.contentType,
-              )).toList(),
+              favorites.favorites
+                  .map(
+                    (f) => ContentItem(
+                      f.streamId,
+                      f.name,
+                      f.imagePath ?? '',
+                      f.contentType,
+                    ),
+                  )
+                  .toList(),
             ),
           if (history.movieHistory.isNotEmpty)
             _buildSection(
               'Recent Movies',
-              history.movieHistory.map((h) => ContentItem(
-                h.streamId,
-                h.title,
-                h.imagePath ?? '',
-                h.contentType,
-              )).toList(),
+              history.movieHistory
+                  .map(
+                    (h) => ContentItem(
+                      h.streamId,
+                      h.title,
+                      h.imagePath ?? '',
+                      h.contentType,
+                    ),
+                  )
+                  .toList(),
             ),
           if (history.seriesHistory.isNotEmpty)
             _buildSection(
               'Recent Series',
-              history.seriesHistory.map((h) => ContentItem(
-                h.streamId,
-                h.title,
-                h.imagePath ?? '',
-                h.contentType,
-              )).toList(),
+              history.seriesHistory
+                  .map(
+                    (h) => ContentItem(
+                      h.streamId,
+                      h.title,
+                      h.imagePath ?? '',
+                      h.contentType,
+                    ),
+                  )
+                  .toList(),
             ),
           const SizedBox(height: 32),
         ],
@@ -180,6 +195,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
         SizedBox(
           height: 160,
           child: ListView.builder(
+            cacheExtent: 500,
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: items.length,
@@ -211,7 +227,8 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
               child: CachedNetworkImage(
                 imageUrl: item.imageUrl,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => const Icon(Icons.movie, color: Colors.white24),
+                errorWidget: (_, __, ___) =>
+                    const Icon(Icons.movie, color: Colors.white24),
               ),
             ),
             Padding(

@@ -98,8 +98,9 @@ class _ContentItemCardWidgetState extends State<ContentItemCardWidget> {
   void selectAndScrollToIndex(int index) {
     if (index < 0 ||
         index >= widget.contentItems.length ||
-        !widget.isSelectionModeEnabled)
+        !widget.isSelectionModeEnabled) {
       return;
+    }
 
     setState(() {
       selectedIndex = index;

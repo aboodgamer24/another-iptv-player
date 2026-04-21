@@ -12,6 +12,9 @@ class AppLocalizationsTr extends AppLocalizations {
   String get slogan => 'Açık Kaynaklı IPTV Oynatıcı';
 
   @override
+  String get account => 'Hesap';
+
+  @override
   String get search => 'Ara';
 
   @override

@@ -4,9 +4,6 @@ import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../widgets/playlist_info_widget.dart';
-import '../../widgets/server_info_widget.dart';
-import '../../widgets/status_card_widget.dart';
-import '../../widgets/subscription_info_widget.dart';
 import '../settings/general_settings_section.dart';
 
 class M3uPlaylistSettingsScreen extends StatefulWidget {

@@ -21,7 +21,8 @@ class MobileMovieDetailScreen extends StatefulWidget {
   const MobileMovieDetailScreen({super.key, required this.contentItem});
 
   @override
-  State<MobileMovieDetailScreen> createState() => _MobileMovieDetailScreenState();
+  State<MobileMovieDetailScreen> createState() =>
+      _MobileMovieDetailScreenState();
 }
 
 class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
@@ -77,7 +78,10 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
       final streamId = isXtreamCode
           ? widget.contentItem.id
           : widget.contentItem.m3uItem?.id ?? widget.contentItem.id;
-      final history = await _watchHistoryService.getWatchHistory(playlist.id, streamId);
+      final history = await _watchHistoryService.getWatchHistory(
+        playlist.id,
+        streamId,
+      );
       if (mounted) setState(() => _watchHistory = history);
     } catch (_) {}
   }
@@ -88,7 +92,7 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
       return;
     }
     try {
-      final info = await _repository!.getVodInfo(widget.contentItem.id);
+      final info = await _repository.getVodInfo(widget.contentItem.id);
       if (mounted) {
         setState(() {
           _vodInfo = info;
@@ -106,12 +110,20 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
         final vod = widget.contentItem.vodStream;
         final categoryId = vod?.categoryId;
         if (categoryId != null) {
-          final movies = await _repository!.getMovies(categoryId: categoryId);
+          final movies = await _repository.getMovies(categoryId: categoryId);
           if (movies != null && mounted) {
             setState(() {
               _categoryMovies = movies
-                  .map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.vod,
-                      vodStream: x, containerExtension: x.containerExtension))
+                  .map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.vod,
+                      vodStream: x,
+                      containerExtension: x.containerExtension,
+                    ),
+                  )
                   .toList();
             });
           }
@@ -121,8 +133,14 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
   }
 
   Future<void> _checkStatus() async {
-    final isFav = await _favoritesController.isFavorite(widget.contentItem.id, widget.contentItem.contentType);
-    final isWL = await _watchLaterController.isWatchLater(widget.contentItem.id, widget.contentItem.contentType);
+    final isFav = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    final isWL = await _watchLaterController.isWatchLater(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
     if (mounted) {
       setState(() {
         _isFavorite = isFav;
@@ -161,7 +179,8 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
   String? get _backdropUrl {
     if (_vodInfo != null) {
       final backdrop = _vodInfo!['backdrop_path'];
-      if (backdrop is List && backdrop.isNotEmpty) return backdrop.first.toString();
+      if (backdrop is List && backdrop.isNotEmpty)
+        return backdrop.first.toString();
       if (backdrop is String && backdrop.isNotEmpty) return backdrop;
     }
     return null;
@@ -171,7 +190,10 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
   Widget build(BuildContext context) {
     final vod = widget.contentItem.vodStream;
     final metadata = [
-      if (_vodInfo != null) (_vodInfo!['releaseDate'] ?? _vodInfo!['release_date'] ?? _vodInfo!['year']),
+      if (_vodInfo != null)
+        (_vodInfo!['releaseDate'] ??
+            _vodInfo!['release_date'] ??
+            _vodInfo!['year']),
       if (vod?.genre != null) vod!.genre,
       if (vod?.rating != null && vod!.rating.isNotEmpty) '⭐ ${vod.rating}',
       if (_vodInfo?['duration'] != null) _vodInfo!['duration'],
@@ -191,7 +213,8 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
                   CachedNetworkImage(
                     imageUrl: _backdropUrl ?? _posterUrl ?? '',
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(color: Colors.grey[900]),
+                    errorWidget: (_, __, ___) =>
+                        Container(color: Colors.grey[900]),
                   ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
@@ -214,7 +237,11 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
                 children: [
                   Text(
                     widget.contentItem.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -239,29 +266,53 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
                     children: [
                       IconButton.filledTonal(
                         onPressed: () async {
-                          final result = await _favoritesController.toggleFavorite(widget.contentItem);
+                          final result = await _favoritesController
+                              .toggleFavorite(widget.contentItem);
                           setState(() => _isFavorite = result);
                         },
-                        icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.red : null),
+                        icon: Icon(
+                          _isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: _isFavorite ? Colors.red : null,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       IconButton.filledTonal(
                         onPressed: () async {
-                          final result = await _watchLaterController.toggleWatchLater(widget.contentItem);
+                          final result = await _watchLaterController
+                              .toggleWatchLater(widget.contentItem);
                           setState(() => _isInWatchLater = result);
                         },
-                        icon: Icon(_isInWatchLater ? Icons.schedule : Icons.schedule_outlined, color: _isInWatchLater ? Colors.blue : null),
+                        icon: Icon(
+                          _isInWatchLater
+                              ? Icons.schedule
+                              : Icons.schedule_outlined,
+                          color: _isInWatchLater ? Colors.blue : null,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
-                  const Text('Synopsis', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Text(
+                    'Synopsis',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const SizedBox(height: 8),
                   GestureDetector(
-                    onTap: () => setState(() => _isPlotExpanded = !_isPlotExpanded),
+                    onTap: () =>
+                        setState(() => _isPlotExpanded = !_isPlotExpanded),
                     child: Text(
-                      _vodInfo?['plot'] ?? widget.contentItem.description ?? 'No description available.',
-                      style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5),
+                      _vodInfo?['plot'] ??
+                          widget.contentItem.description ??
+                          'No description available.',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
                       maxLines: _isPlotExpanded ? null : 3,
                       overflow: _isPlotExpanded ? null : TextOverflow.ellipsis,
                     ),
@@ -273,9 +324,22 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
                     ),
                   if (_vodInfo?['cast'] != null) ...[
                     const SizedBox(height: 24),
-                    const Text('Cast', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Cast',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text(_vodInfo!['cast'], style: const TextStyle(color: Colors.white70, fontSize: 14)),
+                    Text(
+                      _vodInfo!['cast'],
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                   const SizedBox(height: 40),
                 ],

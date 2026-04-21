@@ -12,6 +12,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get slogan => '开源IPTV播放器';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => '搜索';
 
   @override

@@ -753,7 +753,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 ),
               ),
             )
-            .toList(),
+            ,
       ],
     );
   }
@@ -1228,14 +1228,14 @@ class _SeriesScreenState extends State<SeriesScreen> {
   }
 
   Widget _buildTrailerCard() {
-    final String? _trailerKey = seriesInfo?.youtubeTrailer;
+    final String? trailerKey = seriesInfo?.youtubeTrailer;
 
     return InkWell(
       borderRadius: BorderRadius.circular(12),
       onTap: () async {
         String urlString;
-        if (_trailerKey != null && _trailerKey.isNotEmpty) {
-          urlString = "https://www.youtube.com/watch?v=$_trailerKey";
+        if (trailerKey != null && trailerKey.isNotEmpty) {
+          urlString = "https://www.youtube.com/watch?v=$trailerKey";
         } else {
           final trailerText = context.loc.trailer;
           final languageCode = Localizations.localeOf(context).languageCode;

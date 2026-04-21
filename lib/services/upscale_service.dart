@@ -41,12 +41,15 @@ String upscalePresetDescription(String preset) {
 
 Future<void> applyUpscalePreset(Player player, String preset) async {
   if (!isMpvSupported) return;
+  // Clamp preset if requested one is not available on this platform (e.g. synced from desktop to mobile)
+  final String effectivePreset = availableUpscalePresets.contains(preset) ? preset : 'standard';
+
   // Access the underlying NativePlayer to call MPV properties
   final native = player.platform;
   if (native is! NativePlayer) return;
 
   try {
-    switch (preset) {
+    switch (effectivePreset) {
       case 'enhanced':
         await native.setProperty('scale', 'spline36');
         await native.setProperty('cscale', 'spline36');
@@ -84,8 +87,8 @@ Future<void> applyUpscalePreset(Player player, String preset) async {
   await Future.delayed(const Duration(milliseconds: 200));
   try {
     final applied = await native.getProperty('scale');
-    debugPrint('[Upscaler] Requested: $preset | MPV applied: $applied');
-    if (applied.trim() != preset.trim()) {
+    debugPrint('[Upscaler] Requested: $effectivePreset | MPV applied: $applied');
+    if (applied.trim() != effectivePreset.trim()) {
       debugPrint('[Upscaler] WARNING: scale mismatch — upscaler may not be active');
     }
   } catch (e) {

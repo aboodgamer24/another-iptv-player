@@ -477,7 +477,8 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 if (!compact)
                   IconButton(
                     padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                    iconSize: 20,
                     icon: Icon(
                       Icons.tune_rounded,
                       color: _showEnhancementPanel
@@ -742,88 +743,93 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       right: 40,
       child: Container(
         width: 320,
-        padding: const EdgeInsets.all(24),
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * 0.65,
+        ),
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.85),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(color: Colors.white10),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Enhancement',
-              style: theme.textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Enhancement',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
-            ),
-            const SizedBox(height: 20),
-            _buildEnhancementSlider(
-              theme,
-              label: 'Sharpness',
-              icon: Icons.landscape_rounded,
-              value: _sharpness,
-              min: -1.0,
-              max: 1.0,
-              onChanged: (val) {
-                setState(() => _sharpness = val);
-                _applyEnhancement();
-              },
-            ),
-            _buildEnhancementSlider(
-              theme,
-              label: 'Contrast',
-              icon: Icons.contrast_rounded,
-              value: _contrast,
-              min: -1.0,
-              max: 1.0,
-              onChanged: (val) {
-                setState(() => _contrast = val);
-                _applyEnhancement();
-              },
-            ),
-            _buildEnhancementSlider(
-              theme,
-              label: 'Saturation',
-              icon: Icons.color_lens_rounded,
-              value: _saturation,
-              min: -1.0,
-              max: 1.0,
-              onChanged: (val) {
-                setState(() => _saturation = val);
-                _applyEnhancement();
-              },
-            ),
-            _buildEnhancementSlider(
-              theme,
-              label: 'Noise Reduction',
-              icon: Icons.grain_rounded,
-              value: _noiseReduction,
-              min: 0.0,
-              max: 1.0,
-              onChanged: (val) {
-                setState(() => _noiseReduction = val);
-                _applyEnhancement();
-              },
-            ),
-            const SizedBox(height: 8),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  _sharpness = 0.0;
-                  _contrast = 0.0;
-                  _saturation = 0.0;
-                  _noiseReduction = 0.0;
-                });
-                _applyEnhancement();
-              },
-              icon: const Icon(Icons.restart_alt_rounded, size: 16),
-              label: const Text('Reset All'),
-              style: TextButton.styleFrom(foregroundColor: Colors.white38),
-            ),
-          ],
+              const SizedBox(height: 20),
+              _buildEnhancementSlider(
+                theme,
+                label: 'Sharpness',
+                icon: Icons.landscape_rounded,
+                value: _sharpness,
+                min: -1.0,
+                max: 1.0,
+                onChanged: (val) {
+                  setState(() => _sharpness = val);
+                  _applyEnhancement();
+                },
+              ),
+              _buildEnhancementSlider(
+                theme,
+                label: 'Contrast',
+                icon: Icons.contrast_rounded,
+                value: _contrast,
+                min: -1.0,
+                max: 1.0,
+                onChanged: (val) {
+                  setState(() => _contrast = val);
+                  _applyEnhancement();
+                },
+              ),
+              _buildEnhancementSlider(
+                theme,
+                label: 'Saturation',
+                icon: Icons.color_lens_rounded,
+                value: _saturation,
+                min: -1.0,
+                max: 1.0,
+                onChanged: (val) {
+                  setState(() => _saturation = val);
+                  _applyEnhancement();
+                },
+              ),
+              _buildEnhancementSlider(
+                theme,
+                label: 'Noise Reduction',
+                icon: Icons.grain_rounded,
+                value: _noiseReduction,
+                min: 0.0,
+                max: 1.0,
+                onChanged: (val) {
+                  setState(() => _noiseReduction = val);
+                  _applyEnhancement();
+                },
+              ),
+              const SizedBox(height: 8),
+              TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _sharpness = 0.0;
+                    _contrast = 0.0;
+                    _saturation = 0.0;
+                    _noiseReduction = 0.0;
+                  });
+                  _applyEnhancement();
+                },
+                icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                label: const Text('Reset All'),
+                style: TextButton.styleFrom(foregroundColor: Colors.white38),
+              ),
+            ],
+          ),
         ),
       ),
     );

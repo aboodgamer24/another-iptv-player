@@ -137,8 +137,8 @@ class CategoryDetailController extends ChangeNotifier {
         break;
       case "release_date":
         list.sort((a, b) {
-          final dateA;
-          final dateB;
+          final Object dateA;
+          final Object dateB;
           if (a.contentType.name == "series") {
             dateA =
                 DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ??
@@ -159,8 +159,8 @@ class CategoryDetailController extends ChangeNotifier {
         break;
       case "rating":
         list.sort((a, b) {
-          final ratingA;
-          final ratingB;
+          final double ratingA;
+          final double ratingB;
           if (a.contentType.name == "series") {
             ratingA = double.tryParse(a.seriesStream?.rating ?? '0') ?? 0.0;
             ratingB = double.tryParse(b.seriesStream?.rating ?? '0') ?? 0.0;

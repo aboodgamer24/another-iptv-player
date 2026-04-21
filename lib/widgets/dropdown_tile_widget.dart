@@ -28,7 +28,7 @@ class DropdownTileWidget<T> extends StatelessWidget {
       trailing: SizedBox(
         width: 120,
         child: DropdownButtonFormField<T>(
-          value: value,
+          initialValue: value,
           decoration: InputDecoration(
             isDense: true,
             contentPadding: const EdgeInsets.symmetric(

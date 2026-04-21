@@ -12,6 +12,9 @@ class AppLocalizationsFr extends AppLocalizations {
   String get slogan => 'Lecteur IPTV Open Source';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => 'Rechercher';
 
   @override

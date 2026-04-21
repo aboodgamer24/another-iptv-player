@@ -6,7 +6,6 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import '../../../controllers/favorites_controller.dart';
-import '../../../models/favorite.dart';
 
 import '../../../models/content_type.dart';
 

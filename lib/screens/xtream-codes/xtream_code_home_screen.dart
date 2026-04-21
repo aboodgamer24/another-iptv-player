@@ -159,9 +159,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
             playlistName: widget.playlist.name,
           ),
           // Main content area
-          Expanded(
-            child: _buildDesktopPageView(controller),
-          ),
+          Expanded(child: _buildDesktopPageView(controller)),
         ],
       ),
     );
@@ -178,7 +176,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     return [
       // 0 - Home
       DesktopHomeScreen(
-        key: ValueKey('desktop_home_${_desktopIndex}'),
+        key: ValueKey('desktop_home_$_desktopIndex'),
         playlistId: widget.playlist.id,
       ),
       // 1 - Live TV

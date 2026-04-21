@@ -12,6 +12,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get slogan => 'مشغل IPTV مفتوح المصدر';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => 'بحث';
 
   @override

@@ -129,6 +129,7 @@ class IptvRepository {
       print('Live Channels Error: $e');
       return null;
     }
+    return null;
   }
 
   Future<List<LiveStream>?> getLiveChannelsByCategoryId({
@@ -150,6 +151,7 @@ class IptvRepository {
       print('Live Channels Error: $e');
       return null;
     }
+    return null;
   }
 
   Future<LiveStream?> findLiveStreamById(String streamId) async {
@@ -231,6 +233,7 @@ class IptvRepository {
       print('Movies Error: $e');
       return null;
     }
+    return null;
   }
 
   Future<List<SeriesStream>?> getSeriesFromApi({
@@ -299,6 +302,7 @@ class IptvRepository {
       print('Series Error: $e');
       return null;
     }
+    return null;
   }
 
   /// Fetch VOD movie info from API

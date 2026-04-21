@@ -2,7 +2,6 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/models/category_view_model.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/widgets/player_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:another_iptv_player/widgets/common/resizable_sidebar.dart';
@@ -103,55 +102,55 @@ class _DesktopLiveTvScreenState extends State<DesktopLiveTvScreen> {
             initialWidth: 240,
             child: Container(
               decoration: const BoxDecoration(
-              color: Color(0xFF0D0F13),
-              border: Border(
-                right: BorderSide(color: Color(0xFF1E2128), width: 1),
+                color: Color(0xFF0D0F13),
+                border: Border(
+                  right: BorderSide(color: Color(0xFF1E2128), width: 1),
+                ),
               ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Title
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Text(
-                    context.loc.categories,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Title
+                  Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Text(
+                      context.loc.categories,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: 0.5,
+                      ),
                     ),
                   ),
-                ),
-                const Divider(color: Color(0xFF1E2128), height: 1),
-                Expanded(
-                  child: ListView.builder(
-                    controller: _catScrollController,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    itemCount: widget.categories.length + 1,
-                    itemBuilder: (context, index) {
-                      if (index == 0) {
+                  const Divider(color: Color(0xFF1E2128), height: 1),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: _catScrollController,
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      itemCount: widget.categories.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index == 0) {
+                          return _buildCategoryItem(
+                            context,
+                            label: context.loc.all,
+                            isSelected: _selectedCategoryIndex == 0,
+                            index: 0,
+                          );
+                        }
+                        final cat = widget.categories[index - 1];
                         return _buildCategoryItem(
                           context,
-                          label: context.loc.all,
-                          isSelected: _selectedCategoryIndex == 0,
-                          index: 0,
+                          label: cat.category.categoryName,
+                          isSelected: _selectedCategoryIndex == index,
+                          index: index,
                         );
-                      }
-                      final cat = widget.categories[index - 1];
-                      return _buildCategoryItem(
-                        context,
-                        label: cat.category.categoryName,
-                        isSelected: _selectedCategoryIndex == index,
-                        index: index,
-                      );
-                    },
+                      },
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ),
 
           // Main Content Area

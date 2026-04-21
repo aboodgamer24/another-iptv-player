@@ -79,8 +79,10 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
       final streamId = isXtreamCode
           ? widget.contentItem.id
           : widget.contentItem.m3uItem?.id ?? widget.contentItem.id;
-      final history =
-          await _watchHistoryService.getWatchHistory(playlist.id, streamId);
+      final history = await _watchHistoryService.getWatchHistory(
+        playlist.id,
+        streamId,
+      );
       if (mounted) {
         setState(() {
           _watchHistory = history;
@@ -97,7 +99,7 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
       return;
     }
     try {
-      final info = await _repository!.getVodInfo(widget.contentItem.id);
+      final info = await _repository.getVodInfo(widget.contentItem.id);
       if (mounted) {
         setState(() {
           _vodInfo = info;
@@ -115,13 +117,20 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
         final vod = widget.contentItem.vodStream;
         final categoryId = vod?.categoryId;
         if (categoryId != null) {
-          final movies = await _repository!.getMovies(categoryId: categoryId);
+          final movies = await _repository.getMovies(categoryId: categoryId);
           if (movies != null && mounted) {
             setState(() {
               _categoryMovies = movies
-                  .map((x) => ContentItem(
-                      x.streamId, x.name, x.streamIcon, ContentType.vod,
-                      vodStream: x, containerExtension: x.containerExtension))
+                  .map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.vod,
+                      vodStream: x,
+                      containerExtension: x.containerExtension,
+                    ),
+                  )
                   .toList();
             });
           }
@@ -134,9 +143,13 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
 
   Future<void> _checkStatus() async {
     final isFav = await _favoritesController.isFavorite(
-        widget.contentItem.id, widget.contentItem.contentType);
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
     final isWL = await _watchLaterController.isWatchLater(
-        widget.contentItem.id, widget.contentItem.contentType);
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
     if (mounted) {
       setState(() {
         _isFavorite = isFav;
@@ -146,30 +159,40 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    final result =
-        await _favoritesController.toggleFavorite(widget.contentItem);
+    final result = await _favoritesController.toggleFavorite(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() => _isFavorite = result);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result
-            ? context.loc.added_to_favorites
-            : context.loc.removed_from_favorites),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_favorites
+                : context.loc.removed_from_favorites,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
   Future<void> _toggleWatchLater() async {
-    final result =
-        await _watchLaterController.toggleWatchLater(widget.contentItem);
+    final result = await _watchLaterController.toggleWatchLater(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() => _isInWatchLater = result);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result
-            ? context.loc.added_to_watch_later
-            : context.loc.removed_from_watch_later),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_watch_later
+                : context.loc.removed_from_watch_later,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -363,10 +386,8 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
   Widget _buildDetails() {
     final progress = _progress;
     final vod = widget.contentItem.vodStream;
-    final genre =
-        vod?.genre ?? (_vodInfo != null ? _vodInfo!['genre'] : null);
-    final director =
-        _vodInfo != null ? _vodInfo!['director'] : null;
+    final genre = vod?.genre ?? (_vodInfo != null ? _vodInfo!['genre'] : null);
+    final director = _vodInfo != null ? _vodInfo!['director'] : null;
     final cast = _vodInfo != null ? _vodInfo!['cast'] : null;
 
     return Column(
@@ -394,24 +415,31 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
               Text(
                 '${double.parse(vod.rating.trim()).toStringAsFixed(1)}/10',
                 style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600),
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(width: 20),
             ],
             if (genre is String && genre.isNotEmpty) ...[
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1D24),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFF262A35)),
                 ),
-                child: Text(genre,
-                    style: const TextStyle(
-                        color: Color(0xFFA0A5B5), fontSize: 12)),
+                child: Text(
+                  genre,
+                  style: const TextStyle(
+                    color: Color(0xFFA0A5B5),
+                    fontSize: 12,
+                  ),
+                ),
               ),
               const SizedBox(width: 12),
             ],
@@ -419,8 +447,12 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
             IconButton(
               onPressed: _toggleWatchLater,
               icon: Icon(
-                _isInWatchLater ? Icons.watch_later : Icons.watch_later_outlined,
-                color: _isInWatchLater ? Colors.blueAccent : const Color(0xFF747B8B),
+                _isInWatchLater
+                    ? Icons.watch_later
+                    : Icons.watch_later_outlined,
+                color: _isInWatchLater
+                    ? Colors.blueAccent
+                    : const Color(0xFF747B8B),
               ),
             ),
             IconButton(
@@ -448,8 +480,7 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
           const SizedBox(height: 8),
           Text(
             '${_formatDuration(_watchHistory!.watchDuration!)} / ${_formatDuration(_watchHistory!.totalDuration!)}',
-            style:
-                const TextStyle(color: Color(0xFF747B8B), fontSize: 12),
+            style: const TextStyle(color: Color(0xFF747B8B), fontSize: 12),
           ),
           const SizedBox(height: 12),
         ],
@@ -462,15 +493,15 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
               backgroundColor: const Color(0xFF5A45FF),
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             icon: const Icon(Icons.play_arrow_rounded, size: 28),
             label: Text(
               progress != null && progress > 0.01
                   ? context.loc.continue_watching
                   : context.loc.start_watching,
-              style:
-                  const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
             ),
           ),
         ),
@@ -481,15 +512,19 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
           const Text(
             'Synopsis',
             style: TextStyle(
-                color: Colors.white70,
-                fontSize: 16,
-                fontWeight: FontWeight.w600),
+              color: Colors.white70,
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             _plot!,
             style: const TextStyle(
-                color: Color(0xFFA0A5B5), fontSize: 14, height: 1.6),
+              color: Color(0xFFA0A5B5),
+              fontSize: 14,
+              height: 1.6,
+            ),
           ),
           const SizedBox(height: 24),
         ],
@@ -497,8 +532,7 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
         // Director + Cast
         if (director is String && director.isNotEmpty)
           _buildInfoRow('Director', director),
-        if (cast is String && cast.isNotEmpty)
-          _buildInfoRow('Cast', cast),
+        if (cast is String && cast.isNotEmpty) _buildInfoRow('Cast', cast),
       ],
     );
   }
@@ -511,16 +545,20 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
         children: [
           SizedBox(
             width: 80,
-            child: Text(label,
-                style: const TextStyle(
-                    color: Color(0xFF747B8B),
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600)),
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF747B8B),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
           ),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(
-                    color: Color(0xFFA0A5B5), fontSize: 13)),
+            child: Text(
+              value,
+              style: const TextStyle(color: Color(0xFFA0A5B5), fontSize: 13),
+            ),
           ),
         ],
       ),

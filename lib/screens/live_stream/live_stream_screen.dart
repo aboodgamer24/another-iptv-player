@@ -6,7 +6,6 @@ import 'package:another_iptv_player/services/app_state.dart';
 import '../../../models/content_type.dart';
 import '../../../services/event_bus.dart';
 import '../../../utils/get_playlist_type.dart';
-import '../../../widgets/loading_widget.dart';
 import '../../../widgets/player_widget.dart';
 
 class LiveStreamScreen extends StatefulWidget {
@@ -107,18 +106,18 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   @override
   Widget build(BuildContext context) {
     if (!allContentsLoaded) {
-      return Scaffold(
+      return const Scaffold(
         backgroundColor: Colors.black,
-        body: SafeArea(child: buildFullScreenLoadingWidget()),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
     return Scaffold(
+      extendBodyBehindAppBar: true,
+      extendBody: true,
       backgroundColor: Colors.black,
-      body: SafeArea(
-        child: SizedBox.expand(
-          child: PlayerWidget(contentItem: widget.content, queue: allContents),
-        ),
+      body: SizedBox.expand(
+        child: PlayerWidget(contentItem: widget.content, queue: allContents),
       ),
     );
   }

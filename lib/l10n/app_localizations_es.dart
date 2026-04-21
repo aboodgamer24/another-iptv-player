@@ -12,6 +12,9 @@ class AppLocalizationsEs extends AppLocalizations {
   String get slogan => 'Reproductor IPTV de Código Abierto';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => 'Buscar';
 
   @override

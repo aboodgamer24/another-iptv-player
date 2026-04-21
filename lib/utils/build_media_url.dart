@@ -22,7 +22,7 @@ String buildMediaUrl(ContentItem contentItem) {
 
   // Resolve extension: prefer the item's own field, then fall back to
   // the VodStream / SeriesStream extension, then default to 'mkv'.
-  String _ext(String? direct, String? fallback) {
+  String ext0(String? direct, String? fallback) {
     final e = (direct ?? '').trim().isNotEmpty
         ? direct!.trim()
         : (fallback ?? '').trim();
@@ -34,17 +34,14 @@ String buildMediaUrl(ContentItem contentItem) {
       return '$baseUrl/${playlist.username}/${playlist.password}/${contentItem.id}';
 
     case ContentType.vod:
-      final ext = _ext(
+      final ext = ext0(
         contentItem.containerExtension,
         contentItem.vodStream?.containerExtension,
       );
       return '$baseUrl/movie/${playlist.username}/${playlist.password}/${contentItem.id}.$ext';
 
     case ContentType.series:
-      final ext = _ext(
-        contentItem.containerExtension,
-        null,
-      );
+      final ext = ext0(contentItem.containerExtension, null);
       return '$baseUrl/series/${playlist.username}/${playlist.password}/${contentItem.id}.$ext';
   }
 }

@@ -57,19 +57,17 @@ class _VideoChannelSelectorWidgetState
 
     _globalContext = context;
 
-    if (_globalToggleSubscription == null) {
-      _globalToggleSubscription = EventBus()
-          .on<bool>('toggle_channel_list')
-          .listen((bool show) {
-            if (show) {
-              if (_globalContext != null) {
-                _showChannelSelector(_globalContext!);
-              }
-            } else {
-              _hideChannelSelector();
+    _globalToggleSubscription ??= EventBus()
+        .on<bool>('toggle_channel_list')
+        .listen((bool show) {
+          if (show) {
+            if (_globalContext != null) {
+              _showChannelSelector(_globalContext!);
             }
-          });
-    }
+          } else {
+            _hideChannelSelector();
+          }
+        });
   }
 
   @override
@@ -274,9 +272,7 @@ class _VideoChannelSelectorWidgetState
           selectedIndex = foundIndex;
         }
       }
-      if (selectedIndex == null) {
-        selectedIndex = widget.currentIndex ?? 0;
-      }
+      selectedIndex ??= widget.currentIndex ?? 0;
     }
 
     return Positioned.fill(

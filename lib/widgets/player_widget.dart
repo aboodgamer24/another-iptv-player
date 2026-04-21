@@ -187,386 +187,393 @@ class _PlayerWidgetState extends State<PlayerWidget>
     if (!mounted) return;
 
     try {
-    PlayerState.subtitleConfiguration = await getSubtitleConfiguration();
+      PlayerState.subtitleConfiguration = await getSubtitleConfiguration();
 
-    PlayerState.backgroundPlay = await UserPreferences.getBackgroundPlay();
-    _audioHandler.setPlayer(_player);
-    _videoController = VideoController(_player);
+      PlayerState.backgroundPlay = await UserPreferences.getBackgroundPlay();
+      _audioHandler.setPlayer(_player);
+      _videoController = VideoController(_player);
 
-    var watchHistory = await watchHistoryService.getWatchHistory(
-      AppState.currentPlaylist!.id,
-      isXtreamCode ? contentItem.id : contentItem.m3uItem?.id ?? contentItem.id,
-    );
+      var watchHistory = await watchHistoryService.getWatchHistory(
+        AppState.currentPlaylist!.id,
+        isXtreamCode
+            ? contentItem.id
+            : contentItem.m3uItem?.id ?? contentItem.id,
+      );
 
-    List<MediaItem> mediaItems = [];
-    var currentItemIndex = 0;
+      List<MediaItem> mediaItems = [];
+      var currentItemIndex = 0;
 
-    if (_queue != null) {
-      for (int i = 0; i < _queue!.length; i++) {
-        final item = _queue![i];
-        final itemWatchHistory = await watchHistoryService.getWatchHistory(
-          AppState.currentPlaylist!.id,
-          isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
-        );
+      if (_queue != null) {
+        for (int i = 0; i < _queue!.length; i++) {
+          final item = _queue![i];
+          final itemWatchHistory = await watchHistoryService.getWatchHistory(
+            AppState.currentPlaylist!.id,
+            isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
+          );
 
-        mediaItems.add(
-          MediaItem(
-            id: item.id.toString(),
-            title: item.name,
-            artist: _getContentTypeDisplayName(),
-            album: AppState.currentPlaylist?.name ?? '',
-            artUri: item.imagePath != null ? Uri.parse(item.imagePath!) : null,
-            playable: true,
-            extras: {
-              'url': item.url,
-              'startPosition':
-                  itemWatchHistory?.watchDuration?.inMilliseconds ?? 0,
-            },
-          ),
-        );
+          mediaItems.add(
+            MediaItem(
+              id: item.id.toString(),
+              title: item.name,
+              artist: _getContentTypeDisplayName(),
+              album: AppState.currentPlaylist?.name ?? '',
+              artUri: Uri.parse(item.imagePath!),
+              playable: true,
+              extras: {
+                'url': item.url,
+                'startPosition':
+                    itemWatchHistory?.watchDuration?.inMilliseconds ?? 0,
+              },
+            ),
+          );
 
-        if (item.id == contentItem.id) {
-          currentItemIndex = i;
-          _currentItemIndex = i;
-          contentItem = item;
-          EventBus().emit('player_content_item', item);
-          EventBus().emit('player_content_item_index', i);
+          if (item.id == contentItem.id) {
+            currentItemIndex = i;
+            _currentItemIndex = i;
+            contentItem = item;
+            EventBus().emit('player_content_item', item);
+            EventBus().emit('player_content_item_index', i);
+          }
         }
-      }
 
-      await _audioHandler.setQueue(mediaItems, initialIndex: currentItemIndex);
+        await _audioHandler.setQueue(
+          mediaItems,
+          initialIndex: currentItemIndex,
+        );
 
-      if (contentItem.contentType != ContentType.liveStream) {
-        var playlist = mediaItems.map((mediaItem) {
-          final url = mediaItem.extras!['url'] as String;
-          final startMs = mediaItem.extras!['startPosition'] as int;
-          return Media(url, start: Duration(milliseconds: startMs));
-        }).toList();
+        if (contentItem.contentType != ContentType.liveStream) {
+          var playlist = mediaItems.map((mediaItem) {
+            final url = mediaItem.extras!['url'] as String;
+            final startMs = mediaItem.extras!['startPosition'] as int;
+            return Media(url, start: Duration(milliseconds: startMs));
+          }).toList();
+
+          await _player.open(
+            Playlist(playlist, index: currentItemIndex),
+            play: true,
+          );
+          await _applyUpscaler();
+        } else {
+          await _player.open(Media(contentItem.url));
+          await _applyUpscaler();
+        }
+      } else {
+        final mediaItem = MediaItem(
+          id: contentItem.id.toString(),
+          title: contentItem.name,
+          artist: _getContentTypeDisplayName(),
+          artUri: Uri.parse(contentItem.imagePath!),
+          extras: {
+            'url': contentItem.url,
+            'startPosition': watchHistory?.watchDuration?.inMilliseconds ?? 0,
+          },
+        );
+
+        // if (contentItem.contentType == ContentType.liveStream) {
+        //   liveStreamContentItem = contentItem;
+        // }
+
+        await _audioHandler.setQueue([mediaItem]);
 
         await _player.open(
-          Playlist(playlist, index: currentItemIndex),
+          Playlist([
+            Media(
+              contentItem.url,
+              start: watchHistory?.watchDuration ?? Duration(),
+            ),
+          ]),
           play: true,
         );
         await _applyUpscaler();
-      } else {
-        await _player.open(Media(contentItem.url));
-        await _applyUpscaler();
       }
-    } else {
-      final mediaItem = MediaItem(
-        id: contentItem.id.toString(),
-        title: contentItem.name,
-        artist: _getContentTypeDisplayName(),
-        artUri: contentItem.imagePath != null
-            ? Uri.parse(contentItem.imagePath!)
-            : null,
-        extras: {
-          'url': contentItem.url,
-          'startPosition': watchHistory?.watchDuration?.inMilliseconds ?? 0,
-        },
-      );
 
-      // if (contentItem.contentType == ContentType.liveStream) {
-      //   liveStreamContentItem = contentItem;
-      // }
-
-      await _audioHandler.setQueue([mediaItem]);
-
-      await _player.open(
-        Playlist([
-          Media(
-            contentItem.url,
-            start: watchHistory?.watchDuration ?? Duration(),
-          ),
-        ]),
-        play: true,
-      );
-      await _applyUpscaler();
-    }
-
-    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
-      List<ConnectivityResult> results,
-    ) async {
-      bool hasConnection = results.any(
-        (connectivity) =>
-            connectivity == ConnectivityResult.mobile ||
-            connectivity == ConnectivityResult.wifi ||
-            connectivity == ConnectivityResult.ethernet,
-      );
-
-      if (_isFirstCheck) {
-        final currentConnectivity = await Connectivity().checkConnectivity();
-        hasConnection = currentConnectivity.any(
+      _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+        List<ConnectivityResult> results,
+      ) async {
+        bool hasConnection = results.any(
           (connectivity) =>
               connectivity == ConnectivityResult.mobile ||
               connectivity == ConnectivityResult.wifi ||
               connectivity == ConnectivityResult.ethernet,
         );
-        _isFirstCheck = false;
-      }
 
-      if (hasConnection) {
-        if (_wasDisconnected &&
-            contentItem.contentType == ContentType.liveStream &&
-            contentItem.url.isNotEmpty) {
-          try {
-            ScaffoldMessenger.of(context).clearSnackBars();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text("Online", style: TextStyle(color: Colors.white)),
-                backgroundColor: Colors.green,
-              ),
-            );
-
-            // TODO: Implement watch history duration for vod and series
-            await _player.open(Media(contentItem.url));
-            await _applyUpscaler();
-          } catch (e) {
-            print('Error opening media: $e');
-          }
+        if (_isFirstCheck) {
+          final currentConnectivity = await Connectivity().checkConnectivity();
+          hasConnection = currentConnectivity.any(
+            (connectivity) =>
+                connectivity == ConnectivityResult.mobile ||
+                connectivity == ConnectivityResult.wifi ||
+                connectivity == ConnectivityResult.ethernet,
+          );
+          _isFirstCheck = false;
         }
-        _wasDisconnected = false;
-      } else {
-        _wasDisconnected = true;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "No Connection",
-              style: TextStyle(color: Colors.white),
-            ),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    });
 
-    _player.stream.tracks.listen((event) async {
-      if (!mounted) return;
+        if (hasConnection) {
+          if (_wasDisconnected &&
+              contentItem.contentType == ContentType.liveStream &&
+              contentItem.url.isNotEmpty) {
+            try {
+              ScaffoldMessenger.of(context).clearSnackBars();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    "Online",
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  backgroundColor: Colors.green,
+                ),
+              );
 
-      PlayerState.videos = event.video;
-      PlayerState.audios = event.audio;
-      PlayerState.subtitles = event.subtitle;
-
-      EventBus().emit('player_tracks', event);
-
-      await _player.setVideoTrack(
-        VideoTrack(await UserPreferences.getVideoTrack(), null, null),
-      );
-
-      var selectedAudioLanguage = await UserPreferences.getAudioTrack();
-      var possibleAudioTrack = event.audio.firstWhere(
-        (x) => x.language == selectedAudioLanguage,
-        orElse: AudioTrack.auto,
-      );
-
-      await _player.setAudioTrack(possibleAudioTrack);
-
-      var selectedSubtitleLanguage = await UserPreferences.getSubtitleTrack();
-      var possibleSubtitleLanguage = event.subtitle.firstWhere(
-        (x) => x.language == selectedSubtitleLanguage,
-        orElse: SubtitleTrack.auto,
-      );
-
-      await _player.setSubtitleTrack(possibleSubtitleLanguage);
-    });
-
-    _player.stream.track.listen((event) async {
-      if (!mounted) return;
-
-      PlayerState.selectedVideo = _player.state.track.video;
-      PlayerState.selectedAudio = _player.state.track.audio;
-      PlayerState.selectedSubtitle = _player.state.track.subtitle;
-
-      // Track değişikliğini bildir
-      EventBus().emit('player_track_changed', null);
-
-      var volume = await UserPreferences.getVolume();
-      await _player.setVolume(volume);
-    });
-
-    _player.stream.volume.listen((event) async {
-      await UserPreferences.setVolume(event);
-    });
-
-    _player.stream.position.listen((position) {
-      // DEBUG: Remove mutation of unmodifiable list
-      // _player.state.playlist.medias[currentItemIndex] = Media(
-      //   contentItem.url,
-      //   start: position,
-      // );
-
-      // Debounce: Save watch history every 5 seconds instead of on every position update
-      _pendingWatchDuration = position;
-      _pendingTotalDuration = _player.state.duration;
-
-      _watchHistoryTimer?.cancel();
-      _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
-        _saveWatchHistory();
-      });
-    });
-
-    _player.stream.error.listen((error) async {
-      print('PLAYER ERROR -> $error');
-      if (error.contains('Failed to open')) {
-        _errorHandler.handleError(
-          error,
-          () async {
-            if (_isSwitchingChannel) return;
-            if (contentItem.contentType == ContentType.liveStream) {
+              // TODO: Implement watch history duration for vod and series
               await _player.open(Media(contentItem.url));
               await _applyUpscaler();
+            } catch (e) {
+              print('Error opening media: $e');
             }
-          },
-          (errorMessage) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(errorMessage),
-                duration: Duration(seconds: 3),
+          }
+          _wasDisconnected = false;
+        } else {
+          _wasDisconnected = true;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "No Connection",
+                style: TextStyle(color: Colors.white),
               ),
-            );
-          },
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      });
+
+      _player.stream.tracks.listen((event) async {
+        if (!mounted) return;
+
+        PlayerState.videos = event.video;
+        PlayerState.audios = event.audio;
+        PlayerState.subtitles = event.subtitle;
+
+        EventBus().emit('player_tracks', event);
+
+        await _player.setVideoTrack(
+          VideoTrack(await UserPreferences.getVideoTrack(), null, null),
         );
-      }
-    });
 
-    _player.stream.playlist.listen((playlist) {
-      if (!mounted) return;
+        var selectedAudioLanguage = await UserPreferences.getAudioTrack();
+        var possibleAudioTrack = event.audio.firstWhere(
+          (x) => x.language == selectedAudioLanguage,
+          orElse: AudioTrack.auto,
+        );
 
-      if (contentItem.contentType == ContentType.liveStream ||
-          contentItem.contentType == ContentType.series) {
-        return;
-      }
+        await _player.setAudioTrack(possibleAudioTrack);
 
-      _currentItemIndex = playlist.index;
-      currentItemIndex = _currentItemIndex;
-      contentItem = _queue?[playlist.index] ?? widget.contentItem;
+        var selectedSubtitleLanguage = await UserPreferences.getSubtitleTrack();
+        var possibleSubtitleLanguage = event.subtitle.firstWhere(
+          (x) => x.language == selectedSubtitleLanguage,
+          orElse: SubtitleTrack.auto,
+        );
 
-      // --- INSERTION 2: QUEUE CHANGE SETTER ---
-      PlayerState.currentContent = contentItem;
-      PlayerState.currentIndex = _currentItemIndex;
-      // ----------------------------------------
+        await _player.setSubtitleTrack(possibleSubtitleLanguage);
+      });
 
-      PlayerState.title = contentItem.name;
-      EventBus().emit('player_content_item', contentItem);
-      EventBus().emit('player_content_item_index', playlist.index);
+      _player.stream.track.listen((event) async {
+        if (!mounted) return;
 
-      // Kanal listesi açıksa güncelle
-      if (_showChannelList && mounted) {
-        setState(() {});
-      }
-    });
+        PlayerState.selectedVideo = _player.state.track.video;
+        PlayerState.selectedAudio = _player.state.track.audio;
+        PlayerState.selectedSubtitle = _player.state.track.subtitle;
 
-    _player.stream.completed.listen((playlist) async {
-      if (_isSwitchingChannel) return;
-      if (contentItem.contentType == ContentType.liveStream) {
-        await _player.open(Media(contentItem.url));
-        await _applyUpscaler();
-      }
-    });
+        // Track değişikliğini bildir
+        EventBus().emit('player_track_changed', null);
 
-    contentItemIndexChangedSubscription = EventBus()
-        .on<int>('player_content_item_index_changed')
-        .listen((int index) async {
-          if (contentItem.contentType == ContentType.liveStream) {
-            // Guard against concurrent open() calls — rapid taps can
-            // overlap and crash the native D3D/ANGLE video pipeline.
-            if (_isSwitchingChannel) return;
-            _isSwitchingChannel = true;
+        var volume = await UserPreferences.getVolume();
+        await _player.setVolume(volume);
+      });
 
-            try {
-              // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
-              final updatedQueue = _queue ?? PlayerState.queue;
-              if (updatedQueue == null || index >= updatedQueue.length) return;
-              // sync PlayerState so it matches the active session
-              PlayerState.queue = updatedQueue;
+      _player.stream.volume.listen((event) async {
+        await UserPreferences.setVolume(event);
+      });
 
-              final item = updatedQueue[index];
+      _player.stream.position.listen((position) {
+        // DEBUG: Remove mutation of unmodifiable list
+        // _player.state.playlist.medias[currentItemIndex] = Media(
+        //   contentItem.url,
+        //   start: position,
+        // );
+
+        // Debounce: Save watch history every 5 seconds instead of on every position update
+        _pendingWatchDuration = position;
+        _pendingTotalDuration = _player.state.duration;
+
+        _watchHistoryTimer?.cancel();
+        _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
+          _saveWatchHistory();
+        });
+      });
+
+      _player.stream.error.listen((error) async {
+        print('PLAYER ERROR -> $error');
+        if (error.contains('Failed to open')) {
+          _errorHandler.handleError(
+            error,
+            () async {
+              if (_isSwitchingChannel) return;
+              if (contentItem.contentType == ContentType.liveStream) {
+                await _player.open(Media(contentItem.url));
+                await _applyUpscaler();
+              }
+            },
+            (errorMessage) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(errorMessage),
+                  duration: Duration(seconds: 3),
+                ),
+              );
+            },
+          );
+        }
+      });
+
+      _player.stream.playlist.listen((playlist) {
+        if (!mounted) return;
+
+        if (contentItem.contentType == ContentType.liveStream ||
+            contentItem.contentType == ContentType.series) {
+          return;
+        }
+
+        _currentItemIndex = playlist.index;
+        currentItemIndex = _currentItemIndex;
+        contentItem = _queue?[playlist.index] ?? widget.contentItem;
+
+        // --- INSERTION 2: QUEUE CHANGE SETTER ---
+        PlayerState.currentContent = contentItem;
+        PlayerState.currentIndex = _currentItemIndex;
+        // ----------------------------------------
+
+        PlayerState.title = contentItem.name;
+        EventBus().emit('player_content_item', contentItem);
+        EventBus().emit('player_content_item_index', playlist.index);
+
+        // Kanal listesi açıksa güncelle
+        if (_showChannelList && mounted) {
+          setState(() {});
+        }
+      });
+
+      _player.stream.completed.listen((playlist) async {
+        if (_isSwitchingChannel) return;
+        if (contentItem.contentType == ContentType.liveStream) {
+          await _player.open(Media(contentItem.url));
+          await _applyUpscaler();
+        }
+      });
+
+      contentItemIndexChangedSubscription = EventBus()
+          .on<int>('player_content_item_index_changed')
+          .listen((int index) async {
+            if (contentItem.contentType == ContentType.liveStream) {
+              // Guard against concurrent open() calls — rapid taps can
+              // overlap and crash the native D3D/ANGLE video pipeline.
+              if (_isSwitchingChannel) return;
+              _isSwitchingChannel = true;
+
+              try {
+                // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
+                final updatedQueue = _queue ?? PlayerState.queue;
+                if (updatedQueue == null || index >= updatedQueue.length)
+                  return;
+                // sync PlayerState so it matches the active session
+                PlayerState.queue = updatedQueue;
+
+                final item = updatedQueue[index];
+                contentItem = item;
+                _queue = updatedQueue; // Queue'yu güncelle
+
+                // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
+                PlayerState.currentContent = contentItem;
+                PlayerState.currentIndex = index;
+                PlayerState.title = item.name;
+                _currentItemIndex = index;
+                // -------------------------------------------
+
+                // Cancel any pending retry timers before opening new stream
+                _errorHandler.reset();
+
+                // Use bare Media (not Playlist) to match initial open pattern
+                // and avoid recreating the entire video pipeline.
+                await _player.open(Media(item.url));
+                await _applyUpscaler();
+                EventBus().emit('player_content_item', item);
+                EventBus().emit('player_content_item_index', index);
+                _errorHandler.reset();
+
+                if (mounted) setState(() {});
+              } finally {
+                _isSwitchingChannel = false;
+              }
+            } else {
+              // Update contentItem immediately so playlist.listen does not overwrite
+              // it with the stale index before the new media begins playing.
+              if (_queue == null || index >= _queue!.length) return;
+              final item = _queue![index];
               contentItem = item;
-              _queue = updatedQueue; // Queue'yu güncelle
-
-              // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
-              PlayerState.currentContent = contentItem;
+              _currentItemIndex = index;
+              PlayerState.currentContent = item;
               PlayerState.currentIndex = index;
               PlayerState.title = item.name;
-              _currentItemIndex = index;
-              // -------------------------------------------
-
-              // Cancel any pending retry timers before opening new stream
-              _errorHandler.reset();
-
-              // Use bare Media (not Playlist) to match initial open pattern
-              // and avoid recreating the entire video pipeline.
-              await _player.open(Media(item.url));
+              // Look up resume position from watch history and open directly.
+              final itemHistory = await watchHistoryService.getWatchHistory(
+                AppState.currentPlaylist!.id,
+                isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
+              );
+              final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
+              await _player.open(
+                Media(item.url, start: Duration(milliseconds: startMs)),
+                play: true,
+              );
               await _applyUpscaler();
               EventBus().emit('player_content_item', item);
               EventBus().emit('player_content_item_index', index);
               _errorHandler.reset();
-
               if (mounted) setState(() {});
-            } finally {
-              _isSwitchingChannel = false;
             }
-          } else {
-            // Update contentItem immediately so playlist.listen does not overwrite
-            // it with the stale index before the new media begins playing.
-            if (_queue == null || index >= _queue!.length) return;
-            final item = _queue![index];
-            contentItem = item;
-            _currentItemIndex = index;
-            PlayerState.currentContent = item;
-            PlayerState.currentIndex = index;
-            PlayerState.title = item.name;
-            // Look up resume position from watch history and open directly.
-            final itemHistory = await watchHistoryService.getWatchHistory(
-              AppState.currentPlaylist!.id,
-              isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
-            );
-            final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
-            await _player.open(
-              Media(item.url, start: Duration(milliseconds: startMs)),
-              play: true,
-            );
-            await _applyUpscaler();
-            EventBus().emit('player_content_item', item);
-            EventBus().emit('player_content_item_index', index);
-            _errorHandler.reset();
-            if (mounted) setState(() {});
-          }
-        });
+          });
 
-    // Kanal listesi göster/gizle event'i
-    EventBus().on<bool>('toggle_channel_list').listen((bool show) {
-      if (mounted) {
-        setState(() {
-          _showChannelList = show;
-          PlayerState.showChannelList = show;
-        });
-      }
-    });
-
-    // Video bilgisi göster/gizle event'i
-    EventBus().on<bool>('toggle_video_info').listen((bool show) {
-      if (mounted) {
-        setState(() {
-          PlayerState.showVideoInfo = show;
-        });
-      }
-    });
-
-    // Video ayarları göster/gizle event'i
-    EventBus().on<bool>('toggle_video_settings').listen((bool show) {
-      if (mounted) {
-        setState(() {
-          PlayerState.showVideoSettings = show;
-        });
-      }
-    });
-
-    if (mounted) {
-      setState(() {
-        isLoading = false;
+      // Kanal listesi göster/gizle event'i
+      EventBus().on<bool>('toggle_channel_list').listen((bool show) {
+        if (mounted) {
+          setState(() {
+            _showChannelList = show;
+            PlayerState.showChannelList = show;
+          });
+        }
       });
-    }
+
+      // Video bilgisi göster/gizle event'i
+      EventBus().on<bool>('toggle_video_info').listen((bool show) {
+        if (mounted) {
+          setState(() {
+            PlayerState.showVideoInfo = show;
+          });
+        }
+      });
+
+      // Video ayarları göster/gizle event'i
+      EventBus().on<bool>('toggle_video_settings').listen((bool show) {
+        if (mounted) {
+          setState(() {
+            PlayerState.showVideoSettings = show;
+          });
+        }
+      });
+
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     } catch (e, st) {
       debugPrint('_initializePlayer error: $e\n$st');
       if (mounted) {
@@ -608,8 +615,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
     final items = _queue!;
     final currentContent = PlayerState.currentContent;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final panelWidth = (screenWidth / 3).clamp(200.0, 400.0);
+    final isMobilePhone = MediaQuery.sizeOf(context).shortestSide < 600;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final panelWidth = isMobilePhone
+        ? (screenWidth * 0.55).clamp(200.0, 240.0)
+        : (screenWidth / 3).clamp(200.0, 400.0);
 
     // Mevcut index'i bul
     int selectedIndex = _currentItemIndex;
@@ -637,7 +647,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           });
         },
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           child: Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -646,10 +656,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 width: panelWidth,
                 height: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.95),
+                  color: Colors.black.withValues(alpha: 0.95),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       blurRadius: 10,
                       spreadRadius: 2,
                     ),
@@ -661,7 +671,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.8),
+                        color: Colors.black.withValues(alpha: 0.8),
                         border: Border(
                           bottom: BorderSide(
                             color: Colors.grey[800]!,
@@ -750,7 +760,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: isSelected
-              ? Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3)
+              ? Theme.of(
+                  context,
+                ).colorScheme.primaryContainer.withValues(alpha: 0.3)
               : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(8),
           border: isSelected
@@ -852,6 +864,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       ),
     );
   }
+
   Widget _buildSeriesEpisodePanel(BuildContext context) {
     final items = _queue ?? [];
     // Group by season
@@ -863,14 +876,19 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final seasons = bySeason.keys.toList()..sort();
     // Find current episode's season for initial tab
     final currentSeason = contentItem.season ?? seasons.first;
-    int initialTab = seasons.indexOf(currentSeason).clamp(0, seasons.length - 1);
-    final screenWidth = MediaQuery.of(context).size.width;
-    final panelWidth = (screenWidth / 3).clamp(200.0, 380.0);
+    int initialTab = seasons
+        .indexOf(currentSeason)
+        .clamp(0, seasons.length - 1);
+    final isMobilePhone = MediaQuery.sizeOf(context).shortestSide < 600;
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final panelWidth = isMobilePhone
+        ? (screenWidth * 0.55).clamp(200.0, 240.0)
+        : (screenWidth / 3).clamp(200.0, 380.0);
     return Positioned.fill(
       child: GestureDetector(
         onTap: () => setState(() => _showChannelList = false),
         child: Container(
-          color: Colors.black.withOpacity(0.3),
+          color: Colors.black.withValues(alpha: 0.3),
           child: Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
@@ -882,31 +900,49 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   length: seasons.length,
                   initialIndex: initialTab,
                   child: Container(
-                    color: Colors.black.withOpacity(0.95),
+                    color: Colors.black.withValues(alpha: 0.95),
                     child: Column(
                       children: [
                         // Header
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
-                            color: Colors.black.withOpacity(0.8),
-                            border: Border(bottom: BorderSide(color: Colors.grey!, width: 1)),
+                            color: Colors.black.withValues(alpha: 0.8),
+                            border: Border(
+                              bottom: BorderSide(color: Colors.grey, width: 1),
+                            ),
                           ),
                           child: Row(
                             children: [
-                              const Icon(Icons.tv_rounded, size: 16, color: Colors.white54),
+                              const Icon(
+                                Icons.tv_rounded,
+                                size: 16,
+                                color: Colors.white54,
+                              ),
                               const SizedBox(width: 8),
                               const Expanded(
                                 child: Text(
                                   'Episodes',
-                                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                               IconButton(
-                                icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                                icon: const Icon(
+                                  Icons.close,
+                                  color: Colors.white,
+                                  size: 20,
+                                ),
                                 padding: EdgeInsets.zero,
                                 constraints: const BoxConstraints(),
-                                onPressed: () => setState(() => _showChannelList = false),
+                                onPressed: () =>
+                                    setState(() => _showChannelList = false),
                               ),
                             ],
                           ),
@@ -919,8 +955,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
                               isScrollable: true,
                               labelColor: Colors.white,
                               unselectedLabelColor: Colors.white54,
-                              indicatorColor: Theme.of(context).colorScheme.primary,
-                              tabs: seasons.map((s) => Tab(text: 'S$s')).toList(),
+                              indicatorColor: Theme.of(
+                                context,
+                              ).colorScheme.primary,
+                              tabs: seasons
+                                  .map((s) => Tab(text: 'S$s'))
+                                  .toList(),
                             ),
                           ),
                         // Episode list per season tab
@@ -934,12 +974,17 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                 itemBuilder: (context, idx) {
                                   final ep = eps[idx];
                                   // Find the TRUE index in the full queue
-                                  final queueIndex = items.indexWhere((q) => q.id == ep.id);
+                                  final queueIndex = items.indexWhere(
+                                    (q) => q.id == ep.id,
+                                  );
                                   final isSelected = ep.id == contentItem.id;
                                   return InkWell(
                                     onTap: () {
                                       if (queueIndex != -1) {
-                                        EventBus().emit('player_content_item_index_changed', queueIndex);
+                                        EventBus().emit(
+                                          'player_content_item_index_changed',
+                                          queueIndex,
+                                        );
                                       }
                                     },
                                     child: Container(
@@ -947,35 +992,64 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                       padding: const EdgeInsets.all(10),
                                       decoration: BoxDecoration(
                                         color: isSelected
-                                            ? Theme.of(context).colorScheme.primary.withOpacity(0.25)
-                                            : Colors.white.withOpacity(0.05),
+                                            ? Theme.of(context)
+                                                  .colorScheme
+                                                  .primary
+                                                  .withValues(alpha: 0.25)
+                                            : Colors.white.withValues(
+                                                alpha: 0.05,
+                                              ),
                                         borderRadius: BorderRadius.circular(8),
                                         border: isSelected
-                                            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1.5)
-                                            : Border.all(color: Colors.grey!, width: 1),
+                                            ? Border.all(
+                                                color: Theme.of(
+                                                  context,
+                                                ).colorScheme.primary,
+                                                width: 1.5,
+                                              )
+                                            : Border.all(
+                                                color: Colors.grey,
+                                                width: 1,
+                                              ),
                                       ),
                                       child: Row(
                                         children: [
                                           if (ep.imagePath.isNotEmpty)
                                             ClipRRect(
-                                              borderRadius: BorderRadius.circular(4),
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
                                               child: Image.network(
                                                 ep.imagePath,
                                                 width: 60,
                                                 height: 36,
                                                 fit: BoxFit.cover,
-                                                errorBuilder: (_, __, ___) => Container(
-                                                  width: 60, height: 36,
-                                                  color: Colors.grey,
-                                                  child: const Icon(Icons.tv, size: 18, color: Colors.white38),
-                                                ),
+                                                errorBuilder: (_, __, ___) =>
+                                                    Container(
+                                                      width: 60,
+                                                      height: 36,
+                                                      color: Colors.grey,
+                                                      child: const Icon(
+                                                        Icons.tv,
+                                                        size: 18,
+                                                        color: Colors.white38,
+                                                      ),
+                                                    ),
                                               ),
                                             )
                                           else
                                             Container(
-                                              width: 60, height: 36,
-                                              decoration: BoxDecoration(color: Colors.grey, borderRadius: BorderRadius.circular(4)),
-                                              child: const Icon(Icons.tv, size: 18, color: Colors.white38),
+                                              width: 60,
+                                              height: 36,
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey,
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: const Icon(
+                                                Icons.tv,
+                                                size: 18,
+                                                color: Colors.white38,
+                                              ),
                                             ),
                                           const SizedBox(width: 10),
                                           Expanded(
@@ -983,16 +1057,25 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                               ep.name,
                                               style: TextStyle(
                                                 fontSize: 13,
-                                                color: isSelected ? Colors.white : Colors.white70,
-                                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                                color: isSelected
+                                                    ? Colors.white
+                                                    : Colors.white70,
+                                                fontWeight: isSelected
+                                                    ? FontWeight.bold
+                                                    : FontWeight.normal,
                                               ),
                                               maxLines: 2,
                                               overflow: TextOverflow.ellipsis,
                                             ),
                                           ),
                                           if (isSelected)
-                                            Icon(Icons.play_circle_fill_rounded,
-                                                color: Theme.of(context).colorScheme.primary, size: 20),
+                                            Icon(
+                                              Icons.play_circle_fill_rounded,
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.primary,
+                                              size: 20,
+                                            ),
                                         ],
                                       ),
                                     ),
@@ -1035,7 +1118,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         return 'Dizi';
     }
   }
-
 
   String _getContentTypeDisplayName() {
     switch (widget.contentItem.contentType) {
@@ -1197,10 +1279,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             children: [
               Expanded(child: playerCore),
               Container(width: 1, color: Colors.grey.shade900),
-              SizedBox(
-                width: 300,
-                child: _buildPersistentChannelList(),
-              ),
+              SizedBox(width: 300, child: _buildPersistentChannelList()),
             ],
           );
         },
@@ -1235,8 +1314,11 @@ class _PlayerWidgetState extends State<PlayerWidget>
             ),
             child: Row(
               children: [
-                const Icon(Icons.live_tv_rounded,
-                    size: 16, color: Colors.white54),
+                const Icon(
+                  Icons.live_tv_rounded,
+                  size: 16,
+                  color: Colors.white54,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1259,22 +1341,26 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 final item = items[index];
                 final isSelected = index == selectedIndex;
                 return InkWell(
-                  onTap: () => EventBus()
-                      .emit('player_content_item_index_changed', index),
+                  onTap: () => EventBus().emit(
+                    'player_content_item_index_changed',
+                    index,
+                  ),
                   child: Container(
                     height: 56,
                     margin: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
+                      horizontal: 8,
+                      vertical: 2,
+                    ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? theme.colorScheme.primary
-                              .withValues(alpha: 0.18)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.18)
                           : Colors.transparent,
                       borderRadius: BorderRadius.circular(6),
                       border: isSelected
                           ? Border.all(
-                              color: theme.colorScheme.primary
-                                  .withValues(alpha: 0.5),
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.5,
+                              ),
                               width: 1,
                             )
                           : null,

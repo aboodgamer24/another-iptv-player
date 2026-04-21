@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'upscale_service.dart';
 import '../database/database.dart';
 import '../models/content_type.dart';
 import '../models/favorite.dart';
@@ -217,6 +218,15 @@ class SyncApplier {
     if (rawSettings == null || rawSettings is! Map) return;
 
     final settings = Map<String, dynamic>.from(rawSettings);
+
+    // Clamp upscale_preset to platform supported values
+    // Check both snake_case and camelCase (sync server vs local pref names)
+    final rawPreset = (settings['upscale_preset'] ?? settings['upscalePreset']) as String? ?? 'standard';
+    final clampedPreset = availableUpscalePresets.contains(rawPreset)
+        ? rawPreset
+        : 'standard';
+    await UserPreferences.setUpscalePreset(clampedPreset);
+
     await UserPreferences.applySyncedSettings(settings);
   }
 

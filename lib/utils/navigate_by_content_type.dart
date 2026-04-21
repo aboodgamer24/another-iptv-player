@@ -39,8 +39,8 @@ Future<void> navigateByContentType(BuildContext context, ContentItem content) as
   }
 
   if (isM3u &&
-      ((content.m3uItem != null && content.m3uItem!.groupTitle == null) ||
-          content.contentType == ContentType.series)) {
+      content.m3uItem != null &&
+      content.contentType != ContentType.series) {
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -55,7 +55,6 @@ Future<void> navigateByContentType(BuildContext context, ContentItem content) as
         ),
       ),
     );
-
     return;
   }
 

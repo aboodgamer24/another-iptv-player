@@ -11,7 +11,7 @@ class PlaylistController extends ChangeNotifier {
   List<Playlist> _playlists = [];
   bool _isLoading = false;
   String? _error;
-  bool _hasInitialized = false;
+  final bool _hasInitialized = false;
 
   List<Playlist> get playlists => List.unmodifiable(_playlists);
 

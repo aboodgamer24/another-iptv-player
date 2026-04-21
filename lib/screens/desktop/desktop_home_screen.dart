@@ -6,7 +6,6 @@ import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/favorite.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/watch_history.dart';
-import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
@@ -47,18 +46,24 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
       backgroundColor: const Color(0xFF0B0E14),
       body: _historyController.isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF5A45FF)))
+              child: CircularProgressIndicator(color: Color(0xFF5A45FF)),
+            )
           : RefreshIndicator(
               onRefresh: _loadData,
               child: ListView(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32,
+                  vertical: 24,
+                ),
                 children: [
                   // Header
                   Row(
                     children: [
-                      const Icon(Icons.home_rounded,
-                          color: Colors.white, size: 28),
+                      const Icon(
+                        Icons.home_rounded,
+                        color: Colors.white,
+                        size: 28,
+                      ),
                       const SizedBox(width: 12),
                       Text(
                         context.loc.history,
@@ -75,7 +80,9 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                   // Continue Watching
                   if (_historyController.continueWatching.isNotEmpty) ...[
                     _buildSectionTitle(
-                        context.loc.continue_watching, Icons.play_circle),
+                      context.loc.continue_watching,
+                      Icons.play_circle,
+                    ),
                     const SizedBox(height: 12),
                     _buildContinueWatchingRow(),
                     const SizedBox(height: 32),
@@ -84,7 +91,9 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                   // Recently Viewed Channels
                   if (_historyController.liveHistory.isNotEmpty) ...[
                     _buildSectionTitle(
-                        'Recently Viewed Channels', Icons.history_rounded),
+                      'Recently Viewed Channels',
+                      Icons.history_rounded,
+                    ),
                     const SizedBox(height: 12),
                     _buildRecentChannelsRow(),
                     const SizedBox(height: 32),
@@ -92,8 +101,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
 
                   // Recently Watched Movies
                   if (_historyController.movieHistory.isNotEmpty) ...[
-                    _buildSectionTitle(
-                        'Recent Movies', Icons.movie_rounded),
+                    _buildSectionTitle('Recent Movies', Icons.movie_rounded),
                     const SizedBox(height: 12),
                     _buildHistoryRow(_historyController.movieHistory),
                     const SizedBox(height: 32),
@@ -101,8 +109,7 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
 
                   // Recently Watched Series
                   if (_historyController.seriesHistory.isNotEmpty) ...[
-                    _buildSectionTitle(
-                        'Recent Series', Icons.tv_rounded),
+                    _buildSectionTitle('Recent Series', Icons.tv_rounded),
                     const SizedBox(height: 12),
                     _buildHistoryRow(_historyController.seriesHistory),
                     const SizedBox(height: 32),
@@ -111,10 +118,13 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                   // Favorite Channels
                   if (_favoritesController.liveStreamFavorites.isNotEmpty) ...[
                     _buildSectionTitle(
-                        'Favorite Channels', Icons.favorite_rounded),
+                      'Favorite Channels',
+                      Icons.favorite_rounded,
+                    ),
                     const SizedBox(height: 12),
                     _buildFavoritesRow(
-                        _favoritesController.liveStreamFavorites),
+                      _favoritesController.liveStreamFavorites,
+                    ),
                     const SizedBox(height: 32),
                   ],
 
@@ -130,17 +140,21 @@ class _DesktopHomeScreenState extends State<DesktopHomeScreen> {
                             height: 80,
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
-                              color:
-                                  const Color(0xFF1A1D24),
+                              color: const Color(0xFF1A1D24),
                             ),
-                            child: const Icon(Icons.tv_rounded,
-                                color: Color(0xFF747B8B), size: 36),
+                            child: const Icon(
+                              Icons.tv_rounded,
+                              color: Color(0xFF747B8B),
+                              size: 36,
+                            ),
                           ),
                           const SizedBox(height: 20),
                           const Text(
                             'Start watching to see your history here',
                             style: TextStyle(
-                                color: Color(0xFF747B8B), fontSize: 16),
+                              color: Color(0xFF747B8B),
+                              fontSize: 16,
+                            ),
                           ),
                         ],
                       ),
@@ -301,8 +315,11 @@ class _ContinueWatchingCardState extends State<_ContinueWatchingCard> {
                         Container(
                           color: Colors.black.withValues(alpha: 0.5),
                           child: const Center(
-                            child: Icon(Icons.play_arrow_rounded,
-                                color: Colors.white, size: 40),
+                            child: Icon(
+                              Icons.play_arrow_rounded,
+                              color: Colors.white,
+                              size: 40,
+                            ),
                           ),
                         ),
                     ],
@@ -369,8 +386,9 @@ class _RecentChannelCardState extends State<_RecentChannelCard> {
             color: _hovered ? const Color(0xFF1A1D24) : const Color(0xFF13161C),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color:
-                  _hovered ? const Color(0xFF323640) : const Color(0xFF1E2128),
+              color: _hovered
+                  ? const Color(0xFF323640)
+                  : const Color(0xFF1E2128),
             ),
           ),
           child: Row(
@@ -383,13 +401,17 @@ class _RecentChannelCardState extends State<_RecentChannelCard> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: widget.history.imagePath != null &&
+                child:
+                    widget.history.imagePath != null &&
                         widget.history.imagePath!.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: widget.history.imagePath!,
                         fit: BoxFit.contain,
-                        errorWidget: (_, __, ___) =>
-                            const Icon(Icons.tv, color: Colors.white38, size: 24),
+                        errorWidget: (_, __, ___) => const Icon(
+                          Icons.tv,
+                          color: Colors.white38,
+                          size: 24,
+                        ),
                       )
                     : const Icon(Icons.tv, color: Colors.white38, size: 24),
               ),
@@ -467,8 +489,11 @@ class _HistoryCardState extends State<_HistoryCard> {
                         Container(
                           color: Colors.black.withValues(alpha: 0.4),
                           child: const Center(
-                            child: Icon(Icons.play_arrow_rounded,
-                                color: Colors.white, size: 32),
+                            child: Icon(
+                              Icons.play_arrow_rounded,
+                              color: Colors.white,
+                              size: 32,
+                            ),
                           ),
                         ),
                     ],
@@ -536,8 +561,9 @@ class _FavoriteChannelCardState extends State<_FavoriteChannelCard> {
             color: _hovered ? const Color(0xFF1A1D24) : const Color(0xFF13161C),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
-              color:
-                  _hovered ? const Color(0xFF323640) : const Color(0xFF1E2128),
+              color: _hovered
+                  ? const Color(0xFF323640)
+                  : const Color(0xFF1E2128),
             ),
           ),
           child: Row(
@@ -550,13 +576,17 @@ class _FavoriteChannelCardState extends State<_FavoriteChannelCard> {
                   borderRadius: BorderRadius.circular(8),
                 ),
                 clipBehavior: Clip.antiAlias,
-                child: widget.favorite.imagePath != null &&
+                child:
+                    widget.favorite.imagePath != null &&
                         widget.favorite.imagePath!.isNotEmpty
                     ? CachedNetworkImage(
                         imageUrl: widget.favorite.imagePath!,
                         fit: BoxFit.contain,
-                        errorWidget: (_, __, ___) =>
-                            const Icon(Icons.tv, color: Colors.white38, size: 20),
+                        errorWidget: (_, __, ___) => const Icon(
+                          Icons.tv,
+                          color: Colors.white38,
+                          size: 20,
+                        ),
                       )
                     : const Icon(Icons.tv, color: Colors.white38, size: 20),
               ),

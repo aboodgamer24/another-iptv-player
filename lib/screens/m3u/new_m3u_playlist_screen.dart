@@ -606,7 +606,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
 
       Navigator.of(context).pop();
 
-      if (m3uItems.length == 0) {
+      if (m3uItems.isEmpty) {
         playlistController.setError(context.loc.m3u_error);
         await playlistController.deletePlaylist(playlist!.id);
         return;

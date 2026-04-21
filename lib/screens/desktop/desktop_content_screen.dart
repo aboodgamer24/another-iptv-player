@@ -4,8 +4,6 @@ import 'package:another_iptv_player/models/category_view_model.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/utils/responsive_helper.dart';
-import 'package:another_iptv_player/screens/search_screen.dart';
-import 'package:another_iptv_player/services/app_state.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/content_type.dart';
 
@@ -97,10 +95,7 @@ class _DesktopContentScreenState extends State<DesktopContentScreen> {
       backgroundColor: const Color(0xFF0B0E14),
       body: Row(
         children: [
-          SizedBox(
-            width: _sidebarWidth,
-            child: _buildCategorySidebar(context),
-          ),
+          SizedBox(width: _sidebarWidth, child: _buildCategorySidebar(context)),
 
           // Draggable vertical splitter
           MouseRegion(
@@ -109,17 +104,16 @@ class _DesktopContentScreenState extends State<DesktopContentScreen> {
               behavior: HitTestBehavior.translucent,
               onHorizontalDragUpdate: (details) {
                 setState(() {
-                  _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                      .clamp(_minSidebarWidth, _maxSidebarWidth);
+                  _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(
+                    _minSidebarWidth,
+                    _maxSidebarWidth,
+                  );
                 });
               },
               child: SizedBox(
                 width: 8,
                 child: Center(
-                  child: Container(
-                    width: 1,
-                    color: const Color(0xFF1E2128),
-                  ),
+                  child: Container(width: 1, color: const Color(0xFF1E2128)),
                 ),
               ),
             ),

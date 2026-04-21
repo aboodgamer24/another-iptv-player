@@ -39,7 +39,7 @@ class _C4DashboardState extends State<C4Dashboard> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadTmdbHeroFirst(); // fast, independent
-      _loadData();          // slow, runs in parallel
+      _loadData(); // slow, runs in parallel
     });
   }
 
@@ -54,8 +54,9 @@ class _C4DashboardState extends State<C4Dashboard> {
 
       // Pick the first result that has a backdrop
       final pick = results.firstWhere(
-        (m) => m['backdrop_path'] != null &&
-               (m['backdrop_path'] as String).isNotEmpty,
+        (m) =>
+            m['backdrop_path'] != null &&
+            (m['backdrop_path'] as String).isNotEmpty,
         orElse: () => results.first,
       );
 
@@ -74,10 +75,7 @@ class _C4DashboardState extends State<C4Dashboard> {
 
       // Pre-warm into cache immediately
       if (backdropUrl.isNotEmpty) {
-        await precacheImage(
-          CachedNetworkImageProvider(backdropUrl),
-          context,
-        );
+        await precacheImage(CachedNetworkImageProvider(backdropUrl), context);
       }
 
       if (mounted) {
@@ -99,20 +97,24 @@ class _C4DashboardState extends State<C4Dashboard> {
     if (mounted) {
       setState(() {
         _trendingMovies = trendingMovies
-            .map((m) => ContentItem(
-                  m['id'].toString(),
-                  m['title'] ?? m['name'] ?? '',
-                  _tmdbService.getPosterUrl(m['poster_path']),
-                  ContentType.vod,
-                ))
+            .map(
+              (m) => ContentItem(
+                m['id'].toString(),
+                m['title'] ?? m['name'] ?? '',
+                _tmdbService.getPosterUrl(m['poster_path']),
+                ContentType.vod,
+              ),
+            )
             .toList();
         _trendingSeries = trendingTv
-            .map((m) => ContentItem(
-                  m['id'].toString(),
-                  m['name'] ?? m['title'] ?? '',
-                  _tmdbService.getPosterUrl(m['poster_path']),
-                  ContentType.series,
-                ))
+            .map(
+              (m) => ContentItem(
+                m['id'].toString(),
+                m['name'] ?? m['title'] ?? '',
+                _tmdbService.getPosterUrl(m['poster_path']),
+                ContentType.series,
+              ),
+            )
             .toList();
       });
     }
@@ -140,12 +142,11 @@ class _C4DashboardState extends State<C4Dashboard> {
 
     // Pre-warm hero image into cache immediately after item is resolved
     final heroItem = xtreamController.heroItem;
-    if (heroItem != null && heroItem.imageUrl.isNotEmpty && heroItem.id != _lastPrecachedHeroId) {
+    if (heroItem != null &&
+        heroItem.imageUrl.isNotEmpty &&
+        heroItem.id != _lastPrecachedHeroId) {
       _lastPrecachedHeroId = heroItem.id;
-      precacheImage(
-        CachedNetworkImageProvider(heroItem.imageUrl),
-        context,
-      );
+      precacheImage(CachedNetworkImageProvider(heroItem.imageUrl), context);
     }
 
     return LayoutBuilder(
@@ -161,10 +162,8 @@ class _C4DashboardState extends State<C4Dashboard> {
             else if (_tmdbHeroItem != null)
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 600),
-                transitionBuilder: (child, animation) => FadeTransition(
-                  opacity: animation,
-                  child: child,
-                ),
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
                 child: C4DashboardHero(
                   key: ValueKey(_tmdbHeroItem!.id),
                   item: _tmdbHeroItem!,
@@ -175,8 +174,14 @@ class _C4DashboardState extends State<C4Dashboard> {
             const SizedBox(height: 32),
 
             for (final rail in visibleRails) ...[
-              _buildRail(context, rail.id, xtreamController, historyController,
-                  favoritesController, watchLaterController),
+              _buildRail(
+                context,
+                rail.id,
+                xtreamController,
+                historyController,
+                favoritesController,
+                watchLaterController,
+              ),
             ],
 
             const SizedBox(height: 64),
@@ -196,8 +201,9 @@ class _C4DashboardState extends State<C4Dashboard> {
   ) {
     switch (id) {
       case 'recommended':
-        if (xtreamController.recommendations.isEmpty)
+        if (xtreamController.recommendations.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
@@ -207,19 +213,22 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
 
       case 'favorites_live':
-        if (favoritesController.liveStreamFavorites.isEmpty)
+        if (favoritesController.liveStreamFavorites.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
             title: context.loc.rail_favorites_live,
             items: favoritesController.liveStreamFavorites
-                .map((f) => ContentItem(
-                      f.streamId,
-                      f.name,
-                      f.imagePath ?? '',
-                      f.contentType,
-                    ))
+                .map(
+                  (f) => ContentItem(
+                    f.streamId,
+                    f.name,
+                    f.imagePath ?? '',
+                    f.contentType,
+                  ),
+                )
                 .toList(),
             isPortrait: false,
             onItemTap: (ctx, item) {
@@ -234,19 +243,22 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
 
       case 'favorites_movies':
-        if (favoritesController.movieFavorites.isEmpty)
+        if (favoritesController.movieFavorites.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
             title: context.loc.rail_favorites_movies,
             items: favoritesController.movieFavorites
-                .map((f) => ContentItem(
-                      f.streamId,
-                      f.name,
-                      f.imagePath ?? '',
-                      f.contentType,
-                    ))
+                .map(
+                  (f) => ContentItem(
+                    f.streamId,
+                    f.name,
+                    f.imagePath ?? '',
+                    f.contentType,
+                  ),
+                )
                 .toList(),
             onItemTap: (ctx, item) {
               final fav = favoritesController.movieFavorites.firstWhere(
@@ -260,19 +272,22 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
 
       case 'favorites_series':
-        if (favoritesController.seriesFavorites.isEmpty)
+        if (favoritesController.seriesFavorites.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
             title: context.loc.rail_favorites_series,
             items: favoritesController.seriesFavorites
-                .map((f) => ContentItem(
-                      f.streamId,
-                      f.name,
-                      f.imagePath ?? '',
-                      f.contentType,
-                    ))
+                .map(
+                  (f) => ContentItem(
+                    f.streamId,
+                    f.name,
+                    f.imagePath ?? '',
+                    f.contentType,
+                  ),
+                )
                 .toList(),
             onItemTap: (ctx, item) {
               final fav = favoritesController.seriesFavorites.firstWhere(
@@ -286,19 +301,22 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
 
       case 'watch_later':
-        if (watchLaterController.watchLaterItems.isEmpty)
+        if (watchLaterController.watchLaterItems.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
             title: context.loc.rail_watch_later,
             items: watchLaterController.watchLaterItems
-                .map((h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ))
+                .map(
+                  (h) => ContentItem(
+                    h.streamId,
+                    h.title,
+                    h.imagePath ?? '',
+                    h.contentType,
+                  ),
+                )
                 .toList(),
             onItemTap: (ctx, item) {
               final data = watchLaterController.watchLaterItems.firstWhere(
@@ -311,20 +329,23 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
 
       case 'continue_watching':
-        if (historyController.continueWatching.isEmpty)
+        if (historyController.continueWatching.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
             title: context.loc.rail_continue_watching,
             items: historyController.continueWatching
                 .where((h) => h.contentType != ContentType.liveStream)
-                .map((h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ))
+                .map(
+                  (h) => ContentItem(
+                    h.streamId,
+                    h.title,
+                    h.imagePath ?? '',
+                    h.contentType,
+                  ),
+                )
                 .toList(),
             onItemTap: (ctx, item) {
               final h = historyController.continueWatching.firstWhere(
@@ -340,19 +361,22 @@ class _C4DashboardState extends State<C4Dashboard> {
         );
 
       case 'live_history':
-        if (historyController.liveHistory.isEmpty)
+        if (historyController.liveHistory.isEmpty) {
           return const SizedBox.shrink();
+        }
         return Padding(
           padding: const EdgeInsets.only(bottom: 32),
           child: C4ContentRail(
             title: context.loc.rail_live_history,
             items: historyController.liveHistory
-                .map((h) => ContentItem(
-                      h.streamId,
-                      h.title,
-                      h.imagePath ?? '',
-                      h.contentType,
-                    ))
+                .map(
+                  (h) => ContentItem(
+                    h.streamId,
+                    h.title,
+                    h.imagePath ?? '',
+                    h.contentType,
+                  ),
+                )
                 .toList(),
             isPortrait: false,
             onItemTap: (ctx, item) {
@@ -452,9 +476,9 @@ class _C4DashboardState extends State<C4Dashboard> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error matching content: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error matching content: $e')));
       }
     }
   }
@@ -478,9 +502,10 @@ class _HeroBannerShimmerState extends State<_HeroBannerShimmer>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    _anim = Tween<double>(begin: -2, end: 2).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: -2,
+      end: 2,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override

@@ -4,9 +4,8 @@ import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/repositories/favorites_repository.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
-import 'package:another_iptv_player/screens/series/episode_screen.dart';
-import 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart';
 import 'package:another_iptv_player/services/sync_service.dart';
+import 'package:another_iptv_player/services/app_state.dart';
 import 'package:flutter/material.dart';
 
 class FavoritesController extends ChangeNotifier {
@@ -197,37 +196,69 @@ class FavoritesController extends ChangeNotifier {
 
   Future<void> playFavorite(BuildContext context, Favorite favorite) async {
     try {
-      _setError(null);
-      final contentItem = await _repository.getContentItemFromFavorite(favorite);
-
-      if (contentItem == null) {
-        _setError('Favori içeriği bulunamadı');
-        return;
-      }
-
-      if (isXtreamCode) {
-        if (favorite.contentType == ContentType.series &&
-            favorite.episodeId != null) {
-          // If it's a specific episode, try to navigate to EpisodeScreen
-          navigateByContentType(context, contentItem);
-        } else {
-          navigateByContentType(context, contentItem);
-        }
-      } else if (isM3u) {
-        if (favorite.contentType == ContentType.series) {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => M3uPlayerScreen(contentItem: contentItem),
-            ),
-          );
-        } else {
-          navigateByContentType(context, contentItem);
-        }
+      final contentItem = await _buildFullContentItem(favorite);
+      if (context.mounted) {
+        await navigateByContentType(context, contentItem);
       }
     } catch (e) {
-      _setError('Favori oynatılırken hata oluştu: $e');
+      debugPrint('[FavoritesController] playFavorite error: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Could not play: $e')));
+      }
     }
+  }
+
+  /// Builds a complete ContentItem with liveStream/m3uItem properly set,
+  /// so navigateByContentType routes to the correct screen.
+  Future<ContentItem> _buildFullContentItem(Favorite fav) async {
+    if (fav.contentType == ContentType.liveStream) {
+      if (isXtreamCode) {
+        // Look up the live channel from the local database
+        try {
+          final liveStream = await AppState.xtreamCodeRepository
+              ?.findLiveStreamById(fav.streamId);
+          if (liveStream != null) {
+            return ContentItem(
+              liveStream.streamId,
+              liveStream.name,
+              liveStream.streamIcon,
+              ContentType.liveStream,
+              liveStream: liveStream,
+            );
+          }
+        } catch (e) {
+          debugPrint('[FavoritesController] xtream lookup failed: $e');
+        }
+      } else if (isM3u) {
+        try {
+          final m3uItem = await AppState.m3uRepository?.getM3uItemByUrl(
+            url: fav.streamId,
+          );
+          if (m3uItem != null) {
+            return ContentItem(
+              m3uItem.url,
+              m3uItem.name ?? fav.name,
+              m3uItem.tvgLogo ?? fav.imagePath ?? '',
+              ContentType.liveStream,
+              m3uItem: m3uItem,
+            );
+          }
+        } catch (e) {
+          debugPrint('[FavoritesController] m3u lookup failed: $e');
+        }
+      }
+    }
+
+    // For VOD/Series or if the lookup above failed, use the stored data.
+    // navigateByContentType handles these correctly already.
+    return ContentItem(
+      fav.streamId,
+      fav.name,
+      fav.imagePath ?? '',
+      fav.contentType,
+    );
   }
 
   List<Favorite> searchFavorites(String query) {
@@ -263,15 +294,19 @@ class FavoritesController extends ChangeNotifier {
 
   /// Fire-and-forget push of the current favorites list to the sync server.
   void _syncFavoritesToServer() {
-    final data = _favorites.map((f) => {
-      'id': f.id,
-      'streamId': f.streamId,
-      'name': f.name,
-      'imagePath': f.imagePath,
-      'contentType': f.contentType.toString(),
-      'episodeId': f.episodeId,
-      'sortOrder': f.sortOrder,
-    }).toList();
+    final data = _favorites
+        .map(
+          (f) => {
+            'id': f.id,
+            'streamId': f.streamId,
+            'name': f.name,
+            'imagePath': f.imagePath,
+            'contentType': f.contentType.toString(),
+            'episodeId': f.episodeId,
+            'sortOrder': f.sortOrder,
+          },
+        )
+        .toList();
     SyncService.instance.pushField('favorites', data);
   }
 }

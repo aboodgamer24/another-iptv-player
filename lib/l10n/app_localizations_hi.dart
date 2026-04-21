@@ -12,6 +12,9 @@ class AppLocalizationsHi extends AppLocalizations {
   String get slogan => 'ओपन सोर्स IPTV प्लेयर';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => 'खोजें';
 
   @override

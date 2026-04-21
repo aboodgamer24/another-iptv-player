@@ -100,7 +100,9 @@ class _MovieScreenState extends State<MovieScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    final result = await _favoritesController.toggleFavorite(widget.contentItem);
+    final result = await _favoritesController.toggleFavorite(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() {
         _isFavorite = result;
@@ -109,7 +111,9 @@ class _MovieScreenState extends State<MovieScreen> {
   }
 
   Future<void> _toggleWatchLater() async {
-    final result = await _watchLaterController.toggleWatchLater(widget.contentItem);
+    final result = await _watchLaterController.toggleWatchLater(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() {
         _isInWatchLater = result;
@@ -135,7 +139,7 @@ class _MovieScreenState extends State<MovieScreen> {
         final categoryId = vod?.categoryId;
 
         if (categoryId != null) {
-          final movies = await _repository!.getMovies(categoryId: categoryId);
+          final movies = await _repository.getMovies(categoryId: categoryId);
           if (movies != null && mounted) {
             setState(() {
               _categoryMovies = movies
@@ -236,7 +240,7 @@ class _MovieScreenState extends State<MovieScreen> {
     }
 
     try {
-      final info = await _repository!.getVodInfo(widget.contentItem.id);
+      final info = await _repository.getVodInfo(widget.contentItem.id);
 
       if (!mounted) return;
       setState(() {
@@ -264,7 +268,7 @@ class _MovieScreenState extends State<MovieScreen> {
     final value = history.watchDuration!.inMilliseconds / total;
     if (value <= 0) return null;
 
-    return (value.clamp(0.0, 1.0)) as double;
+    return (value.clamp(0.0, 1.0));
   }
 
   String? get _posterUrl {
@@ -361,7 +365,9 @@ class _MovieScreenState extends State<MovieScreen> {
             ),
             child: IconButton(
               icon: Icon(
-                _isInWatchLater ? Icons.watch_later : Icons.watch_later_outlined,
+                _isInWatchLater
+                    ? Icons.watch_later
+                    : Icons.watch_later_outlined,
                 color: _isInWatchLater ? Colors.blueAccent : Colors.white,
               ),
               onPressed: _toggleWatchLater,

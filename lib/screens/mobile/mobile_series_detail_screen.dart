@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,7 +9,6 @@ import '../../services/app_state.dart';
 import '../../services/watch_history_service.dart';
 import '../../controllers/favorites_controller.dart';
 import '../../controllers/watch_later_controller.dart';
-import '../../l10n/localization_extension.dart';
 import '../../widgets/player_widget.dart';
 import '../../database/database.dart';
 
@@ -20,10 +18,12 @@ class MobileSeriesDetailScreen extends StatefulWidget {
   const MobileSeriesDetailScreen({super.key, required this.contentItem});
 
   @override
-  State<MobileSeriesDetailScreen> createState() => _MobileSeriesDetailScreenState();
+  State<MobileSeriesDetailScreen> createState() =>
+      _MobileSeriesDetailScreenState();
 }
 
-class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> with TickerProviderStateMixin {
+class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen>
+    with TickerProviderStateMixin {
   late IptvRepository _repository;
   late FavoritesController _favoritesController;
   late WatchLaterController _watchLaterController;
@@ -71,24 +71,39 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
         if (mounted) {
           setState(() {
             _seriesInfo = response.seriesInfo;
-            _seasons = response.seasons.where((s) => response.episodes.any((ep) => ep.season == s.seasonNumber)).toList();
+            _seasons = response.seasons
+                .where(
+                  (s) => response.episodes.any(
+                    (ep) => ep.season == s.seasonNumber,
+                  ),
+                )
+                .toList();
             _episodes = response.episodes;
             _isLoading = false;
-            _tabController = TabController(length: _seasons.length, vsync: this);
+            _tabController = TabController(
+              length: _seasons.length,
+              vsync: this,
+            );
             _tabController!.addListener(() {
-              if (mounted) setState(() => _selectedSeasonIndex = _tabController!.index);
+              if (mounted)
+                setState(() => _selectedSeasonIndex = _tabController!.index);
             });
           });
-          await Future.wait([
-            _loadEpisodeProgress(),
-            _checkStatus(),
-          ]);
+          await Future.wait([_loadEpisodeProgress(), _checkStatus()]);
         }
       } else {
-        if (mounted) setState(() { _error = 'Failed to load series info'; _isLoading = false; });
+        if (mounted)
+          setState(() {
+            _error = 'Failed to load series info';
+            _isLoading = false;
+          });
       }
     } catch (e) {
-      if (mounted) setState(() { _error = 'Error: $e'; _isLoading = false; });
+      if (mounted)
+        setState(() {
+          _error = 'Error: $e';
+          _isLoading = false;
+        });
     }
   }
 
@@ -97,11 +112,15 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
     final Map<String, double> progressMap = {};
 
     for (final ep in _episodes) {
-      final history = await _watchHistoryService.getWatchHistory(playlistId, ep.episodeId.toString());
+      final history = await _watchHistoryService.getWatchHistory(
+        playlistId,
+        ep.episodeId.toString(),
+      );
       if (history?.watchDuration != null && history?.totalDuration != null) {
         final total = history!.totalDuration!.inMilliseconds;
         if (total > 0) {
-          progressMap[ep.episodeId.toString()] = (history.watchDuration!.inMilliseconds / total).clamp(0.0, 1.0);
+          progressMap[ep.episodeId.toString()] =
+              (history.watchDuration!.inMilliseconds / total).clamp(0.0, 1.0);
         }
       }
     }
@@ -110,8 +129,14 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
   }
 
   Future<void> _checkStatus() async {
-    final isFav = await _favoritesController.isFavorite(widget.contentItem.id, widget.contentItem.contentType);
-    final isWL = await _watchLaterController.isWatchLater(widget.contentItem.id, widget.contentItem.contentType);
+    final isFav = await _favoritesController.isFavorite(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
+    final isWL = await _watchLaterController.isWatchLater(
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
     if (mounted) {
       setState(() {
         _isFavorite = isFav;
@@ -122,14 +147,16 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
 
   void _playEpisode(EpisodesData episode) {
     final allContents = _episodes
-        .map((x) => ContentItem(
-              x.episodeId,
-              x.title,
-              x.movieImage ?? '',
-              ContentType.series,
-              containerExtension: x.containerExtension,
-              season: x.season,
-            ))
+        .map(
+          (x) => ContentItem(
+            x.episodeId,
+            x.title,
+            x.movieImage ?? '',
+            ContentType.series,
+            containerExtension: x.containerExtension,
+            season: x.season,
+          ),
+        )
         .toList();
 
     Navigator.push(
@@ -166,7 +193,10 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return const Scaffold(backgroundColor: Color(0xFF0B0E14), body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        backgroundColor: Color(0xFF0B0E14),
+        body: Center(child: CircularProgressIndicator()),
+      );
     }
     if (_error != null) {
       return Scaffold(
@@ -195,9 +225,11 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
                 fit: StackFit.expand,
                 children: [
                   CachedNetworkImage(
-                    imageUrl: _seriesInfo?.cover ?? widget.contentItem.imagePath,
+                    imageUrl:
+                        _seriesInfo?.cover ?? widget.contentItem.imagePath,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => Container(color: Colors.grey[900]),
+                    errorWidget: (_, __, ___) =>
+                        Container(color: Colors.grey[900]),
                   ),
                   const DecoratedBox(
                     decoration: BoxDecoration(
@@ -220,7 +252,11 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
                 children: [
                   Text(
                     _seriesInfo?.name ?? widget.contentItem.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -232,26 +268,50 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
                     children: [
                       IconButton.filledTonal(
                         onPressed: () async {
-                          final result = await _favoritesController.toggleFavorite(widget.contentItem);
+                          final result = await _favoritesController
+                              .toggleFavorite(widget.contentItem);
                           setState(() => _isFavorite = result);
                         },
-                        icon: Icon(_isFavorite ? Icons.favorite : Icons.favorite_border, color: _isFavorite ? Colors.red : null),
+                        icon: Icon(
+                          _isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: _isFavorite ? Colors.red : null,
+                        ),
                       ),
                       const SizedBox(width: 8),
                       IconButton.filledTonal(
                         onPressed: () async {
-                          final result = await _watchLaterController.toggleWatchLater(widget.contentItem);
+                          final result = await _watchLaterController
+                              .toggleWatchLater(widget.contentItem);
                           setState(() => _isInWatchLater = result);
                         },
-                        icon: Icon(_isInWatchLater ? Icons.schedule : Icons.schedule_outlined, color: _isInWatchLater ? Colors.blue : null),
+                        icon: Icon(
+                          _isInWatchLater
+                              ? Icons.schedule
+                              : Icons.schedule_outlined,
+                          color: _isInWatchLater ? Colors.blue : null,
+                        ),
                       ),
                     ],
                   ),
                   const SizedBox(height: 24),
                   if (_seriesInfo?.plot != null) ...[
-                    const Text('Synopsis', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text(
+                      'Synopsis',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                     const SizedBox(height: 8),
-                    Text(_seriesInfo!.plot!, style: const TextStyle(color: Colors.white70, fontSize: 14, height: 1.5)),
+                    Text(
+                      _seriesInfo!.plot!,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        height: 1.5,
+                      ),
+                    ),
                     const SizedBox(height: 24),
                   ],
                 ],
@@ -273,13 +333,10 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
               ),
             ),
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                final ep = _currentSeasonEpisodes[index];
-                return _buildEpisodeRow(ep);
-              },
-              childCount: _currentSeasonEpisodes.length,
-            ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              final ep = _currentSeasonEpisodes[index];
+              return _buildEpisodeRow(ep);
+            }, childCount: _currentSeasonEpisodes.length),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 40)),
         ],
@@ -306,7 +363,8 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
             CachedNetworkImage(
               imageUrl: ep.movieImage ?? '',
               fit: BoxFit.cover,
-              errorWidget: (_, __, ___) => const Icon(Icons.tv, color: Colors.white24),
+              errorWidget: (_, __, ___) =>
+                  const Icon(Icons.tv, color: Colors.white24),
             ),
             if (progress != null && progress > 0)
               Positioned(
@@ -317,7 +375,9 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
                   value: progress,
                   minHeight: 4,
                   backgroundColor: Colors.transparent,
-                  valueColor: AlwaysStoppedAnimation(Theme.of(context).primaryColor),
+                  valueColor: AlwaysStoppedAnimation(
+                    Theme.of(context).primaryColor,
+                  ),
                 ),
               ),
             const Center(child: Icon(Icons.play_arrow, color: Colors.white70)),
@@ -326,7 +386,11 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen> wit
       ),
       title: Text(
         'E${ep.episodeNum}: ${ep.title}',
-        style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.bold,
+        ),
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
       ),
@@ -349,11 +413,12 @@ class _SliverAppBarDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => _tabBar.preferredSize.height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
-    return Container(
-      color: const Color(0xFF0B0E14),
-      child: _tabBar,
-    );
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return Container(color: const Color(0xFF0B0E14), child: _tabBar);
   }
 
   @override

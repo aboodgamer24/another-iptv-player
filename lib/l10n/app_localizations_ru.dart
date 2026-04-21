@@ -12,6 +12,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get slogan => 'IPTV-плеер с открытым исходным кодом';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => 'Поиск';
 
   @override

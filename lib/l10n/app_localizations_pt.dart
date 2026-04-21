@@ -12,6 +12,9 @@ class AppLocalizationsPt extends AppLocalizations {
   String get slogan => 'Player IPTV de Código Aberto';
 
   @override
+  String get account => 'Account';
+
+  @override
   String get search => 'Pesquisar';
 
   @override
