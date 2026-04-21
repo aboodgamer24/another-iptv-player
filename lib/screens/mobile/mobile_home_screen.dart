@@ -7,6 +7,9 @@ import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../l10n/localization_extension.dart';
 import '../../services/tmdb_service.dart';
+import '../../models/content_type.dart';
+import '../../models/watch_history.dart';
+import '../../models/favorite.dart';
 
 class MobileHomeScreen extends StatefulWidget {
   final String playlistId;
@@ -20,6 +23,7 @@ class MobileHomeScreen extends StatefulWidget {
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
   late WatchHistoryController _historyController;
   late FavoritesController _favoritesController;
+  late final TmdbService _tmdb;
   List<Map<String, dynamic>> _trendingMovies = [];
   List<Map<String, dynamic>> _trendingSeries = [];
   bool _tmdbLoading = false;
@@ -27,45 +31,61 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   @override
   void initState() {
     super.initState();
+    _tmdb = TmdbService();
     _historyController = context.read<WatchHistoryController>();
     _favoritesController = context.read<FavoritesController>();
     _loadData();
   }
 
   Future<void> _loadData() async {
+    if (!mounted) return;
     setState(() => _tmdbLoading = true);
+
     await Future.wait([
       _historyController.loadWatchHistory(),
       _favoritesController.loadFavorites(),
+      _fetchTmdb(),
     ]);
 
-    // Load TMDB data
+    if (mounted) {
+      setState(() => _tmdbLoading = false);
+    }
+  }
+
+  Future<void> _fetchTmdb() async {
     try {
-      final tmdb = TmdbService();
-      final movies = await tmdb.getTrendingMovies();
-      final series = await tmdb.getTrendingTv();
+      final results = await Future.wait([
+        _tmdb.getTrendingMovies(),
+        _tmdb.getTrendingTv(),
+      ]);
       if (mounted) {
         setState(() {
-          _trendingMovies = movies;
-          _trendingSeries = series;
-          _tmdbLoading = false;
+          _trendingMovies = results[0];
+          _trendingSeries = results[1];
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _tmdbLoading = false);
+      // silently fail — TMDB is non-critical
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final history = context.watch<WatchHistoryController>();
-    final favorites = context.watch<FavoritesController>();
+    final isHistoryLoading = context.select<WatchHistoryController, bool>((c) => c.isLoading);
+    final isFavLoading = context.select<FavoritesController, bool>((c) => c.isLoading);
+    final continueWatching = context.select<WatchHistoryController, List<WatchHistory>>((c) => c.continueWatching);
+    final favItems = context.select<FavoritesController, List<Favorite>>((c) => c.favorites);
+    final movieHistory = context.select<WatchHistoryController, List<WatchHistory>>((c) => c.movieHistory);
+    final seriesHistory = context.select<WatchHistoryController, List<WatchHistory>>((c) => c.seriesHistory);
 
-    if (history.isLoading || favorites.isLoading) {
+    if (isHistoryLoading || isFavLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final heroItem = _getHeroItem();
+    final continueWatchingFiltered = continueWatching
+        .where((h) => h.contentType != ContentType.liveStream)
+        .toList();
 
     return RefreshIndicator(
       onRefresh: _loadData,
@@ -73,10 +93,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
         children: [
           if (heroItem != null) _buildHero(heroItem),
           const SizedBox(height: 16),
-          if (history.continueWatching.isNotEmpty)
+          if (continueWatchingFiltered.isNotEmpty)
             _buildSection(
               context.loc.continue_watching,
-              history.continueWatching
+              continueWatchingFiltered
                   .map(
                     (h) => ContentItem(
                       h.streamId,
@@ -87,10 +107,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
-          if (favorites.favorites.isNotEmpty)
+          if (favItems.isNotEmpty)
             _buildSection(
               context.loc.favorites,
-              favorites.favorites
+              favItems
                   .map(
                     (f) => ContentItem(
                       f.streamId,
@@ -107,10 +127,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
           if (_trendingSeries.isNotEmpty)
             _buildTmdbSection('Trending Series', _trendingSeries),
 
-          if (history.movieHistory.isNotEmpty)
+          if (movieHistory.isNotEmpty)
             _buildSection(
               'Recent Movies',
-              history.movieHistory
+              movieHistory
                   .map(
                     (h) => ContentItem(
                       h.streamId,
@@ -121,10 +141,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
-          if (history.seriesHistory.isNotEmpty)
+          if (seriesHistory.isNotEmpty)
             _buildSection(
               'Recent Series',
-              history.seriesHistory
+              seriesHistory
                   .map(
                     (h) => ContentItem(
                       h.streamId,
@@ -142,7 +162,6 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   Widget _buildTmdbSection(String title, List<Map<String, dynamic>> items) {
-    final tmdb = TmdbService();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -169,6 +188,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: items.length,
+            itemExtent: 118.0,
             itemBuilder: (context, index) {
               final item = items[index];
               final posterPath = item['poster_path'] as String?;
@@ -188,8 +208,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                     children: [
                       Expanded(
                         child: CachedNetworkImage(
-                          imageUrl: tmdb.getPosterUrl(posterPath),
+                          imageUrl: _tmdb.getPosterUrl(posterPath),
                           fit: BoxFit.cover,
+                          memCacheWidth: 220,
+                          memCacheHeight: 330,
+                          fadeInDuration: const Duration(milliseconds: 150),
                           errorWidget: (_, __, ___) =>
                               const Icon(Icons.movie, color: Colors.white24),
                         ),
@@ -215,12 +238,20 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   ContentItem? _getHeroItem() {
-    if (_historyController.continueWatching.isNotEmpty) {
-      final h = _historyController.continueWatching.first;
+    // Prefer first non-live continue watching item
+    final nonLiveContinue = _historyController.continueWatching
+        .where((h) => h.contentType != ContentType.liveStream)
+        .toList();
+    if (nonLiveContinue.isNotEmpty) {
+      final h = nonLiveContinue.first;
       return ContentItem(h.streamId, h.title, h.imagePath ?? '', h.contentType);
     }
-    if (_favoritesController.favorites.isNotEmpty) {
-      final f = _favoritesController.favorites.first;
+    // Fallback: first non-live favorite
+    final nonLiveFav = _favoritesController.favorites
+        .where((f) => f.contentType != ContentType.liveStream)
+        .toList();
+    if (nonLiveFav.isNotEmpty) {
+      final f = nonLiveFav.first;
       return ContentItem(f.streamId, f.name, f.imagePath ?? '', f.contentType);
     }
     return null;
@@ -237,6 +268,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
             CachedNetworkImage(
               imageUrl: item.imageUrl,
               fit: BoxFit.cover,
+              memCacheWidth: 780,
+              memCacheHeight: 440,
+              fadeInDuration: const Duration(milliseconds: 200),
               errorWidget: (_, __, ___) => Container(color: Colors.grey[900]),
             ),
             Container(
@@ -298,6 +332,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             itemCount: items.length,
+            itemExtent: 120.0,
             itemBuilder: (context, index) {
               final item = items[index];
               return _buildPosterCard(item);
@@ -326,6 +361,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
               child: CachedNetworkImage(
                 imageUrl: item.imageUrl,
                 fit: BoxFit.cover,
+                memCacheWidth: 220,
+                memCacheHeight: 330,
+                fadeInDuration: const Duration(milliseconds: 150),
                 errorWidget: (_, __, ___) =>
                     const Icon(Icons.movie, color: Colors.white24),
               ),

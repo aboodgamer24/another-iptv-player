@@ -53,21 +53,23 @@ class WatchHistoryController extends ChangeNotifier {
 
   Future<void> loadWatchHistory() async {
     print('WatchHistoryController: loadWatchHistory başladı');
-    _setLoading(true);
-    _clearError();
-
-    // Mevcut verileri temizle
+    
+    _isLoading = true;
+    _errorMessage = null;
     _continueWatching.clear();
     _recentlyWatched.clear();
     _liveHistory.clear();
     _movieHistory.clear();
     _seriesHistory.clear();
+    
+    // Single notify for loading state
     WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
     if (AppState.currentPlaylist == null) {
       print('WatchHistoryController: Aktif playlist bulunamadı');
-      _setError('Aktif playlist bulunamadı');
-      _setLoading(false);
+      _errorMessage = 'Aktif playlist bulunamadı';
+      _isLoading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
       return;
     }
 
@@ -98,11 +100,16 @@ class WatchHistoryController extends ChangeNotifier {
       _movieHistory = futures[3];
       _seriesHistory = futures[4];
 
-      _setLoading(false);
+      _isLoading = false;
+      _errorMessage = null;
+
+      // Single final notify — all data is ready
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
       _syncContinueWatchingToServer();
     } catch (e) {
-      _setError('İzleme geçmişi yüklenirken hata oluştu: $e');
-      _setLoading(false);
+      _errorMessage = 'İzleme geçmişi yüklenirken hata oluştu: $e';
+      _isLoading = false;
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     }
   }
 
@@ -120,7 +127,8 @@ class WatchHistoryController extends ChangeNotifier {
           break;
       }
     } catch (e) {
-      _setError('Video oynatılırken hata oluştu: $e');
+      _errorMessage = 'Video oynatılırken hata oluştu: $e';
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     }
   }
 
@@ -132,7 +140,8 @@ class WatchHistoryController extends ChangeNotifier {
       );
       await loadWatchHistory();
     } catch (e) {
-      _setError('Hata oluştu: $e');
+      _errorMessage = 'Hata oluştu: $e';
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     }
   }
 
@@ -141,27 +150,10 @@ class WatchHistoryController extends ChangeNotifier {
       await _historyService.clearAllHistory();
       await loadWatchHistory();
     } catch (e) {
-      _setError('Hata oluştu: $e');
+      _errorMessage = 'Hata oluştu: $e';
+      WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     }
   }
-
-  // Private methods
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-  }
-
-  void _setError(String error) {
-    _errorMessage = error;
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-  }
-
-  void _clearError() {
-    _errorMessage = null;
-    WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
-  }
-
-  Future<void> _playLiveStream(
     BuildContext context,
     WatchHistory history,
   ) async {
