@@ -17,20 +17,21 @@ services:
       retries: 5
 
   server:
-    image: node:20-alpine
+    build:
+      context: .
+      no_cache: true
     restart: unless-stopped
-    working_dir: /app
     depends_on:
       db:
         condition: service_healthy
     env_file:
-      - .env
-    volumes:
-      - .:/app
+      - stack.env
+    environment:
+      - DOCKER_BUILDKIT=0
     ports:
       - "${PORT:-7000}:${PORT:-7000}"
     command: >
-      sh -c "npm install --production && node src/migrate.js && node src/index.js"
+      sh -c "node src/migrate.js && node src/index.js"
 
 volumes:
   pgdata:
