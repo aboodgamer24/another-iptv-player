@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import '../repositories/user_preferences.dart';
-import '../services/sync_applier.dart';
 import '../services/sync_service.dart';
-import 'app_initializer_screen.dart';
 import 'playlist_screen.dart';
+import 'post_login_choice_screen.dart';
 
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
@@ -96,24 +95,10 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     }
   }
 
-  Future<void> _proceedAfterAuth() async {
-    // Show loading while syncing
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    // Pull and apply all server data locally
-    await SyncApplier.pullAndApply();
-
+  void _proceedAfterAuth() {
     if (!mounted) return;
-
-    setState(() { _isLoading = false; });
-
-    // Now proceed to normal app flow — AppInitializerScreen will
-    // find the synced playlists and navigate correctly
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const AppInitializerScreen()),
+      MaterialPageRoute(builder: (_) => const PostLoginChoiceScreen()),
     );
   }
 
