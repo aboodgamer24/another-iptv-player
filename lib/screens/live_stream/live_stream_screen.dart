@@ -33,45 +33,75 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
   }
 
   Future<void> _initializeQueue() async {
-    allContents = isXtreamCode
-        ? (await AppState.xtreamCodeRepository!.getLiveChannelsByCategoryId(
-            categoryId: widget.content.liveStream!.categoryId,
-          ))!.map((x) {
-            return ContentItem(
-              x.streamId,
-              x.name,
-              x.streamIcon,
-              ContentType.liveStream,
-              liveStream: x,
-            );
-          }).toList()
-        : (await AppState.m3uRepository!.getM3uItemsByCategoryId(
-            categoryId: widget.content.m3uItem!.categoryId!,
-          ))!.map((x) {
-            return ContentItem(
-              x.url,
-              x.name ?? 'NO NAME',
-              x.tvgLogo ?? '',
-              ContentType.liveStream,
-              m3uItem: x,
-            );
-          }).toList();
+    try {
+      if (isXtreamCode) {
+        if (widget.content.liveStream == null) {
+          // Bare ContentItem from favorites — play solo with no queue
+          setState(() {
+            allContents = [widget.content];
+            selectedContentItemIndex = 0;
+            allContentsLoaded = true;
+          });
+          _setupIndexSubscription();
+          return;
+        }
+        allContents = (await AppState.xtreamCodeRepository!
+                .getLiveChannelsByCategoryId(
+                  categoryId: widget.content.liveStream!.categoryId,
+                ))!
+            .map((x) => ContentItem(
+                  x.streamId, x.name, x.streamIcon,
+                  ContentType.liveStream, liveStream: x,
+                ))
+            .toList();
+      } else {
+        if (widget.content.m3uItem == null) {
+          setState(() {
+            allContents = [widget.content];
+            selectedContentItemIndex = 0;
+            allContentsLoaded = true;
+          });
+          _setupIndexSubscription();
+          return;
+        }
+        allContents = (await AppState.m3uRepository!
+                .getM3uItemsByCategoryId(
+                  categoryId: widget.content.m3uItem!.categoryId!,
+                ))!
+            .map((x) => ContentItem(
+                  x.url, x.name ?? 'NO NAME', x.tvgLogo ?? '',
+                  ContentType.liveStream, m3uItem: x,
+                ))
+            .toList();
+      }
 
-    setState(() {
-      selectedContentItemIndex = allContents.indexWhere(
-        (element) => element.id == widget.content.id,
-      );
-      allContentsLoaded = true;
-    });
+      setState(() {
+        selectedContentItemIndex = allContents.indexWhere(
+          (element) => element.id == widget.content.id,
+        );
+        if (selectedContentItemIndex == -1) selectedContentItemIndex = 0;
+        allContentsLoaded = true;
+      });
+    } catch (e) {
+      debugPrint('[LiveStreamScreen] _initializeQueue error: $e');
+      setState(() {
+        allContents = [widget.content];
+        selectedContentItemIndex = 0;
+        allContentsLoaded = true;
+      });
+    }
 
+    _setupIndexSubscription();
+  }
+
+  void _setupIndexSubscription() {
     contentItemIndexChangedSubscription = EventBus()
         .on<int>('player_content_item_index')
         .listen((int index) {
           if (!mounted) return;
-
           setState(() {
             selectedContentItemIndex = index;
-            contentItem = allContents[selectedContentItemIndex];
+            contentItem = allContents[index];
           });
         });
   }
@@ -117,7 +147,7 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
       extendBody: true,
       backgroundColor: Colors.black,
       body: SizedBox.expand(
-        child: PlayerWidget(contentItem: widget.content, queue: allContents),
+        child: PlayerWidget(contentItem: contentItem, queue: allContents),
       ),
     );
   }

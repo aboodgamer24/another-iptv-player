@@ -196,7 +196,7 @@ class FavoritesController extends ChangeNotifier {
 
   Future<void> playFavorite(BuildContext context, Favorite favorite) async {
     try {
-      final contentItem = await _buildFullContentItem(favorite);
+      final contentItem = await resolveContentItem(favorite);
       if (context.mounted) {
         await navigateByContentType(context, contentItem);
       }
@@ -212,7 +212,7 @@ class FavoritesController extends ChangeNotifier {
 
   /// Builds a complete ContentItem with liveStream/m3uItem properly set,
   /// so navigateByContentType routes to the correct screen.
-  Future<ContentItem> _buildFullContentItem(Favorite fav) async {
+  Future<ContentItem> resolveContentItem(Favorite fav) async {
     if (fav.contentType == ContentType.liveStream) {
       if (isXtreamCode) {
         // Look up the live channel from the local database

@@ -116,7 +116,7 @@ class CategoryDetailController extends ChangeNotifier {
     } else {
       _filteredItems = _contentItems
           .where(
-            (item) => (item.name ?? '').toLowerCase().contains(
+            (item) => item.name.toLowerCase().contains(
               query.trim().toLowerCase(),
             ),
           )
@@ -130,31 +130,28 @@ class CategoryDetailController extends ChangeNotifier {
 
     switch (order) {
       case "ascending":
-        list.sort((a, b) => (a.name ?? '').compareTo(b.name ?? ''));
+        list.sort((a, b) => a.name.compareTo(b.name));
         break;
       case "descending":
-        list.sort((a, b) => (b.name ?? '').compareTo(a.name ?? ''));
+        list.sort((a, b) => b.name.compareTo(a.name));
         break;
       case "release_date":
         list.sort((a, b) {
-          final Object dateA;
-          final Object dateB;
           if (a.contentType.name == "series") {
-            dateA =
-                DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ??
+            final dateA = DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ??
                 DateTime(1970);
-            dateB =
-                DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ??
+            final dateB = DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ??
                 DateTime(1970);
+            return dateB.compareTo(dateA);
           } else {
-            dateA =
+            final dateA =
                 a.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ??
                 0.0;
-            dateB =
+            final dateB =
                 b.vodStream?.createdAt?.millisecondsSinceEpoch.toDouble() ??
                 0.0;
+            return dateB.compareTo(dateA);
           }
-          return dateB.compareTo(dateA);
         });
         break;
       case "rating":

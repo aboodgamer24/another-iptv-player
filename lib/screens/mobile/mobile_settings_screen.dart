@@ -8,6 +8,7 @@ import '../../services/sync_service.dart';
 import '../../services/upscale_service.dart';
 import '../../l10n/localization_extension.dart';
 import '../../l10n/supported_languages.dart';
+import '../../utils/app_config.dart';
 import '../account/account_screen.dart';
 
 class MobileSettingsScreen extends StatefulWidget {
@@ -31,6 +32,9 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
   
   // Video Quality
   String _upscalePreset = 'standard';
+
+  final TextEditingController _tmdbKeyController = TextEditingController();
+  bool _obscureTmdbKey = true;
 
   @override
   void initState() {
@@ -62,6 +66,14 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
       _playbackSpeed = speed;
       _upscalePreset = preset;
     });
+
+    _tmdbKeyController.text = AppConfig.tmdbApiKey;
+  }
+
+  @override
+  void dispose() {
+    _tmdbKeyController.dispose();
+    super.dispose();
   }
 
   @override
@@ -147,6 +159,32 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           title: const Text('Language'),
           subtitle: Text(_getCurrentLanguageName()),
           onTap: _showLanguageDialog,
+        ),
+
+        const Divider(),
+        _buildSectionHeader('Integrations'),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: TextField(
+            controller: _tmdbKeyController,
+            obscureText: _obscureTmdbKey,
+            decoration: InputDecoration(
+              labelText: 'TMDB API Key',
+              hintText: 'Enter your TMDB API key',
+              prefixIcon: const Icon(Icons.api_rounded),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  _obscureTmdbKey ? Icons.visibility_off : Icons.visibility,
+                ),
+                onPressed: () =>
+                    setState(() => _obscureTmdbKey = !_obscureTmdbKey),
+              ),
+              border: const OutlineInputBorder(),
+            ),
+            onChanged: (value) async {
+              await AppConfig.setTmdbApiKey(value);
+            },
+          ),
         ),
 
         const Divider(),

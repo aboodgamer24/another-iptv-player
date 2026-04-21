@@ -456,10 +456,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         EventBus().emit('player_content_item', contentItem);
         EventBus().emit('player_content_item_index', playlist.index);
 
-        // Kanal listesi açıksa güncelle
-        if (_showChannelList && mounted) {
-          setState(() {});
-        }
+
       });
 
       _player.stream.completed.listen((playlist) async {

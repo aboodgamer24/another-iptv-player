@@ -122,7 +122,11 @@ class _LiveTabState extends State<_LiveTab> with AutomaticKeepAliveClientMixin {
               ),
             ),
             title: Text(item.name, style: const TextStyle(color: Colors.white, fontSize: 14)),
-            onTap: () => navigateByContentType(context, item.toContentItem()),
+            onTap: () async {
+              final resolved = await context.read<FavoritesController>().resolveContentItem(item);
+              if (!context.mounted) return;
+              await navigateByContentType(context, resolved);
+            },
           ),
         );
       },
