@@ -3,8 +3,14 @@ import 'package:provider/provider.dart';
 import '../controllers/playlist_controller.dart';
 import '../repositories/user_preferences.dart';
 import '../services/sync_applier.dart';
-import 'app_initializer_screen.dart';
+import '../models/playlist_model.dart';
+import '../models/api_configuration_model.dart';
+import '../repositories/iptv_repository.dart';
+import '../services/app_state.dart';
+import '../services/playlist_service.dart';
+import 'main_navigation_screen.dart';
 import 'playlist_screen.dart';
+
 
 class PostLoginChoiceScreen extends StatefulWidget {
   const PostLoginChoiceScreen({super.key});
@@ -17,6 +23,7 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
     with SingleTickerProviderStateMixin {
   String _displayName = 'there';
   bool _isRestoring = false;
+  String _loadingMessage = 'Restoring your data...';
 
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
@@ -50,8 +57,12 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
   }
 
   Future<void> _restoreFromCloud() async {
-    setState(() => _isRestoring = true);
+    setState(() {
+      _isRestoring = true;
+      _loadingMessage = 'Pulling data from server...';
+    });
 
+    // Step 1: Pull and apply sync data (playlists, favorites, settings)
     final success = await SyncApplier.pullAndApply();
 
     if (!mounted) return;
@@ -67,20 +78,80 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
       return;
     }
 
-    // Refresh playlist controller with synced data
+    // Step 2: Refresh playlist controller
+    setState(() => _loadingMessage = 'Loading playlists...');
     try {
       final playlistController =
           Provider.of<PlaylistController>(context, listen: false);
       await playlistController.loadPlaylists(context);
     } catch (_) {}
 
-    setState(() => _isRestoring = false);
+    if (!mounted) return;
+
+    // Step 3: Set up AppState exactly like AppInitializerScreen does
+    setState(() => _loadingMessage = 'Setting up your account...');
+    final lastPlaylistId = await UserPreferences.getLastPlaylist();
+    Playlist? playlist;
+    if (lastPlaylistId != null) {
+      playlist = await PlaylistService.getPlaylistById(lastPlaylistId);
+      if (playlist != null) {
+        AppState.currentPlaylist = playlist;
+        if (playlist.type == PlaylistType.xtream) {
+          AppState.xtreamCodeRepository = IptvRepository(
+            ApiConfig(
+              baseUrl: playlist.url!,
+              username: playlist.username!,
+              password: playlist.password!,
+            ),
+            playlist.id,
+          );
+        }
+      }
+    }
 
     if (!mounted) return;
 
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (_) => const AppInitializerScreen()),
-    );
+    // Step 4: If xtream playlist, pre-fetch all content NOW before navigating
+    if (playlist != null && playlist.type == PlaylistType.xtream) {
+      setState(() => _loadingMessage = 'Fetching your channels & content...');
+      try {
+        final repo = AppState.xtreamCodeRepository!;
+        await Future.wait([
+          repo.getLiveCategories(forceRefresh: true)
+              .then((_) => repo.getLiveChannelsFromApi()),
+          repo.getVodCategories(forceRefresh: true)
+              .then((_) => repo.getMoviesFromApi()),
+          repo.getSeriesCategories(forceRefresh: true)
+              .then((_) => repo.getSeriesFromApi()),
+        ]);
+        debugPrint('[PostLoginChoice] Content pre-fetch complete');
+      } catch (e) {
+        debugPrint('[PostLoginChoice] Content pre-fetch error (non-fatal): $e');
+        // Non-fatal — still navigate, controller will read from DB
+      }
+    }
+
+    if (!mounted) return;
+
+    setState(() => _loadingMessage = 'Almost done...');
+    await Future.delayed(const Duration(milliseconds: 300)); // brief settle
+
+    if (!mounted) return;
+
+    // Step 5: Navigate — if playlist exists go directly to MainNavigationScreen
+    // (skip AppInitializerScreen entirely since we already set up AppState)
+    if (playlist != null) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (_) => MainNavigationScreen(playlist: playlist!),
+        ),
+      );
+    } else {
+      // No playlist found after restore — go to playlist setup
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const PlaylistScreen()),
+      );
+    }
   }
 
   void _startFresh() {
@@ -94,6 +165,58 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
+    // Full-screen loading overlay while restoring
+    if (_isRestoring) {
+      return Scaffold(
+        body: Container(
+          width: double.infinity,
+          height: double.infinity,
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                colorScheme.surface,
+                colorScheme.surface.withValues(alpha: 0.95),
+                colorScheme.primary.withValues(alpha: 0.04),
+              ],
+            ),
+          ),
+          child: SafeArea(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    strokeWidth: 3.0,
+                    color: colorScheme.primary,
+                  ),
+                  const SizedBox(height: 24),
+                  Text(
+                    _loadingMessage,
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.75),
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'This may take a minute on large playlists',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Normal choice screen (unchanged layout)
     return Scaffold(
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -114,10 +237,7 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 40,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 500),
                   child: Column(
@@ -158,27 +278,22 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
                       ),
                       const SizedBox(height: 40),
 
-                      // ── Button 1: Restore from Cloud ──
                       _buildChoiceCard(
                         colorScheme: colorScheme,
                         icon: Icons.cloud_download_outlined,
                         title: 'Restore My Data',
-                        subtitle:
-                            'Pull your playlists, favorites, and settings from your account',
-                        isLoading: _isRestoring,
-                        onTap: _isRestoring ? null : _restoreFromCloud,
+                        subtitle: 'Pull your playlists, favorites, and settings from your account',
+                        isLoading: false, // loading is handled by full-screen overlay now
+                        onTap: _restoreFromCloud,
                       ),
                       const SizedBox(height: 16),
-
-                      // ── Button 2: Start Fresh ──
                       _buildChoiceCard(
                         colorScheme: colorScheme,
                         icon: Icons.add_circle_outline,
                         title: 'Add a New Playlist',
-                        subtitle:
-                            'Set up a new playlist and start watching',
+                        subtitle: 'Set up a new playlist and start watching',
                         isLoading: false,
-                        onTap: _isRestoring ? null : _startFresh,
+                        onTap: _startFresh,
                       ),
                     ],
                   ),
@@ -294,4 +409,5 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
       ),
     );
   }
+
 }
