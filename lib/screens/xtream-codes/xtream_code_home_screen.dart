@@ -40,7 +40,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   // Desktop sidebar uses indices 0-6:
   // 0=Home, 1=LiveTV, 2=Movies, 3=Series, 4=Search, 5=Favorites, 6=Settings
   int _desktopIndex = 0;
-  int _mobileIndex = 0;
+  int _mobileIndex = 0; // 0=Home, 1=Live, 2=Movies, 3=Series
 
   @override
   void initState() {
@@ -100,34 +100,70 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
     BuildContext context,
     XtreamCodeHomeController controller,
   ) {
+    // Titles for the 4 bottom-nav tabs only
     final titles = [
-      context.loc.history,
-      context.loc.live,
-      context.loc.movies,
-      context.loc.series_plural,
-      context.loc.favorites,
-      context.loc.rail_watch_later,
-      context.loc.settings
+      context.loc.history,       // 0 - Home (or whatever the home tab loc key is)
+      context.loc.live,          // 1 - Live
+      context.loc.movies,        // 2 - Movies
+      context.loc.series_plural, // 3 - Series
     ];
     final currentTitle = titles[_mobileIndex.clamp(0, titles.length - 1)];
     final showSearch = _mobileIndex == 1 || _mobileIndex == 2 || _mobileIndex == 3;
 
     return MobileShellScreen(
       selectedIndex: _mobileIndex,
-      onItemSelected: (index) {
-        setState(() => _mobileIndex = index);
-      },
+      onItemSelected: (index) => setState(() => _mobileIndex = index),
       currentTitle: currentTitle,
       onSearchTap: showSearch
-          ? () {
-              Navigator.push(
+          ? () => Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (_) => const MobileGlobalSearchScreen(),
-                ),
-              );
-            }
+                MaterialPageRoute(builder: (_) => const MobileGlobalSearchScreen()),
+              )
           : null,
+
+      // Favorites → pushed as a full screen route
+      onFavoritesTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(
+              title: Text(context.loc.favorites),
+              centerTitle: true,
+            ),
+            body: const MobileFavoritesScreen(),
+          ),
+        ),
+      ),
+
+      // Watch Later → pushed as a full screen route
+      onWatchLaterTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(
+              title: Text(context.loc.rail_watch_later),
+              centerTitle: true,
+            ),
+            body: const MobileWatchLaterScreen(),
+          ),
+        ),
+      ),
+
+      // Settings → pushed as a full screen route
+      onSettingsTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => Scaffold(
+            appBar: AppBar(
+              title: Text(context.loc.settings),
+              centerTitle: true,
+            ),
+            body: MobileSettingsScreen(playlist: widget.playlist),
+          ),
+        ),
+      ),
+
+      // IndexedStack now only has 4 children matching the 4 bottom-nav tabs
       child: IndexedStack(
         index: _mobileIndex,
         children: [
@@ -140,28 +176,23 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
           ),
           // 2 - Movies
           MobileContentScreen(
-            key: const ValueKey('mobile_movies'),
+            key: ValueKey('mobile_movies_${controller.movieCategories.length}'),
             categories: controller.movieCategories,
             contentType: ContentType.vod,
             title: context.loc.movies,
           ),
           // 3 - Series
           MobileContentScreen(
-            key: const ValueKey('mobile_series'),
+            key: ValueKey('mobile_series_${controller.seriesCategories.length}'),
             categories: controller.seriesCategories,
             contentType: ContentType.series,
             title: context.loc.series_plural,
           ),
-          // 4 - Favorites
-          const MobileFavoritesScreen(),
-          // 5 - Watch Later
-          const MobileWatchLaterScreen(),
-          // 6 - Settings
-          MobileSettingsScreen(playlist: widget.playlist),
         ],
       ),
     );
   }
+
 
   // ========================
   // DESKTOP LAYOUT (sidebar-driven)

@@ -70,7 +70,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 4:
         return context.loc.favorites;
       case 5:
-        return context.loc.watch_later;
+        return context.loc.rail_watch_later;
       case 6:
         return context.loc.settings;
       default:
@@ -106,12 +106,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               contentType: ContentType.series,
               title: context.loc.series_plural,
             );
-          case 4:
-            return const MobileFavoritesScreen();
-          case 5:
-            return const MobileWatchLaterScreen();
-          case 6:
-            return const MobileSettingsScreen();
           default:
             return const SizedBox.shrink();
         }
@@ -178,6 +172,42 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             MaterialPageRoute(builder: (_) => const MobileGlobalSearchScreen()),
           );
         },
+        onFavoritesTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(context.loc.favorites),
+                centerTitle: true,
+              ),
+              body: const MobileFavoritesScreen(),
+            ),
+          ),
+        ),
+        onWatchLaterTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(context.loc.rail_watch_later),
+                centerTitle: true,
+              ),
+              body: const MobileWatchLaterScreen(),
+            ),
+          ),
+        ),
+        onSettingsTap: () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => Scaffold(
+              appBar: AppBar(
+                title: Text(context.loc.settings),
+                centerTitle: true,
+              ),
+              body: MobileSettingsScreen(playlist: widget.playlist),
+            ),
+          ),
+        ),
         child: content,
       );
     }

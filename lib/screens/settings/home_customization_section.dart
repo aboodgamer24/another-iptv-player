@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 import '../../controllers/home_rails_controller.dart';
 import '../../l10n/localization_extension.dart';
 import '../../models/home_rail_config.dart';
@@ -129,10 +130,11 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
                 child: child,
               );
             },
-            onReorderStart: (index) =>
-                setState(() => _draggingIndex = index),
-            onReorderEnd: (_) =>
-                setState(() => _draggingIndex = null),
+            onReorderStart: (index) {
+              HapticFeedback.lightImpact();
+              setState(() => _draggingIndex = index);
+            },
+            onReorderEnd: (_) => setState(() => _draggingIndex = null),
             onReorder: (oldIndex, newIndex) {
               if (newIndex > oldIndex) newIndex -= 1;
               final updated = List<HomeRailConfig>.from(rails);

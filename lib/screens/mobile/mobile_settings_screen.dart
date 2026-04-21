@@ -19,6 +19,7 @@ import '../../utils/get_playlist_type.dart';
 import '../../screens/xtream-codes/xtream_code_data_loader_screen.dart';
 import '../../screens/settings/category_settings_section.dart';
 import '../../controllers/xtream_code_home_controller.dart';
+import '../xtream-codes/xtream_code_playlist_settings_screen.dart';
 
 import '../../models/playlist_model.dart';
 
@@ -96,8 +97,6 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    
     return ListView(
       cacheExtent: 500,
       children: [
@@ -129,6 +128,21 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
             }
           },
         ),
+        if (widget.playlist != null)
+          ListTile(
+            leading: const Icon(Icons.dns_outlined),
+            title: const Text('My Playlist'),
+            subtitle: const Text('Server info, subscription details'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => XtreamCodePlaylistSettingsScreen(
+                  playlist: widget.playlist!,
+                ),
+              ),
+            ),
+          ),
         ListTile(
           leading: const Icon(Icons.refresh),
           title: const Text('Refresh Content'),
@@ -279,8 +293,8 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
             controller: _tmdbKeyController,
             obscureText: _obscureTmdbKey,
             decoration: InputDecoration(
-              labelText: 'TMDB API Key',
-              hintText: 'Enter your TMDB API key',
+              labelText: context.loc.tmdb_api_key,
+              hintText: context.loc.enter_tmdb_api_key,
               prefixIcon: const Icon(Icons.api_rounded),
               suffixIcon: IconButton(
                 icon: Icon(
