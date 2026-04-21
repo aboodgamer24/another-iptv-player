@@ -24,7 +24,7 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - stack.env
+      - .env
     volumes:
       - .:/app
     ports:
