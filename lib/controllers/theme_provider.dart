@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../repositories/user_preferences.dart';
+import '../services/settings_sync.dart';
 import '../utils/app_themes.dart';
 
 class ThemeProvider extends ChangeNotifier {
@@ -30,6 +31,7 @@ class ThemeProvider extends ChangeNotifier {
     _themeMode = _themeModeFromName(name);
     await UserPreferences.setThemeName(name);
     notifyListeners();
+    SettingsSync.push();
   }
 
   // Legacy helpers (kept for compatibility)

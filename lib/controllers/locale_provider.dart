@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../repositories/user_preferences.dart';
+import '../services/settings_sync.dart';
 
 class LocaleProvider extends ChangeNotifier {
   Locale? _locale;
@@ -23,6 +24,7 @@ class LocaleProvider extends ChangeNotifier {
     _locale = locale;
     await UserPreferences.setLocale(locale.languageCode);
     notifyListeners();
+    SettingsSync.push();
   }
 
   Future<void> clearLocale() async {

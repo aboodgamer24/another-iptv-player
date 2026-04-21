@@ -1,8 +1,10 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:another_iptv_player/database/database.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/watch_history.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
+import 'sync_service.dart';
 
 class WatchHistoryService {
   final _database = getIt<AppDatabase>();
@@ -13,6 +15,7 @@ class WatchHistoryService {
     await _database
         .into(_database.watchHistories)
         .insertOnConflictUpdate(history.toDriftCompanion());
+    _pushContinueWatchingToServer(history.playlistId);
   }
 
   Future<WatchHistory?> getWatchHistory(
@@ -99,5 +102,27 @@ class WatchHistoryService {
 
   Future<void> clearAllHistory() async {
     await _database.delete(_database.watchHistories).go();
+  }
+
+  /// Fire-and-forget push of continue watching entries to sync server.
+  void _pushContinueWatchingToServer(String playlistId) {
+    () async {
+      try {
+        final entries = await getContinueWatching(playlistId);
+        final data = entries.map((h) => {
+          'streamId': h.streamId,
+          'title': h.title,
+          'imagePath': h.imagePath,
+          'contentType': h.contentType.toString(),
+          'playlistId': h.playlistId,
+          'lastWatched': h.lastWatched.toIso8601String(),
+          'watchDuration': h.watchDuration?.inMilliseconds,
+          'totalDuration': h.totalDuration?.inMilliseconds,
+        }).toList();
+        SyncService.instance.pushField('continue_watching', data);
+      } catch (e) {
+        debugPrint('[WatchHistory] Auto-sync failed: $e');
+      }
+    }();
   }
 }
