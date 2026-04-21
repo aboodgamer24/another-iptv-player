@@ -68,18 +68,12 @@ class _MobileLiveTvScreenState extends State<MobileLiveTvScreen> {
         Expanded(
           child: _displayItems.isEmpty
               ? _buildEmptyState()
-              : GridView.builder(
+              : ListView.builder(
                   cacheExtent: 500,
-                  padding: const EdgeInsets.all(8),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 1.6,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   itemCount: _displayItems.length,
                   itemBuilder: (context, index) {
-                    return _buildChannelCard(_displayItems[index]);
+                    return _buildChannelListTile(_displayItems[index]);
                   },
                 ),
         ),
@@ -142,46 +136,59 @@ class _MobileLiveTvScreenState extends State<MobileLiveTvScreen> {
     );
   }
 
-  Widget _buildChannelCard(ContentItem item) {
+  Widget _buildChannelListTile(ContentItem item) {
     return GestureDetector(
       onTap: () => navigateByContentType(context, item),
       child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 3),
         decoration: BoxDecoration(
           color: Colors.grey[900],
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
           border: Border.all(color: Colors.white10),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          fit: StackFit.expand,
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Center(
-                child: CachedNetworkImage(
-                  imageUrl: item.imageUrl,
-                  fit: BoxFit.contain,
-                  errorWidget: (_, __, ___) => const Icon(Icons.live_tv, size: 40, color: Colors.white24),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          child: Row(
+            children: [
+              // Channel logo
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: SizedBox(
+                  width: 52,
+                  height: 52,
+                  child: CachedNetworkImage(
+                    imageUrl: item.imageUrl,
+                    fit: BoxFit.contain,
+                    errorWidget: (_, __, ___) => const Icon(
+                      Icons.live_tv,
+                      size: 28,
+                      color: Colors.white24,
+                    ),
+                  ),
                 ),
               ),
-            ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                color: Colors.black54,
+              const SizedBox(width: 14),
+              // Channel name
+              Expanded(
                 child: Text(
                   item.name,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  maxLines: 1,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  textAlign: TextAlign.center,
                 ),
               ),
-            ),
-          ],
+              // Play arrow indicator
+              const Icon(
+                Icons.play_circle_outline_rounded,
+                color: Colors.white24,
+                size: 22,
+              ),
+            ],
+          ),
         ),
       ),
     );
