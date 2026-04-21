@@ -1,4 +1,5 @@
 import 'package:another_iptv_player/database/database.dart';
+import 'dart:io';
 import 'package:another_iptv_player/screens/settings/subtitle_settings_section.dart';
 import 'package:another_iptv_player/widgets/common/hover_scale_wrapper.dart';
 import 'package:another_iptv_player/screens/settings/parental_controls_screen.dart';
@@ -438,7 +439,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
               },
             ),
           ),
-          _buildUpscalerSection(Theme.of(context)),
+          if (!Platform.isAndroid) _buildUpscalerSection(Theme.of(context)),
           _buildStreamEnhancementSection(Theme.of(context)),
           // Player gesture settings - Only show on mobile platforms (Android & iOS)
           if (Theme.of(context).platform == TargetPlatform.android ||

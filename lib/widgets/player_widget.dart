@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'package:flutter/services.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 import 'package:another_iptv_player/models/watch_history.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
@@ -99,6 +101,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
     watchHistoryService = WatchHistoryService();
 
     super.initState();
+    
+    // Android: auto-enter fullscreen as soon as player mounts
+    if (Platform.isAndroid) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _enterAndroidFullscreen();
+      });
+    }
     videoTrackSubscription = EventBus()
         .on<VideoTrack>('video_track_changed')
         .listen((VideoTrack data) async {
@@ -144,10 +153,55 @@ class _PlayerWidgetState extends State<PlayerWidget>
     contentItemIndexChangedSubscription.cancel();
     _connectivitySubscription.cancel();
     _errorHandler.reset();
+
+    // Android: restore portrait + system UI when player closes
+    if (Platform.isAndroid) {
+      fullscreenNotifier.value = false;
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.portraitUp,
+        DeviceOrientation.portraitDown,
+      ]);
+      SystemChrome.setEnabledSystemUIMode(
+        SystemUiMode.manual,
+        overlays: SystemUiOverlay.values,
+      );
+    }
+
     super.dispose();
   }
 
+  void _enterAndroidFullscreen() {
+    if (!mounted) return;
+    // Set the global fullscreen notifier so the shell hides AppBar + BottomNav
+    fullscreenNotifier.value = true;
+    // Force landscape + hide system UI for true immersive fullscreen
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
   Future<void> _applyUpscaler() async {
+    if (Platform.isAndroid) {
+      // Android: always force bilinear — upscalers cause lag on mobile GPUs
+      final native = _player.platform;
+      if (native is NativePlayer) {
+        try {
+          await native.setProperty('scale', 'bilinear');
+          await native.setProperty('cscale', 'bilinear');
+          await native.setProperty('dscale', 'bilinear');
+          await native.setProperty('scale-antiring', '0.0');
+          await native.setProperty('sigmoid-upscaling', 'no');
+          await native.setProperty('linear-upscaling', 'no');
+        } catch (_) {}
+      }
+      // Still apply stream enhancement (deband/sharpness) if user enabled it
+      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
+      await applyStreamEnhancement(_player, enhancementEnabled);
+      return; // ← exit early, skip preset logic entirely
+    }
+
     final preset = await UserPreferences.getUpscalePreset();
     await applyUpscalePreset(_player, preset);
 
