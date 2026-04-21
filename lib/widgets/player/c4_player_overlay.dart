@@ -12,6 +12,7 @@ import '../../models/category_view_model.dart';
 import '../../services/fullscreen_notifier.dart';
 import '../../utils/get_playlist_type.dart';
 import '../../services/event_bus.dart';
+import '../../models/playlist_content_model.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -69,26 +70,46 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   late List<StreamSubscription> _subscriptions;
   final FocusNode _keyboardFocusNode = FocusNode(debugLabel: 'player_overlay');
 
+  final _positionNotifier = ValueNotifier<Duration>(Duration.zero);
+  final _durationNotifier = ValueNotifier<Duration>(Duration.zero);
+  List<ContentItem>? _panelQueue;
+
   @override
   void initState() {
     super.initState();
     _volume = widget.player.state.volume / 100.0;
     _isMuted = widget.player.state.volume == 0;
     _startHideTimer();
+    _panelQueue = app_player_state.PlayerState.queue;
     _subscriptions = [
-      widget.player.stream.position.listen((p) => setState(() => _position = p)),
-      widget.player.stream.duration.listen((d) => setState(() => _duration = d)),
-      widget.player.stream.volume.listen((v) => setState(() {
-        _volume = v / 100.0;
-        _isMuted = v == 0;
-      })),
+      widget.player.stream.position.listen((p) {
+        _positionNotifier.value = p;
+        _position = p;
+      }),
+      widget.player.stream.duration.listen((d) {
+        _durationNotifier.value = d;
+        _duration = d;
+      }),
+      widget.player.stream.volume.listen((v) {
+        if (!mounted) return;
+        final newVol = v / 100.0;
+        final newMuted = v == 0;
+        if (newVol != _volume || newMuted != _isMuted) {
+          setState(() {
+            _volume = newVol;
+            _isMuted = newMuted;
+          });
+        }
+      }),
       // videoParams for resolution
       widget.player.stream.videoParams.listen((vp) {
         if (!mounted) return;
-        setState(() {
-          if (vp.w != null && vp.w! > 0) _resW = vp.w;
-          if (vp.h != null && vp.h! > 0) _resH = vp.h;
-        });
+        if ((vp.w != null && vp.w != _resW) || (vp.h != null && vp.h != _resH)) {
+          setState(() {
+            if (vp.w != null && vp.w! > 0) _resW = vp.w;
+            if (vp.h != null && vp.h! > 0) _resH = vp.h;
+          });
+        }
       }),
 
       // Available tracks list carries demuxer metadata (fps, bitrate, codec)
@@ -97,13 +118,21 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         for (final vt in tracks.video) {
           // Skip pseudo-tracks ('auto', 'no')
           if (vt.id == 'auto' || vt.id == 'no') continue;
-          setState(() {
-            if (vt.fps != null && vt.fps! > 0) _fps = vt.fps;
-            if (vt.bitrate != null && vt.bitrate! > 0) _bitrate = vt.bitrate;
-            if (vt.codec != null && vt.codec!.isNotEmpty) _codec = vt.codec;
-            if (vt.w != null && vt.w! > 0) _resW = vt.w;
-            if (vt.h != null && vt.h! > 0) _resH = vt.h;
-          });
+          final newFps = vt.fps;
+          final newBitrate = vt.bitrate;
+          final newCodec = vt.codec;
+          final newW = vt.w;
+          final newH = vt.h;
+          if (newFps != _fps || newBitrate != _bitrate || newCodec != _codec ||
+              newW != _resW || newH != _resH) {
+            setState(() {
+              if (newFps != null && newFps > 0) _fps = newFps;
+              if (newBitrate != null && newBitrate > 0) _bitrate = newBitrate;
+              if (newCodec != null && newCodec!.isNotEmpty) _codec = newCodec;
+              if (newW != null && newW > 0) _resW = newW;
+              if (newH != null && newH > 0) _resH = newH;
+            });
+          }
           break; // use the first real video track
         }
       }),
@@ -186,6 +215,8 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       }
     }
+    _positionNotifier.dispose();
+    _durationNotifier.dispose();
     super.dispose();
   }
 
@@ -590,39 +621,54 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!isLive) ...[
-                  SliderTheme(
-                    data: SliderTheme.of(context).copyWith(
-                      activeTrackColor: theme.colorScheme.primary,
-                      inactiveTrackColor: Colors.white24,
-                      thumbColor: theme.colorScheme.primary,
-                      overlayColor:
-                          theme.colorScheme.primary.withValues(alpha: 0.2),
-                      trackHeight: compact ? 2 : 4,
-                      thumbShape: RoundSliderThumbShape(
-                        enabledThumbRadius: compact ? 4 : 6,
-                      ),
+                    ValueListenableBuilder<Duration>(
+                      valueListenable: _positionNotifier,
+                      builder: (context, position, _) {
+                        return ValueListenableBuilder<Duration>(
+                          valueListenable: _durationNotifier,
+                          builder: (context, duration, _) {
+                            final total = duration.inSeconds.toDouble().clamp(1.0, double.infinity);
+                            final current = position.inSeconds.toDouble().clamp(0.0, total);
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    activeTrackColor: theme.colorScheme.primary,
+                                    inactiveTrackColor: Colors.white24,
+                                    thumbColor: theme.colorScheme.primary,
+                                    overlayColor:
+                                        theme.colorScheme.primary.withValues(alpha: 0.2),
+                                    trackHeight: compact ? 2 : 4,
+                                    thumbShape: RoundSliderThumbShape(
+                                      enabledThumbRadius: compact ? 4 : 6,
+                                    ),
+                                  ),
+                                  child: Slider(
+                                    value: current,
+                                    max: total,
+                                    onChanged: (val) =>
+                                        widget.player.seek(Duration(seconds: val.toInt())),
+                                  ),
+                                ),
+                                if (!compact) ...[
+                                  const SizedBox(height: 8),
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(_formatDuration(position),
+                                          style: const TextStyle(color: Colors.white70)),
+                                      Text(_formatDuration(duration),
+                                          style: const TextStyle(color: Colors.white70)),
+                                    ],
+                                  ),
+                                ],
+                              ],
+                            );
+                          },
+                        );
+                      },
                     ),
-                    child: Slider(
-                      value: _position.inSeconds.toDouble(),
-                      max: _duration.inSeconds.toDouble() > 0
-                          ? _duration.inSeconds.toDouble()
-                          : 1.0,
-                      onChanged: (val) =>
-                          widget.player.seek(Duration(seconds: val.toInt())),
-                    ),
-                  ),
-                  if (!compact) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(_formatDuration(_position),
-                            style: const TextStyle(color: Colors.white70)),
-                        Text(_formatDuration(_duration),
-                            style: const TextStyle(color: Colors.white70)),
-                      ],
-                    ),
-                  ],
                 ] else
                   Row(
                     mainAxisAlignment: MainAxisAlignment.end,
@@ -931,86 +977,130 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildSidePanel(ThemeData theme) {
+    final screenWidth = MediaQuery.sizeOf(context).width;
+    final isPhone = MediaQuery.sizeOf(context).shortestSide < 600;
+    final safePadding = MediaQuery.paddingOf(context);
+
+    final panelWidth = isPhone
+        ? (screenWidth * 0.85).clamp(220.0, 320.0)
+        : 350.0;
+
     return Positioned(
       top: 0,
       right: 0,
       bottom: 0,
-      width: 350,
-      child: Container(
-        decoration: BoxDecoration(
-          color: theme.scaffoldBackgroundColor.withValues(alpha: 0.95),
-          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 20)],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(24, 60, 24, 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _sidePanelMode == _SidePanelMode.channels ? 'Channel List' : 'Categories',
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.close_rounded),
-                    onPressed: () => setState(() => _showSidePanel = false),
-                  ),
-                ],
+      child: SizedBox(
+        width: panelWidth,
+        child: Container(
+          decoration: BoxDecoration(
+            color: theme.scaffoldBackgroundColor.withValues(alpha: 0.97),
+            boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 20)],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  16,
+                  safePadding.top + 12,
+                  8,
+                  12,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _sidePanelMode == _SidePanelMode.channels
+                            ? 'Channel List'
+                            : 'Categories',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isPhone ? 15 : 18,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close_rounded),
+                      iconSize: isPhone ? 20 : 24,
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      onPressed: () => setState(() => _showSidePanel = false),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            const Divider(),
-            Expanded(
-              child: _sidePanelMode == _SidePanelMode.channels 
-                  ? _buildChannelListView(theme) 
-                  : _buildCategoryListView(theme, widget.homeController),
-            ),
-            Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      if (_sidePanelMode == _SidePanelMode.channels) {
-                        if (widget.homeController != null) {
-                          _sidePanelMode = _SidePanelMode.categories;
+              const Divider(height: 1),
+              Expanded(
+                child: _sidePanelMode == _SidePanelMode.channels
+                    ? _buildChannelListView(theme)
+                    : _buildCategoryListView(theme, widget.homeController),
+              ),
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  12,
+                  8,
+                  12,
+                  safePadding.bottom + 12,
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        if (_sidePanelMode == _SidePanelMode.channels) {
+                          if (widget.homeController != null) {
+                            _sidePanelMode = _SidePanelMode.categories;
+                          }
+                        } else {
+                          _sidePanelMode = _SidePanelMode.channels;
                         }
-                      } else {
-                        _sidePanelMode = _SidePanelMode.channels;
-                      }
-                    });
-                  },
-                  icon: Icon(_sidePanelMode == _SidePanelMode.channels 
-                      ? Icons.explore_outlined 
-                      : Icons.arrow_back_rounded),
-                  label: Text(_sidePanelMode == _SidePanelMode.channels 
-                      ? (widget.homeController != null ? 'Discover other categories' : 'Categories not available')
-                      : 'Back to channel list'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.white70,
-                    side: const BorderSide(color: Colors.white10),
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                      });
+                    },
+                    icon: Icon(
+                      _sidePanelMode == _SidePanelMode.channels
+                          ? Icons.explore_outlined
+                          : Icons.arrow_back_rounded,
+                      size: isPhone ? 16 : 18,
+                    ),
+                    label: Text(
+                      _sidePanelMode == _SidePanelMode.channels
+                          ? (widget.homeController != null
+                              ? 'Browse categories'
+                              : 'Categories unavailable')
+                          : 'Back to channels',
+                      style: TextStyle(fontSize: isPhone ? 12 : 14),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white70,
+                      side: const BorderSide(color: Colors.white10),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isPhone ? 10 : 14,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
   }
 
   Widget _buildChannelListView(ThemeData theme) {
-    final channels = app_player_state.PlayerState.queue ?? [];
+    final channels = _panelQueue ?? app_player_state.PlayerState.queue ?? [];
+    final currentContent = app_player_state.PlayerState.currentContent;
+    final isPhone = MediaQuery.sizeOf(context).shortestSide < 600;
     
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: EdgeInsets.symmetric(vertical: isPhone ? 4 : 8),
+      itemExtent: isPhone ? 56.0 : 64.0,
       itemCount: channels.length,
       itemBuilder: (context, index) {
         final channel = channels[index];
-        final isPlaying = app_player_state.PlayerState.currentIndex == index;
+        final isPlaying = currentContent != null && channel.id == currentContent.id;
         
         return ListTile(
           selected: isPlaying,
@@ -1025,6 +1115,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             child: channel.imageUrl.isNotEmpty
                 ? Image.network(
                     channel.imageUrl,
+                    fit: BoxFit.contain,
                     errorBuilder: (context, error, stackTrace) => 
                         const Icon(Icons.live_tv, size: 20, color: Colors.white24),
                   )
@@ -1035,18 +1126,16 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             style: TextStyle(
               color: isPlaying ? theme.colorScheme.primary : Colors.white,
               fontWeight: isPlaying ? FontWeight.bold : FontWeight.normal,
+              fontSize: isPhone ? 13 : 14,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           onTap: () {
-            // Emit the index-change event so PlayerWidget's
-            // contentItemIndexChangedSubscription handles the
-            // full channel switch (updates contentItem, _queue,
-            // PlayerState, and calls _player.open).
+            app_player_state.PlayerState.queue = channels;
+            EventBus().emit('player_queue_changed', channels);
             EventBus().emit('player_content_item_index_changed', index);
             
-            // Ensure overlay is visible while new stream loads
             setState(() {
               _showSidePanel = false;
               _isVisible = true;
@@ -1092,12 +1181,8 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
           ),
           trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 20),
           onTap: () {
-            // Update the global queue with the selected category's channels
-            app_player_state.PlayerState.queue = categoryVM.contentItems;
-            app_player_state.PlayerState.currentIndex = 0; // Default to first channel
-            
-            // Switch back to channel view for the new category
             setState(() {
+              _panelQueue = categoryVM.contentItems;
               _sidePanelMode = _SidePanelMode.channels;
               _isVisible = true;
             });

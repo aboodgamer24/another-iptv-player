@@ -531,6 +531,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
               if (mounted) setState(() {});
             }
           });
+      
+      EventBus().on<List<ContentItem>>('player_queue_changed').listen((newQueue) {
+        if (!mounted) return;
+        _queue = newQueue;
+        PlayerState.queue = newQueue;
+        _currentItemIndex = 0; // will be corrected by index-changed event
+      });
 
       // Kanal listesi göster/gizle event'i
       EventBus().on<bool>('toggle_channel_list').listen((bool show) {
