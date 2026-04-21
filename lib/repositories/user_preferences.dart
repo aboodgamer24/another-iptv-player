@@ -36,6 +36,7 @@ class UserPreferences {
   static const String _keyLiveTvRememberChannel = 'live_tv_remember_channel';
   static const String _keyLiveTvGridColumns = 'live_tv_grid_columns';
   static const String _keyLiveTvSortOrder = 'live_tv_sort_order';
+  static const String _keyHasSeenWelcome = 'has_seen_welcome';
 
   static Future<void> setLastPlaylist(String playlistId) async {
     final prefs = await SharedPreferences.getInstance();
@@ -402,6 +403,17 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     final jsonString = json.encode(rails.map((r) => r.toJson()).toList());
     await prefs.setString(_homeRailsKey, jsonString);
+  }
+
+  // ── Welcome / Onboarding ───────────────────────────────────────────
+  static Future<bool> getHasSeenWelcome() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_keyHasSeenWelcome) ?? false;
+  }
+
+  static Future<void> setHasSeenWelcome(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_keyHasSeenWelcome, value);
   }
 
   // ── Sync session keys ──────────────────────────────────────────────
