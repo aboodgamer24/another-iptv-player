@@ -6,6 +6,7 @@ import '../../controllers/favorites_controller.dart';
 import '../../models/playlist_content_model.dart';
 import '../../utils/navigate_by_content_type.dart';
 import '../../l10n/localization_extension.dart';
+import '../../services/tmdb_service.dart';
 
 class MobileHomeScreen extends StatefulWidget {
   final String playlistId;
@@ -19,6 +20,9 @@ class MobileHomeScreen extends StatefulWidget {
 class _MobileHomeScreenState extends State<MobileHomeScreen> {
   late WatchHistoryController _historyController;
   late FavoritesController _favoritesController;
+  List<Map<String, dynamic>> _trendingMovies = [];
+  List<Map<String, dynamic>> _trendingSeries = [];
+  bool _tmdbLoading = false;
 
   @override
   void initState() {
@@ -29,11 +33,27 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   }
 
   Future<void> _loadData() async {
+    setState(() => _tmdbLoading = true);
     await Future.wait([
       _historyController.loadWatchHistory(),
       _favoritesController.loadFavorites(),
     ]);
-    if (mounted) setState(() {});
+
+    // Load TMDB data
+    try {
+      final tmdb = TmdbService();
+      final movies = await tmdb.getTrendingMovies();
+      final series = await tmdb.getTrendingTv();
+      if (mounted) {
+        setState(() {
+          _trendingMovies = movies;
+          _trendingSeries = series;
+          _tmdbLoading = false;
+        });
+      }
+    } catch (_) {
+      if (mounted) setState(() => _tmdbLoading = false);
+    }
   }
 
   @override
@@ -81,6 +101,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
+
+          if (_trendingMovies.isNotEmpty)
+            _buildTmdbSection('Trending Movies', _trendingMovies),
+          if (_trendingSeries.isNotEmpty)
+            _buildTmdbSection('Trending Series', _trendingSeries),
+
           if (history.movieHistory.isNotEmpty)
             _buildSection(
               'Recent Movies',
@@ -112,6 +138,79 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
           const SizedBox(height: 32),
         ],
       ),
+    );
+  }
+
+  Widget _buildTmdbSection(String title, List<Map<String, dynamic>> items) {
+    final tmdb = TmdbService();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              const Icon(Icons.local_fire_department, color: Colors.orange, size: 18),
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 180,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final item = items[index];
+              final posterPath = item['poster_path'] as String?;
+              final name = (item['title'] ?? item['name'] ?? '') as String;
+              return GestureDetector(
+                onTap: () {/* TMDB detail navigation if available */},
+                child: Container(
+                  width: 110,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(8),
+                    color: Colors.grey[900],
+                  ),
+                  clipBehavior: Clip.antiAlias,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: CachedNetworkImage(
+                          imageUrl: tmdb.getPosterUrl(posterPath),
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) =>
+                              const Icon(Icons.movie, color: Colors.white24),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Text(
+                          name,
+                          style: const TextStyle(color: Colors.white, fontSize: 10),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

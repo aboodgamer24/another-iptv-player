@@ -48,14 +48,19 @@ class _XtreamCodePlaylistSettingsScreenState
     // On narrow screens: original 12px padding.
     final hPad = isWide ? ((screenWidth - 860).clamp(0.0, 200.0) / 2) + 12.0 : 12.0;
 
+    // Show AppBar only when this screen is pushed onto the navigator
+    // (i.e., when accessed from playlist list, not when embedded as a tab)
+    final canPop = Navigator.of(context).canPop();
+
     return Scaffold(
-      appBar: AppBar(
-        title: SelectableText(
-          context.loc.settings,
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        actions: const [],
-      ),
+      appBar: canPop
+          ? AppBar(
+              title: SelectableText(
+                context.loc.settings,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
+            )
+          : null,
       body: ListView(
         padding: EdgeInsets.symmetric(vertical: 8, horizontal: hPad),
         children: [

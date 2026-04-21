@@ -20,8 +20,11 @@ import '../../screens/xtream-codes/xtream_code_data_loader_screen.dart';
 import '../../screens/settings/category_settings_section.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 
+import '../../models/playlist_model.dart';
+
 class MobileSettingsScreen extends StatefulWidget {
-  const MobileSettingsScreen({super.key});
+  final Playlist? playlist;
+  const MobileSettingsScreen({super.key, this.playlist});
 
   @override
   State<MobileSettingsScreen> createState() => _MobileSettingsScreenState();
@@ -137,7 +140,7 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
                 context,
                 MaterialPageRoute(
                   builder: (_) => XtreamCodeDataLoaderScreen(
-                    playlist: AppState.currentPlaylist!,
+                    playlist: widget.playlist ?? AppState.currentPlaylist!,
                     refreshAll: true,
                   ),
                 ),

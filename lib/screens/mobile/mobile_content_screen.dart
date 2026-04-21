@@ -35,6 +35,18 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
     _loadAllItems();
   }
 
+  @override
+  void didUpdateWidget(MobileContentScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.contentType != widget.contentType ||
+        oldWidget.categories != widget.categories) {
+      _selectedCategoryIndex = 0;
+      _searchQuery = '';
+      _searchController.clear();
+      _loadAllItems();
+    }
+  }
+
   void _loadAllItems() {
     List<ContentItem> items = [];
     for (final cat in widget.categories) {

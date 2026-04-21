@@ -106,6 +106,7 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
           child: ReorderableListView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
+            buildDefaultDragHandles: false, // disable default long-press handle
             itemCount: rails.length,
             // Animated drag feedback — elevated card while dragging
             proxyDecorator: (child, index, animation) {
@@ -196,13 +197,16 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
                           ),
                           const SizedBox(width: 4),
                           // Drag handle
-                          MouseRegion(
-                            cursor: SystemMouseCursors.grab,
-                            child: Icon(
-                              Icons.drag_handle_rounded,
-                              color: colorScheme.onSurface
-                                  .withValues(alpha: 0.35),
-                              size: 22,
+                          ReorderableDragStartListener(
+                            index: index,
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.grab,
+                              child: Icon(
+                                Icons.drag_handle_rounded,
+                                color: colorScheme.onSurface
+                                    .withValues(alpha: 0.35),
+                                size: 22,
+                              ),
                             ),
                           ),
                           const SizedBox(width: 8),
