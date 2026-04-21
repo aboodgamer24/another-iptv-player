@@ -105,7 +105,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   void _proceedAsGuest() async {
     await UserPreferences.setHasSeenWelcome(true);
     if (mounted) {
-      Navigator.of(context).pushReplacement(
+      Navigator.of(context).push(
         MaterialPageRoute(builder: (_) => const PlaylistScreen()),
       );
     }
