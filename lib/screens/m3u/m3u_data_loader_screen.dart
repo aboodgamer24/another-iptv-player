@@ -7,6 +7,7 @@ import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/models/progress_step.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:provider/provider.dart';
+import 'package:another_iptv_player/services/settings_sync.dart';
 import '../playlist_screen.dart';
 import 'm3u_home_screen.dart';
 
@@ -117,6 +118,7 @@ class M3uDataLoaderScreenState extends State<M3uDataLoaderScreen>
 
       AppState.currentPlaylist = widget.playlist;
       await UserPreferences.setLastPlaylist(widget.playlist.id);
+      SettingsSync.push(); // Push last_playlist_id to settings sync
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(

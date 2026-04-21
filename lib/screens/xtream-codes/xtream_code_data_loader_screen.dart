@@ -8,6 +8,7 @@ import 'package:another_iptv_player/models/progress_step.dart';
 import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:provider/provider.dart';
+import 'package:another_iptv_player/services/settings_sync.dart';
 import '../main_navigation_screen.dart';
 import 'xtream_code_home_screen.dart';
 import '../playlist_screen.dart';
@@ -121,6 +122,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
 
       AppState.currentPlaylist = widget.playlist;
       await UserPreferences.setLastPlaylist(widget.playlist.id);
+      SettingsSync.push(); // Push last_playlist_id to settings sync
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(

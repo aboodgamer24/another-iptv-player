@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/sync_service.dart';
+import 'package:another_iptv_player/services/settings_sync.dart';
 import '../models/playlist_model.dart';
 import '../screens/main_navigation_screen.dart';
 import '../services/playlist_service.dart';
@@ -48,6 +49,7 @@ class PlaylistController extends ChangeNotifier {
 
   Future<void> openPlaylist(BuildContext context, Playlist playlist) async {
     await UserPreferences.setLastPlaylist(playlist.id);
+    SettingsSync.push(); // Push last_playlist_id to settings sync
     AppState.currentPlaylist = playlist;
 
     if (context.mounted) {

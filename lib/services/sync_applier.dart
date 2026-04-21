@@ -4,6 +4,7 @@ import '../models/content_type.dart';
 import '../models/favorite.dart';
 import '../models/playlist_model.dart';
 import '../repositories/user_preferences.dart';
+import 'database_service.dart';
 import 'playlist_service.dart';
 import 'service_locator.dart';
 import 'sync_service.dart';
@@ -14,51 +15,72 @@ class SyncApplier {
   static Future<bool> pullAndApply() async {
     try {
       final data = await SyncService.instance.pullSync();
-      if (data == null) return false;
+      if (data == null) {
+        debugPrint('[SyncApplier] pullSync returned null — server unreachable or not logged in');
+        return false;
+      }
 
-      // 1. Apply Playlists (non-destructive — only add missing ones)
-      await _applyPlaylists(data['playlists']);
+      debugPrint('[SyncApplier] Received data keys: ${data.keys.toList()}');
+      debugPrint('[SyncApplier] Playlists count: ${(data['playlists'] as List?)?.length ?? 0}');
 
-      // 2. Apply Favorites
-      await _applyFavorites(data['favorites']);
-
-      // 3. Apply Watch Later
-      await _applyWatchLater(data['watch_later']);
-
-      // 4. Apply Settings
+      // 1. Apply Settings first (so last_playlist_id is available)
       await _applySettings(data['settings']);
 
-      // 5. Apply last playlist selection
+      // 2. Apply last playlist selection from settings (before playlist apply)
       final rawLastPlaylistId = data['settings']?['last_playlist_id'];
-      if (rawLastPlaylistId != null && rawLastPlaylistId is String) {
+      if (rawLastPlaylistId != null && rawLastPlaylistId is String && rawLastPlaylistId.isNotEmpty) {
         await UserPreferences.setLastPlaylist(rawLastPlaylistId);
       }
 
+      // 3. Apply Playlists (will set lastPlaylist if not already set above)
+      await _applyPlaylists(data['playlists']);
+
+      // 4. Apply Favorites
+      await _applyFavorites(data['favorites']);
+
+      // 5. Apply Watch Later
+      await _applyWatchLater(data['watch_later']);
+
       debugPrint('[SyncApplier] Sync applied successfully');
       return true;
-    } catch (e) {
-      debugPrint('[SyncApplier] pullAndApply error: $e');
+    } catch (e, stack) {
+      debugPrint('[SyncApplier] pullAndApply error: $e\n$stack');
       return false;
     }
   }
 
   /// Apply playlists — only add ones that don't exist locally.
+  /// Uses DatabaseService directly to avoid triggering auto-push during restore.
   static Future<void> _applyPlaylists(dynamic rawPlaylists) async {
     if (rawPlaylists == null || rawPlaylists is! List || rawPlaylists.isEmpty) {
       return;
     }
 
+    String? firstRestoredId;
+
     for (final p in rawPlaylists) {
       try {
-        final playlist = Playlist.fromJson(Map<String, dynamic>.from(p));
+        final map = Map<String, dynamic>.from(p);
+        final playlist = Playlist.fromJson(map);
         final existing = await PlaylistService.getPlaylistById(playlist.id);
         if (existing == null) {
-          await PlaylistService.savePlaylist(playlist);
-          debugPrint('[SyncApplier] Added playlist: ${playlist.name}');
+          // Use DatabaseService directly to avoid triggering auto-push during restore
+          await DatabaseService.savePlaylist(playlist);
+          debugPrint('[SyncApplier] Restored playlist: ${playlist.name}');
+          firstRestoredId ??= playlist.id;
+        } else {
+          firstRestoredId ??= existing.id;
         }
       } catch (e) {
         debugPrint('[SyncApplier] Failed to apply playlist: $e');
       }
+    }
+
+    // If no last_playlist_id was set by settings, use the first restored playlist
+    final currentLast = await UserPreferences.getLastPlaylist();
+    if ((currentLast == null || currentLast.isEmpty) && firstRestoredId != null) {
+      await UserPreferences.setLastPlaylist(firstRestoredId);
+      debugPrint('[SyncApplier] Set last playlist to: $firstRestoredId');
     }
   }
 

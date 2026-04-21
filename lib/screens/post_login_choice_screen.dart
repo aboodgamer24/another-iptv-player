@@ -63,6 +63,8 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
       await playlistController.loadPlaylists(context);
     } catch (_) {}
 
+    setState(() => _isRestoring = false);
+
     if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
@@ -210,62 +212,72 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
                 ),
               ],
             ),
-            child: Row(
-              children: [
-                // Icon or loading indicator
-                SizedBox(
-                  width: 48,
-                  height: 48,
-                  child: isLoading
-                      ? Center(
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2.5,
-                              color: colorScheme.primary,
+            child: isLoading
+                ? Center(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(
+                            strokeWidth: 3.0,
+                            color: colorScheme.primary,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Restoring your data...',
+                            style: TextStyle(
+                              color: colorScheme.onSurface.withValues(alpha: 0.7),
                             ),
                           ),
-                        )
-                      : Icon(
+                        ],
+                      ),
+                    ),
+                  )
+                : Row(
+                    children: [
+                      // Icon
+                      SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Icon(
                           icon,
                           size: 40,
                           color: colorScheme.primary,
                         ),
-                ),
-                const SizedBox(width: 16),
-                // Text content
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
+                      ),
+                      const SizedBox(width: 16),
+                      // Text content
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        subtitle,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color:
-                              colorScheme.onSurface.withValues(alpha: 0.6),
-                        ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        Icons.chevron_right_rounded,
+                        color: colorScheme.onSurface.withValues(alpha: 0.3),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.onSurface.withValues(alpha: 0.3),
-                ),
-              ],
-            ),
           ),
         ),
       ),
