@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/home_rail_config.dart';
+import '../utils/app_config.dart';
+
 
 class UserPreferences {
   static const String _keyLastPlaylist = 'last_playlist';
@@ -539,8 +541,7 @@ class UserPreferences {
     // Restore TMDB API key (handle both key variants)
     final tmdbKey = settings['tmdbApiKey'] ?? settings['tmdb_api_key'];
     if (tmdbKey != null && (tmdbKey as String).isNotEmpty) {
-      await prefs.setString('tmdb_api_key', tmdbKey);
-      await prefs.setString('tmdbApiKey', tmdbKey);
+      await AppConfig.setTmdbApiKey(tmdbKey as String);
       debugPrint('[UserPreferences] Restored TMDB API key from sync');
     }
     if (settings['subtitleSize'] != null) await prefs.setDouble('subtitle_size', (settings['subtitleSize'] as num).toDouble());
