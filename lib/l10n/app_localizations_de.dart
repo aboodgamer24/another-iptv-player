@@ -12,7 +12,7 @@ class AppLocalizationsDe extends AppLocalizations {
   String get slogan => 'Open Source IPTV Player';
 
   @override
-  String get account => 'Account';
+  String get account => 'Konto';
 
   @override
   String get search => 'Suchen';
@@ -855,67 +855,67 @@ class AppLocalizationsDe extends AppLocalizations {
   String get duration_label => 'Dauer';
 
   @override
-  String get watch_later => 'Watch Later';
+  String get watch_later => 'Später ansehen';
 
   @override
-  String get watch_later_empty_message => 'Your watch later list is empty';
+  String get watch_later_empty_message => 'Deine Merkliste ist leer';
 
   @override
   String get watch_later_empty_description =>
-      'Save movies and shows to watch them later here.';
+      'Speichere Filme und Serien, um sie später hier anzusehen.';
 
   @override
   String get integration => 'Integration';
 
   @override
-  String get tmdb_api_key => 'TMDB API Key';
+  String get tmdb_api_key => 'TMDB-API-Schlüssel';
 
   @override
-  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+  String get enter_tmdb_api_key => 'TMDB-API-Schlüssel eingeben';
 
   @override
-  String get added_to_watch_later => 'Added to Watch Later';
+  String get added_to_watch_later => 'Zu Später ansehen hinzugefügt';
 
   @override
-  String get removed_from_watch_later => 'Removed from Watch Later';
+  String get removed_from_watch_later => 'Aus Später ansehen entfernt';
 
   @override
-  String get live_tv => 'Live TV';
+  String get live_tv => 'Live-TV';
 
   @override
-  String get no_favorites_found => 'No favorites found';
+  String get no_favorites_found => 'Keine Favoriten gefunden';
 
   @override
-  String get home_customization => 'Home Customization';
+  String get home_customization => 'Startseiten-Anpassung';
 
   @override
   String get home_customization_subtitle =>
-      'Drag to reorder, toggle to show or hide sections';
+      'Ziehen zum Umordnen, Umschalten zum Anzeigen oder Ausblenden von Bereichen';
 
   @override
-  String get rail_continue_watching => 'Continue Watching';
+  String get rail_continue_watching => 'Weiter ansehen';
 
   @override
-  String get rail_recommended => 'Recommended for you';
+  String get rail_recommended => 'Empfohlen für dich';
 
   @override
-  String get rail_favorites_live => 'Favorite Channels';
+  String get rail_favorites_live => 'Favoritenkanäle';
 
   @override
-  String get rail_favorites_movies => 'Favorite Movies';
+  String get rail_favorites_movies => 'Favoritenfilme';
 
   @override
-  String get rail_favorites_series => 'Favorite Series';
+  String get rail_favorites_series => 'Favoritenserien';
 
   @override
-  String get rail_watch_later => 'Watch Later';
+  String get rail_watch_later => 'Später ansehen';
 
   @override
-  String get rail_live_history => 'Recently Watched';
+  String get rail_live_history => 'Kürzlich angesehen';
 
   @override
-  String get rail_trending_movies => 'Trending Movies';
+  String get rail_trending_movies => 'Trend-Filme';
 
   @override
-  String get rail_trending_series => 'Trending Series';
+  String get rail_trending_series => 'Trend-Serien';
 }

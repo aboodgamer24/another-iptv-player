@@ -12,7 +12,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get slogan => 'IPTV-плеер с открытым исходным кодом';
 
   @override
-  String get account => 'Account';
+  String get account => 'Аккаунт';
 
   @override
   String get search => 'Поиск';
@@ -846,70 +846,70 @@ class AppLocalizationsRu extends AppLocalizations {
   String get minutes => 'мин';
 
   @override
-  String get duration_label => 'Продолжительность';
+  String get duration_label => 'Длительность';
 
   @override
-  String get watch_later => 'Watch Later';
+  String get watch_later => 'Смотреть позже';
 
   @override
-  String get watch_later_empty_message => 'Your watch later list is empty';
+  String get watch_later_empty_message => 'Ваш список «Смотреть позже» пуст';
 
   @override
   String get watch_later_empty_description =>
-      'Save movies and shows to watch them later here.';
+      'Сохраняйте фильмы и сериалы, чтобы посмотреть их позже.';
 
   @override
-  String get integration => 'Integration';
+  String get integration => 'Интеграция';
 
   @override
-  String get tmdb_api_key => 'TMDB API Key';
+  String get tmdb_api_key => 'Ключ API TMDB';
 
   @override
-  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+  String get enter_tmdb_api_key => 'Введите ключ API TMDB';
 
   @override
-  String get added_to_watch_later => 'Added to Watch Later';
+  String get added_to_watch_later => 'Добавлено в Смотреть позже';
 
   @override
-  String get removed_from_watch_later => 'Removed from Watch Later';
+  String get removed_from_watch_later => 'Удалено из Смотреть позже';
 
   @override
-  String get live_tv => 'Live TV';
+  String get live_tv => 'Прямой эфир';
 
   @override
-  String get no_favorites_found => 'No favorites found';
+  String get no_favorites_found => 'Избранное не найдено';
 
   @override
-  String get home_customization => 'Home Customization';
+  String get home_customization => 'Настройка главного экрана';
 
   @override
   String get home_customization_subtitle =>
-      'Drag to reorder, toggle to show or hide sections';
+      'Перетаскивайте для изменения порядка, переключайте для показа или скрытия разделов';
 
   @override
-  String get rail_continue_watching => 'Continue Watching';
+  String get rail_continue_watching => 'Продолжить просмотр';
 
   @override
-  String get rail_recommended => 'Recommended for you';
+  String get rail_recommended => 'Рекомендуемое для вас';
 
   @override
-  String get rail_favorites_live => 'Favorite Channels';
+  String get rail_favorites_live => 'Избранные каналы';
 
   @override
-  String get rail_favorites_movies => 'Favorite Movies';
+  String get rail_favorites_movies => 'Избранные фильмы';
 
   @override
-  String get rail_favorites_series => 'Favorite Series';
+  String get rail_favorites_series => 'Избранные сериалы';
 
   @override
-  String get rail_watch_later => 'Watch Later';
+  String get rail_watch_later => 'Смотреть позже';
 
   @override
-  String get rail_live_history => 'Recently Watched';
+  String get rail_live_history => 'Недавно просмотренное';
 
   @override
-  String get rail_trending_movies => 'Trending Movies';
+  String get rail_trending_movies => 'Популярные фильмы';
 
   @override
-  String get rail_trending_series => 'Trending Series';
+  String get rail_trending_series => 'Популярные сериалы';
 }

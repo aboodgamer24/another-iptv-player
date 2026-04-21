@@ -284,5 +284,32 @@
   "series_content_type": "Dizi",
   "last_update": "Son Güncelleme",
   "minutes": "dk",
-  "duration_label": "Süre"
+  "duration_label": "Süre",
+  "watch_later": "Daha Sonra İzle",
+  "watch_later_empty_message": "Daha sonra izle listeniz boş",
+  "watch_later_empty_description": "Daha sonra izlemek istediğiniz film ve dizileri buraya kaydedin.",
+  "integration": "Entegrasyon",
+  "tmdb_api_key": "TMDB API Anahtarı",
+  "enter_tmdb_api_key": "TMDB API Anahtarını girin",
+  "added_to_watch_later": "Daha Sonra İzle'ye eklendi",
+  "removed_from_watch_later": "Daha Sonra İzle'den kaldırıldı",
+  "live_tv": "Canlı TV",
+  "no_favorites_found": "Favori bulunamadı",
+  "home_customization": "Ana Sayfa Özelleştirme",
+  "home_customization_subtitle": "Sürükleyerek sıralayın, bölümleri gösterip gizleyin",
+  "rail_continue_watching": "İzlemeye Devam Et",
+  "rail_recommended": "Sizin için önerilenler",
+  "rail_favorites_live": "Favori Kanallar",
+  "rail_favorites_movies": "Favori Filmler",
+  "rail_favorites_series": "Favori Diziler",
+  "rail_watch_later": "Daha Sonra İzle",
+  "rail_live_history": "Son İzlenenler",
+  "rail_trending_movies": "Trend Filmler",
+  "rail_trending_series": "Trend Diziler",
+  "@continue_watching_label": {
+    "placeholders": {
+      "season": { "type": "String" },
+      "episode": { "type": "String" }
+    }
+  }
 }

@@ -12,7 +12,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get slogan => 'مشغل IPTV مفتوح المصدر';
 
   @override
-  String get account => 'Account';
+  String get account => 'الحساب';
 
   @override
   String get search => 'بحث';
@@ -846,67 +846,67 @@ class AppLocalizationsAr extends AppLocalizations {
   String get duration_label => 'المدة';
 
   @override
-  String get watch_later => 'Watch Later';
+  String get watch_later => 'المشاهدة لاحقًا';
 
   @override
-  String get watch_later_empty_message => 'Your watch later list is empty';
+  String get watch_later_empty_message => 'قائمة المشاهدة لاحقًا فارغة';
 
   @override
   String get watch_later_empty_description =>
-      'Save movies and shows to watch them later here.';
+      'احفظ الأفلام والعروض لمشاهدتها لاحقًا هنا.';
 
   @override
-  String get integration => 'Integration';
+  String get integration => 'التكامل';
 
   @override
-  String get tmdb_api_key => 'TMDB API Key';
+  String get tmdb_api_key => 'مفتاح TMDB API';
 
   @override
-  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+  String get enter_tmdb_api_key => 'أدخل مفتاح TMDB API';
 
   @override
-  String get added_to_watch_later => 'Added to Watch Later';
+  String get added_to_watch_later => 'تمت الإضافة إلى المشاهدة لاحقًا';
 
   @override
-  String get removed_from_watch_later => 'Removed from Watch Later';
+  String get removed_from_watch_later => 'تمت الإزالة من المشاهدة لاحقًا';
 
   @override
-  String get live_tv => 'Live TV';
+  String get live_tv => 'تلفزيون مباشر';
 
   @override
-  String get no_favorites_found => 'No favorites found';
+  String get no_favorites_found => 'لم يتم العثور على مفضلات';
 
   @override
-  String get home_customization => 'Home Customization';
+  String get home_customization => 'تخصيص الصفحة الرئيسية';
 
   @override
   String get home_customization_subtitle =>
-      'Drag to reorder, toggle to show or hide sections';
+      'اسحب لإعادة الترتيب، قم بتبديل إظهار أو إخفاء الأقسام';
 
   @override
-  String get rail_continue_watching => 'Continue Watching';
+  String get rail_continue_watching => 'متابعة المشاهدة';
 
   @override
-  String get rail_recommended => 'Recommended for you';
+  String get rail_recommended => 'موصى به لك';
 
   @override
-  String get rail_favorites_live => 'Favorite Channels';
+  String get rail_favorites_live => 'القنوات المفضلة';
 
   @override
-  String get rail_favorites_movies => 'Favorite Movies';
+  String get rail_favorites_movies => 'الأفلام المفضلة';
 
   @override
-  String get rail_favorites_series => 'Favorite Series';
+  String get rail_favorites_series => 'المسلسلات المفضلة';
 
   @override
-  String get rail_watch_later => 'Watch Later';
+  String get rail_watch_later => 'المشاهدة لاحقًا';
 
   @override
-  String get rail_live_history => 'Recently Watched';
+  String get rail_live_history => 'شوهدت مؤخرًا';
 
   @override
-  String get rail_trending_movies => 'Trending Movies';
+  String get rail_trending_movies => 'الأفلام الرائجة';
 
   @override
-  String get rail_trending_series => 'Trending Series';
+  String get rail_trending_series => 'المسلسلات الرائجة';
 }

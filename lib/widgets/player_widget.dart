@@ -395,13 +395,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
 
       _player.stream.position.listen((position) {
-        // DEBUG: Remove mutation of unmodifiable list
-        // _player.state.playlist.medias[currentItemIndex] = Media(
-        //   contentItem.url,
-        //   start: position,
-        // );
-
-        // Debounce: Save watch history every 5 seconds instead of on every position update
         _pendingWatchDuration = position;
         _pendingTotalDuration = _player.state.duration;
 
@@ -409,6 +402,18 @@ class _PlayerWidgetState extends State<PlayerWidget>
         _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
           _saveWatchHistory();
         });
+      });
+
+      _player.stream.buffering.listen((buffering) {
+        if (!mounted) return;
+        if (buffering != isLoading) {
+          setState(() => isLoading = buffering);
+        }
+      });
+
+      _player.stream.playing.listen((playing) {
+        if (!mounted) return;
+        _audioHandler.setPlaying(playing);
       });
 
       _player.stream.error.listen((error) async {
@@ -477,29 +482,18 @@ class _PlayerWidgetState extends State<PlayerWidget>
               _isSwitchingChannel = true;
 
               try {
-                // Queue'yu PlayerState'ten al (kategori değiştiğinde güncellenmiş olabilir)
-                final updatedQueue = _queue ?? PlayerState.queue;
-                if (updatedQueue == null || index >= updatedQueue.length)
-                  return;
-                // sync PlayerState so it matches the active session
-                PlayerState.queue = updatedQueue;
+                if (_queue == null || index < 0 || index >= _queue!.length) return;
 
-                final item = updatedQueue[index];
+                final item = _queue![index];
                 contentItem = item;
-                _queue = updatedQueue; // Queue'yu güncelle
 
-                // --- INSERTION 3: EXTERNAL CHANGE SETTER ---
                 PlayerState.currentContent = contentItem;
                 PlayerState.currentIndex = index;
                 PlayerState.title = item.name;
                 _currentItemIndex = index;
-                // -------------------------------------------
 
-                // Cancel any pending retry timers before opening new stream
                 _errorHandler.reset();
 
-                // Use bare Media (not Playlist) to match initial open pattern
-                // and avoid recreating the entire video pipeline.
                 await _player.open(Media(item.url));
                 await _applyUpscaler();
                 EventBus().emit('player_content_item', item);
@@ -611,7 +605,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       return _buildSeriesEpisodePanel(context);
     }
     final items = _queue!;
-    final currentContent = PlayerState.currentContent;
     final isMobilePhone = MediaQuery.sizeOf(context).shortestSide < 600;
     final screenWidth = MediaQuery.sizeOf(context).width;
     final panelWidth = isMobilePhone
@@ -619,20 +612,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
         : (screenWidth / 3).clamp(200.0, 400.0);
 
     // Mevcut index'i bul
-    int selectedIndex = _currentItemIndex;
-    if (currentContent != null) {
-      final foundIndex = items.indexWhere(
-        (item) => item.id == currentContent.id,
-      );
-      if (foundIndex != -1) {
-        selectedIndex = foundIndex;
-      }
-    }
+    final int selectedIndex = _currentItemIndex;
 
     String overlayTitle = 'Kanal Seç';
-    if (currentContent?.contentType == ContentType.vod) {
+    if (contentItem.contentType == ContentType.vod) {
       overlayTitle = 'Filmler';
-    } else if (currentContent?.contentType == ContentType.series) {
+    } else if (contentItem.contentType == ContentType.series) {
       overlayTitle = 'Bölümler';
     }
 
@@ -1249,7 +1234,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
             _showChannelList &&
             _queue != null &&
             _queue!.length > 1)
-          _buildChannelListOverlay(context),
+          RepaintBoundary(
+            child: _buildChannelListOverlay(context),
+          ),
       ],
     );
 
@@ -1290,12 +1277,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final items = _queue!;
     final theme = Theme.of(context);
 
-    int selectedIndex = _currentItemIndex;
-    final current = PlayerState.currentContent;
-    if (current != null) {
-      final found = items.indexWhere((item) => item.id == current.id);
-      if (found != -1) selectedIndex = found;
-    }
+    final int selectedIndex = _currentItemIndex;
 
     return Container(
       color: Colors.black,

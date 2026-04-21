@@ -12,7 +12,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get slogan => 'ओपन सोर्स IPTV प्लेयर';
 
   @override
-  String get account => 'Account';
+  String get account => 'खाता';
 
   @override
   String get search => 'खोजें';
@@ -847,67 +847,67 @@ class AppLocalizationsHi extends AppLocalizations {
   String get duration_label => 'अवधि';
 
   @override
-  String get watch_later => 'Watch Later';
+  String get watch_later => 'बाद में देखें';
 
   @override
-  String get watch_later_empty_message => 'Your watch later list is empty';
+  String get watch_later_empty_message => 'आपकी बाद में देखने की सूची खाली है';
 
   @override
   String get watch_later_empty_description =>
-      'Save movies and shows to watch them later here.';
+      'बाद में देखने के लिए फ़िल्में और शो यहाँ सहेजें।';
 
   @override
-  String get integration => 'Integration';
+  String get integration => 'एकीकरण';
 
   @override
-  String get tmdb_api_key => 'TMDB API Key';
+  String get tmdb_api_key => 'TMDB API कुंजी';
 
   @override
-  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+  String get enter_tmdb_api_key => 'अपनी TMDB API कुंजी दर्ज करें';
 
   @override
-  String get added_to_watch_later => 'Added to Watch Later';
+  String get added_to_watch_later => 'बाद में देखने के लिए जोड़ा गया';
 
   @override
-  String get removed_from_watch_later => 'Removed from Watch Later';
+  String get removed_from_watch_later => 'बाद में देखने की सूची से हटाया गया';
 
   @override
-  String get live_tv => 'Live TV';
+  String get live_tv => 'लाइव टीवी';
 
   @override
-  String get no_favorites_found => 'No favorites found';
+  String get no_favorites_found => 'कोई पसंदीदा नहीं मिला';
 
   @override
-  String get home_customization => 'Home Customization';
+  String get home_customization => 'होम कस्टमाइज़ेशन';
 
   @override
   String get home_customization_subtitle =>
-      'Drag to reorder, toggle to show or hide sections';
+      'क्रम बदलने के लिए खींचें, अनुभागों को दिखाने या छिपाने के लिए टॉगल करें';
 
   @override
-  String get rail_continue_watching => 'Continue Watching';
+  String get rail_continue_watching => 'देखना जारी रखें';
 
   @override
-  String get rail_recommended => 'Recommended for you';
+  String get rail_recommended => 'आपके लिए अनुशंसित';
 
   @override
-  String get rail_favorites_live => 'Favorite Channels';
+  String get rail_favorites_live => 'पसंदीदा चैनल';
 
   @override
-  String get rail_favorites_movies => 'Favorite Movies';
+  String get rail_favorites_movies => 'पसंदीदा फिल्में';
 
   @override
-  String get rail_favorites_series => 'Favorite Series';
+  String get rail_favorites_series => 'पसंदीदा सीरीज़';
 
   @override
-  String get rail_watch_later => 'Watch Later';
+  String get rail_watch_later => 'बाद में देखें';
 
   @override
-  String get rail_live_history => 'Recently Watched';
+  String get rail_live_history => 'हाल ही में देखा गया';
 
   @override
-  String get rail_trending_movies => 'Trending Movies';
+  String get rail_trending_movies => 'ट्रेंडिंग फिल्में';
 
   @override
-  String get rail_trending_series => 'Trending Series';
+  String get rail_trending_series => 'ट्रेंडिंग सीरीज़';
 }

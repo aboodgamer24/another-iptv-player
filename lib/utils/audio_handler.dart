@@ -160,6 +160,17 @@ class MyAudioHandler extends BaseAudioHandler with QueueHandler, SeekHandler {
     });
   }
 
+  void setPlaying(bool playing) {
+    if (playbackState.value.playing == playing) return;
+    playbackState.add(
+      playbackState.value.copyWith(
+        playing: playing,
+        updatePosition: _player?.state.position ?? Duration.zero,
+        bufferedPosition: _player?.state.position ?? Duration.zero,
+      ),
+    );
+  }
+
   Future<void> setQueue(
     List<MediaItem> newQueue, {
     int initialIndex = 0,

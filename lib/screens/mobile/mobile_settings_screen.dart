@@ -10,6 +10,15 @@ import '../../l10n/localization_extension.dart';
 import '../../l10n/supported_languages.dart';
 import '../../utils/app_config.dart';
 import '../account/account_screen.dart';
+import '../../screens/playlist_screen.dart';
+import '../../screens/settings/subtitle_settings_section.dart';
+import '../../screens/settings/parental_controls_screen.dart';
+import '../../screens/settings/home_customization_section.dart';
+import '../../services/app_state.dart';
+import '../../utils/get_playlist_type.dart';
+import '../../screens/xtream-codes/xtream_code_data_loader_screen.dart';
+import '../../screens/settings/category_settings_section.dart';
+import '../../controllers/xtream_code_home_controller.dart';
 
 class MobileSettingsScreen extends StatefulWidget {
   const MobileSettingsScreen({super.key});
@@ -35,6 +44,7 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
 
   final TextEditingController _tmdbKeyController = TextEditingController();
   bool _obscureTmdbKey = true;
+  bool _streamEnhancement = false;
 
   @override
   void initState() {
@@ -67,6 +77,11 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
       _upscalePreset = preset;
     });
 
+    final streamEnh = await UserPreferences.getStreamEnhancement();
+    setState(() {
+      _streamEnhancement = streamEnh;
+    });
+
     _tmdbKeyController.text = AppConfig.tmdbApiKey;
   }
 
@@ -83,6 +98,7 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
     return ListView(
       cacheExtent: 500,
       children: [
+        // ── ACCOUNT ──────────────────────────────────────────
         _buildSectionHeader(context.loc.account),
         ListTile(
           leading: const Icon(Icons.account_circle_outlined),
@@ -91,7 +107,65 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           trailing: const Icon(Icons.chevron_right),
           onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
         ),
-        
+
+        // ── PLAYLIST ─────────────────────────────────────────
+        const Divider(),
+        _buildSectionHeader('Playlist'),
+        ListTile(
+          leading: const Icon(Icons.list_alt_outlined),
+          title: const Text('Change Playlist'),
+          subtitle: const Text('Switch to a different playlist'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () async {
+            await UserPreferences.removeLastPlaylist();
+            if (mounted) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (_) => PlaylistScreen()),
+              );
+            }
+          },
+        ),
+        ListTile(
+          leading: const Icon(Icons.refresh),
+          title: const Text('Refresh Content'),
+          subtitle: const Text('Re-download all channels and content'),
+          trailing: const Icon(Icons.cloud_download_outlined),
+          onTap: () {
+            if (isXtreamCode) {
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => XtreamCodeDataLoaderScreen(
+                    playlist: AppState.currentPlaylist!,
+                    refreshAll: true,
+                  ),
+                ),
+              );
+            }
+          },
+        ),
+        if (isXtreamCode)
+          ListTile(
+            leading: const Icon(Icons.subtitles_outlined),
+            title: const Text('Hidden Categories'),
+            subtitle: const Text('Show or hide content categories'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () async {
+              XtreamCodeHomeController? ctrl;
+              try { ctrl = context.read<XtreamCodeHomeController>(); } catch (_) {}
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => CategorySettingsScreen(
+                    controller: ctrl ?? XtreamCodeHomeController(false),
+                  ),
+                ),
+              );
+            },
+          ),
+
+        // ── PLAYER GESTURES ───────────────────────────────────
         const Divider(),
         _buildSectionHeader('Player Gestures'),
         _buildSwitchTile(
@@ -130,6 +204,7 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           onChanged: (v) => _updateSetting(() => _playbackSpeed = v, UserPreferences.setSpeedUpOnLongPress(v)),
         ),
 
+        // ── VIDEO QUALITY ─────────────────────────────────────
         const Divider(),
         _buildSectionHeader('Video Quality'),
         ListTile(
@@ -145,7 +220,33 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           value: _backgroundPlay,
           onChanged: (v) => _updateSetting(() => _backgroundPlay = v, UserPreferences.setBackgroundPlay(v)),
         ),
+        SwitchListTile(
+          secondary: const Icon(Icons.auto_fix_high_outlined),
+          title: const Text('Stream Enhancement'),
+          subtitle: const Text('Apply post-processing filters to video'),
+          value: _streamEnhancement,
+          onChanged: (v) => _updateSetting(() => _streamEnhancement = v, UserPreferences.setStreamEnhancement(v)),
+        ),
 
+        // ── PLAYER ────────────────────────────────────────────
+        const Divider(),
+        _buildSectionHeader('Player'),
+        ListTile(
+          leading: const Icon(Icons.subtitles_outlined),
+          title: const Text('Subtitle Settings'),
+          subtitle: const Text('Font, size, color and position'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const SubtitleSettingsScreen())),
+        ),
+        ListTile(
+          leading: const Icon(Icons.lock_outline),
+          title: const Text('Parental Controls'),
+          subtitle: const Text('Set PIN and content restrictions'),
+          trailing: const Icon(Icons.chevron_right),
+          onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const ParentalControlsScreen())),
+        ),
+
+        // ── APPEARANCE ────────────────────────────────────────
         const Divider(),
         _buildSectionHeader('Appearance'),
         ListTile(
@@ -161,6 +262,12 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           onTap: _showLanguageDialog,
         ),
 
+        // ── HOME CUSTOMIZATION ────────────────────────────────
+        const Divider(),
+        _buildSectionHeader('Home Customization'),
+        const HomeCustomizationSection(),
+
+        // ── INTEGRATIONS ──────────────────────────────────────
         const Divider(),
         _buildSectionHeader('Integrations'),
         Padding(
@@ -187,6 +294,7 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           ),
         ),
 
+        // ── ABOUT ─────────────────────────────────────────────
         const Divider(),
         _buildSectionHeader('About'),
         ListTile(
@@ -198,7 +306,7 @@ class _MobileSettingsScreenState extends State<MobileSettingsScreen> {
           leading: const Icon(Icons.code),
           title: const Text('Source Code'),
           subtitle: const Text('View on GitHub'),
-          onTap: () {}, 
+          onTap: () {},
         ),
         const SizedBox(height: 32),
       ],

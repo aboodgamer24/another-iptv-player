@@ -846,67 +846,67 @@ class AppLocalizationsTr extends AppLocalizations {
   String get duration_label => 'Süre';
 
   @override
-  String get watch_later => 'Watch Later';
+  String get watch_later => 'Daha Sonra İzle';
 
   @override
-  String get watch_later_empty_message => 'Your watch later list is empty';
+  String get watch_later_empty_message => 'Daha sonra izle listeniz boş';
 
   @override
   String get watch_later_empty_description =>
-      'Save movies and shows to watch them later here.';
+      'Daha sonra izlemek istediğiniz film ve dizileri buraya kaydedin.';
 
   @override
-  String get integration => 'Integration';
+  String get integration => 'Entegrasyon';
 
   @override
-  String get tmdb_api_key => 'TMDB API Key';
+  String get tmdb_api_key => 'TMDB API Anahtarı';
 
   @override
-  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+  String get enter_tmdb_api_key => 'TMDB API Anahtarını girin';
 
   @override
-  String get added_to_watch_later => 'Added to Watch Later';
+  String get added_to_watch_later => 'Daha Sonra İzle\'ye eklendi';
 
   @override
-  String get removed_from_watch_later => 'Removed from Watch Later';
+  String get removed_from_watch_later => 'Daha Sonra İzle\'den kaldırıldı';
 
   @override
-  String get live_tv => 'Live TV';
+  String get live_tv => 'Canlı TV';
 
   @override
-  String get no_favorites_found => 'No favorites found';
+  String get no_favorites_found => 'Favori bulunamadı';
 
   @override
-  String get home_customization => 'Home Customization';
+  String get home_customization => 'Ana Sayfa Özelleştirme';
 
   @override
   String get home_customization_subtitle =>
-      'Drag to reorder, toggle to show or hide sections';
+      'Sürükleyerek sıralayın, bölümleri gösterip gizleyin';
 
   @override
-  String get rail_continue_watching => 'Continue Watching';
+  String get rail_continue_watching => 'İzlemeye Devam Et';
 
   @override
-  String get rail_recommended => 'Recommended for you';
+  String get rail_recommended => 'Sizin için önerilenler';
 
   @override
-  String get rail_favorites_live => 'Favorite Channels';
+  String get rail_favorites_live => 'Favori Kanallar';
 
   @override
-  String get rail_favorites_movies => 'Favorite Movies';
+  String get rail_favorites_movies => 'Favori Filmler';
 
   @override
-  String get rail_favorites_series => 'Favorite Series';
+  String get rail_favorites_series => 'Favori Diziler';
 
   @override
-  String get rail_watch_later => 'Watch Later';
+  String get rail_watch_later => 'Daha Sonra İzle';
 
   @override
-  String get rail_live_history => 'Recently Watched';
+  String get rail_live_history => 'Son İzlenenler';
 
   @override
-  String get rail_trending_movies => 'Trending Movies';
+  String get rail_trending_movies => 'Trend Filmler';
 
   @override
-  String get rail_trending_series => 'Trending Series';
+  String get rail_trending_series => 'Trend Diziler';
 }
