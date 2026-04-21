@@ -148,9 +148,9 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
               final iconName = _getRailIcon(rail.id);
 
               return ReorderableDragStartListener(
+                key: ValueKey(rail.id),
                 index: index,
                 child: AnimatedContainer(
-                  key: ValueKey(rail.id),
                   duration: const Duration(milliseconds: 200),
                   curve: Curves.easeOut,
                   decoration: BoxDecoration(
