@@ -4,6 +4,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../controllers/watch_history_controller.dart';
 import '../../controllers/favorites_controller.dart';
+import '../../models/watch_history.dart';
 import '../../controllers/watch_later_controller.dart';
 import '../../controllers/home_rails_controller.dart';
 import '../../l10n/localization_extension.dart';
@@ -337,9 +338,9 @@ class _C4DashboardState extends State<C4Dashboard> {
           child: C4ContentRail(
             title: context.loc.rail_continue_watching,
             items: historyController.continueWatching
-                .where((h) => h.contentType != ContentType.liveStream)
+                .where((WatchHistory h) => h.contentType != ContentType.liveStream)
                 .map(
-                  (h) => ContentItem(
+                  (WatchHistory h) => ContentItem(
                     h.streamId,
                     h.title,
                     h.imagePath ?? '',
@@ -349,7 +350,7 @@ class _C4DashboardState extends State<C4Dashboard> {
                 .toList(),
             onItemTap: (ctx, item) {
               final h = historyController.continueWatching.firstWhere(
-                (wh) =>
+                (WatchHistory wh) =>
                     wh.streamId == item.id &&
                     wh.contentType == item.contentType,
                 orElse: () =>
@@ -370,7 +371,7 @@ class _C4DashboardState extends State<C4Dashboard> {
             title: context.loc.rail_live_history,
             items: historyController.liveHistory
                 .map(
-                  (h) => ContentItem(
+                  (WatchHistory h) => ContentItem(
                     h.streamId,
                     h.title,
                     h.imagePath ?? '',
@@ -381,7 +382,7 @@ class _C4DashboardState extends State<C4Dashboard> {
             isPortrait: false,
             onItemTap: (ctx, item) {
               final h = historyController.liveHistory.firstWhere(
-                (wh) =>
+                (WatchHistory wh) =>
                     wh.streamId == item.id &&
                     wh.contentType == item.contentType,
                 orElse: () =>

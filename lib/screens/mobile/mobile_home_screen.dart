@@ -71,20 +71,16 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isHistoryLoading = context.select<WatchHistoryController, bool>((c) => c.isLoading);
-    final isFavLoading = context.select<FavoritesController, bool>((c) => c.isLoading);
-    final continueWatching = context.select<WatchHistoryController, List<WatchHistory>>((c) => c.continueWatching);
-    final favItems = context.select<FavoritesController, List<Favorite>>((c) => c.favorites);
-    final movieHistory = context.select<WatchHistoryController, List<WatchHistory>>((c) => c.movieHistory);
-    final seriesHistory = context.select<WatchHistoryController, List<WatchHistory>>((c) => c.seriesHistory);
+    final history = context.watch<WatchHistoryController>();
+    final favorites = context.watch<FavoritesController>();
 
-    if (isHistoryLoading || isFavLoading) {
+    if (history.isLoading || favorites.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
 
     final heroItem = _getHeroItem();
-    final continueWatchingFiltered = continueWatching
-        .where((h) => h.contentType != ContentType.liveStream)
+    final continueWatchingFiltered = history.continueWatching
+        .where((WatchHistory h) => h.contentType != ContentType.liveStream)
         .toList();
 
     return RefreshIndicator(
@@ -107,10 +103,10 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
-          if (favItems.isNotEmpty)
+          if (favorites.favorites.isNotEmpty)
             _buildSection(
               context.loc.favorites,
-              favItems
+              favorites.favorites
                   .map(
                     (f) => ContentItem(
                       f.streamId,
@@ -127,12 +123,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
           if (_trendingSeries.isNotEmpty)
             _buildTmdbSection('Trending Series', _trendingSeries),
 
-          if (movieHistory.isNotEmpty)
+          if (history.movieHistory.isNotEmpty)
             _buildSection(
               'Recent Movies',
-              movieHistory
+              history.movieHistory
                   .map(
-                    (h) => ContentItem(
+                    (WatchHistory h) => ContentItem(
                       h.streamId,
                       h.title,
                       h.imagePath ?? '',
@@ -141,12 +137,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                   )
                   .toList(),
             ),
-          if (seriesHistory.isNotEmpty)
+          if (history.seriesHistory.isNotEmpty)
             _buildSection(
               'Recent Series',
-              seriesHistory
+              history.seriesHistory
                   .map(
-                    (h) => ContentItem(
+                    (WatchHistory h) => ContentItem(
                       h.streamId,
                       h.title,
                       h.imagePath ?? '',
@@ -240,7 +236,7 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   ContentItem? _getHeroItem() {
     // Prefer first non-live continue watching item
     final nonLiveContinue = _historyController.continueWatching
-        .where((h) => h.contentType != ContentType.liveStream)
+        .where((WatchHistory h) => h.contentType != ContentType.liveStream)
         .toList();
     if (nonLiveContinue.isNotEmpty) {
       final h = nonLiveContinue.first;

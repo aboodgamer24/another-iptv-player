@@ -154,6 +154,7 @@ class WatchHistoryController extends ChangeNotifier {
       WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     }
   }
+  Future<void> _playLiveStream(
     BuildContext context,
     WatchHistory history,
   ) async {
@@ -308,7 +309,7 @@ class WatchHistoryController extends ChangeNotifier {
 
   /// Fire-and-forget push of the continue_watching list to the sync server.
   void _syncContinueWatchingToServer() {
-    final data = _continueWatching.map((h) => {
+    final data = _continueWatching.map((WatchHistory h) => {
       'streamId': h.streamId,
       'title': h.title,
       'imagePath': h.imagePath,
