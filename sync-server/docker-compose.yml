@@ -24,10 +24,9 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env
+      - stack.env
     volumes:
-      - .:/app:ro
-      - server_modules:/app/node_modules
+      - .:/app
     ports:
       - "${PORT:-7000}:${PORT:-7000}"
     command: >
@@ -35,4 +34,3 @@ services:
 
 volumes:
   pgdata:
-  server_modules:
