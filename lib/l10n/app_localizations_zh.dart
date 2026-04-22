@@ -12,7 +12,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get slogan => '开源IPTV播放器';
 
   @override
-  String get account => 'Account';
+  String get account => '账户';
 
   @override
   String get search => '搜索';
@@ -824,67 +824,65 @@ class AppLocalizationsZh extends AppLocalizations {
   String get duration_label => '时长';
 
   @override
-  String get watch_later => 'Watch Later';
+  String get watch_later => '稍后观看';
 
   @override
-  String get watch_later_empty_message => 'Your watch later list is empty';
+  String get watch_later_empty_message => '您的稍后观看列表为空';
 
   @override
-  String get watch_later_empty_description =>
-      'Save movies and shows to watch them later here.';
+  String get watch_later_empty_description => '将电影和节目保存到此处，稍后再观看。';
 
   @override
-  String get integration => 'Integration';
+  String get integration => '集成';
 
   @override
-  String get tmdb_api_key => 'TMDB API Key';
+  String get tmdb_api_key => 'TMDB API 密钥';
 
   @override
-  String get enter_tmdb_api_key => 'Enter your TMDB API Key';
+  String get enter_tmdb_api_key => '输入您的 TMDB API 密钥';
 
   @override
-  String get added_to_watch_later => 'Added to Watch Later';
+  String get added_to_watch_later => '已添加到稍后观看';
 
   @override
-  String get removed_from_watch_later => 'Removed from Watch Later';
+  String get removed_from_watch_later => '已从稍后观看中移除';
 
   @override
-  String get live_tv => 'Live TV';
+  String get live_tv => '直播电视';
 
   @override
-  String get no_favorites_found => 'No favorites found';
+  String get no_favorites_found => '未找到收藏内容';
 
   @override
-  String get home_customization => 'Home Customization';
+  String get home_customization => '主页自定义';
 
   @override
-  String get home_customization_subtitle =>
-      'Drag to reorder, toggle to show or hide sections';
+  String get home_customization_subtitle => '拖动以重新排序，切换以显示或隐藏部分';
 
   @override
-  String get rail_continue_watching => 'Continue Watching';
+  String get rail_continue_watching => '继续观看';
 
   @override
-  String get rail_recommended => 'Recommended for you';
+  String get rail_recommended => '为您推荐';
 
   @override
-  String get rail_favorites_live => 'Favorite Channels';
+  String get rail_favorites_live => '收藏频道';
 
   @override
-  String get rail_favorites_movies => 'Favorite Movies';
+  String get rail_favorites_movies => '收藏电影';
 
   @override
-  String get rail_favorites_series => 'Favorite Series';
+  String get rail_favorites_series => '收藏剧集';
 
   @override
-  String get rail_watch_later => 'Watch Later';
+  String get rail_watch_later => '稍后观看';
 
   @override
-  String get rail_live_history => 'Recently Watched';
+  String get rail_live_history => '最近观看';
 
   @override
-  String get rail_trending_movies => 'Trending Movies';
+  String get rail_trending_movies => '热门电影';
 
   @override
-  String get rail_trending_series => 'Trending Series';
+  String get rail_trending_series => '热门剧集';
 }
