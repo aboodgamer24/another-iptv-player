@@ -37,7 +37,7 @@ jobs:
             - **Windows**: Run the setup installer (`.exe`) for easy installation, or extract the zip file for portable use
             - **macOS**: Extract zip and run `another_iptv_player.app`
             - **Linux**: Extract zip and run `another_iptv_player`
-            - **Android**: Install the APK file
+            - **Android**: Install the APK file (Universal — supports ARM, ARM64, x86_64)
             - **iOS**: Requires developer account for installation
             
             ### 🔄 Auto-generated from CI/CD
@@ -179,8 +179,8 @@ jobs:
         run: flutter pub get
       - name: Generate files
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
-      - name: Build Android APK
-        run: flutter build apk --build-name=releaseUnsigned
+      - name: Build Android APK (Universal)
+        run: flutter build apk --release --target-platform android-arm,android-arm64,android-x64
       - name: Rename APK to standard format
         run: cp build/app/outputs/flutter-apk/app-release.apk another-iptv-player-android-${{ github.ref_name }}.apk
       - name: Upload Android Asset

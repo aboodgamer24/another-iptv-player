@@ -39,11 +39,11 @@ jobs:
       - name: Generate files
         run: flutter packages pub run build_runner build --delete-conflicting-outputs
 
-      - name: Build Android APK
-        run: flutter build apk --build-name=releaseUnsigned
+      - name: Build Android APK (Universal)
+        run: flutter build apk --release --target-platform android-arm,android-arm64,android-x64
 
       - name: Build Android App Bundle
-        run: flutter build appbundle --build-name=releaseUnsigned
+        run: flutter build appbundle --release
 
       - name: Upload Android APK
         uses: actions/upload-artifact@v4
