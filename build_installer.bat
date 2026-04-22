@@ -7,7 +7,7 @@ echo ================================================
 echo.
 
 :: ── CONFIG ──────────────────────────────────────
-set VERSION=1.4.0
+set VERSION=0.6.0-alpha
 set APP_NAME=C4-TV
 set OUT_DIR=release_bundle
 set NSIS_PATH=C:\Program Files (x86)\NSIS\makensis.exe
@@ -103,10 +103,10 @@ echo.
 echo [4/4] Building Android Universal APK via WSL...
 echo.
 
-set APK_SRC=build\app\outputs\flutter-apk\app-release.apk
 set APK_OUT=%OUT_DIR%\%APP_NAME%-android-%VERSION%-universal.apk
 
-wsl bash ~/build_apk.sh
+:: Pass VERSION to WSL so the APK filename always matches
+wsl bash ~/build_apk.sh "%VERSION%"
 
 if %ERRORLEVEL% neq 0 (
     echo ERROR: Android APK build failed in WSL!
@@ -118,6 +118,7 @@ if exist "%APK_OUT%" (
     echo       APK ready: %APK_OUT%
 ) else (
     echo ERROR: APK not found in release_bundle!
+    echo        Expected: %APK_OUT%
     echo        Check WSL build output above.
     pause & exit /b 1
 )

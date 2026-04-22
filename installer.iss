@@ -1,5 +1,5 @@
 #define MyAppName "C4-TV"
-#define MyAppVersion "0.5.1"
+#define MyAppVersion "0.6.0-alpha"
 #define MyAppPublisher "aboodgamer24"
 #define MyAppExeName "C4-TV.exe"
 #define MyAppBuildDir "build\windows\x64\runner\Release"
