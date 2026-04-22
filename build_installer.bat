@@ -12,9 +12,6 @@ set APP_NAME=C4-TV
 set OUT_DIR=release_bundle
 set NSIS_PATH=C:\Program Files (x86)\NSIS\makensis.exe
 set INNO_PATH=C:\Program Files (x86)\Inno Setup 6\ISCC.exe
-:: Inno Setup outputs here based on installer.iss:
-::   OutputDir=release_bundle
-::   OutputBaseFilename=C4-TV_Setup
 set INNO_OUTPUT=%OUT_DIR%\C4-TV_Setup.exe
 :: ────────────────────────────────────────────────
 
@@ -41,11 +38,9 @@ set WIN_ZIP=%OUT_DIR%\%APP_NAME%-windows-%VERSION%.zip
 
 if exist "%WIN_ZIP%" del "%WIN_ZIP%"
 
-:: Try 7-Zip first
 7z a "%WIN_ZIP%" ".\%WIN_SRC%\*" >nul 2>&1
 if %ERRORLEVEL% equ 0 goto :ZIP_DONE
 
-:: Fallback to built-in tar (Windows 10/11)
 tar -a -c -f "%WIN_ZIP%" -C "%WIN_SRC%" .
 if %ERRORLEVEL% equ 0 goto :ZIP_DONE
 
@@ -61,12 +56,10 @@ echo.
 :: ════════════════════════════════════════════════
 echo [3/4] Compiling Windows installer...
 
-:: Try Inno Setup first (installer.iss at repo root)
 if exist "%INNO_PATH%" (
     echo       Using Inno Setup...
     "%INNO_PATH%" installer.iss
     if !ERRORLEVEL! equ 0 (
-        :: Inno outputs to release_bundle\C4-TV_Setup.exe per installer.iss
         if exist "%INNO_OUTPUT%" (
             move "%INNO_OUTPUT%" "%OUT_DIR%\%APP_NAME%-windows-setup-%VERSION%.exe" >nul
             echo       Created: %OUT_DIR%\%APP_NAME%-windows-setup-%VERSION%.exe
@@ -79,14 +72,13 @@ if exist "%INNO_PATH%" (
     )
 )
 
-:: Fallback to NSIS (installer.nsi lives inside windows\ folder)
 where makensis >nul 2>&1
 if %ERRORLEVEL% equ 0 (
     set NSIS_CMD=makensis
 ) else if exist "%NSIS_PATH%" (
     set "NSIS_CMD=%NSIS_PATH%"
 ) else (
-    echo WARNING: No installer tool found (Inno Setup or NSIS^). Skipping.
+    echo WARNING: No installer tool found. Skipping.
     goto :BUILD_ANDROID
 )
 
@@ -96,7 +88,6 @@ if %ERRORLEVEL% neq 0 (
     pause & exit /b 1
 )
 
-:: NSIS outputs another-iptv-player-windows-setup.exe at repo root
 if exist "another-iptv-player-windows-setup.exe" (
     move "another-iptv-player-windows-setup.exe" "%OUT_DIR%\%APP_NAME%-windows-setup-%VERSION%.exe" >nul
     echo       Created: %OUT_DIR%\%APP_NAME%-windows-setup-%VERSION%.exe
@@ -106,34 +97,92 @@ if exist "another-iptv-player-windows-setup.exe" (
 echo.
 
 :: ════════════════════════════════════════════════
-:: STEP 4 — Build Android Universal APK
+:: STEP 4 — Build Android Universal APK via WSL
 :: ════════════════════════════════════════════════
 :BUILD_ANDROID
-echo [4/4] Building Android Universal APK...
+echo [4/4] Building Android Universal APK via WSL...
 echo.
 
 set APK_SRC=build\app\outputs\flutter-apk\app-release.apk
 set APK_OUT=%OUT_DIR%\%APP_NAME%-android-%VERSION%-universal.apk
-set FLUTTER_APK_CMD=flutter build apk --release --target-platform android-arm,android-arm64,android-x64
 
-:: Try WSL first (more reliable for Android SDK on Windows)
-wsl --status >nul 2>&1
-if %ERRORLEVEL% equ 0 (
-    echo       Building via WSL...
-    :: Convert current Windows path to WSL mount path (e.g. C:\foo -> /mnt/c/foo)
-    for /f "delims=" %%i in ('wsl wslpath -u "%CD%"') do set WSL_PATH=%%i
-    wsl bash -c "cd '!WSL_PATH!' && %FLUTTER_APK_CMD%"
-    if !ERRORLEVEL! equ 0 goto :COPY_APK
-    echo       WSL build failed, trying native Windows...
-)
+:: Convert current Windows path to WSL path (e.g. C:\Users\foo -> /mnt/c/Users/foo)
+for /f "delims=" %%i in ('wsl wslpath -u "%CD%"') do set WSL_PATH=%%i
+echo       Project WSL path: !WSL_PATH!
+echo.
 
-:: Native Windows fallback (requires Android SDK in PATH)
-echo       Attempting native Windows build...
-call %FLUTTER_APK_CMD%
-if %ERRORLEVEL% neq 0 (
-    echo ERROR: Android APK build failed!
-    echo        Make sure Android SDK + Java 17 are installed and in PATH.
-    echo        Run: flutter doctor
+:: Write a self-contained build script into WSL and execute it
+:: This avoids quoting/escaping issues with inline bash -c commands
+wsl bash -c "cat > /tmp/c4tv_build.sh << 'BASHEOF'" 
+wsl bash << 'WSLEOF'
+cat > /tmp/c4tv_build.sh << 'BASHEOF'
+#!/bin/bash
+set -e
+
+PROJECT_PATH="$1"
+
+echo "  [WSL] Changing to project directory: $PROJECT_PATH"
+cd "$PROJECT_PATH"
+
+echo "  [WSL] Checking Flutter..."
+if ! command -v flutter &> /dev/null; then
+    # Try common Flutter install locations in WSL
+    for p in "$HOME/flutter/bin" "/usr/local/flutter/bin" "$HOME/snap/flutter/common/flutter/bin"; do
+        if [ -f "$p/flutter" ]; then
+            export PATH="$p:$PATH"
+            echo "  [WSL] Found Flutter at $p"
+            break
+        fi
+    done
+fi
+
+if ! command -v flutter &> /dev/null; then
+    echo "  [WSL] ERROR: Flutter not found in WSL!"
+    echo "  [WSL] Install Flutter in WSL: https://docs.flutter.dev/get-started/install/linux"
+    exit 1
+fi
+
+echo "  [WSL] Flutter version: $(flutter --version | head -1)"
+
+echo "  [WSL] Checking Java..."
+if ! command -v java &> /dev/null; then
+    echo "  [WSL] ERROR: Java not found! Install with:"
+    echo "  [WSL]   sudo apt install openjdk-17-jdk"
+    exit 1
+fi
+echo "  [WSL] Java: $(java -version 2>&1 | head -1)"
+
+echo "  [WSL] Running flutter pub get..."
+flutter pub get
+
+echo "  [WSL] Building Universal APK..."
+flutter build apk --release --target-platform android-arm,android-arm64,android-x64
+
+echo "  [WSL] APK build complete!"
+BASHEOF
+chmod +x /tmp/c4tv_build.sh
+WSLEOF
+
+:: Run the build script inside WSL passing the project path
+echo       Starting WSL build...
+wsl bash /tmp/c4tv_build.sh "!WSL_PATH!"
+
+if !ERRORLEVEL! neq 0 (
+    echo.
+    echo ERROR: Android APK build failed in WSL!
+    echo.
+    echo Common fixes:
+    echo   1. Make sure Flutter is installed in WSL
+    echo      Run in WSL: sudo snap install flutter --classic
+    echo      OR:         git clone https://github.com/flutter/flutter ~/flutter
+    echo.
+    echo   2. Make sure Java 17 is installed in WSL
+    echo      Run in WSL: sudo apt install openjdk-17-jdk
+    echo.
+    echo   3. Accept Android licenses in WSL
+    echo      Run in WSL: flutter doctor --android-licenses
+    echo.
+    echo   4. Run in WSL to diagnose: flutter doctor
     pause & exit /b 1
 )
 
@@ -143,6 +192,7 @@ if exist "%APK_SRC%" (
     echo       Created: %APK_OUT%
 ) else (
     echo ERROR: APK not found at %APK_SRC%
+    echo        WSL build ran but APK was not written back to Windows filesystem.
     pause & exit /b 1
 )
 
