@@ -106,95 +106,23 @@ echo.
 set APK_SRC=build\app\outputs\flutter-apk\app-release.apk
 set APK_OUT=%OUT_DIR%\%APP_NAME%-android-%VERSION%-universal.apk
 
-:: Convert current Windows path to WSL path (e.g. C:\Users\foo -> /mnt/c/Users/foo)
-for /f "delims=" %%i in ('wsl wslpath -u "%CD%"') do set WSL_PATH=%%i
-echo       Project WSL path: !WSL_PATH!
-echo.
+wsl bash ~/build_apk.sh
 
-:: Write a self-contained build script into WSL and execute it
-:: This avoids quoting/escaping issues with inline bash -c commands
-wsl bash -c "cat > /tmp/c4tv_build.sh << 'BASHEOF'" 
-wsl bash << 'WSLEOF'
-cat > /tmp/c4tv_build.sh << 'BASHEOF'
-#!/bin/bash
-set -e
-
-PROJECT_PATH="$1"
-
-echo "  [WSL] Changing to project directory: $PROJECT_PATH"
-cd "$PROJECT_PATH"
-
-echo "  [WSL] Checking Flutter..."
-if ! command -v flutter &> /dev/null; then
-    # Try common Flutter install locations in WSL
-    for p in "$HOME/flutter/bin" "/usr/local/flutter/bin" "$HOME/snap/flutter/common/flutter/bin"; do
-        if [ -f "$p/flutter" ]; then
-            export PATH="$p:$PATH"
-            echo "  [WSL] Found Flutter at $p"
-            break
-        fi
-    done
-fi
-
-if ! command -v flutter &> /dev/null; then
-    echo "  [WSL] ERROR: Flutter not found in WSL!"
-    echo "  [WSL] Install Flutter in WSL: https://docs.flutter.dev/get-started/install/linux"
-    exit 1
-fi
-
-echo "  [WSL] Flutter version: $(flutter --version | head -1)"
-
-echo "  [WSL] Checking Java..."
-if ! command -v java &> /dev/null; then
-    echo "  [WSL] ERROR: Java not found! Install with:"
-    echo "  [WSL]   sudo apt install openjdk-17-jdk"
-    exit 1
-fi
-echo "  [WSL] Java: $(java -version 2>&1 | head -1)"
-
-echo "  [WSL] Running flutter pub get..."
-flutter pub get
-
-echo "  [WSL] Building Universal APK..."
-flutter build apk --release --target-platform android-arm,android-arm64,android-x64
-
-echo "  [WSL] APK build complete!"
-BASHEOF
-chmod +x /tmp/c4tv_build.sh
-WSLEOF
-
-:: Run the build script inside WSL passing the project path
-echo       Starting WSL build...
-wsl bash /tmp/c4tv_build.sh "!WSL_PATH!"
-
-if !ERRORLEVEL! neq 0 (
-    echo.
+if %ERRORLEVEL% neq 0 (
     echo ERROR: Android APK build failed in WSL!
-    echo.
-    echo Common fixes:
-    echo   1. Make sure Flutter is installed in WSL
-    echo      Run in WSL: sudo snap install flutter --classic
-    echo      OR:         git clone https://github.com/flutter/flutter ~/flutter
-    echo.
-    echo   2. Make sure Java 17 is installed in WSL
-    echo      Run in WSL: sudo apt install openjdk-17-jdk
-    echo.
-    echo   3. Accept Android licenses in WSL
-    echo      Run in WSL: flutter doctor --android-licenses
-    echo.
-    echo   4. Run in WSL to diagnose: flutter doctor
     pause & exit /b 1
 )
 
 :COPY_APK
-if exist "%APK_SRC%" (
-    copy "%APK_SRC%" "%APK_OUT%" >nul
-    echo       Created: %APK_OUT%
+if exist "%APK_OUT%" (
+    echo       APK ready: %APK_OUT%
 ) else (
-    echo ERROR: APK not found at %APK_SRC%
-    echo        WSL build ran but APK was not written back to Windows filesystem.
+    echo ERROR: APK not found in release_bundle!
+    echo        Check WSL build output above.
     pause & exit /b 1
 )
+
+goto :DONE
 
 :: ════════════════════════════════════════════════
 :DONE
