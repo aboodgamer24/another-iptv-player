@@ -26,6 +26,7 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
   int _selectedCategoryIndex = 0; // 0 = "All"
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<ContentItem> _allItems = [];
 
@@ -76,49 +77,89 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _buildSearchBar(),
-        _buildCategoryChips(),
-        Expanded(
-          child: _displayItems.isEmpty
-              ? _buildEmptyState()
-              : GridView.builder(
-                  cacheExtent: 500,
-                  padding: const EdgeInsets.all(8),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.67,
-                    mainAxisSpacing: 12,
-                    crossAxisSpacing: 12,
+    return Scaffold(
+      key: _scaffoldKey,
+      backgroundColor: Colors.transparent,
+      drawer: _buildCategoryDrawer(),
+      body: Column(
+        children: [
+          _buildSearchBar(),
+          Expanded(
+            child: _displayItems.isEmpty
+                ? _buildEmptyState()
+                : GridView.builder(
+                    cacheExtent: 500,
+                    padding: const EdgeInsets.all(8),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      childAspectRatio: 0.67,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                    ),
+                    itemCount: _displayItems.length,
+                    itemBuilder: (context, index) {
+                      return _buildPosterCard(_displayItems[index]);
+                    },
                   ),
-                  itemCount: _displayItems.length,
-                  itemBuilder: (context, index) {
-                    return _buildPosterCard(_displayItems[index]);
-                  },
-                ),
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildSearchBar() {
+    final selectedLabel = _selectedCategoryIndex == 0 ? context.loc.all : widget.categories[_selectedCategoryIndex - 1].category.categoryName;
+
     return Padding(
-      padding: const EdgeInsets.all(8.0),
-      child: TextField(
-        controller: _searchController,
-        onChanged: (v) => setState(() => _searchQuery = v),
-        decoration: InputDecoration(
-          hintText: _getSearchHint(),
-          prefixIcon: const Icon(Icons.search),
-          filled: true,
-          fillColor: Colors.grey[900],
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: BorderSide.none,
+      padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
+      child: Row(
+        children: [
+          GestureDetector(
+            onTap: () => _scaffoldKey.currentState?.openDrawer(),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.grey[900],
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white12),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.menu_rounded, color: Colors.white70, size: 18),
+                  const SizedBox(width: 6),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 90),
+                    child: Text(
+                      selectedLabel,
+                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: TextField(
+              controller: _searchController,
+              onChanged: (v) => setState(() => _searchQuery = v),
+              decoration: InputDecoration(
+                hintText: _getSearchHint(),
+                prefixIcon: const Icon(Icons.search),
+                filled: true,
+                fillColor: Colors.grey[900],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -134,36 +175,92 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
     }
   }
 
-  Widget _buildCategoryChips() {
-    return SizedBox(
-      height: 50,
-      child: ListView.builder(
-        cacheExtent: 500,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8),
-        itemCount: widget.categories.length + 1,
-        itemBuilder: (context, index) {
-          final isSelected = _selectedCategoryIndex == index;
-          final label = index == 0 ? context.loc.all : widget.categories[index - 1].category.categoryName;
-
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: ChoiceChip(
-              label: Text(label),
-              selected: isSelected,
-              onSelected: (selected) {
-                if (selected) {
-                  setState(() => _selectedCategoryIndex = index);
-                }
-              },
-              selectedColor: Theme.of(context).primaryColor,
-              backgroundColor: Colors.grey[900],
-              labelStyle: TextStyle(
-                color: isSelected ? Colors.white : Colors.white70,
+  Widget _buildCategoryDrawer() {
+    return Drawer(
+      width: 260,
+      backgroundColor: const Color(0xFF1A1A1A),
+      child: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Row(
+                children: [
+                  Icon(
+                    widget.contentType == ContentType.vod ? Icons.movie_outlined : Icons.tv_outlined,
+                    color: Colors.white70,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    context.loc.categories,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
-          );
-        },
+            const Divider(color: Colors.white12, height: 1),
+            // Category list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                itemCount: widget.categories.length + 1, // +1 for "All"
+                itemBuilder: (context, index) {
+                  final isSelected = _selectedCategoryIndex == index;
+                  final label = index == 0 ? context.loc.all : widget.categories[index - 1].category.categoryName;
+                  final count = index == 0 ? _allItems.length : widget.categories[index - 1].contentItems.length;
+
+                  return InkWell(
+                    onTap: () {
+                      setState(() => _selectedCategoryIndex = index);
+                      Navigator.of(context).pop(); // close drawer
+                    },
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.2) : Colors.transparent,
+                        borderRadius: BorderRadius.circular(8),
+                        border: isSelected ? Border.all(color: Theme.of(context).primaryColor.withOpacity(0.5)) : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: isSelected ? Colors.white : Colors.white70,
+                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                fontSize: 14,
+                              ),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '$count',
+                            style: TextStyle(
+                              color: isSelected ? Theme.of(context).primaryColor : Colors.white38,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
