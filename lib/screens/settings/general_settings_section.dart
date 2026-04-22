@@ -386,6 +386,10 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                 value: 'skyBlue',
                 child: Text('Sky Blue'),
               ),
+              const DropdownMenuItem(
+                value: 'crimson',
+                child: Text('Crimson'),
+              ),
             ],
             onChanged: (value) async {
               if (value != null) {

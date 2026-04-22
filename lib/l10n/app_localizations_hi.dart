@@ -72,8 +72,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get day => 'दिन';
 
   @override
-  String get clear_all_confirmation_message =>
-      'क्या आप वाकई सारा इतिहास हटाना चाहते हैं?';
+  String get clear_all_confirmation_message => 'क्या आप वाकई सारा इतिहास हटाना चाहते हैं?';
 
   @override
   String get try_again => 'फिर से कोशिश करें';
@@ -185,8 +184,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get continue_on_background => 'बैकग्राउंड में चलाना जारी रखें';
 
   @override
-  String get continue_on_background_description =>
-      'ऐप बैकग्राउंड में होने पर भी प्लेबैक जारी रखें';
+  String get continue_on_background_description => 'ऐप बैकग्राउंड में होने पर भी प्लेबैक जारी रखें';
 
   @override
   String get refresh_contents => 'सामग्री रीफ्रेश करें';
@@ -195,8 +193,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get subtitle_settings => 'सबटाइटल सेटिंग्स';
 
   @override
-  String get subtitle_settings_description =>
-      'सबटाइटल की दिखावट को कस्टमाइज़ करें';
+  String get subtitle_settings_description => 'सबटाइटल की दिखावट को कस्टमाइज़ करें';
 
   @override
   String get sample_text => 'नमूना सबटाइटल टेक्स्ट\nयह इस तरह दिखेगा';
@@ -311,8 +308,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get empty_playlist_title => 'अभी तक कोई प्लेलिस्ट नहीं';
 
   @override
-  String get empty_playlist_message =>
-      'अपनी पहली प्लेलिस्ट बनाकर शुरुआत करें।\nआप Xtream Code या M3U फॉर्मेट में प्लेलिस्ट जोड़ सकते हैं।';
+  String get empty_playlist_message => 'अपनी पहली प्लेलिस्ट बनाकर शुरुआत करें।\nआप Xtream Code या M3U फॉर्मेट में प्लेलिस्ट जोड़ सकते हैं।';
 
   @override
   String get empty_playlist_button => 'मेरी पहली प्लेलिस्ट बनाएं';
@@ -336,20 +332,16 @@ class AppLocalizationsHi extends AppLocalizations {
   String get select_playlist_type => 'प्लेलिस्ट प्रकार चुनें';
 
   @override
-  String get select_playlist_message =>
-      'आप जो प्लेलिस्ट बनाना चाहते हैं उसका प्रकार चुनें';
+  String get select_playlist_message => 'आप जो प्लेलिस्ट बनाना चाहते हैं उसका प्रकार चुनें';
 
   @override
-  String get xtream_code_title =>
-      'API URL, उपयोगकर्ता नाम और पासवर्ड के साथ कनेक्ट करें';
+  String get xtream_code_title => 'API URL, उपयोगकर्ता नाम और पासवर्ड के साथ कनेक्ट करें';
 
   @override
-  String get xtream_code_description =>
-      'अपने IPTV प्रदाता की जानकारी के साथ आसानी से कनेक्ट करें';
+  String get xtream_code_description => 'अपने IPTV प्रदाता की जानकारी के साथ आसानी से कनेक्ट करें';
 
   @override
-  String get select_playlist_type_footer =>
-      'आपकी प्लेलिस्ट की जानकारी आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है।';
+  String get select_playlist_type_footer => 'आपकी प्लेलिस्ट की जानकारी आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है।';
 
   @override
   String get api_url => 'API URL';
@@ -431,24 +423,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get server_message => 'सर्वर संदेश';
 
   @override
-  String get all_datas_are_stored_in_device =>
-      'सभी डेटा आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है';
+  String get all_datas_are_stored_in_device => 'सभी डेटा आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है';
 
   @override
-  String get url_format_validate_message =>
-      'URL फॉर्मेट http://server:port की तरह होना चाहिए';
+  String get url_format_validate_message => 'URL फॉर्मेट http://server:port की तरह होना चाहिए';
 
   @override
-  String get url_format_validate_error =>
-      'कृपया एक वैध URL दर्ज करें (http:// या https:// से शुरू होना चाहिए)';
+  String get url_format_validate_error => 'कृपया एक वैध URL दर्ज करें (http:// या https:// से शुरू होना चाहिए)';
 
   @override
-  String get playlist_name_already_exists =>
-      'इस नाम की प्लेलिस्ट पहले से मौजूद है';
+  String get playlist_name_already_exists => 'इस नाम की प्लेलिस्ट पहले से मौजूद है';
 
   @override
-  String get invalid_credentials =>
-      'आपके IPTV प्रदाता से प्रतिक्रिया नहीं मिल सकी, कृपया अपनी जानकारी जांचें';
+  String get invalid_credentials => 'आपके IPTV प्रदाता से प्रतिक्रिया नहीं मिल सकी, कृपया अपनी जानकारी जांचें';
 
   @override
   String get error_occurred => 'एक त्रुटि हुई';
@@ -498,8 +485,7 @@ class AppLocalizationsHi extends AppLocalizations {
   }
 
   @override
-  String get preparing_user_info_exception_1 =>
-      'उपयोगकर्ता की जानकारी नहीं मिल सकी';
+  String get preparing_user_info_exception_1 => 'उपयोगकर्ता की जानकारी नहीं मिल सकी';
 
   @override
   String preparing_user_info_exception_2(Object error) {
@@ -510,22 +496,19 @@ class AppLocalizationsHi extends AppLocalizations {
   String get m3u_playlist_title => 'M3U फ़ाइल या URL के साथ प्लेलिस्ट जोड़ें';
 
   @override
-  String get m3u_playlist_description =>
-      'पारंपरिक M3U प्रारूप फ़ाइलों का समर्थन करता है';
+  String get m3u_playlist_description => 'पारंपरिक M3U प्रारूप फ़ाइलों का समर्थन करता है';
 
   @override
   String get m3u_playlist => 'M3U प्लेलिस्ट';
 
   @override
-  String get m3u_playlist_load_description =>
-      'M3U प्लेलिस्ट फ़ाइल या URL के साथ IPTV चैनल लोड करें';
+  String get m3u_playlist_load_description => 'M3U प्लेलिस्ट फ़ाइल या URL के साथ IPTV चैनल लोड करें';
 
   @override
   String get playlist_name_hint => 'प्लेलिस्ट का नाम दर्ज करें';
 
   @override
-  String get playlist_name_min_length =>
-      'प्लेलिस्ट का नाम कम से कम 2 अक्षर का होना चाहिए';
+  String get playlist_name_min_length => 'प्लेलिस्ट का नाम कम से कम 2 अक्षर का होना चाहिए';
 
   @override
   String get source_type => 'स्रोत प्रकार';
@@ -576,8 +559,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get error_occurred_title => 'त्रुटि हुई';
 
   @override
-  String get m3u_info_message =>
-      'सभी डेटा आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है।\nसमर्थित प्रारूप: .m3u, .m3u8\nURL प्रारूप: http:// या https:// से शुरू होना चाहिए';
+  String get m3u_info_message => 'सभी डेटा आपके डिवाइस पर सुरक्षित रूप से संग्रहीत है।\nसमर्थित प्रारूप: .m3u, .m3u8\nURL प्रारूप: http:// या https:// से शुरू होना चाहिए';
 
   @override
   String get m3u_parse_error => 'M3U पार्सिंग त्रुटि';
@@ -658,8 +640,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get remove_from_history => 'इतिहास से हटाएं';
 
   @override
-  String get remove_from_history_confirmation =>
-      'क्या आप वाकई इस आइटम को देखने के इतिहास से हटाना चाहते हैं?';
+  String get remove_from_history_confirmation => 'क्या आप वाकई इस आइटम को देखने के इतिहास से हटाना चाहते हैं?';
 
   @override
   String get remove => 'हटाएं';
@@ -668,8 +649,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clear_old_records => 'पुराने रिकॉर्ड साफ़ करें';
 
   @override
-  String get clear_old_records_confirmation =>
-      'क्या आप 30 दिन से पुराने देखने के रिकॉर्ड को हटाना चाहते हैं?';
+  String get clear_old_records_confirmation => 'क्या आप 30 दिन से पुराने देखने के रिकॉर्ड को हटाना चाहते हैं?';
 
   @override
   String get clear_old => 'पुराने साफ़ करें';
@@ -678,8 +658,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get clear_all_history => 'सभी इतिहास साफ़ करें';
 
   @override
-  String get clear_all_history_confirmation =>
-      'क्या आप सभी देखने का इतिहास हटाना चाहते हैं?';
+  String get clear_all_history_confirmation => 'क्या आप सभी देखने का इतिहास हटाना चाहते हैं?';
 
   @override
   String get appearance => 'दिखावट';
@@ -720,15 +699,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get brightness_gesture => 'चमक जेस्चर';
 
   @override
-  String get brightness_gesture_description =>
-      'बाईं ओर लंबवत स्वाइप करके चमक नियंत्रित करें';
+  String get brightness_gesture_description => 'बाईं ओर लंबवत स्वाइप करके चमक नियंत्रित करें';
 
   @override
   String get volume_gesture => 'वॉल्यूम जेस्चर';
 
   @override
-  String get volume_gesture_description =>
-      'दाईं ओर लंबवत स्वाइप करके वॉल्यूम नियंत्रित करें';
+  String get volume_gesture_description => 'दाईं ओर लंबवत स्वाइप करके वॉल्यूम नियंत्रित करें';
 
   @override
   String get seek_gesture => 'सीक जेस्चर';
@@ -740,8 +717,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get speed_up_on_long_press => 'लंबे दबाव पर गति बढ़ाएं';
 
   @override
-  String get speed_up_on_long_press_description =>
-      'लंबे दबाव पर प्लेबैक गति बढ़ाएं';
+  String get speed_up_on_long_press_description => 'लंबे दबाव पर प्लेबैक गति बढ़ाएं';
 
   @override
   String get seek_on_double_tap => 'डबल टैप पर खोजें';
@@ -762,8 +738,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get support_on_github => 'GitHub पर समर्थन करें';
 
   @override
-  String get support_on_github_description =>
-      'GitHub पर प्रोजेक्ट में योगदान दें';
+  String get support_on_github_description => 'GitHub पर प्रोजेक्ट में योगदान दें';
 
   @override
   String get select_channel => 'चैनल चुनें';
@@ -853,8 +828,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get watch_later_empty_message => 'आपकी बाद में देखने की सूची खाली है';
 
   @override
-  String get watch_later_empty_description =>
-      'बाद में देखने के लिए फ़िल्में और शो यहाँ सहेजें।';
+  String get watch_later_empty_description => 'बाद में देखने के लिए फ़िल्में और शो यहाँ सहेजें।';
 
   @override
   String get integration => 'एकीकरण';
@@ -881,8 +855,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get home_customization => 'होम कस्टमाइज़ेशन';
 
   @override
-  String get home_customization_subtitle =>
-      'क्रम बदलने के लिए खींचें, अनुभागों को दिखाने या छिपाने के लिए टॉगल करें';
+  String get home_customization_subtitle => 'क्रम बदलने के लिए खींचें, अनुभागों को दिखाने या छिपाने के लिए टॉगल करें';
 
   @override
   String get rail_continue_watching => 'देखना जारी रखें';

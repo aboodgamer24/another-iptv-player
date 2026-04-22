@@ -20,6 +20,15 @@ class AppThemes {
   static const Color _skyBluePrimary = Color(0xFF4A90D9);
   static const Color _skyBlueAccent = Color(0xFF2E7BC6);
 
+  // Crimson palette
+  static const Color _crimsonPrimary = Color(0xFFA50000);
+  static const Color _crimsonAccent = Color(0xFFD32F2F);
+  static const Color _crimsonBg = Color(0xFF0D0000);
+  static const Color _crimsonSurface = Color(0xFF1A0000);
+  static const Color _crimsonSurface2 = Color(0xFF2A0505);
+  static const Color _crimsonText = Color(0xFFF5E6E6);
+  static const Color _crimsonTextMuted = Color(0xFFBB8C8C);
+
   static final ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     pageTransitionsTheme: _androidFadeThrough,
@@ -202,6 +211,98 @@ class AppThemes {
     ),
   );
 
+  static final ThemeData crimsonTheme = ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    fontFamily: 'DMSans',
+    pageTransitionsTheme: _androidFadeThrough,
+    colorScheme: ColorScheme.dark(
+      primary: _crimsonPrimary,
+      onPrimary: Colors.white,
+      primaryContainer: _crimsonPrimary.withValues(alpha: 0.25),
+      onPrimaryContainer: const Color(0xFFFFCDD2),
+      secondary: _crimsonAccent,
+      onSecondary: Colors.white,
+      surface: _crimsonSurface,
+      onSurface: _crimsonText,
+      onSurfaceVariant: _crimsonTextMuted,
+      outline: const Color(0xFF4A1515),
+      surfaceContainerHighest: _crimsonSurface2,
+      surfaceContainerHigh: const Color(0xFF220808),
+      surfaceContainer: const Color(0xFF1E0404),
+      error: const Color(0xFFFF6B6B),
+      onError: Colors.black,
+    ),
+    scaffoldBackgroundColor: _crimsonBg,
+    cardTheme: CardThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      color: _crimsonSurface,
+    ),
+    appBarTheme: const AppBarTheme(
+      centerTitle: false,
+      elevation: 0,
+      backgroundColor: _crimsonBg,
+      titleTextStyle: TextStyle(
+        fontFamily: 'DMSans',
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
+        color: _crimsonText,
+      ),
+    ),
+    navigationRailTheme: NavigationRailThemeData(
+      backgroundColor: _crimsonBg,
+      selectedIconTheme: const IconThemeData(color: _crimsonPrimary),
+      unselectedIconTheme: IconThemeData(color: _crimsonTextMuted),
+      selectedLabelTextStyle: const TextStyle(
+        color: _crimsonPrimary,
+        fontWeight: FontWeight.bold,
+      ),
+      unselectedLabelTextStyle: TextStyle(color: _crimsonTextMuted),
+    ),
+    bottomNavigationBarTheme: BottomNavigationBarThemeData(
+      backgroundColor: _crimsonBg,
+      selectedItemColor: _crimsonPrimary,
+      unselectedItemColor: _crimsonTextMuted,
+    ),
+    navigationBarTheme: NavigationBarThemeData(
+      backgroundColor: _crimsonBg,
+      indicatorColor: _crimsonPrimary.withValues(alpha: 0.2),
+    ),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF2A0A0A),
+      thickness: 1,
+    ),
+    inputDecorationTheme: InputDecorationTheme(
+      border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      filled: true,
+      fillColor: _crimsonSurface2,
+      hintStyle: TextStyle(color: _crimsonTextMuted),
+    ),
+    dialogTheme: DialogThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      backgroundColor: _crimsonSurface,
+    ),
+    snackBarTheme: SnackBarThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      behavior: SnackBarBehavior.floating,
+      backgroundColor: _crimsonSurface2,
+      contentTextStyle: const TextStyle(color: _crimsonText),
+    ),
+    chipTheme: ChipThemeData(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      backgroundColor: _crimsonSurface2,
+      selectedColor: _crimsonPrimary.withValues(alpha: 0.3),
+    ),
+    textTheme: const TextTheme(
+      headlineLarge: TextStyle(color: _crimsonText, fontWeight: FontWeight.bold),
+      headlineMedium: TextStyle(color: _crimsonText, fontWeight: FontWeight.bold),
+      bodyLarge: TextStyle(color: _crimsonText),
+      bodyMedium: TextStyle(color: _crimsonTextMuted),
+    ),
+  );
+
   /// Get theme by name string
   static ThemeData getThemeByName(String name) {
     switch (name) {
@@ -211,6 +312,8 @@ class AppThemes {
         return darkTheme;
       case 'skyBlue':
         return skyBlueTheme;
+      case 'crimson':
+        return crimsonTheme;
       default:
         return darkTheme;
     }
@@ -218,7 +321,7 @@ class AppThemes {
 
   /// Check if a theme name represents a dark theme
   static bool isDarkTheme(String name) {
-    return name == 'dark';
+    return name == 'dark' || name == 'crimson';
   }
 }
 

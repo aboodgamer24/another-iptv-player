@@ -18,7 +18,7 @@ class ThemeProvider extends ChangeNotifier {
   ThemeData get currentThemeData => AppThemes.getThemeByName(_themeName);
 
   /// Whether the current theme is a dark variant.
-  bool get isDark => _themeName == 'dark';
+  bool get isDark => _themeName == 'dark' || _themeName == 'crimson';
 
   Future<void> _loadTheme() async {
     _themeName = await UserPreferences.getThemeName();
@@ -39,6 +39,7 @@ class ThemeProvider extends ChangeNotifier {
   bool isLightMode() => _themeName == 'light';
   bool isSystemMode() => false; // no longer used for custom themes
   bool isSkyBlueMode() => _themeName == 'skyBlue';
+  bool isCrimsonMode() => _themeName == 'crimson';
 
   ThemeMode _themeModeFromName(String name) {
     switch (name) {
@@ -46,6 +47,7 @@ class ThemeProvider extends ChangeNotifier {
       case 'skyBlue':
         return ThemeMode.light;
       case 'dark':
+      case 'crimson':
         return ThemeMode.dark;
       default:
         return ThemeMode.dark;

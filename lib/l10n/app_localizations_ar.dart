@@ -72,8 +72,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get day => 'يوم';
 
   @override
-  String get clear_all_confirmation_message =>
-      'هل أنت متأكد من رغبتك في حذف كل السجل؟';
+  String get clear_all_confirmation_message => 'هل أنت متأكد من رغبتك في حذف كل السجل؟';
 
   @override
   String get try_again => 'حاول مرة أخرى';
@@ -185,8 +184,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get continue_on_background => 'متابعة التشغيل في الخلفية';
 
   @override
-  String get continue_on_background_description =>
-      'متابعة التشغيل حتى عندما يكون التطبيق في الخلفية';
+  String get continue_on_background_description => 'متابعة التشغيل حتى عندما يكون التطبيق في الخلفية';
 
   @override
   String get refresh_contents => 'تحديث المحتوى';
@@ -310,8 +308,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get empty_playlist_title => 'لا توجد قوائم تشغيل بعد';
 
   @override
-  String get empty_playlist_message =>
-      'ابدأ بإنشاء قائمة التشغيل الأولى.\nيمكنك إضافة قوائم تشغيل بتنسيق Xtream Code أو M3U.';
+  String get empty_playlist_message => 'ابدأ بإنشاء قائمة التشغيل الأولى.\nيمكنك إضافة قوائم تشغيل بتنسيق Xtream Code أو M3U.';
 
   @override
   String get empty_playlist_button => 'إنشاء قائمة التشغيل الأولى';
@@ -335,20 +332,16 @@ class AppLocalizationsAr extends AppLocalizations {
   String get select_playlist_type => 'اختر نوع قائمة التشغيل';
 
   @override
-  String get select_playlist_message =>
-      'اختر نوع قائمة التشغيل التي تريد إنشاءها';
+  String get select_playlist_message => 'اختر نوع قائمة التشغيل التي تريد إنشاءها';
 
   @override
-  String get xtream_code_title =>
-      'الاتصال باستخدام API URL واسم المستخدم وكلمة المرور';
+  String get xtream_code_title => 'الاتصال باستخدام API URL واسم المستخدم وكلمة المرور';
 
   @override
-  String get xtream_code_description =>
-      'اتصل بسهولة باستخدام معلومات مزود IPTV الخاص بك';
+  String get xtream_code_description => 'اتصل بسهولة باستخدام معلومات مزود IPTV الخاص بك';
 
   @override
-  String get select_playlist_type_footer =>
-      'يتم تخزين معلومات قائمة التشغيل بأمان على جهازك.';
+  String get select_playlist_type_footer => 'يتم تخزين معلومات قائمة التشغيل بأمان على جهازك.';
 
   @override
   String get api_url => 'رابط API';
@@ -430,24 +423,19 @@ class AppLocalizationsAr extends AppLocalizations {
   String get server_message => 'رسالة الخادم';
 
   @override
-  String get all_datas_are_stored_in_device =>
-      'يتم تخزين جميع البيانات بأمان على جهازك';
+  String get all_datas_are_stored_in_device => 'يتم تخزين جميع البيانات بأمان على جهازك';
 
   @override
-  String get url_format_validate_message =>
-      'يجب أن يكون تنسيق الرابط مثل http://server:port';
+  String get url_format_validate_message => 'يجب أن يكون تنسيق الرابط مثل http://server:port';
 
   @override
-  String get url_format_validate_error =>
-      'يرجى إدخال رابط صحيح (يجب أن يبدأ بـ http:// أو https://)';
+  String get url_format_validate_error => 'يرجى إدخال رابط صحيح (يجب أن يبدأ بـ http:// أو https://)';
 
   @override
-  String get playlist_name_already_exists =>
-      'توجد قائمة تشغيل بهذا الاسم بالفعل';
+  String get playlist_name_already_exists => 'توجد قائمة تشغيل بهذا الاسم بالفعل';
 
   @override
-  String get invalid_credentials =>
-      'تعذر الحصول على استجابة من مزود IPTV، يرجى التحقق من معلوماتك';
+  String get invalid_credentials => 'تعذر الحصول على استجابة من مزود IPTV، يرجى التحقق من معلوماتك';
 
   @override
   String get error_occurred => 'حدث خطأ';
@@ -467,8 +455,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get preparing_live_streams => 'جارٍ تحميل القنوات المباشرة';
 
   @override
-  String get preparing_live_streams_exception_1 =>
-      'تعذر الحصول على القنوات المباشرة';
+  String get preparing_live_streams_exception_1 => 'تعذر الحصول على القنوات المباشرة';
 
   @override
   String preparing_live_streams_exception_2(Object error) {
@@ -498,8 +485,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get preparing_user_info_exception_1 =>
-      'تعذر الحصول على معلومات المستخدم';
+  String get preparing_user_info_exception_1 => 'تعذر الحصول على معلومات المستخدم';
 
   @override
   String preparing_user_info_exception_2(Object error) {
@@ -516,15 +502,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get m3u_playlist => 'قائمة تشغيل M3U';
 
   @override
-  String get m3u_playlist_load_description =>
-      'تحميل قنوات IPTV بملف قائمة تشغيل M3U أو رابط';
+  String get m3u_playlist_load_description => 'تحميل قنوات IPTV بملف قائمة تشغيل M3U أو رابط';
 
   @override
   String get playlist_name_hint => 'أدخل اسم قائمة التشغيل';
 
   @override
-  String get playlist_name_min_length =>
-      'يجب أن يكون اسم قائمة التشغيل على الأقل حرفين';
+  String get playlist_name_min_length => 'يجب أن يكون اسم قائمة التشغيل على الأقل حرفين';
 
   @override
   String get source_type => 'نوع المصدر';
@@ -575,8 +559,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get error_occurred_title => 'حدث خطأ';
 
   @override
-  String get m3u_info_message =>
-      'جميع البيانات محفوظة بأمان على جهازك.\nالتنسيقات المدعومة: .m3u, .m3u8\nتنسيق الرابط: يجب أن يبدأ بـ http:// أو https://';
+  String get m3u_info_message => 'جميع البيانات محفوظة بأمان على جهازك.\nالتنسيقات المدعومة: .m3u, .m3u8\nتنسيق الرابط: يجب أن يبدأ بـ http:// أو https://';
 
   @override
   String get m3u_parse_error => 'خطأ في تحليل M3U';
@@ -657,8 +640,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get remove_from_history => 'إزالة من السجل';
 
   @override
-  String get remove_from_history_confirmation =>
-      'هل أنت متأكد من أنك تريد إزالة هذا العنصر من سجل المشاهدة؟';
+  String get remove_from_history_confirmation => 'هل أنت متأكد من أنك تريد إزالة هذا العنصر من سجل المشاهدة؟';
 
   @override
   String get remove => 'إزالة';
@@ -667,8 +649,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clear_old_records => 'مسح السجلات القديمة';
 
   @override
-  String get clear_old_records_confirmation =>
-      'هل أنت متأكد من أنك تريد حذف سجلات المشاهدة الأقدم من 30 يومًا؟';
+  String get clear_old_records_confirmation => 'هل أنت متأكد من أنك تريد حذف سجلات المشاهدة الأقدم من 30 يومًا؟';
 
   @override
   String get clear_old => 'مسح القديم';
@@ -677,8 +658,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get clear_all_history => 'مسح كل السجل';
 
   @override
-  String get clear_all_history_confirmation =>
-      'هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟';
+  String get clear_all_history_confirmation => 'هل أنت متأكد من أنك تريد حذف كل سجل المشاهدة؟';
 
   @override
   String get appearance => 'المظهر';
@@ -719,15 +699,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get brightness_gesture => 'إيماءة السطوع';
 
   @override
-  String get brightness_gesture_description =>
-      'التحكم في السطوع عن طريق السحب عموديًا على الجانب الأيسر';
+  String get brightness_gesture_description => 'التحكم في السطوع عن طريق السحب عموديًا على الجانب الأيسر';
 
   @override
   String get volume_gesture => 'إيماءة الصوت';
 
   @override
-  String get volume_gesture_description =>
-      'التحكم في الصوت عن طريق السحب عموديًا على الجانب الأيمن';
+  String get volume_gesture_description => 'التحكم في الصوت عن طريق السحب عموديًا على الجانب الأيمن';
 
   @override
   String get seek_gesture => 'إيماءة البحث';
@@ -739,15 +717,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get speed_up_on_long_press => 'تسريع عند الضغط الطويل';
 
   @override
-  String get speed_up_on_long_press_description =>
-      'تسريع التشغيل عند الضغط الطويل';
+  String get speed_up_on_long_press_description => 'تسريع التشغيل عند الضغط الطويل';
 
   @override
   String get seek_on_double_tap => 'البحث عند النقر المزدوج';
 
   @override
-  String get seek_on_double_tap_description =>
-      'البحث للأمام/للخلف بالنقر المزدوج';
+  String get seek_on_double_tap_description => 'البحث للأمام/للخلف بالنقر المزدوج';
 
   @override
   String get copied_to_clipboard => 'تم النسخ إلى الحافظة';
@@ -852,8 +828,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get watch_later_empty_message => 'قائمة المشاهدة لاحقًا فارغة';
 
   @override
-  String get watch_later_empty_description =>
-      'احفظ الأفلام والعروض لمشاهدتها لاحقًا هنا.';
+  String get watch_later_empty_description => 'احفظ الأفلام والعروض لمشاهدتها لاحقًا هنا.';
 
   @override
   String get integration => 'التكامل';
@@ -880,8 +855,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get home_customization => 'تخصيص الصفحة الرئيسية';
 
   @override
-  String get home_customization_subtitle =>
-      'اسحب لإعادة الترتيب، قم بتبديل إظهار أو إخفاء الأقسام';
+  String get home_customization_subtitle => 'اسحب لإعادة الترتيب، قم بتبديل إظهار أو إخفاء الأقسام';
 
   @override
   String get rail_continue_watching => 'متابعة المشاهدة';
