@@ -28,14 +28,14 @@ InstallDirRegKey HKCU "Software\Another IPTV Player" ""
 RequestExecutionLevel admin
 
 ; Version information
-VIProductVersion "1.3.0.0"
+VIProductVersion "1.4.0.0"
 VIAddVersionKey "ProductName" "Another IPTV Player"
 VIAddVersionKey "Comments" "A modern IPTV player application"
 VIAddVersionKey "CompanyName" "Another IPTV Player"
 VIAddVersionKey "LegalCopyright" "Copyright © 2025"
 VIAddVersionKey "FileDescription" "Another IPTV Player Installer"
-VIAddVersionKey "FileVersion" "1.3.0.0"
-VIAddVersionKey "ProductVersion" "1.3.0.0"
+VIAddVersionKey "FileVersion" "1.4.0.0"
+VIAddVersionKey "ProductVersion" "1.4.0.0"
 
 ;--------------------------------
 ; Interface Settings
@@ -97,7 +97,7 @@ Section "Another IPTV Player" SecMain
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
                    "Publisher" "Another IPTV Player"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
-                   "DisplayVersion" "1.3.0"
+                   "DisplayVersion" "1.4.0"
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
                      "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Another IPTV Player" \
