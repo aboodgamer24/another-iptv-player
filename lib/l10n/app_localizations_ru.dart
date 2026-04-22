@@ -72,7 +72,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get day => 'День';
 
   @override
-  String get clear_all_confirmation_message => 'Вы уверены, что хотите удалить всю историю?';
+  String get clear_all_confirmation_message =>
+      'Вы уверены, что хотите удалить всю историю?';
 
   @override
   String get try_again => 'Попробовать снова';
@@ -81,7 +82,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get history => 'История';
 
   @override
-  String get history_empty_message => 'Просмотренные видео будут отображаться здесь';
+  String get history_empty_message =>
+      'Просмотренные видео будут отображаться здесь';
 
   @override
   String get live => 'Прямой эфир';
@@ -184,7 +186,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get continue_on_background => 'Воспроизведение в фоне';
 
   @override
-  String get continue_on_background_description => 'Продолжать воспроизведение, когда приложение свёрнуто';
+  String get continue_on_background_description =>
+      'Продолжать воспроизведение, когда приложение свёрнуто';
 
   @override
   String get refresh_contents => 'Обновить контент';
@@ -289,7 +292,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get playlist_name_required => 'Название плейлиста обязательно';
 
   @override
-  String get playlist_name_min_2 => 'Название должно содержать минимум 2 символа';
+  String get playlist_name_min_2 =>
+      'Название должно содержать минимум 2 символа';
 
   @override
   String playlist_deleted(Object name) {
@@ -308,7 +312,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get empty_playlist_title => 'Пока нет плейлистов';
 
   @override
-  String get empty_playlist_message => 'Начните с создания вашего первого плейлиста.\nВы можете добавить плейлисты в формате Xtream Code или M3U.';
+  String get empty_playlist_message =>
+      'Начните с создания вашего первого плейлиста.\nВы можете добавить плейлисты в формате Xtream Code или M3U.';
 
   @override
   String get empty_playlist_button => 'Создать первый плейлист';
@@ -332,16 +337,19 @@ class AppLocalizationsRu extends AppLocalizations {
   String get select_playlist_type => 'Выберите тип плейлиста';
 
   @override
-  String get select_playlist_message => 'Выберите тип плейлиста, который хотите создать';
+  String get select_playlist_message =>
+      'Выберите тип плейлиста, который хотите создать';
 
   @override
   String get xtream_code_title => 'Подключение через API URL, логин и пароль';
 
   @override
-  String get xtream_code_description => 'Легко подключайтесь с помощью данных от вашего IPTV-провайдера';
+  String get xtream_code_description =>
+      'Легко подключайтесь с помощью данных от вашего IPTV-провайдера';
 
   @override
-  String get select_playlist_type_footer => 'Информация о ваших плейлистах надёжно хранится на устройстве.';
+  String get select_playlist_type_footer =>
+      'Информация о ваших плейлистах надёжно хранится на устройстве.';
 
   @override
   String get api_url => 'API URL';
@@ -359,7 +367,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get username_required => 'Имя пользователя обязательно';
 
   @override
-  String get username_min_3 => 'Имя пользователя должно содержать минимум 3 символа';
+  String get username_min_3 =>
+      'Имя пользователя должно содержать минимум 3 символа';
 
   @override
   String get password => 'Пароль';
@@ -423,19 +432,24 @@ class AppLocalizationsRu extends AppLocalizations {
   String get server_message => 'Сообщение сервера';
 
   @override
-  String get all_datas_are_stored_in_device => 'Все данные надёжно хранятся на вашем устройстве';
+  String get all_datas_are_stored_in_device =>
+      'Все данные надёжно хранятся на вашем устройстве';
 
   @override
-  String get url_format_validate_message => 'Формат URL должен быть как http://сервер:порт';
+  String get url_format_validate_message =>
+      'Формат URL должен быть как http://сервер:порт';
 
   @override
-  String get url_format_validate_error => 'Введите корректный URL (должен начинаться с http:// или https://)';
+  String get url_format_validate_error =>
+      'Введите корректный URL (должен начинаться с http:// или https://)';
 
   @override
-  String get playlist_name_already_exists => 'Плейлист с таким названием уже существует';
+  String get playlist_name_already_exists =>
+      'Плейлист с таким названием уже существует';
 
   @override
-  String get invalid_credentials => 'Не удалось получить ответ от вашего IPTV-провайдера, проверьте данные';
+  String get invalid_credentials =>
+      'Не удалось получить ответ от вашего IPTV-провайдера, проверьте данные';
 
   @override
   String get error_occurred => 'Произошла ошибка';
@@ -455,7 +469,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get preparing_live_streams => 'Загрузка прямых каналов';
 
   @override
-  String get preparing_live_streams_exception_1 => 'Не удалось получить прямые каналы';
+  String get preparing_live_streams_exception_1 =>
+      'Не удалось получить прямые каналы';
 
   @override
   String preparing_live_streams_exception_2(Object error) {
@@ -485,7 +500,8 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get preparing_user_info_exception_1 => 'Не удалось получить информацию о пользователе';
+  String get preparing_user_info_exception_1 =>
+      'Не удалось получить информацию о пользователе';
 
   @override
   String preparing_user_info_exception_2(Object error) {
@@ -496,19 +512,22 @@ class AppLocalizationsRu extends AppLocalizations {
   String get m3u_playlist_title => 'Добавить плейлист с файлом M3U или URL';
 
   @override
-  String get m3u_playlist_description => 'Поддерживает файлы традиционного формата M3U';
+  String get m3u_playlist_description =>
+      'Поддерживает файлы традиционного формата M3U';
 
   @override
   String get m3u_playlist => 'Плейлист M3U';
 
   @override
-  String get m3u_playlist_load_description => 'Загрузить IPTV каналы с файлом плейлиста M3U или URL';
+  String get m3u_playlist_load_description =>
+      'Загрузить IPTV каналы с файлом плейлиста M3U или URL';
 
   @override
   String get playlist_name_hint => 'Введите название плейлиста';
 
   @override
-  String get playlist_name_min_length => 'Название плейлиста должно содержать не менее 2 символов';
+  String get playlist_name_min_length =>
+      'Название плейлиста должно содержать не менее 2 символов';
 
   @override
   String get source_type => 'Тип источника';
@@ -559,7 +578,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get error_occurred_title => 'Произошла ошибка';
 
   @override
-  String get m3u_info_message => 'Все данные надежно хранятся на вашем устройстве.\nПоддерживаемые форматы: .m3u, .m3u8\nФормат URL: Должен начинаться с http:// или https://';
+  String get m3u_info_message =>
+      'Все данные надежно хранятся на вашем устройстве.\nПоддерживаемые форматы: .m3u, .m3u8\nФормат URL: Должен начинаться с http:// или https://';
 
   @override
   String get m3u_parse_error => 'Ошибка парсинга M3U';
@@ -640,7 +660,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get remove_from_history => 'Удалить из истории';
 
   @override
-  String get remove_from_history_confirmation => 'Вы уверены, что хотите удалить этот элемент из истории просмотров?';
+  String get remove_from_history_confirmation =>
+      'Вы уверены, что хотите удалить этот элемент из истории просмотров?';
 
   @override
   String get remove => 'Удалить';
@@ -649,7 +670,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clear_old_records => 'Очистить старые записи';
 
   @override
-  String get clear_old_records_confirmation => 'Вы уверены, что хотите удалить записи просмотров старше 30 дней?';
+  String get clear_old_records_confirmation =>
+      'Вы уверены, что хотите удалить записи просмотров старше 30 дней?';
 
   @override
   String get clear_old => 'Очистить старые';
@@ -658,7 +680,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clear_all_history => 'Очистить всю историю';
 
   @override
-  String get clear_all_history_confirmation => 'Вы уверены, что хотите удалить всю историю просмотров?';
+  String get clear_all_history_confirmation =>
+      'Вы уверены, что хотите удалить всю историю просмотров?';
 
   @override
   String get appearance => 'Внешний вид';
@@ -699,13 +722,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get brightness_gesture => 'Жест яркости';
 
   @override
-  String get brightness_gesture_description => 'Управление яркостью вертикальным свайпом слева';
+  String get brightness_gesture_description =>
+      'Управление яркостью вертикальным свайпом слева';
 
   @override
   String get volume_gesture => 'Жест громкости';
 
   @override
-  String get volume_gesture_description => 'Управление громкостью вертикальным свайпом справа';
+  String get volume_gesture_description =>
+      'Управление громкостью вертикальным свайпом справа';
 
   @override
   String get seek_gesture => 'Жест поиска';
@@ -717,13 +742,15 @@ class AppLocalizationsRu extends AppLocalizations {
   String get speed_up_on_long_press => 'Ускорение при долгом нажатии';
 
   @override
-  String get speed_up_on_long_press_description => 'Ускорение воспроизведения при долгом нажатии';
+  String get speed_up_on_long_press_description =>
+      'Ускорение воспроизведения при долгом нажатии';
 
   @override
   String get seek_on_double_tap => 'Поиск при двойном нажатии';
 
   @override
-  String get seek_on_double_tap_description => 'Поиск вперед/назад двойным нажатием';
+  String get seek_on_double_tap_description =>
+      'Поиск вперед/назад двойным нажатием';
 
   @override
   String get copied_to_clipboard => 'Скопировано в буфер обмена';
@@ -828,7 +855,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get watch_later_empty_message => 'Ваш список «Смотреть позже» пуст';
 
   @override
-  String get watch_later_empty_description => 'Сохраняйте фильмы и сериалы, чтобы посмотреть их позже.';
+  String get watch_later_empty_description =>
+      'Сохраняйте фильмы и сериалы, чтобы посмотреть их позже.';
 
   @override
   String get integration => 'Интеграция';
@@ -855,7 +883,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get home_customization => 'Настройка главного экрана';
 
   @override
-  String get home_customization_subtitle => 'Перетаскивайте для изменения порядка, переключайте для показа или скрытия разделов';
+  String get home_customization_subtitle =>
+      'Перетаскивайте для изменения порядка, переключайте для показа или скрытия разделов';
 
   @override
   String get rail_continue_watching => 'Продолжить просмотр';

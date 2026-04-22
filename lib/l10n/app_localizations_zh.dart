@@ -308,7 +308,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get empty_playlist_title => '暂无播放列表';
 
   @override
-  String get empty_playlist_message => '从创建您的第一个播放列表开始。\n您可以添加 Xtream Code 或 M3U 格式的播放列表。';
+  String get empty_playlist_message =>
+      '从创建您的第一个播放列表开始。\n您可以添加 Xtream Code 或 M3U 格式的播放列表。';
 
   @override
   String get empty_playlist_button => '创建我的第一个播放列表';
@@ -559,7 +560,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get error_occurred_title => '发生错误';
 
   @override
-  String get m3u_info_message => '所有数据都安全存储在您的设备上。\n支持的格式：.m3u, .m3u8\n网址格式：必须以http://或https://开头';
+  String get m3u_info_message =>
+      '所有数据都安全存储在您的设备上。\n支持的格式：.m3u, .m3u8\n网址格式：必须以http://或https://开头';
 
   @override
   String get m3u_parse_error => 'M3U解析错误';
@@ -828,7 +830,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get watch_later_empty_message => 'Your watch later list is empty';
 
   @override
-  String get watch_later_empty_description => 'Save movies and shows to watch them later here.';
+  String get watch_later_empty_description =>
+      'Save movies and shows to watch them later here.';
 
   @override
   String get integration => 'Integration';
@@ -855,7 +858,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get home_customization => 'Home Customization';
 
   @override
-  String get home_customization_subtitle => 'Drag to reorder, toggle to show or hide sections';
+  String get home_customization_subtitle =>
+      'Drag to reorder, toggle to show or hide sections';
 
   @override
   String get rail_continue_watching => 'Continue Watching';

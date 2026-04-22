@@ -27,7 +27,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get search_series => 'Rechercher une série';
 
   @override
-  String get not_found_in_category => 'Aucun contenu trouvé dans cette catégorie';
+  String get not_found_in_category =>
+      'Aucun contenu trouvé dans cette catégorie';
 
   @override
   String get live_stream_not_found => 'Aucun direct trouvé';
@@ -72,7 +73,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get day => 'Jour';
 
   @override
-  String get clear_all_confirmation_message => 'Êtes-vous sûr de vouloir supprimer tout l\'historique ?';
+  String get clear_all_confirmation_message =>
+      'Êtes-vous sûr de vouloir supprimer tout l\'historique ?';
 
   @override
   String get try_again => 'Réessayer';
@@ -184,7 +186,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get continue_on_background => 'Continuer la lecture en arrière-plan';
 
   @override
-  String get continue_on_background_description => 'Continuer la lecture même quand l\'app est en arrière-plan';
+  String get continue_on_background_description =>
+      'Continuer la lecture même quand l\'app est en arrière-plan';
 
   @override
   String get refresh_contents => 'Actualiser le contenu';
@@ -193,10 +196,12 @@ class AppLocalizationsFr extends AppLocalizations {
   String get subtitle_settings => 'Paramètres des sous-titres';
 
   @override
-  String get subtitle_settings_description => 'Personnaliser l\'apparence des sous-titres';
+  String get subtitle_settings_description =>
+      'Personnaliser l\'apparence des sous-titres';
 
   @override
-  String get sample_text => 'Exemple de texte de sous-titre\nCela ressemblera à ceci';
+  String get sample_text =>
+      'Exemple de texte de sous-titre\nCela ressemblera à ceci';
 
   @override
   String get font_settings => 'Paramètres de police';
@@ -289,7 +294,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get playlist_name_required => 'Le nom de la liste est requis';
 
   @override
-  String get playlist_name_min_2 => 'Le nom doit contenir au moins 2 caractères';
+  String get playlist_name_min_2 =>
+      'Le nom doit contenir au moins 2 caractères';
 
   @override
   String playlist_deleted(Object name) {
@@ -308,7 +314,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get empty_playlist_title => 'Aucune liste pour le moment';
 
   @override
-  String get empty_playlist_message => 'Commencez par créer votre première liste de lecture.\nVous pouvez ajouter des listes au format Xtream Code ou M3U.';
+  String get empty_playlist_message =>
+      'Commencez par créer votre première liste de lecture.\nVous pouvez ajouter des listes au format Xtream Code ou M3U.';
 
   @override
   String get empty_playlist_button => 'Créer ma première liste';
@@ -332,16 +339,20 @@ class AppLocalizationsFr extends AppLocalizations {
   String get select_playlist_type => 'Sélectionner le type de liste';
 
   @override
-  String get select_playlist_message => 'Choisissez le type de liste que vous voulez créer';
+  String get select_playlist_message =>
+      'Choisissez le type de liste que vous voulez créer';
 
   @override
-  String get xtream_code_title => 'Se connecter avec l\'URL API, nom d\'utilisateur et mot de passe';
+  String get xtream_code_title =>
+      'Se connecter avec l\'URL API, nom d\'utilisateur et mot de passe';
 
   @override
-  String get xtream_code_description => 'Connectez-vous facilement avec les informations de votre fournisseur IPTV';
+  String get xtream_code_description =>
+      'Connectez-vous facilement avec les informations de votre fournisseur IPTV';
 
   @override
-  String get select_playlist_type_footer => 'Les informations de votre liste sont stockées en sécurité sur votre appareil.';
+  String get select_playlist_type_footer =>
+      'Les informations de votre liste sont stockées en sécurité sur votre appareil.';
 
   @override
   String get api_url => 'URL de l\'API';
@@ -359,7 +370,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get username_required => 'Nom d\'utilisateur requis';
 
   @override
-  String get username_min_3 => 'Le nom d\'utilisateur doit contenir au moins 3 caractères';
+  String get username_min_3 =>
+      'Le nom d\'utilisateur doit contenir au moins 3 caractères';
 
   @override
   String get password => 'Mot de passe';
@@ -371,7 +383,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get password_required => 'Mot de passe requis';
 
   @override
-  String get password_min_3 => 'Le mot de passe doit contenir au moins 3 caractères';
+  String get password_min_3 =>
+      'Le mot de passe doit contenir au moins 3 caractères';
 
   @override
   String get server_url => 'URL du serveur';
@@ -423,19 +436,24 @@ class AppLocalizationsFr extends AppLocalizations {
   String get server_message => 'Message du serveur';
 
   @override
-  String get all_datas_are_stored_in_device => 'Toutes les données sont stockées en sécurité sur votre appareil';
+  String get all_datas_are_stored_in_device =>
+      'Toutes les données sont stockées en sécurité sur votre appareil';
 
   @override
-  String get url_format_validate_message => 'Le format de l\'URL doit être comme http://serveur:port';
+  String get url_format_validate_message =>
+      'Le format de l\'URL doit être comme http://serveur:port';
 
   @override
-  String get url_format_validate_error => 'Veuillez entrer une URL valide (doit commencer par http:// ou https://)';
+  String get url_format_validate_error =>
+      'Veuillez entrer une URL valide (doit commencer par http:// ou https://)';
 
   @override
-  String get playlist_name_already_exists => 'Une liste avec ce nom existe déjà';
+  String get playlist_name_already_exists =>
+      'Une liste avec ce nom existe déjà';
 
   @override
-  String get invalid_credentials => 'Impossible d\'obtenir une réponse de votre fournisseur IPTV, vérifiez vos informations';
+  String get invalid_credentials =>
+      'Impossible d\'obtenir une réponse de votre fournisseur IPTV, vérifiez vos informations';
 
   @override
   String get error_occurred => 'Une erreur s\'est produite';
@@ -455,7 +473,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get preparing_live_streams => 'Chargement des chaînes en direct';
 
   @override
-  String get preparing_live_streams_exception_1 => 'Impossible d\'obtenir les chaînes en direct';
+  String get preparing_live_streams_exception_1 =>
+      'Impossible d\'obtenir les chaînes en direct';
 
   @override
   String preparing_live_streams_exception_2(Object error) {
@@ -485,7 +504,8 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get preparing_user_info_exception_1 => 'Impossible d\'obtenir les informations utilisateur';
+  String get preparing_user_info_exception_1 =>
+      'Impossible d\'obtenir les informations utilisateur';
 
   @override
   String preparing_user_info_exception_2(Object error) {
@@ -493,22 +513,26 @@ class AppLocalizationsFr extends AppLocalizations {
   }
 
   @override
-  String get m3u_playlist_title => 'Ajouter une playlist avec un fichier M3U ou une URL';
+  String get m3u_playlist_title =>
+      'Ajouter une playlist avec un fichier M3U ou une URL';
 
   @override
-  String get m3u_playlist_description => 'Prend en charge les fichiers au format M3U traditionnel';
+  String get m3u_playlist_description =>
+      'Prend en charge les fichiers au format M3U traditionnel';
 
   @override
   String get m3u_playlist => 'Playlist M3U';
 
   @override
-  String get m3u_playlist_load_description => 'Charger les chaînes IPTV avec un fichier de playlist M3U ou une URL';
+  String get m3u_playlist_load_description =>
+      'Charger les chaînes IPTV avec un fichier de playlist M3U ou une URL';
 
   @override
   String get playlist_name_hint => 'Entrez le nom de la playlist';
 
   @override
-  String get playlist_name_min_length => 'Le nom de la playlist doit comporter au moins 2 caractères';
+  String get playlist_name_min_length =>
+      'Le nom de la playlist doit comporter au moins 2 caractères';
 
   @override
   String get source_type => 'Type de source';
@@ -532,7 +556,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get url_format_error => 'Entrez un format d\'URL valide';
 
   @override
-  String get url_scheme_error => 'L\'URL doit commencer par http:// ou https://';
+  String get url_scheme_error =>
+      'L\'URL doit commencer par http:// ou https://';
 
   @override
   String get m3u_file => 'Fichier M3U';
@@ -559,7 +584,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get error_occurred_title => 'Erreur survenue';
 
   @override
-  String get m3u_info_message => 'Toutes les données sont stockées en toute sécurité sur votre appareil.\nFormats pris en charge : .m3u, .m3u8\nFormat d\'URL : Doit commencer par http:// ou https://';
+  String get m3u_info_message =>
+      'Toutes les données sont stockées en toute sécurité sur votre appareil.\nFormats pris en charge : .m3u, .m3u8\nFormat d\'URL : Doit commencer par http:// ou https://';
 
   @override
   String get m3u_parse_error => 'Erreur d\'analyse M3U';
@@ -640,7 +666,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get remove_from_history => 'Retirer de l\'historique';
 
   @override
-  String get remove_from_history_confirmation => 'Êtes-vous sûr de vouloir retirer cet élément de l\'historique de lecture ?';
+  String get remove_from_history_confirmation =>
+      'Êtes-vous sûr de vouloir retirer cet élément de l\'historique de lecture ?';
 
   @override
   String get remove => 'Retirer';
@@ -649,7 +676,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clear_old_records => 'Effacer les anciens enregistrements';
 
   @override
-  String get clear_old_records_confirmation => 'Êtes-vous sûr de vouloir supprimer les enregistrements de lecture de plus de 30 jours ?';
+  String get clear_old_records_confirmation =>
+      'Êtes-vous sûr de vouloir supprimer les enregistrements de lecture de plus de 30 jours ?';
 
   @override
   String get clear_old => 'Effacer anciens';
@@ -658,7 +686,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get clear_all_history => 'Effacer tout l\'historique';
 
   @override
-  String get clear_all_history_confirmation => 'Êtes-vous sûr de vouloir supprimer tout l\'historique de lecture ?';
+  String get clear_all_history_confirmation =>
+      'Êtes-vous sûr de vouloir supprimer tout l\'historique de lecture ?';
 
   @override
   String get appearance => 'Apparence';
@@ -699,31 +728,36 @@ class AppLocalizationsFr extends AppLocalizations {
   String get brightness_gesture => 'Geste de luminosité';
 
   @override
-  String get brightness_gesture_description => 'Contrôler la luminosité en glissant verticalement sur le côté gauche';
+  String get brightness_gesture_description =>
+      'Contrôler la luminosité en glissant verticalement sur le côté gauche';
 
   @override
   String get volume_gesture => 'Geste de volume';
 
   @override
-  String get volume_gesture_description => 'Contrôler le volume en glissant verticalement sur le côté droit';
+  String get volume_gesture_description =>
+      'Contrôler le volume en glissant verticalement sur le côté droit';
 
   @override
   String get seek_gesture => 'Geste de recherche';
 
   @override
-  String get seek_gesture_description => 'Rechercher en glissant horizontalement';
+  String get seek_gesture_description =>
+      'Rechercher en glissant horizontalement';
 
   @override
   String get speed_up_on_long_press => 'Accélérer avec appui long';
 
   @override
-  String get speed_up_on_long_press_description => 'Accélérer la lecture lors d\'un appui long';
+  String get speed_up_on_long_press_description =>
+      'Accélérer la lecture lors d\'un appui long';
 
   @override
   String get seek_on_double_tap => 'Rechercher avec double tap';
 
   @override
-  String get seek_on_double_tap_description => 'Rechercher avant/arrière avec double tap';
+  String get seek_on_double_tap_description =>
+      'Rechercher avant/arrière avec double tap';
 
   @override
   String get copied_to_clipboard => 'Copié dans le presse-papiers';
@@ -828,7 +862,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get watch_later_empty_message => 'Votre liste Voir plus tard est vide';
 
   @override
-  String get watch_later_empty_description => 'Enregistrez des films et des émissions pour les regarder plus tard ici.';
+  String get watch_later_empty_description =>
+      'Enregistrez des films et des émissions pour les regarder plus tard ici.';
 
   @override
   String get integration => 'Intégration';
@@ -855,7 +890,8 @@ class AppLocalizationsFr extends AppLocalizations {
   String get home_customization => 'Personnalisation de l\'accueil';
 
   @override
-  String get home_customization_subtitle => 'Faites glisser pour réorganiser, basculez pour afficher ou masquer les sections';
+  String get home_customization_subtitle =>
+      'Faites glisser pour réorganiser, basculez pour afficher ou masquer les sections';
 
   @override
   String get rail_continue_watching => 'Continuer à regarder';
