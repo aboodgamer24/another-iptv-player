@@ -62,6 +62,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   late StreamSubscription subtitleTrackSubscription;
   late StreamSubscription contentItemIndexChangedSubscription;
   late StreamSubscription _connectivitySubscription;
+  late StreamSubscription _lowLatencySubscription;
 
   late Player _player;
   VideoController? _videoController;
@@ -135,6 +136,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
         });
 
     _initializePlayer();
+
+    _lowLatencySubscription = EventBus()
+        .on<bool>('low_latency_changed')
+        .listen((bool enabled) async {
+      if (enabled) {
+        await _applyLowLatencyProperties();
+      } else {
+        await _applyUserPreferenceProperties();
+      }
+    });
   }
 
   @override
@@ -157,6 +168,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     subtitleTrackSubscription.cancel();
     contentItemIndexChangedSubscription.cancel();
     _connectivitySubscription.cancel();
+    _lowLatencySubscription.cancel();
     _errorHandler.reset();
 
     // Android: restore portrait + system UI when player closes
@@ -210,13 +222,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
         await native.setProperty('correct-downscaling', 'no');
         await native.setProperty('deinterlace', 'no');
         // Drop frames instead of stalling when decoding is slow
-        await native.setProperty('framedrop', 'vo');
+        await native.setProperty('framedrop', 'decoder+vo');
         // Fast demuxer settings for live
         await native.setProperty('cache', 'yes');
-        await native.setProperty('demuxer-max-bytes', '8MiB');
-        await native.setProperty('demuxer-max-back-bytes', '2MiB');
-        await native.setProperty('demuxer-readahead-secs', '2.0');
-        await native.setProperty('cache-secs', '3');
+        await native.setProperty('demuxer-max-bytes', '32MiB');
+        await native.setProperty('demuxer-max-back-bytes', '4MiB');
+        await native.setProperty('demuxer-readahead-secs', '0.5');
+        await native.setProperty('cache-secs', '2');
+        // Low-latency live stream tuning — reduce initial buffering stall
+        await native.setProperty('demuxer-cache-wait', 'no');
+        await native.setProperty('initial-audio-sync', 'no');
       } else {
         // Desktop
         await native.setProperty('hwdec', 'auto');
@@ -243,6 +258,20 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
     final enhancementEnabled = await UserPreferences.getStreamEnhancement();
     await applyStreamEnhancement(_player, enhancementEnabled);
+  }
+
+  Future<void> _applyLowLatencyProperties() async {
+    final native = _player.platform;
+    if (native is! NativePlayer) return;
+    try {
+      await native.setProperty('demuxer-readahead-secs', '0.1');
+      await native.setProperty('cache-secs', '1');
+      await native.setProperty('demuxer-cache-wait', 'no');
+      await native.setProperty('vd-lavc-skiploopfilter', 'nonref');
+      await native.setProperty('vd-lavc-skipframe', 'nonref');
+    } catch (e) {
+      debugPrint('[Player] Low-latency properties failed: $e');
+    }
   }
 
   Future<void> _saveWatchHistory() async {
@@ -349,9 +378,17 @@ class _PlayerWidgetState extends State<PlayerWidget>
             play: true,
           );
           await _applyUserPreferenceProperties();
+          if (await UserPreferences.getLowLatencyMode()) {
+            await _applyLowLatencyProperties();
+          }
+          if (mounted) setState(() => isLoading = false);
         } else {
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
+          if (await UserPreferences.getLowLatencyMode()) {
+            await _applyLowLatencyProperties();
+          }
+          if (mounted) setState(() => isLoading = false);
         }
       } else {
         final mediaItem = MediaItem(
@@ -381,6 +418,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
           play: true,
         );
         await _applyUserPreferenceProperties();
+        if (await UserPreferences.getLowLatencyMode()) {
+          await _applyLowLatencyProperties();
+        }
+        if (mounted) setState(() => isLoading = false);
       }
 
       _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
@@ -423,6 +464,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
               // TODO: Implement watch history duration for vod and series
               await _player.open(Media(contentItem.url));
               await _applyUserPreferenceProperties();
+              if (await UserPreferences.getLowLatencyMode()) {
+                await _applyLowLatencyProperties();
+              }
+              if (mounted) setState(() => isLoading = false);
             } catch (e) {
               print('Error opening media: $e');
             }
@@ -502,6 +547,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       _player.stream.buffering.listen((buffering) {
         if (!mounted) return;
+        // For live streams, never hide the video widget on buffer events.
+        // Doing so causes the video to go black while audio continues playing.
+        if (contentItem.contentType == ContentType.liveStream) return;
         if (buffering != isLoading) {
           setState(() => isLoading = buffering);
         }
@@ -524,6 +572,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
               if (contentItem.contentType == ContentType.liveStream) {
                 await _player.open(Media(contentItem.url));
                 await _applyUserPreferenceProperties();
+                if (await UserPreferences.getLowLatencyMode()) {
+                  await _applyLowLatencyProperties();
+                }
+                if (mounted) setState(() => isLoading = false);
               }
             },
             (errorMessage) {
@@ -567,6 +619,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType == ContentType.liveStream) {
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
+          if (await UserPreferences.getLowLatencyMode()) {
+            await _applyLowLatencyProperties();
+          }
+          if (mounted) setState(() => isLoading = false);
         }
       });
 
@@ -594,6 +650,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
                 await _player.open(Media(item.url));
                 await _applyUserPreferenceProperties();
+                if (await UserPreferences.getLowLatencyMode()) {
+                  await _applyLowLatencyProperties();
+                }
+                if (mounted) setState(() => isLoading = false);
                 EventBus().emit('player_content_item', item);
                 EventBus().emit('player_content_item_index', index);
                 _errorHandler.reset();
@@ -623,6 +683,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 play: true,
               );
               await _applyUserPreferenceProperties();
+              if (await UserPreferences.getLowLatencyMode()) {
+                await _applyLowLatencyProperties();
+              }
+              if (mounted) setState(() => isLoading = false);
               EventBus().emit('player_content_item', item);
               EventBus().emit('player_content_item_index', index);
               _errorHandler.reset();
@@ -667,7 +731,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       if (mounted) {
         setState(() {
-          isLoading = false;
+          // isLoading is now handled inside each open() call
         });
       }
     } catch (e, st) {

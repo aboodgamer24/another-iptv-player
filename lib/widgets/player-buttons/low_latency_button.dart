@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
 import 'package:another_iptv_player/services/player_state.dart';
+import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 class LowLatencyButton extends StatefulWidget {
@@ -24,27 +25,10 @@ class _LowLatencyButtonState extends State<LowLatencyButton> {
   Future<void> _toggle() async {
     final newVal = !_lowLatency;
     await UserPreferences.setLowLatencyMode(newVal);
-    setState(() => _lowLatency = newVal);
+    if (mounted) setState(() => _lowLatency = newVal);
 
-    final native = PlayerState.activePlayer?.platform;
-    if (native is NativePlayer) {
-      try {
-        if (newVal) {
-          await native.setProperty('cache', 'no');
-          await native.setProperty('demuxer-max-bytes', '2MiB');
-          await native.setProperty('demuxer-max-back-bytes', '1MiB');
-          await native.setProperty('cache-secs', '0');
-          await native.setProperty('demuxer-readahead-secs', '0.5');
-          await native.setProperty('video-sync', 'audio');
-        } else {
-          await native.setProperty('cache', 'yes');
-          await native.setProperty('demuxer-max-bytes', '50MiB');
-          await native.setProperty('demuxer-max-back-bytes', '10MiB');
-          await native.setProperty('cache-secs', '5');
-          await native.setProperty('demuxer-readahead-secs', '3.0');
-        }
-      } catch (_) {}
-    }
+    // Notify PlayerWidget to apply properties
+    EventBus().emit('low_latency_changed', newVal);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
