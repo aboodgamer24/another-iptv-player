@@ -593,6 +593,5 @@ class UserPreferences {
 
     debugPrint('[UserPreferences] clearSyncedSettings: all settings reset');
   }
-  }
 }
 
