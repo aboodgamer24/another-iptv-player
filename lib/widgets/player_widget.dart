@@ -191,54 +191,54 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final native = _player.platform;
     if (native is! NativePlayer) return;
 
-    if (Platform.isAndroid) {
-      // Android: lightweight bilinear, no post-processing overhead
-      try {
+    final isLive = contentItem.contentType == ContentType.liveStream;
+
+    try {
+      // Global optimizations to prevent video freeze and sync issues
+      await native.setProperty('video-sync', 'audio');
+      await native.setProperty('interpolation', 'no');
+      await native.setProperty('hwdec', 'auto');
+      await native.setProperty('hwdec-codecs', 'all');
+
+      if (Platform.isAndroid) {
+        // Android Specific optimizations
         await native.setProperty('scale', 'bilinear');
         await native.setProperty('cscale', 'bilinear');
         await native.setProperty('dscale', 'bilinear');
         await native.setProperty('scale-antiring', '0.0');
         await native.setProperty('sigmoid-upscaling', 'no');
         await native.setProperty('linear-upscaling', 'no');
-        // Reduce demuxer cache for live streams to lower latency
-        if (contentItem.contentType == ContentType.liveStream) {
-          await native.setProperty('demuxer-max-bytes', '20MiB');
-          await native.setProperty('demuxer-max-back-bytes', '5MiB');
-          await native.setProperty('cache', 'yes');
-          await native.setProperty('cache-secs', '3');
-        }
-        // Disable frame-timing correction that causes judder on 50fps
-        await native.setProperty('video-sync', 'audio');
-        await native.setProperty('interpolation', 'no');
-        // Hardware decoding
-        await native.setProperty('hwdec', 'auto-safe');
-      } catch (_) {}
-      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
-      await applyStreamEnhancement(_player, enhancementEnabled);
-      return;
-    }
+      } else {
+        // Desktop Specific optimizations
+        await native.setProperty('deinterlace', 'no');
+        await native.setProperty('tscale', 'oversample');
+      }
 
-    // Desktop (Windows/Linux/macOS)
-    try {
-      // Hardware decoding — critical for 4K 50fps
-      await native.setProperty('hwdec', 'auto');
-      // video-sync=audio avoids the frame-pacing overhead of display-resample
-      // which is the main cause of lag on 4K streams
-      await native.setProperty('video-sync', 'audio');
-      await native.setProperty('interpolation', 'no');
-      // Reduce CPU-heavy deinterlacing
-      await native.setProperty('deinterlace', 'no');
-      if (contentItem.contentType == ContentType.liveStream) {
+      if (isLive) {
+        // Live stream buffer tuning — critical for stability
+        await native.setProperty('cache', 'yes');
+        await native.setProperty('cache-secs', '3');
+        await native.setProperty('demuxer-max-bytes', '10MiB');
+        await native.setProperty('demuxer-readahead-secs', '1.5');
+      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
+        // Standard Desktop VOD/Series tuning
         await native.setProperty('demuxer-max-bytes', '50MiB');
         await native.setProperty('demuxer-max-back-bytes', '10MiB');
         await native.setProperty('cache-secs', '5');
       }
-    } catch (_) {}
+    } catch (e) {
+      debugPrint('[Player] Failed to set MPV properties: $e');
+    }
 
-    final preset = await UserPreferences.getUpscalePreset();
-    await applyUpscalePreset(_player, preset);
-    final enhancementEnabled = await UserPreferences.getStreamEnhancement();
-    await applyStreamEnhancement(_player, enhancementEnabled);
+    if (Platform.isAndroid) {
+      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
+      await applyStreamEnhancement(_player, enhancementEnabled);
+    } else {
+      final preset = await UserPreferences.getUpscalePreset();
+      await applyUpscalePreset(_player, preset);
+      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
+      await applyStreamEnhancement(_player, enhancementEnabled);
+    }
   }
 
   Future<void> _saveWatchHistory() async {
@@ -497,9 +497,29 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
       });
 
-      _player.stream.playing.listen((playing) {
+      _player.stream.playing.listen((playing) async {
         if (!mounted) return;
         _audioHandler.setPlaying(playing);
+
+        if (playing) {
+          final native = _player.platform;
+          if (native is NativePlayer) {
+            // Fix video freeze on live streams - redundant application for safety
+            await native.setProperty('video-sync', 'audio');
+            await native.setProperty('interpolation', 'no');
+            // Fix hwdec — zero-copy GPU path
+            await native.setProperty('hwdec', 'auto');
+            await native.setProperty('hwdec-codecs', 'all');
+
+            if (contentItem.contentType == ContentType.liveStream) {
+              await native.setProperty('tscale', 'oversample');
+              await native.setProperty('cache', 'yes');
+              await native.setProperty('cache-secs', '3');
+              await native.setProperty('demuxer-max-bytes', '10MiB');
+              await native.setProperty('demuxer-readahead-secs', '1.5');
+            }
+          }
+        }
       });
 
       _player.stream.error.listen((error) async {

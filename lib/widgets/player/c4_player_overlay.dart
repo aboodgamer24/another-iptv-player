@@ -441,76 +441,81 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
               _onKey(event);
             }
           },
-          child: GestureDetector(
-            onTap: _toggleVisibility,
-            behavior: HitTestBehavior.translucent,
-            // Volume / Brightness — vertical swipe on halves
-            onVerticalDragUpdate: (_volumeGesture || _brightnessGesture) ? (details) {
-              final width = MediaQuery.sizeOf(context).width;
-              final isLeft = details.localPosition.dx < width / 2;
-              if (isLeft && _brightnessGesture) {
-                // Brightness placeholder (requires package, for now just show overlay)
-                _showOverlay();
-              } else if (!isLeft && _volumeGesture) {
-                final delta = -details.primaryDelta! / 200;
-                _adjustVolume(delta);
-                _showOverlay();
-              }
-            } : null,
-            // Seek — horizontal swipe
-            onHorizontalDragUpdate: _seekGesture ? (details) {
-              final delta = details.primaryDelta! * 0.5;
-              final newPos = _position + Duration(seconds: delta.toInt());
-              widget.player.seek(newPos);
-              _showOverlay();
-            } : null,
-            // Speed up on long press
-            onLongPressStart: _speedUpOnLongPress ? (_) {
-              widget.player.setRate(2.0);
-              _showOverlay();
-            } : null,
-            onLongPressEnd: _speedUpOnLongPress ? (_) {
-              widget.player.setRate(1.0);
-            } : null,
-            // Seek on double tap (halves)
-            onDoubleTapDown: _seekOnDoubleTap ? (details) {
-              final width = MediaQuery.sizeOf(context).width;
-              final isLeft = details.localPosition.dx < width / 2;
-              if (isLeft) {
-                widget.player.seek(_position - const Duration(seconds: 10));
-              } else {
-                widget.player.seek(_position + const Duration(seconds: 10));
-              }
-              _showOverlay();
-            } : null,
-            child: Stack(
-              children: [
-                // Overlay Content
-                AnimatedOpacity(
-                  opacity: _isVisible ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 300),
-                  child: IgnorePointer(
-                    ignoring: !_isVisible,
-                    child: Stack(
-                      children: [
-                        // Top Bar
-                        _buildTopBar(theme, isFullscreen),
+          child: Stack(
+            children: [
+              // 1. Transparent tap-catcher — always active, always receives taps
+              Positioned.fill(
+                child: GestureDetector(
+                  onTap: _toggleVisibility,
+                  behavior: HitTestBehavior.translucent,
+                  // Volume / Brightness — vertical swipe on halves
+                  onVerticalDragUpdate: (_volumeGesture || _brightnessGesture) ? (details) {
+                    final width = MediaQuery.sizeOf(context).width;
+                    final isLeft = details.localPosition.dx < width / 2;
+                    if (isLeft && _brightnessGesture) {
+                      // Brightness placeholder (requires package, for now just show overlay)
+                      _showOverlay();
+                    } else if (!isLeft && _volumeGesture) {
+                      final delta = -details.primaryDelta! / 200;
+                      _adjustVolume(delta);
+                      _showOverlay();
+                    }
+                  } : null,
+                  // Seek — horizontal swipe
+                  onHorizontalDragUpdate: _seekGesture ? (details) {
+                    final delta = details.primaryDelta! * 0.5;
+                    final newPos = _position + Duration(seconds: delta.toInt());
+                    widget.player.seek(newPos);
+                    _showOverlay();
+                  } : null,
+                  // Speed up on long press
+                  onLongPressStart: _speedUpOnLongPress ? (_) {
+                    widget.player.setRate(2.0);
+                    _showOverlay();
+                  } : null,
+                  onLongPressEnd: _speedUpOnLongPress ? (_) {
+                    widget.player.setRate(1.0);
+                  } : null,
+                  // Seek on double tap (halves)
+                  onDoubleTapDown: _seekOnDoubleTap ? (details) {
+                    final width = MediaQuery.sizeOf(context).width;
+                    final isLeft = details.localPosition.dx < width / 2;
+                    if (isLeft) {
+                      widget.player.seek(_position - const Duration(seconds: 10));
+                    } else {
+                      widget.player.seek(_position + const Duration(seconds: 10));
+                    }
+                    _showOverlay();
+                  } : null,
+                  child: const SizedBox.expand(), // transparent — just catches gestures
+                ),
+              ),
 
-                        // Bottom Bar
-                        _buildBottomBar(theme, isLive),
+              // 2. Overlay UI — fades in/out but never blocks input when invisible
+              AnimatedOpacity(
+                opacity: _isVisible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 300),
+                child: IgnorePointer(
+                  ignoring: !_isVisible,
+                  child: Stack(
+                    children: [
+                      // Top Bar
+                      _buildTopBar(theme, isFullscreen),
 
-                        // Info Panel (Metadata overlay)
-                        if (_showInfoPanel) _buildInfoPanel(theme, videoTrack),
-                        if (_showEnhancementPanel) _buildEnhancementPanel(theme),
-                      ],
-                    ),
+                      // Bottom Bar
+                      _buildBottomBar(theme, isLive),
+
+                      // Info Panel (Metadata overlay)
+                      if (_showInfoPanel) _buildInfoPanel(theme, videoTrack),
+                      if (_showEnhancementPanel) _buildEnhancementPanel(theme),
+                    ],
                   ),
                 ),
+              ),
 
-                // Side Panel (Always accessible if visible, or can trigger visibility)
-                if (_showSidePanel) _buildSidePanel(theme),
-              ],
-            ),
+              // 3. Side Panel (Always accessible if visible, or can trigger visibility)
+              if (_showSidePanel) _buildSidePanel(theme),
+            ],
           ),
         );
       },
