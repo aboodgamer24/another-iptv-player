@@ -221,7 +221,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     // Desktop (Windows/Linux/macOS)
     try {
       // Hardware decoding — critical for 4K 50fps
-      await native.setProperty('hwdec', 'auto-copy');
+      await native.setProperty('hwdec', 'auto');
       // video-sync=audio avoids the frame-pacing overhead of display-resample
       // which is the main cause of lag on 4K streams
       await native.setProperty('video-sync', 'audio');

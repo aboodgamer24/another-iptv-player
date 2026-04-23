@@ -14,6 +14,8 @@ import '../../utils/get_playlist_type.dart';
 import '../../services/event_bus.dart';
 import '../../models/playlist_content_model.dart';
 import '../../repositories/user_preferences.dart';
+import '../player-buttons/low_latency_button.dart';
+import '../player-buttons/video_settings_widget.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -810,6 +812,10 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                             .seek(_position + const Duration(seconds: 10)),
                       ),
                     ],
+                    const SizedBox(width: 16),
+                    const LowLatencyButton(),
+                    const SizedBox(width: 8),
+                    const VideoSettingsWidget(),
                   ],
                 ),
               ],
