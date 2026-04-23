@@ -51,11 +51,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
   bool _isLoading = true;
   String? _selectedFilePath;
   String _selectedTheme = 'system';
-  bool _brightnessGesture = false;
-  bool _volumeGesture = false;
-  bool _seekGesture = false;
-  bool _speedUpOnLongPress = true;
-  bool _seekOnDoubleTap = true;
+
   String _appVersion = '';
   final TextEditingController _tmdbKeyController = TextEditingController();
   bool _obscureTmdbKey = true;
@@ -83,22 +79,14 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
     try {
       final backgroundPlay = await UserPreferences.getBackgroundPlay();
       final themeName = await UserPreferences.getThemeName();
-      final brightnessGesture = await UserPreferences.getBrightnessGesture();
-      final volumeGesture = await UserPreferences.getVolumeGesture();
-      final seekGesture = await UserPreferences.getSeekGesture();
-      final speedUpOnLongPress = await UserPreferences.getSpeedUpOnLongPress();
-      final seekOnDoubleTap = await UserPreferences.getSeekOnDoubleTap();
+
       final packageInfo = await PackageInfo.fromPlatform();
       final upscalePreset = await UserPreferences.getUpscalePreset();
       final streamEnhancement = await UserPreferences.getStreamEnhancement();
       setState(() {
         _backgroundPlayEnabled = backgroundPlay;
         _selectedTheme = themeName;
-        _brightnessGesture = brightnessGesture;
-        _volumeGesture = volumeGesture;
-        _seekGesture = seekGesture;
-        _speedUpOnLongPress = speedUpOnLongPress;
-        _seekOnDoubleTap = seekOnDoubleTap;
+
         _appVersion = packageInfo.version;
         _tmdbKeyController.text = AppConfig.tmdbApiKey;
         _upscalePreset = upscalePreset;
@@ -445,81 +433,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           ),
           if (!Platform.isAndroid) _buildUpscalerSection(Theme.of(context)),
           _buildStreamEnhancementSection(Theme.of(context)),
-          // Player gesture settings - Only show on mobile platforms (Android & iOS)
-          if (Theme.of(context).platform == TargetPlatform.android ||
-              Theme.of(context).platform == TargetPlatform.iOS) ...[
-            const Divider(height: 1),
-            SwitchListTile(
-              secondary: const Icon(Icons.brightness_6),
-              title: Text(context.loc.brightness_gesture),
-              subtitle: Text(
-                context.loc.brightness_gesture_description,
-              ),
-              value: _brightnessGesture,
-              onChanged: (value) async {
-                await UserPreferences.setBrightnessGesture(value);
-                setState(() {
-                  _brightnessGesture = value;
-                });
-              },
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              secondary: const Icon(Icons.volume_up),
-              title: Text(context.loc.volume_gesture),
-              subtitle: Text(context.loc.volume_gesture_description),
-              value: _volumeGesture,
-              onChanged: (value) async {
-                await UserPreferences.setVolumeGesture(value);
-                setState(() {
-                  _volumeGesture = value;
-                });
-              },
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              secondary: const Icon(Icons.swipe),
-              title: Text(context.loc.seek_gesture),
-              subtitle: Text(context.loc.seek_gesture_description),
-              value: _seekGesture,
-              onChanged: (value) async {
-                await UserPreferences.setSeekGesture(value);
-                setState(() {
-                  _seekGesture = value;
-                });
-              },
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              secondary: const Icon(Icons.fast_forward),
-              title: Text(context.loc.speed_up_on_long_press),
-              subtitle: Text(
-                context.loc.speed_up_on_long_press_description,
-              ),
-              value: _speedUpOnLongPress,
-              onChanged: (value) async {
-                await UserPreferences.setSpeedUpOnLongPress(value);
-                setState(() {
-                  _speedUpOnLongPress = value;
-                });
-              },
-            ),
-            const Divider(height: 1),
-            SwitchListTile(
-              secondary: const Icon(Icons.touch_app),
-              title: Text(context.loc.seek_on_double_tap),
-              subtitle: Text(
-                context.loc.seek_on_double_tap_description,
-              ),
-              value: _seekOnDoubleTap,
-              onChanged: (value) async {
-                await UserPreferences.setSeekOnDoubleTap(value);
-                setState(() {
-                  _seekOnDoubleTap = value;
-                });
-              },
-            ),
-          ],
+
         ],
       ),
     );
