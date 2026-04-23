@@ -4,6 +4,7 @@ import 'package:another_iptv_player/services/event_bus.dart';
 import 'package:another_iptv_player/services/player_state.dart';
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
+import 'package:another_iptv_player/repositories/user_preferences.dart';
 
 class VideoSettingsWidget extends StatefulWidget {
   const VideoSettingsWidget({super.key});
@@ -117,11 +118,13 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
   late String selectedVideoTrack;
   late String selectedAudioTrack;
   late String selectedSubtitleTrack;
+  bool _lowLatencyMode = false;
 
   @override
   void initState() {
     super.initState();
     _loadTracks();
+    _loadSettings();
 
     subscription = EventBus().on<Tracks>('player_tracks').listen((Tracks data) {
       if (mounted) {
@@ -218,6 +221,8 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
                   ),
                 ),
               ),
+              _buildLowLatencyButton(context),
+              const SizedBox(width: 12),
               IconButton(
                 icon: Icon(Icons.close, color: textColor, size: 20),
                 padding: EdgeInsets.zero,
@@ -288,6 +293,100 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
           ),
         ),
       ],
+    );
+  }
+
+  Future<void> _loadSettings() async {
+    final lowLatency = await UserPreferences.getLowLatencyMode();
+    if (mounted) {
+      setState(() {
+        _lowLatencyMode = lowLatency;
+      });
+    }
+  }
+
+  Widget _buildLowLatencyButton(BuildContext context) {
+    return Tooltip(
+      message: _lowLatencyMode ? 'Low Latency: ON' : 'Low Latency: OFF',
+      child: GestureDetector(
+        onTap: () async {
+          final newValue = !_lowLatencyMode;
+          await UserPreferences.setLowLatencyMode(newValue);
+          setState(() => _lowLatencyMode = newValue);
+
+          final player = PlayerState.activePlayer;
+          final native = player?.platform;
+          if (native is NativePlayer) {
+            try {
+              if (newValue) {
+                // Low latency ON: minimal cache, no readahead, fast seek
+                await native.setProperty('cache', 'no');
+                await native.setProperty('demuxer-max-bytes', '2MiB');
+                await native.setProperty('demuxer-max-back-bytes', '1MiB');
+                await native.setProperty('cache-secs', '0');
+                await native.setProperty('demuxer-readahead-secs', '0.5');
+                await native.setProperty('vd-lavc-threads', '0');
+                await native.setProperty('video-sync', 'audio');
+              } else {
+                // Low latency OFF: restore normal buffering
+                await native.setProperty('cache', 'yes');
+                await native.setProperty('demuxer-max-bytes', '50MiB');
+                await native.setProperty('demuxer-max-back-bytes', '10MiB');
+                await native.setProperty('cache-secs', '5');
+                await native.setProperty('demuxer-readahead-secs', '3.0');
+              }
+            } catch (_) {}
+          }
+
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(
+                  newValue
+                      ? '⚡ Low Latency Mode ON — minimal buffering'
+                      : '🔄 Normal Mode — standard buffering restored',
+                  style: const TextStyle(color: Colors.white),
+                ),
+                duration: const Duration(seconds: 2),
+                backgroundColor:
+                    newValue ? Colors.orange.shade800 : Colors.grey.shade800,
+              ),
+            );
+          }
+        },
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _lowLatencyMode
+                ? Colors.orange.withOpacity(0.85)
+                : Colors.white.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: _lowLatencyMode ? Colors.orange : Colors.white38,
+              width: 1.5,
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(
+                Icons.bolt_rounded,
+                color: _lowLatencyMode ? Colors.white : Colors.white70,
+                size: 16,
+              ),
+              const SizedBox(width: 4),
+              Text(
+                'Low Latency',
+                style: TextStyle(
+                  color: _lowLatencyMode ? Colors.white : Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 

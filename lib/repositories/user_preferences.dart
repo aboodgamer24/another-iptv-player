@@ -583,5 +583,15 @@ class UserPreferences {
 
     debugPrint('[UserPreferences] clearSyncedSettings: all settings reset');
   }
+
+  static Future<bool> getLowLatencyMode() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool('low_latency_mode') ?? false;
+  }
+
+  static Future<void> setLowLatencyMode(bool value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('low_latency_mode', value);
+  }
 }
 

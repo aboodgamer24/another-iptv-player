@@ -96,7 +96,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
     // ----------------------------------------
 
     PlayerState.title = widget.contentItem.name;
-    _player = Player(configuration: PlayerConfiguration());
+    _player = Player(
+      configuration: PlayerConfiguration(
+        logLevel: MPVLogLevel.warn,
+        bufferSize: 32 * 1024 * 1024, // 32 MB buffer
+      ),
+    );
     PlayerState.activePlayer = _player;
     watchHistoryService = WatchHistoryService();
 
@@ -183,28 +188,55 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Future<void> _applyUpscaler() async {
+    final native = _player.platform;
+    if (native is! NativePlayer) return;
+
     if (Platform.isAndroid) {
-      // Android: always force bilinear — upscalers cause lag on mobile GPUs
-      final native = _player.platform;
-      if (native is NativePlayer) {
-        try {
-          await native.setProperty('scale', 'bilinear');
-          await native.setProperty('cscale', 'bilinear');
-          await native.setProperty('dscale', 'bilinear');
-          await native.setProperty('scale-antiring', '0.0');
-          await native.setProperty('sigmoid-upscaling', 'no');
-          await native.setProperty('linear-upscaling', 'no');
-        } catch (_) {}
-      }
-      // Still apply stream enhancement (deband/sharpness) if user enabled it
+      // Android: lightweight bilinear, no post-processing overhead
+      try {
+        await native.setProperty('scale', 'bilinear');
+        await native.setProperty('cscale', 'bilinear');
+        await native.setProperty('dscale', 'bilinear');
+        await native.setProperty('scale-antiring', '0.0');
+        await native.setProperty('sigmoid-upscaling', 'no');
+        await native.setProperty('linear-upscaling', 'no');
+        // Reduce demuxer cache for live streams to lower latency
+        if (contentItem.contentType == ContentType.liveStream) {
+          await native.setProperty('demuxer-max-bytes', '20MiB');
+          await native.setProperty('demuxer-max-back-bytes', '5MiB');
+          await native.setProperty('cache', 'yes');
+          await native.setProperty('cache-secs', '3');
+        }
+        // Disable frame-timing correction that causes judder on 50fps
+        await native.setProperty('video-sync', 'audio');
+        await native.setProperty('interpolation', 'no');
+        // Hardware decoding
+        await native.setProperty('hwdec', 'auto-safe');
+      } catch (_) {}
       final enhancementEnabled = await UserPreferences.getStreamEnhancement();
       await applyStreamEnhancement(_player, enhancementEnabled);
-      return; // ← exit early, skip preset logic entirely
+      return;
     }
+
+    // Desktop (Windows/Linux/macOS)
+    try {
+      // Hardware decoding — critical for 4K 50fps
+      await native.setProperty('hwdec', 'auto-copy');
+      // video-sync=audio avoids the frame-pacing overhead of display-resample
+      // which is the main cause of lag on 4K streams
+      await native.setProperty('video-sync', 'audio');
+      await native.setProperty('interpolation', 'no');
+      // Reduce CPU-heavy deinterlacing
+      await native.setProperty('deinterlace', 'no');
+      if (contentItem.contentType == ContentType.liveStream) {
+        await native.setProperty('demuxer-max-bytes', '50MiB');
+        await native.setProperty('demuxer-max-back-bytes', '10MiB');
+        await native.setProperty('cache-secs', '5');
+      }
+    } catch (_) {}
 
     final preset = await UserPreferences.getUpscalePreset();
     await applyUpscalePreset(_player, preset);
-
     final enhancementEnabled = await UserPreferences.getStreamEnhancement();
     await applyStreamEnhancement(_player, enhancementEnabled);
   }
