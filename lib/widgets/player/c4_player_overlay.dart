@@ -494,7 +494,10 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
               // 2. Overlay UI — fades in/out but never blocks input when invisible
               AnimatedOpacity(
                 opacity: _isVisible ? 1.0 : 0.0,
-                duration: const Duration(milliseconds: 300),
+                duration: _isVisible
+                    ? const Duration(milliseconds: 120) // show: fast snap-in
+                    : const Duration(milliseconds: 220), // hide: smooth fade-out
+                curve: _isVisible ? Curves.easeOut : Curves.easeIn,
                 child: IgnorePointer(
                   ignoring: !_isVisible,
                   child: Stack(

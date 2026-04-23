@@ -27,7 +27,6 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   late final TmdbService _tmdb;
   List<Map<String, dynamic>> _trendingMovies = [];
   List<Map<String, dynamic>> _trendingSeries = [];
-  bool _tmdbLoading = false;
 
   @override
   void initState() {
@@ -50,26 +49,20 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
 
   Future<void> _loadData() async {
     if (!mounted) return;
-    setState(() => _tmdbLoading = true);
-
     await Future.wait([
       _historyController.loadWatchHistory(),
       _favoritesController.loadFavorites(),
       _fetchTmdb(),
     ]);
-
-    if (mounted) {
-      setState(() => _tmdbLoading = false);
-    }
   }
 
   Future<void> _fetchTmdb() async {
+    // Fire both concurrently; each returns cached data immediately if available
+    final movies = _tmdb.getTrendingMovies();
+    final tv = _tmdb.getTrendingTv();
     try {
-      final results = await Future.wait([
-        _tmdb.getTrendingMovies(),
-        _tmdb.getTrendingTv(),
-      ]);
-      if (mounted) {
+      final results = await Future.wait([movies, tv]);
+      if (mounted && (results[0].isNotEmpty || results[1].isNotEmpty)) {
         setState(() {
           _trendingMovies = results[0];
           _trendingSeries = results[1];
