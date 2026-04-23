@@ -29,7 +29,6 @@ android {
         jvmTarget = JavaVersion.VERSION_11.toString()
     }
 
-    // Signing configurations
     signingConfigs {
         create("release") {
             if (keystorePropertiesFile.exists()) {
@@ -47,19 +46,6 @@ android {
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
-    }
-
-    // ── ABI Splits: produce one APK per CPU architecture ──────────────────
-    // arm64-v8a   → all modern Android phones (2016+)
-    // armeabi-v7a → older 32-bit phones
-    // x86_64      → emulators / Chrome OS
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("arm64-v8a", "armeabi-v7a", "x86_64")
-            isUniversalApk = false
-        }
     }
 
     buildTypes {
