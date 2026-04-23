@@ -97,15 +97,12 @@ if exist "another-iptv-player-windows-setup.exe" (
 echo.
 
 :: ════════════════════════════════════════════════
-:: STEP 4 — Build Android Universal APK via WSL
+:: STEP 4 — Build Android APKs via WSL
 :: ════════════════════════════════════════════════
 :BUILD_ANDROID
-echo [4/4] Building Android Universal APK via WSL...
+echo [4/4] Building Android APKs via WSL...
 echo.
 
-set APK_OUT=%OUT_DIR%\%APP_NAME%-android-%VERSION%-universal.apk
-
-:: Pass VERSION to WSL so the APK filename always matches
 wsl bash ~/build_apk.sh "%VERSION%"
 
 if %ERRORLEVEL% neq 0 (
@@ -113,15 +110,28 @@ if %ERRORLEVEL% neq 0 (
     pause & exit /b 1
 )
 
-:COPY_APK
-if exist "%APK_OUT%" (
-    echo       APK ready: %APK_OUT%
-) else (
-    echo ERROR: APK not found in release_bundle!
-    echo        Expected: %APK_OUT%
-    echo        Check WSL build output above.
+:: Verify all 3 APKs exist
+set APK_ARM64=%OUT_DIR%\%APP_NAME%-android-%VERSION%-arm64.apk
+set APK_ARM32=%OUT_DIR%\%APP_NAME%-android-%VERSION%-arm32.apk
+set APK_X64=%OUT_DIR%\%APP_NAME%-android-%VERSION%-x86_64.apk
+
+if not exist "%APK_ARM64%" (
+    echo ERROR: arm64 APK not found: %APK_ARM64%
     pause & exit /b 1
 )
+if not exist "%APK_ARM32%" (
+    echo ERROR: arm32 APK not found: %APK_ARM32%
+    pause & exit /b 1
+)
+if not exist "%APK_X64%" (
+    echo ERROR: x86_64 APK not found: %APK_X64%
+    pause & exit /b 1
+)
+
+echo       APKs ready:
+echo         %APK_ARM64%
+echo         %APK_ARM32%
+echo         %APK_X64%
 
 goto :DONE
 
