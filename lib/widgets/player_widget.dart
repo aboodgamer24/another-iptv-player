@@ -10,15 +10,12 @@ import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/subtitle_configuration.dart';
 import 'package:another_iptv_player/widgets/video_widget.dart';
-import 'package:audio_service/audio_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
 import 'package:media_kit_video/media_kit_video.dart';
 import '../../models/content_type.dart';
 import '../../services/player_state.dart';
-import '../../services/service_locator.dart';
-import '../../utils/audio_handler.dart';
 import '../utils/player_error_handler.dart';
 import '../services/fullscreen_notifier.dart';
 import '../utils/responsive_helper.dart';
@@ -67,7 +64,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
   late Player _player;
   VideoController? _videoController;
   late WatchHistoryService watchHistoryService;
-  final MyAudioHandler _audioHandler = getIt<MyAudioHandler>();
   List<ContentItem>? _queue;
   late ContentItem contentItem;
   final PlayerErrorHandler _errorHandler = PlayerErrorHandler();
@@ -161,8 +157,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     PlayerState.activePlayer = null;
     _player.dispose();
-    _audioHandler.setPlayer(null);
-    _audioHandler.stop();
     videoTrackSubscription.cancel();
     audioTrackSubscription.cancel();
     subtitleTrackSubscription.cancel();
@@ -309,7 +303,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       PlayerState.subtitleConfiguration = await getSubtitleConfiguration();
 
       PlayerState.backgroundPlay = await UserPreferences.getBackgroundPlay();
-      _audioHandler.setPlayer(_player);
       _videoController = VideoController(
         _player,
         configuration: const VideoControllerConfiguration(
@@ -325,32 +318,17 @@ class _PlayerWidgetState extends State<PlayerWidget>
             : contentItem.m3uItem?.id ?? contentItem.id,
       );
 
-      List<MediaItem> mediaItems = [];
-      var currentItemIndex = 0;
-
       if (_queue != null) {
+        var currentItemIndex = 0;
+        List<Media> medias = [];
         for (int i = 0; i < _queue!.length; i++) {
           final item = _queue![i];
           final itemWatchHistory = await watchHistoryService.getWatchHistory(
             AppState.currentPlaylist!.id,
             isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
           );
-
-          mediaItems.add(
-            MediaItem(
-              id: item.id.toString(),
-              title: item.name,
-              artist: _getContentTypeDisplayName(),
-              album: AppState.currentPlaylist?.name ?? '',
-              artUri: Uri.parse(item.imagePath!),
-              playable: true,
-              extras: {
-                'url': item.url,
-                'startPosition':
-                    itemWatchHistory?.watchDuration?.inMilliseconds ?? 0,
-              },
-            ),
-          );
+          final startMs = itemWatchHistory?.watchDuration?.inMilliseconds ?? 0;
+          medias.add(Media(item.url, start: Duration(milliseconds: startMs)));
 
           if (item.id == contentItem.id) {
             currentItemIndex = i;
@@ -361,20 +339,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
           }
         }
 
-        await _audioHandler.setQueue(
-          mediaItems,
-          initialIndex: currentItemIndex,
-        );
-
         if (contentItem.contentType != ContentType.liveStream) {
-          var playlist = mediaItems.map((mediaItem) {
-            final url = mediaItem.extras!['url'] as String;
-            final startMs = mediaItem.extras!['startPosition'] as int;
-            return Media(url, start: Duration(milliseconds: startMs));
-          }).toList();
-
           await _player.open(
-            Playlist(playlist, index: currentItemIndex),
+            Playlist(medias, index: currentItemIndex),
             play: true,
           );
           await _applyUserPreferenceProperties();
@@ -391,22 +358,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
           if (mounted) setState(() => isLoading = false);
         }
       } else {
-        final mediaItem = MediaItem(
-          id: contentItem.id.toString(),
-          title: contentItem.name,
-          artist: _getContentTypeDisplayName(),
-          artUri: Uri.parse(contentItem.imagePath!),
-          extras: {
-            'url': contentItem.url,
-            'startPosition': watchHistory?.watchDuration?.inMilliseconds ?? 0,
-          },
-        );
-
-        // if (contentItem.contentType == ContentType.liveStream) {
-        //   liveStreamContentItem = contentItem;
-        // }
-
-        await _audioHandler.setQueue([mediaItem]);
 
         await _player.open(
           Playlist([
@@ -557,8 +508,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       _player.stream.playing.listen((playing) async {
         if (!mounted) return;
-        _audioHandler.setPlaying(playing);
-
         // Properties are applied pre-open; no re-application needed on play events.
       });
 
@@ -599,7 +548,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
 
         _currentItemIndex = playlist.index;
-        currentItemIndex = _currentItemIndex;
         contentItem = _queue?[playlist.index] ?? widget.contentItem;
 
         // --- INSERTION 2: QUEUE CHANGE SETTER ---
@@ -751,8 +699,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     switch (state) {
       case AppLifecycleState.detached:
         await _player.dispose();
-        _audioHandler.setPlayer(null);
-        await _audioHandler.stop();
         break;
       default:
         break;
@@ -1270,16 +1216,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  String _getContentTypeDisplayName() {
-    switch (widget.contentItem.contentType) {
-      case ContentType.liveStream:
-        return 'Canlı Yayın';
-      case ContentType.vod:
-        return 'Film';
-      case ContentType.series:
-        return 'Dizi';
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
