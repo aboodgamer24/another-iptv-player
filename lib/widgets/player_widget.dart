@@ -194,9 +194,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     if (native is! NativePlayer) return;
     try {
       if (Platform.isAndroid) {
-        // Android: explicit GPU video output + hardware decode
-        await native.setProperty('vo', 'gpu');
-        await native.setProperty('gpu-api', 'opengl');
+        // hwdec: use mediacodec-copy for zero-copy hardware decoding
         await native.setProperty('hwdec', 'mediacodec-copy');
         await native.setProperty('hwdec-codecs', 'all');
         // video-sync: display-resample causes stutter on Android; audio is stable
