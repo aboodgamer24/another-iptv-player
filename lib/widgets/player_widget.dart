@@ -99,7 +99,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _player = Player(
       configuration: PlayerConfiguration(
         logLevel: MPVLogLevel.warn,
-        bufferSize: 32 * 1024 * 1024, // 32 MB buffer
+        bufferSize: 64 * 1024 * 1024,
       ),
     );
     PlayerState.activePlayer = _player;
@@ -187,58 +187,64 @@ class _PlayerWidgetState extends State<PlayerWidget>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  Future<void> _applyUpscaler() async {
+  /// Apply critical MPV properties that must be set BEFORE media opens.
+  /// Call this once after creating the Player, before any player.open() call.
+  Future<void> _applyPreOpenMpvProperties() async {
     final native = _player.platform;
     if (native is! NativePlayer) return;
-
-    final isLive = contentItem.contentType == ContentType.liveStream;
-
     try {
-      // Global optimizations to prevent video freeze and sync issues
-      await native.setProperty('video-sync', 'audio');
-      await native.setProperty('interpolation', 'no');
-      await native.setProperty('hwdec', 'auto');
-      await native.setProperty('hwdec-codecs', 'all');
-
       if (Platform.isAndroid) {
-        // Android Specific optimizations
+        // Android: explicit GPU video output + hardware decode
+        await native.setProperty('vo', 'gpu');
+        await native.setProperty('gpu-api', 'opengl');
+        await native.setProperty('hwdec', 'mediacodec-copy');
+        await native.setProperty('hwdec-codecs', 'all');
+        // video-sync: display-resample causes stutter on Android; audio is stable
+        await native.setProperty('video-sync', 'audio');
+        await native.setProperty('interpolation', 'no');
+        // Skip expensive post-processing for 4K on mobile
         await native.setProperty('scale', 'bilinear');
         await native.setProperty('cscale', 'bilinear');
         await native.setProperty('dscale', 'bilinear');
         await native.setProperty('scale-antiring', '0.0');
         await native.setProperty('sigmoid-upscaling', 'no');
         await native.setProperty('linear-upscaling', 'no');
-      } else {
-        // Desktop Specific optimizations
+        await native.setProperty('correct-downscaling', 'no');
         await native.setProperty('deinterlace', 'no');
-        await native.setProperty('tscale', 'oversample');
-      }
-
-      if (isLive) {
-        // Live stream buffer tuning — critical for stability
+        // Drop frames instead of stalling when decoding is slow
+        await native.setProperty('framedrop', 'vo');
+        // Fast demuxer settings for live
         await native.setProperty('cache', 'yes');
+        await native.setProperty('demuxer-max-bytes', '8MiB');
+        await native.setProperty('demuxer-max-back-bytes', '2MiB');
+        await native.setProperty('demuxer-readahead-secs', '2.0');
         await native.setProperty('cache-secs', '3');
-        await native.setProperty('demuxer-max-bytes', '10MiB');
-        await native.setProperty('demuxer-readahead-secs', '1.5');
-      } else if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
-        // Standard Desktop VOD/Series tuning
+      } else {
+        // Desktop
+        await native.setProperty('hwdec', 'auto');
+        await native.setProperty('hwdec-codecs', 'all');
+        await native.setProperty('video-sync', 'audio');
+        await native.setProperty('interpolation', 'no');
+        await native.setProperty('tscale', 'oversample');
+        await native.setProperty('deinterlace', 'no');
+        await native.setProperty('framedrop', 'no');
         await native.setProperty('demuxer-max-bytes', '50MiB');
         await native.setProperty('demuxer-max-back-bytes', '10MiB');
         await native.setProperty('cache-secs', '5');
       }
     } catch (e) {
-      debugPrint('[Player] Failed to set MPV properties: $e');
+      debugPrint('[Player] Pre-open MPV properties failed: $e');
     }
+  }
 
-    if (Platform.isAndroid) {
-      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
-      await applyStreamEnhancement(_player, enhancementEnabled);
-    } else {
+  /// Apply user-preference-based properties AFTER media is open.
+  Future<void> _applyUserPreferenceProperties() async {
+    if (!Platform.isAndroid) {
       final preset = await UserPreferences.getUpscalePreset();
       await applyUpscalePreset(_player, preset);
-      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
-      await applyStreamEnhancement(_player, enhancementEnabled);
     }
+    final enhancementEnabled = await UserPreferences.getStreamEnhancement();
+    await applyStreamEnhancement(_player, enhancementEnabled);
   }
 
   Future<void> _saveWatchHistory() async {
@@ -277,7 +283,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       PlayerState.backgroundPlay = await UserPreferences.getBackgroundPlay();
       _audioHandler.setPlayer(_player);
-      _videoController = VideoController(_player);
+      _videoController = VideoController(
+        _player,
+        configuration: const VideoControllerConfiguration(
+          enableHardwareAcceleration: true,
+        ),
+      );
+      await _applyPreOpenMpvProperties();
 
       var watchHistory = await watchHistoryService.getWatchHistory(
         AppState.currentPlaylist!.id,
@@ -338,10 +350,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
             Playlist(playlist, index: currentItemIndex),
             play: true,
           );
-          await _applyUpscaler();
+          await _applyUserPreferenceProperties();
         } else {
           await _player.open(Media(contentItem.url));
-          await _applyUpscaler();
+          await _applyUserPreferenceProperties();
         }
       } else {
         final mediaItem = MediaItem(
@@ -370,7 +382,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           ]),
           play: true,
         );
-        await _applyUpscaler();
+        await _applyUserPreferenceProperties();
       }
 
       _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
@@ -412,7 +424,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
               // TODO: Implement watch history duration for vod and series
               await _player.open(Media(contentItem.url));
-              await _applyUpscaler();
+              await _applyUserPreferenceProperties();
             } catch (e) {
               print('Error opening media: $e');
             }
@@ -501,25 +513,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (!mounted) return;
         _audioHandler.setPlaying(playing);
 
-        if (playing) {
-          final native = _player.platform;
-          if (native is NativePlayer) {
-            // Fix video freeze on live streams - redundant application for safety
-            await native.setProperty('video-sync', 'audio');
-            await native.setProperty('interpolation', 'no');
-            // Fix hwdec — zero-copy GPU path
-            await native.setProperty('hwdec', 'auto');
-            await native.setProperty('hwdec-codecs', 'all');
-
-            if (contentItem.contentType == ContentType.liveStream) {
-              await native.setProperty('tscale', 'oversample');
-              await native.setProperty('cache', 'yes');
-              await native.setProperty('cache-secs', '3');
-              await native.setProperty('demuxer-max-bytes', '10MiB');
-              await native.setProperty('demuxer-readahead-secs', '1.5');
-            }
-          }
-        }
+        // Properties are applied pre-open; no re-application needed on play events.
       });
 
       _player.stream.error.listen((error) async {
@@ -531,7 +525,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               if (_isSwitchingChannel) return;
               if (contentItem.contentType == ContentType.liveStream) {
                 await _player.open(Media(contentItem.url));
-                await _applyUpscaler();
+                await _applyUserPreferenceProperties();
               }
             },
             (errorMessage) {
@@ -574,7 +568,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (_isSwitchingChannel) return;
         if (contentItem.contentType == ContentType.liveStream) {
           await _player.open(Media(contentItem.url));
-          await _applyUpscaler();
+          await _applyUserPreferenceProperties();
         }
       });
 
@@ -601,7 +595,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 _errorHandler.reset();
 
                 await _player.open(Media(item.url));
-                await _applyUpscaler();
+                await _applyUserPreferenceProperties();
                 EventBus().emit('player_content_item', item);
                 EventBus().emit('player_content_item_index', index);
                 _errorHandler.reset();
@@ -630,7 +624,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 Media(item.url, start: Duration(milliseconds: startMs)),
                 play: true,
               );
-              await _applyUpscaler();
+              await _applyUserPreferenceProperties();
               EventBus().emit('player_content_item', item);
               EventBus().emit('player_content_item_index', index);
               _errorHandler.reset();

@@ -103,14 +103,17 @@ Future<void> applyStreamEnhancement(Player player, bool enabled) async {
 
   try {
     if (enabled) {
-      // Deband — removes banding/blocking from low-bitrate IPTV streams
-      await native.setProperty('deband', 'yes');
-      await native.setProperty('deband-iterations', '2');
-      await native.setProperty('deband-threshold', '48');
-      await native.setProperty('deband-range', '16');
-      await native.setProperty('deband-grain', '12');
-      // Native MPV sharpening (safe at runtime, no vf pipeline needed)
-      await native.setProperty('video-sharpness', '0.3');
+      if (!Platform.isAndroid) {
+        // Deband is too GPU-heavy for 4K on Android — desktop only
+        await native.setProperty('deband', 'yes');
+        await native.setProperty('deband-iterations', '2');
+        await native.setProperty('deband-threshold', '48');
+        await native.setProperty('deband-range', '16');
+        await native.setProperty('deband-grain', '12');
+      } else {
+        await native.setProperty('deband', 'no');
+      }
+      await native.setProperty('video-sharpness', Platform.isAndroid ? '0' : '0.3');
     } else {
       await native.setProperty('deband', 'no');
       await native.setProperty('deband-iterations', '1');
