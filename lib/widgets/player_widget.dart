@@ -10,6 +10,7 @@ import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/subtitle_configuration.dart';
 import 'package:another_iptv_player/widgets/video_widget.dart';
+import 'package:another_iptv_player/widgets/player/c4_player_overlay.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
@@ -64,6 +65,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   List<ContentItem>? _queue;
   late ContentItem contentItem;
   final PlayerErrorHandler _errorHandler = PlayerErrorHandler();
+  final _overlayKey = GlobalKey<C4PlayerOverlayState>();
 
   bool isLoading = true;
   bool hasError = false;
@@ -369,6 +371,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
 
         if (contentItem.contentType != ContentType.liveStream) {
+          _overlayKey.currentState?.resetContentState();
           await _player.open(
             Playlist(medias, index: currentItemIndex),
             play: true,
@@ -379,6 +382,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           }
           if (mounted) setState(() => isLoading = false);
         } else {
+          _overlayKey.currentState?.resetContentState();
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
@@ -387,7 +391,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           if (mounted) setState(() => isLoading = false);
         }
       } else {
-
+        _overlayKey.currentState?.resetContentState();
         await _player.open(
           Playlist([
             Media(
@@ -443,6 +447,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               );
 
               // TODO: Implement watch history duration for vod and series
+              _overlayKey.currentState?.resetContentState();
               await _player.open(Media(contentItem.url));
               await _applyUserPreferenceProperties();
               if (await UserPreferences.getLowLatencyMode()) {
@@ -555,6 +560,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             () async {
               if (_isSwitchingChannel) return;
               if (contentItem.contentType == ContentType.liveStream) {
+                _overlayKey.currentState?.resetContentState();
                 await _player.open(Media(contentItem.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -606,6 +612,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         // VOD/Series completion is handled by the Playlist — do nothing.
         if (contentItem.contentType == ContentType.liveStream) {
           if (!mounted) return;
+          _overlayKey.currentState?.resetContentState();
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
@@ -637,6 +644,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
                 _errorHandler.reset();
 
+                _overlayKey.currentState?.resetContentState();
                 await _player.open(Media(item.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -667,6 +675,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
               );
               final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
+              _overlayKey.currentState?.resetContentState();
               await _player.open(
                 Media(item.url, start: Duration(milliseconds: startMs)),
                 play: true,
@@ -1377,6 +1386,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           onFullscreenOverride: widget.onFullscreen,
           isInline: widget.isInline,
           contentType: widget.contentItem.contentType,
+          overlayKey: _overlayKey,
         ),
         if (!usePersistentSidebar &&
             _showChannelList &&

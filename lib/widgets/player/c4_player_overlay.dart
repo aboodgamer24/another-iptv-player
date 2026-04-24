@@ -38,12 +38,12 @@ class C4PlayerOverlay extends StatefulWidget {
   });
 
   @override
-  State<C4PlayerOverlay> createState() => _C4PlayerOverlayState();
+  State<C4PlayerOverlay> createState() => C4PlayerOverlayState();
 }
 
 enum _SidePanelMode { channels, categories }
 
-class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
+class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _isVisible = true;
   bool _showSidePanel = false;
   bool _showInfoPanel = false;
@@ -111,13 +111,25 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         _position = p; // always track real position for ±10s skip buttons
       }),
       widget.player.stream.duration.listen((d) {
-        _durationNotifier.value = d;
+        // Always track the real position for internal calculations.
         _duration = d;
-        // Once we see any real duration, lock this content as non-live.
-        // This survives seek operations that temporarily reset duration to 0.
-        if (d.inSeconds > 0 && !_confirmedNonLive) {
-          if (mounted) setState(() => _confirmedNonLive = true);
+
+        if (d.inSeconds > 0) {
+          // Update the notifier with the real duration.
+          _durationNotifier.value = d;
+          if (!_confirmedNonLive) {
+            // Lock this content as non-live for its entire playback lifetime.
+            if (mounted) setState(() => _confirmedNonLive = true);
+          }
+          // Once locked, do NOT allow a temporary duration=0 (seek buffering)
+          // to overwrite _durationNotifier — keep the last good value frozen.
+        } else if (!_confirmedNonLive) {
+          // Only propagate duration=0 while we have NOT yet confirmed it is non-live.
+          // This handles true live streams that never report a real duration.
+          _durationNotifier.value = d;
         }
+        // If _confirmedNonLive is true and d.inSeconds == 0, we intentionally
+        // ignore the update — it is a transient seek-buffering artefact.
       }),
       widget.player.stream.volume.listen((v) {
         if (!mounted) return;
@@ -177,7 +189,11 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         });
       }),
       widget.player.stream.playlist.listen((playlist) {
-        if (mounted) setState(() => _confirmedNonLive = false);
+        // Do NOT reset _confirmedNonLive here. A seek causes a playlist update
+        // event, and resetting this flag while MPV reports duration=0 during
+        // buffering switches the UI to LIVE mode and corrupts the seek bar range.
+        // _confirmedNonLive is only cleared when the content itself changes
+        // (handled by the ContentType/queue change path below).
       }),
     ];
 
@@ -437,6 +453,20 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         Navigator.pop(context);
       },
     );
+  }
+
+  /// Called by the parent widget (PlayerWidget) when new content starts loading.
+  /// Resets the live/non-live detection so the new content is evaluated fresh.
+  void resetContentState() {
+    if (mounted) {
+      setState(() {
+        _confirmedNonLive = false;
+        _position = Duration.zero;
+        _duration = Duration.zero;
+        _positionNotifier.value = Duration.zero;
+        _durationNotifier.value = Duration.zero;
+      });
+    }
   }
 
   ContentType? _currentContentType() {
@@ -778,7 +808,13 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     return ValueListenableBuilder<Duration>(
                       valueListenable: _durationNotifier,
                       builder: (context, duration, _) {
-                        final total = duration.inSeconds.toDouble().clamp(1.0, double.infinity);
+                        // If we have confirmed this is non-live content, never let a transient
+                        // near-zero duration collapse the slider range.
+                        final effectiveDuration = (_confirmedNonLive && duration.inSeconds < 60)
+                            ? _duration   // use the cached real duration
+                            : duration;
+
+                        final total = effectiveDuration.inSeconds.toDouble().clamp(1.0, double.infinity);
                         final current = position.inSeconds.toDouble().clamp(0.0, total);
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 120),

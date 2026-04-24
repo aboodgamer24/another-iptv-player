@@ -20,7 +20,10 @@ class VideoWidget extends StatefulWidget {
     this.onFullscreenOverride,
     this.isInline = false,
     this.contentType,
+    this.overlayKey,
   });
+
+  final GlobalKey<C4PlayerOverlayState>? overlayKey;
 
   @override
   State<VideoWidget> createState() => _VideoWidgetState();
@@ -68,6 +71,7 @@ class _VideoWidgetState extends State<VideoWidget> {
           subtitleViewConfiguration: widget.subtitleViewConfiguration,
         ),
         C4PlayerOverlay(
+          key: widget.overlayKey,
           player: widget.controller.player,
           controller: widget.controller,
           homeController: homeController,
@@ -88,6 +92,7 @@ Widget getVideo(
   VoidCallback? onFullscreenOverride,
   bool isInline = false,
   ContentType? contentType,
+  GlobalKey<C4PlayerOverlayState>? overlayKey,
 }) {
   return VideoWidget(
     controller: controller,
@@ -95,5 +100,6 @@ Widget getVideo(
     onFullscreenOverride: onFullscreenOverride,
     isInline: isInline,
     contentType: contentType,
+    overlayKey: overlayKey,
   );
 }
