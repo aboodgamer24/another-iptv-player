@@ -35,7 +35,6 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
 
   WatchHistory? _watchHistory;
   Map<String, dynamic>? _vodInfo;
-  bool _isLoadingInfo = true;
   bool _isFavorite = false;
   bool _isInWatchLater = false;
   List<ContentItem> _categoryMovies = [];
@@ -95,7 +94,6 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
 
   Future<void> _loadVodInfo() async {
     if (!isXtreamCode || _repository == null) {
-      if (mounted) setState(() => _isLoadingInfo = false);
       return;
     }
     try {
@@ -103,11 +101,9 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
       if (mounted) {
         setState(() {
           _vodInfo = info;
-          _isLoadingInfo = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoadingInfo = false);
     }
   }
 

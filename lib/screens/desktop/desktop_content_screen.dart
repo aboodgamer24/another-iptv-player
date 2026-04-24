@@ -424,7 +424,6 @@ class _DesktopContentCardState extends State<_DesktopContentCard> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
 
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),

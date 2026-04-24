@@ -14,9 +14,9 @@ import '../playlist_screen.dart';
 
 class XtreamCodeDataLoaderScreen extends StatefulWidget {
   final Playlist playlist;
-  bool refreshAll = false;
+  final bool refreshAll;
 
-  XtreamCodeDataLoaderScreen({
+  const XtreamCodeDataLoaderScreen({
     super.key,
     required this.playlist,
     this.refreshAll = false,

@@ -22,8 +22,6 @@ import '../services/fullscreen_notifier.dart';
 import '../utils/responsive_helper.dart';
 import '../services/upscale_service.dart';
 
-
-
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
   final double? aspectRatio;
@@ -105,7 +103,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     watchHistoryService = WatchHistoryService();
 
     super.initState();
-    
+
     // Android: auto-enter fullscreen as soon as player mounts
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -141,15 +139,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     _initializePlayer();
 
-    _lowLatencySubscription = EventBus()
-        .on<bool>('low_latency_changed')
-        .listen((bool enabled) async {
-      if (enabled) {
-        await _applyLowLatencyProperties();
-      } else {
-        await _applyUserPreferenceProperties();
-      }
-    });
+    _lowLatencySubscription = EventBus().on<bool>('low_latency_changed').listen(
+      (bool enabled) async {
+        if (enabled) {
+          await _applyLowLatencyProperties();
+        } else {
+          await _applyUserPreferenceProperties();
+        }
+      },
+    );
   }
 
   @override
@@ -358,7 +356,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       );
 
       if (_queue != null) {
-        var currentItemIndex = 0;
         List<Media> medias = [];
         for (int i = 0; i < _queue!.length; i++) {
           final item = _queue![i];
@@ -370,7 +367,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
           medias.add(Media(item.url, start: Duration(milliseconds: startMs)));
 
           if (item.id == contentItem.id) {
-            currentItemIndex = i;
             _currentItemIndex = i;
             contentItem = item;
             EventBus().emit('player_content_item', item);
@@ -381,7 +377,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType != ContentType.liveStream) {
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           await _player.open(
-            Media(contentItem.url, start: watchHistory?.watchDuration ?? Duration.zero),
+            Media(
+              contentItem.url,
+              start: watchHistory?.watchDuration ?? Duration.zero,
+            ),
             play: true,
           );
           await _applyUserPreferenceProperties();
@@ -452,8 +451,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 ),
               );
 
-              // TODO: Implement watch history duration for vod and series
-              _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
+              _overlayKey.currentState?.resetContentState(
+                newUrl: contentItem.url,
+              );
               await _player.open(Media(contentItem.url));
               await _applyUserPreferenceProperties();
               if (await UserPreferences.getLowLatencyMode()) {
@@ -532,24 +532,28 @@ class _PlayerWidgetState extends State<PlayerWidget>
         _pendingWatchDuration = position;
         _pendingTotalDuration = _player.state.duration;
 
-        if (PlayerState.pendingTrackRestorePosition != null && PlayerState.pendingTrackRestoreTime != null) {
-          final timeSinceGuard = DateTime.now().difference(PlayerState.pendingTrackRestoreTime!);
+        if (PlayerState.pendingTrackRestorePosition != null &&
+            PlayerState.pendingTrackRestoreTime != null) {
+          final timeSinceGuard = DateTime.now().difference(
+            PlayerState.pendingTrackRestoreTime!,
+          );
           if (timeSinceGuard.inSeconds < 5) {
-            if (position < const Duration(seconds: 1) && PlayerState.pendingTrackRestorePosition!.inSeconds > 2) {
+            if (position < const Duration(seconds: 1) &&
+                PlayerState.pendingTrackRestorePosition!.inSeconds > 2) {
               final restorePos = PlayerState.pendingTrackRestorePosition!;
               _player.seek(restorePos);
               // We intentionally do NOT null out the guard yet in case MPV drops it again during the seek
             } else if (position > const Duration(seconds: 1)) {
-               // If it successfully passed 1s (or successfully restored), we can clear the guard
-               if (timeSinceGuard.inMilliseconds > 500) {
-                 PlayerState.pendingTrackRestorePosition = null;
-                 PlayerState.pendingTrackRestoreTime = null;
-               }
+              // If it successfully passed 1s (or successfully restored), we can clear the guard
+              if (timeSinceGuard.inMilliseconds > 500) {
+                PlayerState.pendingTrackRestorePosition = null;
+                PlayerState.pendingTrackRestoreTime = null;
+              }
             }
           } else {
-             // Expire guard after 5 seconds
-             PlayerState.pendingTrackRestorePosition = null;
-             PlayerState.pendingTrackRestoreTime = null;
+            // Expire guard after 5 seconds
+            PlayerState.pendingTrackRestorePosition = null;
+            PlayerState.pendingTrackRestoreTime = null;
           }
         }
 
@@ -561,7 +565,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
         // Only reschedule a save if position moved more than 5 seconds
         // since the last save trigger — avoids timer churn during pause/seek.
-        if ((position - _lastSavedPosition).abs() > const Duration(seconds: 5)) {
+        if ((position - _lastSavedPosition).abs() >
+            const Duration(seconds: 5)) {
           _watchHistoryTimer?.cancel();
           _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
             _lastSavedPosition = position;
@@ -600,7 +605,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
               }
 
               if (contentItem.contentType == ContentType.liveStream) {
-                _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
+                _overlayKey.currentState?.resetContentState(
+                  newUrl: contentItem.url,
+                );
                 await _player.open(Media(contentItem.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -636,8 +643,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         PlayerState.title = contentItem.name;
         EventBus().emit('player_content_item', contentItem);
         EventBus().emit('player_content_item_index', playlist.index);
-
-
       });
 
       _player.stream.completed.listen((completed) async {
@@ -675,7 +680,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
               _isSwitchingChannel = true;
 
               try {
-                if (_queue == null || index < 0 || index >= _queue!.length) return;
+                if (_queue == null || index < 0 || index >= _queue!.length)
+                  return;
 
                 final item = _queue![index];
                 contentItem = item;
@@ -734,8 +740,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
               if (mounted) setState(() {});
             }
           });
-      
-      EventBus().on<List<ContentItem>>('player_queue_changed').listen((newQueue) {
+
+      EventBus().on<List<ContentItem>>('player_queue_changed').listen((
+        newQueue,
+      ) {
         if (!mounted) return;
         _queue = newQueue;
         PlayerState.queue = newQueue;
@@ -1311,7 +1319,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final screenSize = MediaQuery.of(context).size;
@@ -1444,9 +1451,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
             _showChannelList &&
             _queue != null &&
             _queue!.length > 1)
-          RepaintBoundary(
-            child: _buildChannelListOverlay(context),
-          ),
+          RepaintBoundary(child: _buildChannelListOverlay(context)),
       ],
     );
 
@@ -1474,7 +1479,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
               Expanded(child: playerCore),
               Container(width: 1, color: Colors.grey.shade900),
               RepaintBoundary(
-                child: SizedBox(width: 300, child: _buildPersistentChannelList()),
+                child: SizedBox(
+                  width: 300,
+                  child: _buildPersistentChannelList(),
+                ),
               ),
             ],
           );

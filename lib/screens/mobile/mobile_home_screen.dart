@@ -161,9 +161,6 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     final movieHistory = context.select<WatchHistoryController, List<WatchHistory>>(
       (c) => c.movieHistory,
     );
-    final seriesHistory = context.select<WatchHistoryController, List<WatchHistory>>(
-      (c) => c.seriesHistory,
-    );
     final favItems = context.select<FavoritesController, List<Favorite>>(
       (c) => c.favorites,
     );

@@ -76,6 +76,7 @@ class _C4DashboardState extends State<C4Dashboard> {
 
       // Pre-warm into cache immediately
       if (backdropUrl.isNotEmpty) {
+        if (!mounted) return;
         await precacheImage(CachedNetworkImageProvider(backdropUrl), context);
       }
 
@@ -168,7 +169,7 @@ class _C4DashboardState extends State<C4Dashboard> {
                 child: C4DashboardHero(
                   key: ValueKey(_tmdbHeroItem!.id),
                   item: _tmdbHeroItem!,
-                  onPlay: () => _playTmdbItem(context, _tmdbHeroItem!),
+                  onPlay: () => _playTmdbItem(_tmdbHeroItem!),
                 ),
               ),
 
@@ -400,7 +401,7 @@ class _C4DashboardState extends State<C4Dashboard> {
           child: C4ContentRail(
             title: context.loc.rail_trending_movies,
             items: _trendingMovies,
-            onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
+            onItemTap: (ctx, item) => _playTmdbItem(item),
           ),
         );
 
@@ -411,7 +412,7 @@ class _C4DashboardState extends State<C4Dashboard> {
           child: C4ContentRail(
             title: context.loc.rail_trending_series,
             items: _trendingSeries,
-            onItemTap: (ctx, item) => _playTmdbItem(ctx, item),
+            onItemTap: (ctx, item) => _playTmdbItem(item),
           ),
         );
 
@@ -420,7 +421,7 @@ class _C4DashboardState extends State<C4Dashboard> {
     }
   }
 
-  Future<void> _playTmdbItem(BuildContext context, ContentItem item) async {
+  Future<void> _playTmdbItem(ContentItem item) async {
     final db = getIt<AppDatabase>();
     final playlistId = AppState.currentPlaylist?.id;
 

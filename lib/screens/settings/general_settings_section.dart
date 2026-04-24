@@ -95,6 +95,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
       });
       _fadeController.forward();
     } catch (e) {
+      debugPrint('[GeneralSettings] _loadSettings error: $e');
       setState(() {
         _isLoading = false;
       });
@@ -115,6 +116,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
         _backgroundPlayEnabled = value;
       });
     } catch (e) {
+      debugPrint('[GeneralSettings] _saveBackgroundPlaySetting error: $e');
       setState(() {
         _backgroundPlayEnabled = !value;
       });
@@ -239,15 +241,13 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           trailing: const Icon(Icons.chevron_right),
           onTap: () async {
             await UserPreferences.removeLastPlaylist();
-            if (mounted) {
-            if (!mounted) return;
+            if (!context.mounted) return;
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
                 builder: (context) => PlaylistScreen(),
               ),
             );
-            }
           },
         ),
       ),
@@ -297,9 +297,11 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   try {
                     ctrl = Provider.of<XtreamCodeHomeController>(
                       context, listen: false);
-                  } catch (_) {}
+                  } catch (e) {
+                    debugPrint('[GeneralSettings] XtreamCodeHomeController resolve error: $e');
+                  }
 
-                  final result = await Navigator.push(
+                  await Navigator.push(
                     context,
                     PageRouteBuilder(
                       pageBuilder: (_, __, ___) => CategorySettingsScreen(
@@ -327,7 +329,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                     ),
                   );
 
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     if (isXtreamCode) {
                       Navigator.pushReplacement(
                         context,

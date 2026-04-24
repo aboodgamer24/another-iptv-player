@@ -469,12 +469,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              child: Icon(
-                Icons.play_arrow_rounded,
-                size: 30,
-                color: contentColor,
-              ),
+            Icon(
+              Icons.play_arrow_rounded,
+              size: 30,
+              color: contentColor,
             ),
             const SizedBox(width: 6),
             Flexible(
@@ -888,7 +886,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
           // New if added in the last 15 days
           isRecent = diff >= -2 && diff <= 15;
         }
-      } catch (e) {}
+      } catch (e) {
+        debugPrint('Error parsing episode date: $e');
+      }
     }
 
     return Container(

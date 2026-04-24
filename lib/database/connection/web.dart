@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:drift/drift.dart';
 import 'package:drift/wasm.dart';
 import 'package:another_iptv_player/database/connection/connect.dart';

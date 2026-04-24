@@ -1,0 +1,58 @@
+Analyzing another-iptv-player...                                
+
+warning - Unused import: 'dart:convert' - lib\controllers\m3u_controller.dart:1:8 - unused_import
+warning - Unused import: 'dart:io' - lib\controllers\m3u_controller.dart:2:8 - unused_import
+warning - The declaration '_parseM3u' isn't referenced - lib\controllers\m3u_controller.dart:350:17 - unused_element
+warning - Unused import: 'package:another_iptv_player/models/view_state.dart' - lib\controllers\m3u_home_controller.dart:7:8 - unused_import
+warning - Unused import: 'package:another_iptv_player/models/view_state.dart' - lib\controllers\xtream_code_home_controller.dart:7:8 - unused_import
+  error - The function 'debugPrint' isn't defined - lib\database\connection\web.dart:28:9 - undefined_function
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\account\account_screen.dart:226:34 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\account\account_screen.dart:236:34 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\common\c4_dashboard.dart:468:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\common\c4_dashboard.dart:470:30 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\common\c4_dashboard.dart:480:9 - use_build_context_synchronously
+warning - The value of the local variable 'theme' isn't used - lib\screens\desktop\desktop_content_screen.dart:427:11 - unused_local_variable
+warning - The value of the field '_isLoadingInfo' isn't used - lib\screens\desktop\desktop_movie_detail_screen.dart:38:8 - unused_field
+warning - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: M3uDataLoaderScreen.refreshAll - lib\screens\m3u\m3u_data_loader_screen.dart:14:7 - must_be_immutable
+warning - The declaration '_buildContentPage' isn't referenced - lib\screens\m3u\m3u_home_screen.dart:146:10 - unused_element
+warning - This default clause is covered by the previous cases - lib\screens\m3u\m3u_items_screen.dart:324:7 - unreachable_switch_default
+warning - This default clause is covered by the previous cases - lib\screens\m3u\m3u_items_screen.dart:337:7 - unreachable_switch_default
+warning - The value of the field '_serverInfo' isn't used - lib\screens\m3u\m3u_playlist_settings_screen.dart:20:16 - unused_field
+warning - Unused import: 'package:another_iptv_player/controllers/m3u_controller.dart' - lib\screens\m3u\new_m3u_playlist_screen.dart:1:8 - unused_import
+warning - Unused import: 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart' - lib\screens\m3u\new_m3u_playlist_screen.dart:9:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\m3u\new_m3u_playlist_screen.dart:592:25 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\m3u\new_m3u_playlist_screen.dart:592:34 - use_build_context_synchronously
+   info - Empty catch block - lib\screens\m3u\new_m3u_playlist_screen.dart:607:20 - empty_catches
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\m3u\new_m3u_playlist_screen.dart:610:20 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\m3u\new_m3u_playlist_screen.dart:614:39 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\m3u\new_m3u_playlist_screen.dart:622:9 - use_build_context_synchronously
+warning - The declaration '_buildEmptyState' isn't referenced - lib\screens\mobile\mobile_favorites_screen.dart:65:10 - unused_element
+warning - The value of the local variable 'seriesHistory' isn't used - lib\screens\mobile\mobile_home_screen.dart:164:11 - unused_local_variable
+   info - The import of 'dart:ui' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\screens\mobile\mobile_movie_detail_screen.dart:1:8 - unnecessary_import
+warning - The value of the field '_watchHistory' isn't used - lib\screens\mobile\mobile_movie_detail_screen.dart:34:17 - unused_field
+warning - The value of the field '_isLoadingInfo' isn't used - lib\screens\mobile\mobile_movie_detail_screen.dart:36:8 - unused_field
+   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_movie_detail_screen.dart:183:9 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_series_detail_screen.dart:89:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_series_detail_screen.dart:96:11 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_series_detail_screen.dart:103:9 - curly_braces_in_flow_control_structures
+warning - The value of the field '_isLoadingVodInfo' isn't used - lib\screens\movies\movie_screen.dart:44:8 - unused_field
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\movies\movie_screen.dart:931:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\movies\movie_screen.dart:932:32 - use_build_context_synchronously
+   info - Unnecessary instance of 'Container' - lib\screens\series\series_screen.dart:472:13 - avoid_unnecessary_containers
+   info - Empty catch block - lib\screens\series\series_screen.dart:891:19 - empty_catches
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\settings\general_settings_section.dart:245:15 - use_build_context_synchronously
+warning - The value of the local variable 'result' isn't used - lib\screens\settings\general_settings_section.dart:302:25 - unused_local_variable
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\screens\settings\general_settings_section.dart:333:25 - use_build_context_synchronously
+warning - The value of the local variable 'isDark' isn't used - lib\screens\settings\parental_controls_screen.dart:143:11 - unused_local_variable
+warning - This class (or a class that this class inherits from) is marked as '@immutable', but one or more of its instance fields aren't final: XtreamCodeDataLoaderScreen.refreshAll - lib\screens\xtream-codes\xtream_code_data_loader_screen.dart:15:7 - must_be_immutable
+  error - Undefined class 'Playlist' - lib\screens\xtream-codes\xtream_code_home_screen.dart:25:9 - undefined_class
+  error - The method 'debugPrint' isn't defined for the type 'PlaylistContentState' - lib\services\playlist_content_state.dart:94:7 - undefined_method
+  error - The method 'debugPrint' isn't defined for the type 'PlaylistContentState' - lib\services\playlist_content_state.dart:133:7 - undefined_method
+  error - The method 'debugPrint' isn't defined for the type 'PlaylistContentState' - lib\services\playlist_content_state.dart:171:7 - undefined_method
+warning - The value of the field '_primaryColor' isn't used - lib\utils\app_themes.dart:16:22 - unused_field
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\player-buttons\video_channel_selector_widget.dart:175:28 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\widgets\player-buttons\video_channel_selector_widget.dart:186:39 - use_build_context_synchronously
+warning - The value of the field '_seekGesture' isn't used - lib\widgets\player\c4_player_overlay.dart:65:8 - unused_field
+warning - The value of the local variable 'currentItemIndex' isn't used - lib\widgets\player_widget.dart:361:13 - unused_local_variable
+
+54 issues found. (ran in 3.4s)

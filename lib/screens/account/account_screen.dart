@@ -222,7 +222,7 @@ class _AccountScreenState extends State<AccountScreen> {
           subtitle: 'Push all local data to server',
           onTap: () async {
             await _pushAll();
-            if (!context.mounted) return;
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Synced successfully')));
           },
         ),
@@ -232,7 +232,7 @@ class _AccountScreenState extends State<AccountScreen> {
           subtitle: 'Overwrite local data with server data',
           onTap: () async {
             await _pullAndApply();
-            if (!context.mounted) return;
+            if (!mounted) return;
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data pulled from server')));
           },
         ),

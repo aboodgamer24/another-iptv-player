@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/models/api_configuration_model.dart';
@@ -10,6 +9,7 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -41,7 +41,6 @@ class _MovieScreenState extends State<MovieScreen> {
   WatchHistory? _watchHistory;
   Map<String, dynamic>? _vodInfo;
   bool _isLoadingHistory = true;
-  bool _isLoadingVodInfo = true;
   bool _isFavorite = false;
   bool _isInWatchLater = false;
   List<ContentItem> _categoryMovies = [];
@@ -234,7 +233,6 @@ class _MovieScreenState extends State<MovieScreen> {
       if (!mounted) return;
       setState(() {
         _vodInfo = null;
-        _isLoadingVodInfo = false;
       });
       return;
     }
@@ -245,13 +243,11 @@ class _MovieScreenState extends State<MovieScreen> {
       if (!mounted) return;
       setState(() {
         _vodInfo = info;
-        _isLoadingVodInfo = false;
       });
     } catch (_) {
       if (!mounted) return;
       setState(() {
         _vodInfo = null;
-        _isLoadingVodInfo = false;
       });
     }
   }
@@ -804,7 +800,7 @@ class _MovieScreenState extends State<MovieScreen> {
     }
 
     return FilledButton.tonalIcon(
-      onPressed: () => _openTrailer(context),
+      onPressed: _openTrailer,
       icon: const Icon(Icons.ondemand_video),
       label: Text(context.loc.trailer),
       style: FilledButton.styleFrom(
@@ -904,7 +900,7 @@ class _MovieScreenState extends State<MovieScreen> {
     return buffer.toString();
   }
 
-  Future<void> _openTrailer(BuildContext context) async {
+  Future<void> _openTrailer() async {
     final vod = widget.contentItem.vodStream;
     if (vod == null) {
       return;

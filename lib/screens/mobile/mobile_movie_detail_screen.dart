@@ -1,10 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
-import '../../models/watch_history.dart';
 import '../../repositories/iptv_repository.dart';
 import '../../models/api_configuration_model.dart';
 import '../../services/app_state.dart';
@@ -31,9 +29,7 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
   late final FavoritesController _favoritesController;
   late final WatchLaterController _watchLaterController;
 
-  WatchHistory? _watchHistory;
   Map<String, dynamic>? _vodInfo;
-  bool _isLoadingInfo = true;
   bool _isFavorite = false;
   bool _isInWatchLater = false;
   List<ContentItem> _categoryMovies = [];
@@ -78,17 +74,17 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
       final streamId = isXtreamCode
           ? widget.contentItem.id
           : widget.contentItem.m3uItem?.id ?? widget.contentItem.id;
-      final history = await _watchHistoryService.getWatchHistory(
+      await _watchHistoryService.getWatchHistory(
         playlist.id,
         streamId,
       );
-      if (mounted) setState(() => _watchHistory = history);
+      if (mounted) setState(() {});
     } catch (_) {}
   }
 
   Future<void> _loadVodInfo() async {
     if (!isXtreamCode || _repository == null) {
-      if (mounted) setState(() => _isLoadingInfo = false);
+      if (mounted) setState(() {});
       return;
     }
     try {
@@ -96,11 +92,10 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
       if (mounted) {
         setState(() {
           _vodInfo = info;
-          _isLoadingInfo = false;
         });
       }
     } catch (_) {
-      if (mounted) setState(() => _isLoadingInfo = false);
+      if (mounted) setState(() {});
     }
   }
 
@@ -179,8 +174,9 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
   String? get _backdropUrl {
     if (_vodInfo != null) {
       final backdrop = _vodInfo!['backdrop_path'];
-      if (backdrop is List && backdrop.isNotEmpty)
+      if (backdrop is List && backdrop.isNotEmpty) {
         return backdrop.first.toString();
+      }
       if (backdrop is String && backdrop.isNotEmpty) return backdrop;
     }
     return null;

@@ -62,18 +62,6 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
     );
   }
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.favorite_border, size: 64, color: Colors.white24),
-          const SizedBox(height: 16),
-          Text(context.loc.no_favorites_found, style: const TextStyle(color: Colors.white54)),
-        ],
-      ),
-    );
-  }
 }
 
 class _LiveTab extends StatefulWidget {

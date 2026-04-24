@@ -62,7 +62,6 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   // Gesture flags
   bool _brightnessGesture = false;
   bool _volumeGesture = false;
-  bool _seekGesture = false;
   bool _speedUpOnLongPress = true;
 
   // Enhancement values — MPV ranges
@@ -285,13 +284,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   Future<void> _loadGesturePrefs() async {
     final b = await UserPreferences.getBrightnessGesture();
     final v = await UserPreferences.getVolumeGesture();
-    final s = await UserPreferences.getSeekGesture();
     final lp = await UserPreferences.getSpeedUpOnLongPress();
     if (mounted) {
       setState(() {
         _brightnessGesture = b;
         _volumeGesture = v;
-        _seekGesture = s;
         _speedUpOnLongPress = lp;
       });
     }

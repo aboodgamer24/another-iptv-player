@@ -28,7 +28,6 @@ class _VideoChannelSelectorWidgetState
   static OverlayEntry? _globalOverlayEntry;
   static StreamSubscription? _globalIndexSubscription;
   static StreamSubscription? _globalToggleSubscription;
-  static BuildContext? _globalContext;
   static String? _selectedCategoryId;
   static bool _showCategories = false;
   static int? _selectedSeason;
@@ -55,15 +54,12 @@ class _VideoChannelSelectorWidgetState
   void initState() {
     super.initState();
 
-    _globalContext = context;
 
     _globalToggleSubscription ??= EventBus()
         .on<bool>('toggle_channel_list')
         .listen((bool show) {
           if (show) {
-            if (_globalContext != null) {
-              _showChannelSelector(_globalContext!);
-            }
+            _showChannelSelector();
           } else {
             _hideChannelSelector();
           }
@@ -85,7 +81,7 @@ class _VideoChannelSelectorWidgetState
       return const SizedBox.shrink();
     }
 
-    _globalContext = context;
+
 
     final currentContent = PlayerState.currentContent;
     String tooltip = context.loc.select_channel;
@@ -100,7 +96,7 @@ class _VideoChannelSelectorWidgetState
       icon: const Icon(Icons.list, color: Colors.white),
       onPressed: () {
         if (_globalOverlayEntry == null) {
-          _showChannelSelector(context);
+          _showChannelSelector();
         } else {
           _hideChannelSelector();
         }
@@ -108,7 +104,7 @@ class _VideoChannelSelectorWidgetState
     );
   }
 
-  void _showChannelSelector(BuildContext context) async {
+  void _showChannelSelector() async {
     if (_globalOverlayEntry != null) return;
 
     // Scroll controller'ları oluştur veya yenile
@@ -168,22 +164,21 @@ class _VideoChannelSelectorWidgetState
     }
 
     if (!mounted) return;
-    final currentContext = context;
 
     OverlayState? overlay;
     try {
-      overlay = Overlay.of(currentContext, rootOverlay: true);
+      overlay = Overlay.of(context, rootOverlay: true);
     } catch (e) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
         if (_globalOverlayEntry == null) {
-          _showChannelSelector(currentContext);
+          _showChannelSelector();
         }
       });
       return;
     }
 
-    final screenWidth = MediaQuery.of(currentContext).size.width;
+    final screenWidth = MediaQuery.of(context).size.width;
     final panelWidth = (screenWidth / 3).clamp(200.0, 400.0);
 
     _globalOverlayEntry = OverlayEntry(

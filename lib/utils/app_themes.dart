@@ -13,7 +13,6 @@ final _androidFadeThrough = PageTransitionsTheme(
 
 class AppThemes {
   // Refined teal accent color
-  static const Color _primaryColor = Color(0xFF64FFDA);
   static const Color _primaryDark = Color(0xFF00BFA5);
 
   // Sky Blue palette

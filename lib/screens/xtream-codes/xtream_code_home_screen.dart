@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
-import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/screens/desktop/desktop_content_screen.dart';
 import 'package:another_iptv_player/screens/desktop/desktop_live_tv_screen.dart';
 import 'package:another_iptv_player/screens/desktop/desktop_home_screen.dart';
@@ -11,6 +10,7 @@ import 'package:another_iptv_player/screens/desktop/desktop_global_search_screen
 import 'package:another_iptv_player/screens/desktop/desktop_favorites_screen.dart';
 import 'package:another_iptv_player/widgets/desktop/desktop_sidebar.dart';
 import '../../models/content_type.dart';
+import 'package:another_iptv_player/models/playlist_model.dart';
 import '../mobile/mobile_shell_screen.dart';
 import '../mobile/mobile_home_screen.dart';
 import '../mobile/mobile_live_tv_screen.dart';

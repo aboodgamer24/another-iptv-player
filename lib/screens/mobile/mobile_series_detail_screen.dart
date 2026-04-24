@@ -85,25 +85,28 @@ class _MobileSeriesDetailScreenState extends State<MobileSeriesDetailScreen>
               vsync: this,
             );
             _tabController!.addListener(() {
-              if (mounted)
+              if (mounted) {
                 setState(() => _selectedSeasonIndex = _tabController!.index);
+              }
             });
           });
           await Future.wait([_loadEpisodeProgress(), _checkStatus()]);
         }
       } else {
-        if (mounted)
+        if (mounted) {
           setState(() {
             _error = 'Failed to load series info';
             _isLoading = false;
           });
+        }
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         setState(() {
           _error = 'Error: $e';
           _isLoading = false;
         });
+      }
     }
   }
 

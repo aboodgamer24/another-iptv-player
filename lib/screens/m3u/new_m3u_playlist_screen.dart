@@ -1,4 +1,3 @@
-import 'package:another_iptv_player/controllers/m3u_controller.dart';
 import 'package:another_iptv_player/models/playlist_model.dart';
 import 'package:another_iptv_player/screens/m3u/m3u_data_loader_screen.dart';
 import 'package:another_iptv_player/services/m3u_parser.dart';
@@ -6,7 +5,6 @@ import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:media_kit_video/media_kit_video_controls/src/controls/methods/video_state.dart';
 import 'package:provider/provider.dart';
 import '../../../../controllers/playlist_controller.dart';
 import '../../models/m3u_item.dart';
@@ -588,7 +586,7 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
       );
 
       List<M3uItem> m3uItems = [];
-      if (!context.mounted) return;
+      if (!mounted) return;
       showLoadingDialog(context, context.loc.loading_m3u);
 
       try {
@@ -604,20 +602,22 @@ class NewM3uPlaylistScreenState extends State<NewM3uPlaylistScreen> {
 
           m3uItems = await compute(M3uParser.parseM3uFile, params);
         }
-      } catch (ex) {}
+      } catch (e) {
+        debugPrint('[NewM3uPlaylistScreen] ignored error: $e');
+      }
 
-      if (!context.mounted) return;
+      if (!mounted) return;
       Navigator.of(context).pop();
 
       if (m3uItems.isEmpty) {
-        if (context.mounted) {
+        if (mounted) {
           playlistController.setError(context.loc.m3u_error);
           await playlistController.deletePlaylist(playlist!.id);
         }
         return;
       }
 
-      if (!context.mounted) return;
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(

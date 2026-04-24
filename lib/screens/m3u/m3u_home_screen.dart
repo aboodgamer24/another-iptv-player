@@ -5,12 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/controllers/m3u_home_controller.dart';
 import 'package:another_iptv_player/models/playlist_model.dart';
-import 'package:another_iptv_player/models/category_view_model.dart';
-import 'package:another_iptv_player/repositories/m3u_repository.dart';
-import 'package:another_iptv_player/screens/category_detail_screen.dart';
-import 'package:another_iptv_player/widgets/category_section.dart';
-import 'package:another_iptv_player/utils/responsive_helper.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import '../../repositories/m3u_repository.dart';
 
 import '../../services/app_state.dart';
 import '../watch_history_screen.dart';
@@ -141,84 +136,6 @@ class _M3UHomeScreenState extends State<M3UHomeScreen> {
       // _buildContentPage(controller.seriesCategories!, controller),
       M3uPlaylistSettingsScreen(playlist: widget.playlist),
     ];
-  }
-
-  Widget _buildContentPage(
-    List<CategoryViewModel> categories,
-    M3UHomeController controller,
-  ) {
-    return NestedScrollView(
-      headerSliverBuilder: (context, innerBoxIsScrolled) => [
-        _buildSliverAppBar(context, controller),
-      ],
-      body: _buildCategoryList(categories),
-    );
-  }
-
-  SliverAppBar _buildSliverAppBar(
-    BuildContext context,
-    M3UHomeController controller,
-  ) {
-    if (ResponsiveHelper.isDesktopOrTV(context)) {
-      return _buildDesktopSliverAppBar(context);
-    }
-
-    return _buildMobileSliverAppBar(context, controller);
-  }
-
-  SliverAppBar _buildDesktopSliverAppBar(BuildContext context) {
-    return SliverAppBar(
-      title: SelectableText(
-        context.loc.live_streams,
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      floating: true,
-      snap: true,
-      elevation: 0,
-    );
-  }
-
-  SliverAppBar _buildMobileSliverAppBar(
-    BuildContext context,
-    M3UHomeController controller,
-  ) {
-    return SliverAppBar(
-      title: SelectableText(
-        controller.getPageTitle(context),
-        style: const TextStyle(fontWeight: FontWeight.bold),
-      ),
-      floating: true,
-      snap: true,
-      elevation: 0,
-      actions: [],
-    );
-  }
-
-  Widget _buildCategoryList(List<CategoryViewModel> categories) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: categories.length,
-      itemBuilder: (context, index) => _buildCategorySection(categories[index]),
-    );
-  }
-
-  Widget _buildCategorySection(CategoryViewModel category) {
-    return CategorySection(
-      category: category,
-      cardWidth: ResponsiveHelper.getCardWidth(context),
-      cardHeight: ResponsiveHelper.getCardHeight(context),
-      onSeeAllTap: () => _navigateToCategoryDetail(category),
-      onContentTap: (content) => navigateByContentType(context, content),
-    );
-  }
-
-  void _navigateToCategoryDetail(CategoryViewModel category) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => CategoryDetailScreen(category: category),
-      ),
-    );
   }
 
   BottomNavigationBar _buildBottomNavigationBar(
