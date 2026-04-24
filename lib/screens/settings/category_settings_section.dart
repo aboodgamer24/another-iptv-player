@@ -41,7 +41,7 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
       }
     });
     await UserPreferences.setHiddenCategories(_hiddenCategories.toList());
-    widget.controller.notifyListeners();
+    widget.controller.refresh();
   }
 
   Future<void> _setAllCategoriesVisible(
@@ -57,15 +57,9 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
       }
     });
     await UserPreferences.setHiddenCategories(_hiddenCategories.toList());
-    widget.controller.notifyListeners();
+    widget.controller.refresh();
   }
 
-  void _closeScreen(BuildContext context) {
-    if (_hasChanges) {
-      widget.controller.notifyListeners();
-    }
-    Navigator.pop(context, _hasChanges);
-  }
 
   @override
   Widget build(BuildContext context) {

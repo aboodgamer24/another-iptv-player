@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/home_rail_config.dart';
@@ -188,7 +187,7 @@ class UserPreferences {
 
   static Future<void> setSubtitleTextColor(Color textColor) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keySubtitleTextColor, textColor.value);
+    await prefs.setInt(_keySubtitleTextColor, textColor.toARGB32());
   }
 
   static Future<Color> getSubtitleBackgroundColor() async {
@@ -199,30 +198,34 @@ class UserPreferences {
 
   static Future<void> setSubtitleBackgroundColor(Color backgroundColor) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(_keySubtitleBackgroundColor, backgroundColor.value);
+    await prefs.setInt(_keySubtitleBackgroundColor, backgroundColor.toARGB32());
   }
 
   static Future<FontWeight> getSubtitleFontWeight() async {
     final prefs = await SharedPreferences.getInstance();
     final weightIndex =
+        // ignore: deprecated_member_use
         prefs.getInt(_keySubtitleFontWeight) ?? FontWeight.normal.index;
     return FontWeight.values[weightIndex];
   }
 
   static Future<void> setSubtitleFontWeight(FontWeight fontWeight) async {
     final prefs = await SharedPreferences.getInstance();
+    // ignore: deprecated_member_use
     await prefs.setInt(_keySubtitleFontWeight, fontWeight.index);
   }
 
   static Future<TextAlign> getSubtitleTextAlign() async {
     final prefs = await SharedPreferences.getInstance();
     final alignIndex =
+        // ignore: deprecated_member_use
         prefs.getInt(_keySubtitleTextAlign) ?? TextAlign.center.index;
     return TextAlign.values[alignIndex];
   }
 
   static Future<void> setSubtitleTextAlign(TextAlign textAlign) async {
     final prefs = await SharedPreferences.getInstance();
+    // ignore: deprecated_member_use
     await prefs.setInt(_keySubtitleTextAlign, textAlign.index);
   }
 

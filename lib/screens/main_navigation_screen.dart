@@ -3,9 +3,6 @@ import 'package:provider/provider.dart';
 import '../models/playlist_model.dart';
 import '../models/content_type.dart';
 import '../controllers/xtream_code_home_controller.dart';
-import '../controllers/m3u_home_controller.dart';
-import '../controllers/watch_history_controller.dart';
-import '../controllers/home_rails_controller.dart';
 import '../l10n/localization_extension.dart';
 import '../utils/platform_utils.dart';
 import 'main_shell_screen.dart';
@@ -79,14 +76,14 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           case 2:
             if (controller.isLoading) return const Center(child: CircularProgressIndicator());
             return MobileContentScreen(
-              categories: controller.movieCategories ?? [],
+              categories: controller.movieCategories,
               contentType: ContentType.vod,
               title: context.loc.movies,
             );
           case 3:
             if (controller.isLoading) return const Center(child: CircularProgressIndicator());
             return MobileContentScreen(
-              categories: controller.seriesCategories ?? [],
+              categories: controller.seriesCategories,
               contentType: ContentType.series,
               title: context.loc.series_plural,
             );

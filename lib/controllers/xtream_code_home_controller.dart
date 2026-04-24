@@ -303,4 +303,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
     _heroItem = next;
     notifyListeners();
   }
+
+  void refresh() => notifyListeners();
 }
