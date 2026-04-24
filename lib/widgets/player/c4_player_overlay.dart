@@ -75,6 +75,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   Timer? _statsTimer;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  // Locked once we see a real duration > 0 for non-live content.
+  // Prevents duration=0 during early buffering from hiding the seek bar.
+  bool _confirmedNonLive = false;
   bool _isDragging = false;
   double _dragValue = 0.0;
   bool _isSeeking = false;
@@ -110,6 +113,11 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       widget.player.stream.duration.listen((d) {
         _durationNotifier.value = d;
         _duration = d;
+        // Once we see any real duration, lock this content as non-live.
+        // This survives seek operations that temporarily reset duration to 0.
+        if (d.inSeconds > 0 && !_confirmedNonLive) {
+          if (mounted) setState(() => _confirmedNonLive = true);
+        }
       }),
       widget.player.stream.volume.listen((v) {
         if (!mounted) return;
@@ -167,6 +175,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
           app_player_state.PlayerState.selectedSubtitle =
               widget.player.state.track.subtitle;
         });
+      }),
+      widget.player.stream.playlist.listen((playlist) {
+        if (mounted) setState(() => _confirmedNonLive = false);
       }),
     ];
 
@@ -450,7 +461,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         ? true
         : contentType == ContentType.vod || contentType == ContentType.series
             ? false
-            : _duration.inSeconds == 0;
+            // Unknown contentType: only treat as live if duration is still 0
+            // AND we have never seen a real duration (prevents flicker).
+            : !_confirmedNonLive && _duration.inSeconds == 0;
     final videoTrack = widget.player.state.track.video;
 
     return ValueListenableBuilder<bool>(

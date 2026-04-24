@@ -234,8 +234,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
           await native.setProperty('demuxer-max-back-bytes', '32MiB');
           await native.setProperty('demuxer-readahead-secs', '5.0');
           await native.setProperty('cache-secs', '30');
-          // Allow demuxer to fill cache before starting — ensures seek works
-          await native.setProperty('demuxer-cache-wait', 'yes');
+          // 'yes' stalls HLS VOD indefinitely. Use 'no' and let MPV seek
+          // on-demand — the large cache (64MiB) handles it gracefully.
+          await native.setProperty('demuxer-cache-wait', 'no');
           await native.setProperty('initial-audio-sync', 'yes');
           // Smooth A/V sync for VOD
           await native.setProperty('audio-buffer', '0.2');
@@ -598,9 +599,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       });
 
-      _player.stream.completed.listen((playlist) async {
+      _player.stream.completed.listen((completed) async {
+        if (!completed) return; // false = stopped, not finished — ignore
         if (_isSwitchingChannel) return;
+        // Only auto-restart live streams on true completion.
+        // VOD/Series completion is handled by the Playlist — do nothing.
         if (contentItem.contentType == ContentType.liveStream) {
+          if (!mounted) return;
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
