@@ -11,6 +11,7 @@ import '../models/category_type.dart';
 import '../models/live_stream.dart';
 import '../models/vod_streams.dart';
 import '../models/series.dart';
+import '../models/category.dart';
 
 class XtreamCodeHomeController extends ChangeNotifier {
   late PageController _pageController;
@@ -295,4 +296,46 @@ class XtreamCodeHomeController extends ChangeNotifier {
   }
 
   void refresh() => notifyListeners();
+
+  List<ContentItem> getLiveChannelsByCategory(String categoryId) {
+    return _liveCategories
+        .firstWhere((c) => c.category.categoryId == categoryId,
+            orElse: () => CategoryViewModel(
+                category: Category(
+                    categoryId: '',
+                    categoryName: '',
+                    parentId: 0,
+                    playlistId: '',
+                    type: CategoryType.live),
+                contentItems: []))
+        .contentItems;
+  }
+
+  List<ContentItem> getMoviesByCategory(String categoryId) {
+    return _movieCategories
+        .firstWhere((c) => c.category.categoryId == categoryId,
+            orElse: () => CategoryViewModel(
+                category: Category(
+                    categoryId: '',
+                    categoryName: '',
+                    parentId: 0,
+                    playlistId: '',
+                    type: CategoryType.vod),
+                contentItems: []))
+        .contentItems;
+  }
+
+  List<ContentItem> getSeriesByCategory(String categoryId) {
+    return _seriesCategories
+        .firstWhere((c) => c.category.categoryId == categoryId,
+            orElse: () => CategoryViewModel(
+                category: Category(
+                    categoryId: '',
+                    categoryName: '',
+                    parentId: 0,
+                    playlistId: '',
+                    type: CategoryType.series),
+                contentItems: []))
+        .contentItems;
+  }
 }

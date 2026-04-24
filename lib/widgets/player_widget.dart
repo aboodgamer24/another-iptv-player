@@ -21,6 +21,7 @@ import '../utils/player_error_handler.dart';
 import '../services/fullscreen_notifier.dart';
 import '../utils/responsive_helper.dart';
 import '../services/upscale_service.dart';
+import '../utils/platform_utils.dart';
 
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
@@ -172,7 +173,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _errorHandler.reset();
 
     // Android: restore portrait + system UI when player closes
-    if (Platform.isAndroid) {
+    if (Platform.isAndroid && !PlatformUtils.isTV) {
       fullscreenNotifier.value = false;
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.portraitUp,
@@ -192,10 +193,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
     // Set the global fullscreen notifier so the shell hides AppBar + BottomNav
     fullscreenNotifier.value = true;
     // Force landscape + hide system UI for true immersive fullscreen
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    // On Android TV the system is always landscape — don't force rotate
+    if (!PlatformUtils.isTV) {
+      SystemChrome.setPreferredOrientations([
+        DeviceOrientation.landscapeLeft,
+        DeviceOrientation.landscapeRight,
+      ]);
+    }
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 

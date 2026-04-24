@@ -19,8 +19,11 @@ import 'package:another_iptv_player/utils/app_config.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io';
 
+import 'package:another_iptv_player/utils/platform_utils.dart';
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await PlatformUtils.detectTV();
   await AppConfig.load();
   await SyncService.instance.init();
   

@@ -20,6 +20,7 @@ class ContentItem {
   final VodStream? vodStream;
   final SeriesStream? seriesStream;
   final int? season;
+  final List<ContentItem>? episodes;
   final M3uItem? m3uItem;
 
   ContentItem(
@@ -35,6 +36,7 @@ class ContentItem {
     this.vodStream,
     this.seriesStream,
     this.season,
+    this.episodes,
     this.m3uItem,
   }) {
     url = isXtreamCode ? buildMediaUrl(this) : m3uItem?.url ?? id;

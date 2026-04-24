@@ -24,6 +24,13 @@ import 'mobile/mobile_favorites_screen.dart';
 import 'mobile/mobile_watch_later_screen.dart';
 import 'mobile/mobile_global_search_screen.dart';
 
+// TV Imports
+import 'tv/tv_shell_screen.dart';
+import 'tv/tv_home_screen.dart';
+import 'tv/tv_live_tv_screen.dart';
+import 'tv/tv_movies_screen.dart';
+import 'tv/tv_series_screen.dart';
+
 class MainNavigationScreen extends StatefulWidget {
   final Playlist playlist;
 
@@ -63,34 +70,51 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     if (isXtream) {
       final controller = Provider.of<XtreamCodeHomeController>(context);
 
-      if (PlatformUtils.isMobile) {
-        switch (_selectedIndex) {
-          case 0:
-            return MobileHomeScreen(playlistId: widget.playlist.id);
-          case 1:
-            if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-            return MobileLiveTvScreen(
-              categories: controller.liveCategories ?? [],
-              title: context.loc.live_streams,
-            );
-          case 2:
-            if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-            return MobileContentScreen(
-              categories: controller.movieCategories,
-              contentType: ContentType.vod,
-              title: context.loc.movies,
-            );
-          case 3:
-            if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-            return MobileContentScreen(
-              categories: controller.seriesCategories,
-              contentType: ContentType.series,
-              title: context.loc.series_plural,
-            );
-          default:
-            return const SizedBox.shrink();
+        if (PlatformUtils.isTV) {
+          switch (_selectedIndex) {
+            case 0: return TvHomeScreen(playlistId: widget.playlist.id);
+            case 1:
+              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+              return const TvLiveTvScreen();
+            case 2:
+              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+              return const TvMoviesScreen();
+            case 3:
+              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+              return const TvSeriesScreen();
+            default: return const SizedBox.shrink();
+          }
         }
-      } else {
+
+        if (PlatformUtils.isMobile) {
+          switch (_selectedIndex) {
+            case 0:
+              return MobileHomeScreen(playlistId: widget.playlist.id);
+            case 1:
+              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+              return MobileLiveTvScreen(
+                categories: controller.liveCategories ?? [],
+                title: context.loc.live_streams,
+              );
+            case 2:
+              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+              return MobileContentScreen(
+                categories: controller.movieCategories,
+                contentType: ContentType.vod,
+                title: context.loc.movies,
+              );
+            case 3:
+              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+              return MobileContentScreen(
+                categories: controller.seriesCategories,
+                contentType: ContentType.series,
+                title: context.loc.series_plural,
+              );
+            default:
+              return const SizedBox.shrink();
+          }
+        }
+ else {
         // Desktop Content
         switch (_selectedIndex) {
           case 0:
@@ -123,6 +147,20 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   @override
   Widget build(BuildContext context) {
     final content = _buildContent();
+
+    if (PlatformUtils.isTV) {
+      return TvShellScreen(
+        selectedIndex: _selectedIndex,
+        onItemSelected: (i) => setState(() => _selectedIndex = i),
+        items: const [
+          TvNavItem(icon: Icons.home_rounded, label: 'Home'),
+          TvNavItem(icon: Icons.live_tv_rounded, label: 'Live TV'),
+          TvNavItem(icon: Icons.movie_rounded, label: 'Movies'),
+          TvNavItem(icon: Icons.tv_rounded, label: 'Series'),
+        ],
+        child: content,
+      );
+    }
 
     if (PlatformUtils.isMobile) {
       return MobileShellScreen(
