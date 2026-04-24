@@ -11,6 +11,7 @@ import '../../services/tmdb_service.dart';
 import '../../models/content_type.dart';
 import '../../models/watch_history.dart';
 import '../../models/favorite.dart';
+import '../../controllers/xtream_code_home_controller.dart';
 
 class MobileHomeScreen extends StatefulWidget {
   final String playlistId;
@@ -27,6 +28,12 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
   late final TmdbService _tmdb;
   List<Map<String, dynamic>> _trendingMovies = [];
   List<Map<String, dynamic>> _trendingSeries = [];
+
+  // Local content lookup maps — populated from XtreamCodeHomeController or
+  // m3u controller after data loads. Keys are normalized lowercase titles.
+  final Map<String, ContentItem> _localMoviesByTitle = {};
+  final Map<String, ContentItem> _localSeriesByTitle = {};
+  bool _localMapsBuilt = false;
 
   @override
   void initState() {
@@ -45,6 +52,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
 
     // TMDB always fetches fresh on first mount
     if (_trendingMovies.isEmpty) _fetchTmdb();
+
+    // Build local content maps after first frame so controllers are ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _buildLocalContentMaps();
+    });
   }
 
   Future<void> _loadData() async {
@@ -71,6 +83,63 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
     } catch (_) {
       // silently fail — TMDB is non-critical
     }
+  }
+
+  /// Builds lookup maps from the available local controllers.
+  /// Call this once after local content has loaded.
+  void _buildLocalContentMaps() {
+    if (_localMapsBuilt) return;
+
+    // Try XtreamCodeHomeController first
+    try {
+      final xc = context.read<XtreamCodeHomeController>();
+      for (final cat in xc.movieCategories) {
+        for (final item in cat.contentItems) {
+          final key = _normalizeTitle(item.name);
+          if (key.isNotEmpty) _localMoviesByTitle[key] = item;
+        }
+      }
+      for (final cat in xc.seriesCategories) {
+        for (final item in cat.contentItems) {
+          final key = _normalizeTitle(item.name);
+          if (key.isNotEmpty) _localSeriesByTitle[key] = item;
+        }
+      }
+      _localMapsBuilt = true;
+    } catch (_) {
+      // XtreamCodeHomeController not in tree (M3U playlist) — skip
+    }
+  }
+
+  /// Strips punctuation, lowercases, collapses spaces for fuzzy matching.
+  String _normalizeTitle(String title) {
+    return title
+        .toLowerCase()
+        .replaceAll(RegExp(r"[^\w\s]"), '')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
+  }
+
+  /// Finds a local ContentItem matching the TMDB title.
+  /// Tries exact match first, then checks if the local name contains
+  /// the TMDB title or vice versa (handles subtitle differences).
+  ContentItem? _matchTmdbToLocal(
+    String tmdbTitle,
+    Map<String, ContentItem> localMap,
+  ) {
+    final key = _normalizeTitle(tmdbTitle);
+    if (key.isEmpty) return null;
+
+    // 1. Exact match
+    if (localMap.containsKey(key)) return localMap[key];
+
+    // 2. Partial match — TMDB title is contained in local name
+    for (final entry in localMap.entries) {
+      if (entry.key.contains(key) || key.contains(entry.key)) {
+        return entry.value;
+      }
+    }
+    return null;
   }
 
   @override
@@ -268,7 +337,30 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                 final posterPath = item['poster_path'] as String?;
                 final name = (item['title'] ?? item['name'] ?? '') as String;
                 return GestureDetector(
-                  onTap: () {/* TMDB detail navigation if available */},
+                  onTap: () {
+                    // Rebuild maps lazily in case they were not ready at initState
+                    _buildLocalContentMaps();
+
+                    final title = (item['title'] ?? item['name'] ?? '') as String;
+                    final isMovie = item.containsKey('title'); // movies have 'title', TV has 'name'
+                    final localItem = isMovie
+                        ? _matchTmdbToLocal(title, _localMoviesByTitle)
+                        : _matchTmdbToLocal(title, _localSeriesByTitle);
+
+                    if (localItem != null) {
+                      // Found in local library — navigate to it
+                      navigateByContentType(context, localItem);
+                    } else {
+                      // Not in local library — show a snack so user knows
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('"$title" is not available in your playlist'),
+                          duration: const Duration(seconds: 2),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    }
+                  },
                   child: Container(
                     width: 110,
                     margin: const EdgeInsets.symmetric(horizontal: 4),
@@ -277,29 +369,58 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                       color: Colors.grey[900],
                     ),
                     clipBehavior: Clip.antiAlias,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                    child: Stack(
+                      fit: StackFit.expand,
                       children: [
-                        Expanded(
-                          child: CachedNetworkImage(
-                            imageUrl: _tmdb.getPosterUrl(posterPath),
-                            fit: BoxFit.cover,
-                            memCacheWidth: 220,
-                            memCacheHeight: 330,
-                            fadeInDuration: const Duration(milliseconds: 150),
-                            errorWidget: (_, __, ___) =>
-                                const Icon(Icons.movie, color: Colors.white24),
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: CachedNetworkImage(
+                                imageUrl: _tmdb.getPosterUrl(posterPath),
+                                fit: BoxFit.cover,
+                                memCacheWidth: 220,
+                                memCacheHeight: 330,
+                                fadeInDuration: const Duration(milliseconds: 150),
+                                errorWidget: (_, __, ___) =>
+                                    const Icon(Icons.movie, color: Colors.white24),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(4),
+                              child: Text(
+                                name,
+                                style: const TextStyle(color: Colors.white, fontSize: 10),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
                         ),
-                        Padding(
-                          padding: const EdgeInsets.all(4),
-                          child: Text(
-                            name,
-                            style: const TextStyle(color: Colors.white, fontSize: 10),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
+                        // Green "available" badge — shown only if matched locally
+                        Builder(builder: (context) {
+                          _buildLocalContentMaps();
+                          final isMovie = item.containsKey('title');
+                          final localItem = isMovie
+                              ? _matchTmdbToLocal(name, _localMoviesByTitle)
+                              : _matchTmdbToLocal(name, _localSeriesByTitle);
+                          if (localItem == null) return const SizedBox.shrink();
+                          return Positioned(
+                            top: 4,
+                            right: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.green.shade700.withValues(alpha: 0.9),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                '✓',
+                                style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          );
+                        }),
                       ],
                     ),
                   ),

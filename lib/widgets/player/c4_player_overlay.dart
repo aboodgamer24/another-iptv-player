@@ -495,8 +495,8 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
               AnimatedOpacity(
                 opacity: _isVisible ? 1.0 : 0.0,
                 duration: _isVisible
-                    ? const Duration(milliseconds: 120) // show: fast snap-in
-                    : const Duration(milliseconds: 220), // hide: smooth fade-out
+                    ? const Duration(milliseconds: 60)  // show: near-instant
+                    : const Duration(milliseconds: 200), // hide: smooth fade-out
                 curve: _isVisible ? Curves.easeOut : Curves.easeIn,
                 child: IgnorePointer(
                   ignoring: !_isVisible,
@@ -1304,7 +1304,7 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-class _PlayerControlBtn extends StatelessWidget {
+class _PlayerControlBtn extends StatefulWidget {
   final IconData icon;
   final VoidCallback onPressed;
   final double size;
@@ -1320,24 +1320,43 @@ class _PlayerControlBtn extends StatelessWidget {
   });
 
   @override
+  State<_PlayerControlBtn> createState() => _PlayerControlBtnState();
+}
+
+class _PlayerControlBtnState extends State<_PlayerControlBtn> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(size / 2),
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onPressed();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.88 : 1.0,
+        duration: const Duration(milliseconds: 80),
+        curve: Curves.easeOut,
         child: Container(
-          width: size,
-          height: size,
+          width: widget.size,
+          height: widget.size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isLarge ? theme.colorScheme.primary : Colors.white10,
+            color: _pressed
+                ? (widget.isLarge
+                    ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                    : Colors.white24)
+                : (widget.isLarge
+                    ? theme.colorScheme.primary
+                    : Colors.white10),
           ),
           child: Icon(
-            icon,
+            widget.icon,
             color: Colors.white,
-            size: iconSize,
+            size: widget.iconSize,
           ),
         ),
       ),
