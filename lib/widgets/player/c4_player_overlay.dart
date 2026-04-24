@@ -86,6 +86,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   final _positionNotifier = ValueNotifier<Duration>(Duration.zero);
   final _durationNotifier = ValueNotifier<Duration>(Duration.zero);
   List<ContentItem>? _panelQueue;
+  Timer? _enhancementDebounce;
 
   @override
   void initState() {
@@ -190,9 +191,11 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
       if (vp.h != null && vp.h! > 0) _resH = vp.h;
       final nativeP = widget.player.platform;
       if (nativeP is NativePlayer) {
-        nativeP.getProperty('scale').then((liveValue) {
-          if (mounted) setState(() => _upscalerPreset = liveValue);
-        }).catchError((_) {});
+        if (_showInfoPanel) {
+          nativeP.getProperty('scale').then((liveValue) {
+            if (mounted) setState(() => _upscalerPreset = liveValue);
+          }).catchError((_) {});
+        }
       }
     });
 
@@ -217,6 +220,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   void dispose() {
     _hideTimer?.cancel();
     _statsTimer?.cancel();
+    _enhancementDebounce?.cancel();
     for (var sub in _subscriptions) {
       sub.cancel();
     }
@@ -478,40 +482,53 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     ),
                     // Middle zone — tap toggles visibility, swipe/long-press gestures
                     Expanded(
-                      child: GestureDetector(
-                        onTap: _toggleVisibility,
-                        behavior: HitTestBehavior.translucent,
-                        onVerticalDragUpdate: (_volumeGesture || _brightnessGesture)
-                            ? (details) {
-                                final width = MediaQuery.sizeOf(context).width;
-                                final isLeft = details.localPosition.dx < width / 2;
-                                if (isLeft && _brightnessGesture) {
-                                  _showOverlay();
-                                } else if (!isLeft && _volumeGesture) {
-                                  final delta = -details.primaryDelta! / 200;
-                                  _adjustVolume(delta);
-                                  _showOverlay();
-                                }
-                              }
-                            : null,
-                        onHorizontalDragUpdate: _seekGesture
-                            ? (details) {
-                                final delta = details.primaryDelta! * 0.5;
-                                final newPos = _position + Duration(seconds: delta.toInt());
-                                widget.player.seek(newPos);
-                                _showOverlay();
-                              }
-                            : null,
-                        onLongPressStart: _speedUpOnLongPress
-                            ? (_) {
-                                widget.player.setRate(2.0);
-                                _showOverlay();
-                              }
-                            : null,
-                        onLongPressEnd: _speedUpOnLongPress
-                            ? (_) => widget.player.setRate(1.0)
-                            : null,
-                        child: const SizedBox.expand(),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          return GestureDetector(
+                            onTap: _toggleVisibility,
+                            behavior: HitTestBehavior.translucent,
+                            onVerticalDragUpdate: (_volumeGesture || _brightnessGesture)
+                                ? (details) {
+                                    // Ignore drags that started in the bottom 35% of the zone
+                                    // (that area belongs to the controls bar)
+                                    final zoneHeight = constraints.maxHeight;
+                                    if (details.localPosition.dy > zoneHeight * 0.65) return;
+                                    final width = MediaQuery.sizeOf(context).width;
+                                    final isLeft = details.localPosition.dx < width / 2;
+                                    if (isLeft && _brightnessGesture) {
+                                      _showOverlay();
+                                    } else if (!isLeft && _volumeGesture) {
+                                      final delta = -details.primaryDelta! / 200;
+                                      _adjustVolume(delta);
+                                      _showOverlay();
+                                    }
+                                  }
+                                : null,
+                            // CRITICAL: only handle horizontal drags in the MIDDLE area,
+                            // not near the bottom where the seek bar lives
+                            onHorizontalDragUpdate: _seekGesture
+                                ? (details) {
+                                    final zoneHeight = constraints.maxHeight;
+                                    // Reject any drag that starts near the bottom controls
+                                    if (details.localPosition.dy > zoneHeight * 0.70) return;
+                                    final delta = details.primaryDelta! * 0.5;
+                                    final newPos = _position + Duration(seconds: delta.toInt());
+                                    widget.player.seek(newPos);
+                                    _showOverlay();
+                                  }
+                                : null,
+                            onLongPressStart: _speedUpOnLongPress
+                                ? (_) {
+                                    widget.player.setRate(2.0);
+                                    _showOverlay();
+                                  }
+                                : null,
+                            onLongPressEnd: _speedUpOnLongPress
+                                ? (_) => widget.player.setRate(1.0)
+                                : null,
+                            child: const SizedBox.expand(),
+                          );
+                        },
                       ),
                     ),
                     // Bottom safe zone — tap here shows overlay (does NOT toggle hide)
@@ -519,7 +536,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       behavior: HitTestBehavior.translucent,
                       onTap: _isVisible ? null : _showOverlay,
                       child: SizedBox(
-                        height: MediaQuery.sizeOf(context).shortestSide < 600 ? 80 : 110,
+                        height: MediaQuery.sizeOf(context).shortestSide < 600
+                            ? 120   // compact: covers full bottom bar
+                            : 220,  // normal: covers full bottom bar including seek slider
                       ),
                     ),
                   ],
@@ -754,44 +773,47 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              SliderTheme(
-                                data: SliderTheme.of(context).copyWith(
-                                  activeTrackColor: theme.colorScheme.primary,
-                                  inactiveTrackColor: Colors.white24,
-                                  thumbColor: theme.colorScheme.primary,
-                                  overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                  // Larger thumb while dragging for easier grabbing
-                                  thumbShape: RoundSliderThumbShape(
-                                    enabledThumbRadius: _isDragging
-                                        ? (compact ? 7.0 : 9.0)
-                                        : (compact ? 4.0 : 6.0),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                child: SliderTheme(
+                                  data: SliderTheme.of(context).copyWith(
+                                    activeTrackColor: theme.colorScheme.primary,
+                                    inactiveTrackColor: Colors.white24,
+                                    thumbColor: theme.colorScheme.primary,
+                                    overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                    // Larger thumb while dragging for easier grabbing
+                                    thumbShape: RoundSliderThumbShape(
+                                      enabledThumbRadius: _isDragging
+                                          ? (compact ? 7.0 : 9.0)
+                                          : (compact ? 5.0 : 7.0),
+                                    ),
+                                    trackHeight: _isDragging ? (compact ? 3.5 : 5.0) : (compact ? 2.0 : 4.0),
+                                    // Remove the ripple overlay delay — makes thumb feel instant
+                                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
                                   ),
-                                  trackHeight: _isDragging ? (compact ? 3.5 : 5.0) : (compact ? 2.0 : 4.0),
-                                  // Remove the ripple overlay delay — makes thumb feel instant
-                                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
-                                ),
-                                child: Slider(
-                                  value: _isDragging ? _dragValue : current,
-                                  max: total,
-                                  onChangeStart: (val) {
-                                    _hideTimer?.cancel();
-                                    setState(() {
-                                      _isDragging = true;
-                                      _dragValue = val;
-                                    });
-                                  },
-                                  onChanged: (val) {
-                                    // Only rebuild the local drag value — no seek sent to player
-                                    setState(() => _dragValue = val);
-                                  },
-                                  onChangeEnd: (val) {
-                                    setState(() {
-                                      _isDragging = false;
-                                      _isSeeking = true;
-                                    });
-                                    widget.player.seek(Duration(seconds: val.toInt()));
-                                    _startHideTimer();
-                                  },
+                                  child: Slider(
+                                    value: _isDragging ? _dragValue : current,
+                                    max: total,
+                                    onChangeStart: (val) {
+                                      _hideTimer?.cancel();
+                                      setState(() {
+                                        _isDragging = true;
+                                        _dragValue = val;
+                                      });
+                                    },
+                                    onChanged: (val) {
+                                      // Only rebuild the local drag value — no seek sent to player
+                                      setState(() => _dragValue = val);
+                                    },
+                                    onChangeEnd: (val) {
+                                      setState(() {
+                                        _isDragging = false;
+                                        _isSeeking = true;
+                                      });
+                                      widget.player.seek(Duration(seconds: val.toInt()));
+                                      _startHideTimer();
+                                    },
+                                  ),
                                 ),
                               ),
                               const SizedBox(height: 4),
@@ -859,83 +881,92 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 ],
               ),
             SizedBox(height: compact ? 8 : 24),
-            Row(
-              children: [
-                _PlayerControlBtn(
-                  icon: widget.player.state.playing
-                      ? Icons.pause_rounded
-                      : Icons.play_arrow_rounded,
-                  isLarge: !compact,
-                  size: compact ? 32 : 64,
-                  iconSize: compact ? 20 : 40,
-                  onPressed: () => widget.player.playOrPause(),
-                ),
-                SizedBox(width: compact ? 8 : 32),
-                GestureDetector(
-                  onTap: () {
-                    if (_isMuted || _volume == 0) {
-                      widget.player.setVolume(100);
-                    } else {
-                      widget.player.setVolume(0);
-                    }
-                  },
-                  child: Icon(
-                    _isMuted || _volume == 0
-                        ? Icons.volume_off_rounded
-                        : _volume < 0.5
-                            ? Icons.volume_down_rounded
-                            : Icons.volume_up_rounded,
-                    color: Colors.white70,
-                    size: compact ? 22 : 24,
+            RepaintBoundary(
+              child: Row(
+                children: [
+                  _PlayerControlBtn(
+                    icon: widget.player.state.playing
+                        ? Icons.pause_rounded
+                        : Icons.play_arrow_rounded,
+                    isLarge: !compact,
+                    size: compact ? 32 : 64,
+                    iconSize: compact ? 20 : 40,
+                    onPressed: () => widget.player.playOrPause(),
                   ),
-                ),
-                if (!compact)
-                  SizedBox(
-                    width: 150,
-                    child: SliderTheme(
-                      data: SliderTheme.of(context).copyWith(
-                        activeTrackColor: Colors.white,
-                        inactiveTrackColor: Colors.white12,
-                        thumbColor: Colors.white,
-                        trackHeight: 2,
-                        thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 6),
-                      ),
-                      child: Slider(
-                        value: _volume,
-                        onChanged: (val) =>
-                            widget.player.setVolume(val * 100),
-                      ),
+                  SizedBox(width: compact ? 8 : 32),
+                  GestureDetector(
+                    onTap: () {
+                      if (_isMuted || _volume == 0) {
+                        widget.player.setVolume(100);
+                      } else {
+                        widget.player.setVolume(0);
+                      }
+                    },
+                    child: Icon(
+                      _isMuted || _volume == 0
+                          ? Icons.volume_off_rounded
+                          : _volume < 0.5
+                              ? Icons.volume_down_rounded
+                              : Icons.volume_up_rounded,
+                      color: Colors.white70,
+                      size: compact ? 22 : 24,
                     ),
                   ),
-                const Spacer(),
-                if (!isLive) ...[
-                  _PlayerControlBtn(
-                    icon: Icons.replay_10_rounded,
-                    size: compact ? 36 : 48,
-                    iconSize: compact ? 18 : 24,
-                    onPressed: () =>
-                        widget.player.seek(_position - const Duration(seconds: 10)),
-                  ),
-                  SizedBox(width: compact ? 8 : 16),
-                  _PlayerControlBtn(
-                    icon: Icons.forward_10_rounded,
-                    size: compact ? 36 : 48,
-                    iconSize: compact ? 18 : 24,
-                    onPressed: () =>
-                        widget.player.seek(_position + const Duration(seconds: 10)),
-                  ),
+                  if (!compact)
+                    SizedBox(
+                      width: 150,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          activeTrackColor: Colors.white,
+                          inactiveTrackColor: Colors.white12,
+                          thumbColor: Colors.white,
+                          trackHeight: 2,
+                          thumbShape: const RoundSliderThumbShape(
+                              enabledThumbRadius: 6),
+                        ),
+                        child: Slider(
+                          value: _volume,
+                          onChanged: (val) =>
+                              widget.player.setVolume(val * 100),
+                        ),
+                      ),
+                    ),
+                  const Spacer(),
+                  if (!isLive) ...[
+                    _PlayerControlBtn(
+                      icon: Icons.replay_10_rounded,
+                      size: compact ? 36 : 48,
+                      iconSize: compact ? 18 : 24,
+                      onPressed: () =>
+                          widget.player.seek(_position - const Duration(seconds: 10)),
+                    ),
+                    SizedBox(width: compact ? 8 : 16),
+                    _PlayerControlBtn(
+                      icon: Icons.forward_10_rounded,
+                      size: compact ? 36 : 48,
+                      iconSize: compact ? 18 : 24,
+                      onPressed: () =>
+                          widget.player.seek(_position + const Duration(seconds: 10)),
+                    ),
+                  ],
+                  const SizedBox(width: 16),
+                  const LowLatencyButton(),
+                  const SizedBox(width: 8),
+                  const VideoSettingsWidget(),
                 ],
-                const SizedBox(width: 16),
-                const LowLatencyButton(),
-                const SizedBox(width: 8),
-                const VideoSettingsWidget(),
-              ],
+              ),
             ),
           ],
         ),
       ),
     );
+  }
+
+  void _scheduleEnhancement() {
+    _enhancementDebounce?.cancel();
+    _enhancementDebounce = Timer(const Duration(milliseconds: 80), () {
+      _applyEnhancement();
+    });
   }
 
   Future<void> _applyEnhancement() async {
@@ -1008,7 +1039,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   max: 1.0,
                   onChanged: (val) {
                     setState(() => _sharpness = val);
-                    _applyEnhancement();
+                    _scheduleEnhancement();
                   },
                 ),
                 _buildEnhancementSlider(
@@ -1020,7 +1051,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   max: 1.0,
                   onChanged: (val) {
                     setState(() => _contrast = val);
-                    _applyEnhancement();
+                    _scheduleEnhancement();
                   },
                 ),
                 _buildEnhancementSlider(
@@ -1032,7 +1063,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   max: 1.0,
                   onChanged: (val) {
                     setState(() => _saturation = val);
-                    _applyEnhancement();
+                    _scheduleEnhancement();
                   },
                 ),
                 _buildEnhancementSlider(
@@ -1044,7 +1075,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   max: 1.0,
                   onChanged: (val) {
                     setState(() => _noiseReduction = val);
-                    _applyEnhancement();
+                    _scheduleEnhancement();
                   },
                 ),
                 const SizedBox(height: 8),

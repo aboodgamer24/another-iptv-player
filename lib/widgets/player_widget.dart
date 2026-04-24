@@ -76,6 +76,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Timer? _watchHistoryTimer;
   Duration? _pendingWatchDuration;
   Duration? _pendingTotalDuration;
+  Duration _lastSavedPosition = Duration.zero;
 
   @override
   void initState() {
@@ -519,10 +520,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
         _pendingWatchDuration = position;
         _pendingTotalDuration = _player.state.duration;
 
-        _watchHistoryTimer?.cancel();
-        _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
-          _saveWatchHistory();
-        });
+        // Only reschedule a save if position moved more than 5 seconds
+        // since the last save trigger — avoids timer churn during pause/seek.
+        if ((position - _lastSavedPosition).abs() > const Duration(seconds: 5)) {
+          _watchHistoryTimer?.cancel();
+          _watchHistoryTimer = Timer(const Duration(seconds: 5), () {
+            _lastSavedPosition = position;
+            _saveWatchHistory();
+          });
+        }
       });
 
       _player.stream.buffering.listen((buffering) {
@@ -846,6 +852,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                     // Channel list
                     Expanded(
                       child: ListView.builder(
+                        cacheExtent: 500,
                         padding: const EdgeInsets.all(12),
                         itemCount: items.length,
                         itemBuilder: (context, index) {
@@ -1096,6 +1103,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                             children: seasons.map((season) {
                               final eps = bySeason[season]!;
                               return ListView.builder(
+                                cacheExtent: 500,
                                 padding: const EdgeInsets.all(8),
                                 itemCount: eps.length,
                                 itemBuilder: (context, idx) {
@@ -1398,7 +1406,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
             children: [
               Expanded(child: playerCore),
               Container(width: 1, color: Colors.grey.shade900),
-              SizedBox(width: 300, child: _buildPersistentChannelList()),
+              RepaintBoundary(
+                child: SizedBox(width: 300, child: _buildPersistentChannelList()),
+              ),
             ],
           );
         },
@@ -1449,6 +1459,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           ),
           Expanded(
             child: ListView.builder(
+              cacheExtent: 500,
               padding: const EdgeInsets.symmetric(vertical: 4),
               itemCount: items.length,
               itemBuilder: (context, index) {
