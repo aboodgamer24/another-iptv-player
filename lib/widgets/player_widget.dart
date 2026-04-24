@@ -632,6 +632,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
       _player.stream.playlist.listen((playlist) {
         if (!mounted) return;
 
+        // While we are manually switching episodes/channels via
+        // player_content_item_index_changed, the internal playlist index is
+        // still 0 (media_kit hasn't moved yet). Trusting it here would
+        // overwrite the contentItem we just set, causing the player to restart
+        // from episode 0. Skip the update entirely while a switch is in flight.
+        if (_isSwitchingChannel) return;
+
         _currentItemIndex = playlist.index;
         contentItem = _queue?[playlist.index] ?? widget.contentItem;
 
@@ -710,35 +717,39 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 _isSwitchingChannel = false;
               }
             } else {
-              // Update contentItem immediately so playlist.listen does not overwrite
-              // it with the stale index before the new media begins playing.
               if (_queue == null || index >= _queue!.length) return;
-              final item = _queue![index];
-              contentItem = item;
-              _currentItemIndex = index;
-              PlayerState.currentContent = item;
-              PlayerState.currentIndex = index;
-              PlayerState.title = item.name;
-              // Look up resume position from watch history and open directly.
-              final itemHistory = await watchHistoryService.getWatchHistory(
-                AppState.currentPlaylist!.id,
-                isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
-              );
-              final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
-              _overlayKey.currentState?.resetContentState(newUrl: item.url);
-              await _player.open(
-                Media(item.url, start: Duration(milliseconds: startMs)),
-                play: true,
-              );
-              await _applyUserPreferenceProperties();
-              if (await UserPreferences.getLowLatencyMode()) {
-                await _applyLowLatencyProperties();
+              if (_isSwitchingChannel) return;
+              _isSwitchingChannel = true;
+              try {
+                final item = _queue![index];
+                contentItem = item;
+                _currentItemIndex = index;
+                PlayerState.currentContent = item;
+                PlayerState.currentIndex = index;
+                PlayerState.title = item.name;
+                // Look up resume position from watch history and open directly.
+                final itemHistory = await watchHistoryService.getWatchHistory(
+                  AppState.currentPlaylist!.id,
+                  isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
+                );
+                final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
+                _overlayKey.currentState?.resetContentState(newUrl: item.url);
+                await _player.open(
+                  Media(item.url, start: Duration(milliseconds: startMs)),
+                  play: true,
+                );
+                await _applyUserPreferenceProperties();
+                if (await UserPreferences.getLowLatencyMode()) {
+                  await _applyLowLatencyProperties();
+                }
+                if (mounted) setState(() => isLoading = false);
+                EventBus().emit('player_content_item', item);
+                EventBus().emit('player_content_item_index', index);
+                _errorHandler.reset();
+                if (mounted) setState(() {});
+              } finally {
+                _isSwitchingChannel = false;
               }
-              if (mounted) setState(() => isLoading = false);
-              EventBus().emit('player_content_item', item);
-              EventBus().emit('player_content_item_index', index);
-              _errorHandler.reset();
-              if (mounted) setState(() {});
             }
           });
 
