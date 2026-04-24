@@ -680,8 +680,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
               _isSwitchingChannel = true;
 
               try {
-                if (_queue == null || index < 0 || index >= _queue!.length)
+                if (_queue == null || index < 0 || index >= _queue!.length) {
                   return;
+                }
 
                 final item = _queue![index];
                 contentItem = item;

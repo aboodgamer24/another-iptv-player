@@ -652,6 +652,7 @@ class _VideoChannelSelectorWidgetState
           if (_selectedCategoryId != null &&
               PlayerState.currentContent?.contentType ==
                   ContentType.liveStream) {
+            // Live stream branch — already correct
             final categoryItems = PlaylistContentState.getLiveStreamsByCategory(
               _selectedCategoryId!,
             );
@@ -662,22 +663,24 @@ class _VideoChannelSelectorWidgetState
             EventBus().emit('player_content_item_index_changed', index);
             EventBus().emit('player_content_item', item);
           } else {
+            // Series / VOD branch — FIX: update PlayerState BEFORE emitting
             final allItems = widget.queue ?? [];
             final realIndex = allItems.indexWhere(
               (queueItem) => queueItem.id == item.id,
             );
-            if (realIndex != -1) {
-              EventBus().emit('player_content_item_index_changed', realIndex);
-            } else {
-              EventBus().emit('player_content_item_index_changed', index);
-            }
+            final resolvedIndex = realIndex != -1 ? realIndex : index;
+
+            // Update PlayerState so player_widget reads the correct item,
+            // not stale state that defaults to index 0.
+            PlayerState.currentContent = item;
+            PlayerState.currentIndex = resolvedIndex;
+
+            // Emit the change event after state is already updated
+            EventBus().emit('player_content_item_index_changed', resolvedIndex);
           }
 
-          if (isSeries &&
-              item.season != null &&
-              _selectedSeason == item.season) {
-            _globalOverlayEntry?.markNeedsBuild();
-          }
+          // Refresh the overlay to show the new selection highlight
+          _globalOverlayEntry?.markNeedsBuild();
         },
         child: Container(
           margin: const EdgeInsets.only(bottom: 8),
