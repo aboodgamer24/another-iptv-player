@@ -115,21 +115,27 @@ class _PlayerWidgetState extends State<PlayerWidget>
     videoTrackSubscription = EventBus()
         .on<VideoTrack>('video_track_changed')
         .listen((VideoTrack data) async {
-          _player.setVideoTrack(data);
+          PlayerState.pendingTrackRestorePosition = _player.state.position;
+          PlayerState.pendingTrackRestoreTime = DateTime.now();
+          await _player.setVideoTrack(data);
           await UserPreferences.setVideoTrack(data.id);
         });
 
     audioTrackSubscription = EventBus()
         .on<AudioTrack>('audio_track_changed')
         .listen((AudioTrack data) async {
-          _player.setAudioTrack(data);
+          PlayerState.pendingTrackRestorePosition = _player.state.position;
+          PlayerState.pendingTrackRestoreTime = DateTime.now();
+          await _player.setAudioTrack(data);
           await UserPreferences.setAudioTrack(data.language ?? 'null');
         });
 
     subtitleTrackSubscription = EventBus()
         .on<SubtitleTrack>('subtitle_track_changed')
         .listen((SubtitleTrack data) async {
-          _player.setSubtitleTrack(data);
+          PlayerState.pendingTrackRestorePosition = _player.state.position;
+          PlayerState.pendingTrackRestoreTime = DateTime.now();
+          await _player.setSubtitleTrack(data);
           await UserPreferences.setSubtitleTrack(data.language ?? 'null');
         });
 
@@ -375,7 +381,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType != ContentType.liveStream) {
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           await _player.open(
-            Playlist(medias, index: currentItemIndex),
+            Media(contentItem.url, start: watchHistory?.watchDuration ?? Duration.zero),
             play: true,
           );
           await _applyUserPreferenceProperties();
@@ -395,12 +401,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
       } else {
         _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
         await _player.open(
-          Playlist([
-            Media(
-              contentItem.url,
-              start: watchHistory?.watchDuration ?? Duration(),
-            ),
-          ]),
+          Media(
+            contentItem.url,
+            start: watchHistory?.watchDuration ?? Duration(),
+          ),
           play: true,
         );
         await _applyUserPreferenceProperties();
@@ -528,6 +532,27 @@ class _PlayerWidgetState extends State<PlayerWidget>
         _pendingWatchDuration = position;
         _pendingTotalDuration = _player.state.duration;
 
+        if (PlayerState.pendingTrackRestorePosition != null && PlayerState.pendingTrackRestoreTime != null) {
+          final timeSinceGuard = DateTime.now().difference(PlayerState.pendingTrackRestoreTime!);
+          if (timeSinceGuard.inSeconds < 5) {
+            if (position < const Duration(seconds: 1) && PlayerState.pendingTrackRestorePosition!.inSeconds > 2) {
+              final restorePos = PlayerState.pendingTrackRestorePosition!;
+              _player.seek(restorePos);
+              // We intentionally do NOT null out the guard yet in case MPV drops it again during the seek
+            } else if (position > const Duration(seconds: 1)) {
+               // If it successfully passed 1s (or successfully restored), we can clear the guard
+               if (timeSinceGuard.inMilliseconds > 500) {
+                 PlayerState.pendingTrackRestorePosition = null;
+                 PlayerState.pendingTrackRestoreTime = null;
+               }
+            }
+          } else {
+             // Expire guard after 5 seconds
+             PlayerState.pendingTrackRestorePosition = null;
+             PlayerState.pendingTrackRestoreTime = null;
+          }
+        }
+
         // Detect manual seek jumps (> 5 seconds)
         if ((position - _lastPosition).abs() > const Duration(seconds: 5)) {
           _lastSeekTime = DateTime.now();
@@ -561,7 +586,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
 
       _player.stream.error.listen((error) async {
-        debugPrint('PLAYER ERROR -> $error');
         if (error.contains('Failed to open')) {
           _errorHandler.handleError(
             error,
@@ -600,12 +624,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       _player.stream.playlist.listen((playlist) {
         if (!mounted) return;
-
-        if (contentItem.contentType == ContentType.liveStream ||
-            contentItem.contentType == ContentType.series ||
-            contentItem.contentType == ContentType.vod) {
-          return;
-        }
 
         _currentItemIndex = playlist.index;
         contentItem = _queue?[playlist.index] ?? widget.contentItem;
@@ -1334,27 +1352,35 @@ class _PlayerWidgetState extends State<PlayerWidget>
       playerWidget = SizedBox(
         width: double.infinity,
         height: double.infinity,
-        child: isLoading
-            ? Container(
+        child: Stack(
+          children: [
+            if (_videoController != null) _buildPlayerContent(),
+            if (isLoading || _videoController == null)
+              Container(
                 color: Colors.black,
                 child: const Center(
                   child: CircularProgressIndicator(color: Colors.white),
                 ),
-              )
-            : _buildPlayerContent(),
+              ),
+          ],
+        ),
       );
     } else {
       // Diğer içerikler için aspect ratio kullan
       playerWidget = AspectRatio(
         aspectRatio: calculateAspectRatio(),
-        child: isLoading
-            ? Container(
+        child: Stack(
+          children: [
+            if (_videoController != null) _buildPlayerContent(),
+            if (isLoading || _videoController == null)
+              Container(
                 color: Colors.black,
                 child: const Center(
                   child: CircularProgressIndicator(color: Colors.white),
                 ),
-              )
-            : _buildPlayerContent(),
+              ),
+          ],
+        ),
       );
 
       if (isTablet) {
@@ -1375,6 +1401,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Widget _buildPlayerContent() {
+    if (_videoController == null) return const SizedBox.shrink();
     if (hasError) {
       return Center(
         child: Column(

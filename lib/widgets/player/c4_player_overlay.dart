@@ -459,9 +459,15 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      onTap: () {
-        widget.player.setSubtitleTrack(track);
+      onTap: () async {
         Navigator.pop(context);
+        
+        // Let the player native backend do its thing, but set up a guard to catch it if it drops position to 0 asynchronously.
+        app_player_state.PlayerState.pendingTrackRestorePosition = widget.player.state.position;
+        app_player_state.PlayerState.pendingTrackRestoreTime = DateTime.now();
+        
+        await widget.player.setSubtitleTrack(track);
+        await UserPreferences.setSubtitleTrack(track.language ?? 'null');
       },
     );
   }
@@ -568,17 +574,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                                 : null,
                             // CRITICAL: only handle horizontal drags in the MIDDLE area,
                             // not near the bottom where the seek bar lives
-                            onHorizontalDragUpdate: _seekGesture
-                                ? (details) {
-                                    final zoneHeight = constraints.maxHeight;
-                                    // Reject any drag that starts near the bottom controls
-                                    if (details.localPosition.dy > zoneHeight * 0.70) return;
-                                    final delta = details.primaryDelta! * 0.5;
-                                    final newPos = _position + Duration(seconds: delta.toInt());
-                                    widget.player.seek(newPos);
-                                    _showOverlay();
-                                  }
-                                : null,
+                            onHorizontalDragUpdate: null,
                             onLongPressStart: _speedUpOnLongPress
                                 ? (_) {
                                     widget.player.setRate(2.0);
@@ -864,6 +860,10 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                                     max: total,
                                     onChangeStart: (val) {
                                       _hideTimer?.cancel();
+                                      // OPTIMIZATION: Pause player during drag to prevent demuxer thrashing
+                                      if (widget.player.state.playing) {
+                                        widget.player.pause();
+                                      }
                                       setState(() {
                                         _isDragging = true;
                                         _dragValue = val;
@@ -878,7 +878,10 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                                         _isDragging = false;
                                         _isSeeking = true;
                                       });
-                                      widget.player.seek(Duration(seconds: val.toInt()));
+                                      // OPTIMIZATION: Seek and then resume playback to stabilize stream
+                                      widget.player.seek(Duration(seconds: val.toInt())).then((_) {
+                                        widget.player.play();
+                                      });
                                       _startHideTimer();
                                     },
                                   ),
@@ -1005,16 +1008,30 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       icon: Icons.replay_10_rounded,
                       size: compact ? 36 : 48,
                       iconSize: compact ? 18 : 24,
-                      onPressed: () =>
-                          widget.player.seek(_position - const Duration(seconds: 10)),
+                      onPressed: () {
+                        if (!isLive) {
+                          final wasPlaying = widget.player.state.playing;
+                          if (wasPlaying) widget.player.pause();
+                          widget.player.seek(_position - const Duration(seconds: 10)).then((_) {
+                            if (wasPlaying) widget.player.play();
+                          });
+                        }
+                      },
                     ),
                     SizedBox(width: compact ? 8 : 16),
                     _PlayerControlBtn(
                       icon: Icons.forward_10_rounded,
                       size: compact ? 36 : 48,
                       iconSize: compact ? 18 : 24,
-                      onPressed: () =>
-                          widget.player.seek(_position + const Duration(seconds: 10)),
+                      onPressed: () {
+                        if (!isLive) {
+                          final wasPlaying = widget.player.state.playing;
+                          if (wasPlaying) widget.player.pause();
+                          widget.player.seek(_position + const Duration(seconds: 10)).then((_) {
+                            if (wasPlaying) widget.player.play();
+                          });
+                        }
+                      },
                     ),
                   ],
                   const SizedBox(width: 16),

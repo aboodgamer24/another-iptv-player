@@ -23,6 +23,8 @@ abstract class PlayerState {
   static bool showChannelList = false;
   static bool showVideoInfo = false;
   static bool showVideoSettings = false;
+  static Duration? pendingTrackRestorePosition;
+  static DateTime? pendingTrackRestoreTime;
 
   static String title = '';
   static bool backgroundPlay = true;
