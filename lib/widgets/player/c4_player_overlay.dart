@@ -615,45 +615,50 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 ],
               ),
             ),
-            if (!compact)
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                iconSize: 20,
-                icon: Icon(
-                  Icons.tune_rounded,
-                  color: _showEnhancementPanel
-                      ? theme.colorScheme.primary
-                      : Colors.white,
-                ),
-                onPressed: () => setState(() {
-                  _showEnhancementPanel = !_showEnhancementPanel;
-                  _showInfoPanel = false;
-                  _showSidePanel = false;
-                  _startHideTimer();
-                }),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(
+                minWidth: compact ? 28 : 32,
+                minHeight: compact ? 28 : 32,
               ),
-            if (!compact) const SizedBox(width: 8),
-            if (!compact)
-              IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                icon: Icon(
-                  _showInfoPanel
-                      ? Icons.info_rounded
-                      : Icons.info_outline_rounded,
-                  color: _showInfoPanel
-                      ? theme.colorScheme.primary
-                      : Colors.white,
-                ),
-                onPressed: () => setState(() {
-                  _showInfoPanel = !_showInfoPanel;
-                  _showSidePanel = false;
-                  _showEnhancementPanel = false;
-                  _startHideTimer();
-                }),
+              iconSize: compact ? 18 : 20,
+              icon: Icon(
+                Icons.tune_rounded,
+                color: _showEnhancementPanel
+                    ? theme.colorScheme.primary
+                    : Colors.white,
               ),
-            if (!compact) const SizedBox(width: 8),
+              onPressed: () => setState(() {
+                _showEnhancementPanel = !_showEnhancementPanel;
+                _showInfoPanel = false;
+                _showSidePanel = false;
+                _startHideTimer();
+              }),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: BoxConstraints(
+                minWidth: compact ? 28 : 32,
+                minHeight: compact ? 28 : 32,
+              ),
+              iconSize: compact ? 18 : 22,
+              icon: Icon(
+                _showInfoPanel
+                    ? Icons.info_rounded
+                    : Icons.info_outline_rounded,
+                color: _showInfoPanel
+                    ? theme.colorScheme.primary
+                    : Colors.white,
+              ),
+              onPressed: () => setState(() {
+                _showInfoPanel = !_showInfoPanel;
+                _showSidePanel = false;
+                _showEnhancementPanel = false;
+                _startHideTimer();
+              }),
+            ),
+            const SizedBox(width: 4),
             IconButton(
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
