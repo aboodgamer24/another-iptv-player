@@ -75,6 +75,9 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   Timer? _statsTimer;
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
+  bool _isDragging = false;
+  double _dragValue = 0.0;
+  bool _isSeeking = false;
   double _volume = 1.0;
   bool _isMuted = false;
   late List<StreamSubscription> _subscriptions;
@@ -94,8 +97,14 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     _panelQueue = app_player_state.PlayerState.queue;
     _subscriptions = [
       widget.player.stream.position.listen((p) {
-        _positionNotifier.value = p;
-        _position = p;
+        if (!_isDragging) {
+          _positionNotifier.value = p;
+          if (_isSeeking) {
+            // MPV has moved — seek is complete
+            if (mounted) setState(() => _isSeeking = false);
+          }
+        }
+        _position = p; // always track real position for ±10s skip buttons
       }),
       widget.player.stream.duration.listen((d) {
         _durationNotifier.value = d;
@@ -739,49 +748,94 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       builder: (context, duration, _) {
                         final total = duration.inSeconds.toDouble().clamp(1.0, double.infinity);
                         final current = position.inSeconds.toDouble().clamp(0.0, total);
-                        return Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            SliderTheme(
-                              data: SliderTheme.of(context).copyWith(
-                                activeTrackColor: theme.colorScheme.primary,
-                                inactiveTrackColor: Colors.white24,
-                                thumbColor: theme.colorScheme.primary,
-                                overlayColor:
-                                    theme.colorScheme.primary.withValues(alpha: 0.2),
-                                trackHeight: compact ? 2 : 4,
-                                thumbShape: RoundSliderThumbShape(
-                                  enabledThumbRadius: compact ? 4 : 6,
+                        return AnimatedContainer(
+                          duration: const Duration(milliseconds: 120),
+                          curve: Curves.easeOut,
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  activeTrackColor: theme.colorScheme.primary,
+                                  inactiveTrackColor: Colors.white24,
+                                  thumbColor: theme.colorScheme.primary,
+                                  overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                  // Larger thumb while dragging for easier grabbing
+                                  thumbShape: RoundSliderThumbShape(
+                                    enabledThumbRadius: _isDragging
+                                        ? (compact ? 7.0 : 9.0)
+                                        : (compact ? 4.0 : 6.0),
+                                  ),
+                                  trackHeight: _isDragging ? (compact ? 3.5 : 5.0) : (compact ? 2.0 : 4.0),
+                                  // Remove the ripple overlay delay — makes thumb feel instant
+                                  overlayShape: const RoundSliderOverlayShape(overlayRadius: 14),
+                                ),
+                                child: Slider(
+                                  value: _isDragging ? _dragValue : current,
+                                  max: total,
+                                  onChangeStart: (val) {
+                                    _hideTimer?.cancel();
+                                    setState(() {
+                                      _isDragging = true;
+                                      _dragValue = val;
+                                    });
+                                  },
+                                  onChanged: (val) {
+                                    // Only rebuild the local drag value — no seek sent to player
+                                    setState(() => _dragValue = val);
+                                  },
+                                  onChangeEnd: (val) {
+                                    setState(() {
+                                      _isDragging = false;
+                                      _isSeeking = true;
+                                    });
+                                    widget.player.seek(Duration(seconds: val.toInt()));
+                                    _startHideTimer();
+                                  },
                                 ),
                               ),
-                              child: Slider(
-                                value: current,
-                                max: total,
-                                onChanged: (val) =>
-                                    widget.player.seek(Duration(seconds: val.toInt())),
+                              const SizedBox(height: 4),
+                              Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  // Normal left/right timestamps
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        _formatDuration(_isDragging
+                                            ? Duration(seconds: _dragValue.toInt())
+                                            : position),
+                                        style: TextStyle(
+                                          color: _isDragging
+                                              ? theme.colorScheme.primary
+                                              : Colors.white70,
+                                          fontSize: compact ? 10 : 13,
+                                          fontWeight: _isDragging ? FontWeight.bold : FontWeight.normal,
+                                        ),
+                                      ),
+                                      if (_isSeeking)
+                                        SizedBox(
+                                          width: compact ? 10 : 14,
+                                          height: compact ? 10 : 14,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 1.5,
+                                            color: theme.colorScheme.primary,
+                                          ),
+                                        ),
+                                      Text(
+                                        _formatDuration(duration),
+                                        style: TextStyle(
+                                          color: Colors.white70,
+                                          fontSize: compact ? 10 : 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ),
-                            ),
-                            const SizedBox(height: 4),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  _formatDuration(position),
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: compact ? 10 : 13,
-                                  ),
-                                ),
-                                Text(
-                                  _formatDuration(duration),
-                                  style: TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: compact ? 10 : 13,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ],
+                            ],
+                          ),
                         );
                       },
                     );
