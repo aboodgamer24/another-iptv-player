@@ -197,13 +197,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
     if (native is! NativePlayer) return;
     try {
       if (Platform.isAndroid) {
-        // hwdec: use mediacodec-copy for zero-copy hardware decoding
+        // --- Properties common to ALL content types ---
         await native.setProperty('hwdec', 'mediacodec-copy');
         await native.setProperty('hwdec-codecs', 'all');
-        // video-sync: display-resample causes stutter on Android; audio is stable
-        await native.setProperty('video-sync', 'audio');
         await native.setProperty('interpolation', 'no');
-        // Skip expensive post-processing for 4K on mobile
         await native.setProperty('scale', 'bilinear');
         await native.setProperty('cscale', 'bilinear');
         await native.setProperty('dscale', 'bilinear');
@@ -212,29 +209,59 @@ class _PlayerWidgetState extends State<PlayerWidget>
         await native.setProperty('linear-upscaling', 'no');
         await native.setProperty('correct-downscaling', 'no');
         await native.setProperty('deinterlace', 'no');
-        // Drop frames instead of stalling when decoding is slow
-        await native.setProperty('framedrop', 'decoder+vo');
-        // Fast demuxer settings for live
-        await native.setProperty('cache', 'yes');
-        await native.setProperty('demuxer-max-bytes', '32MiB');
-        await native.setProperty('demuxer-max-back-bytes', '4MiB');
-        await native.setProperty('demuxer-readahead-secs', '0.5');
-        await native.setProperty('cache-secs', '2');
-        // Low-latency live stream tuning — reduce initial buffering stall
-        await native.setProperty('demuxer-cache-wait', 'no');
-        await native.setProperty('initial-audio-sync', 'no');
+
+        if (contentItem.contentType == ContentType.liveStream) {
+          // --- LIVE STREAM: low-latency, small cache, aggressive framedrop ---
+          await native.setProperty('video-sync', 'audio');
+          await native.setProperty('framedrop', 'decoder+vo');
+          await native.setProperty('cache', 'yes');
+          await native.setProperty('demuxer-max-bytes', '32MiB');
+          await native.setProperty('demuxer-max-back-bytes', '4MiB');
+          await native.setProperty('demuxer-readahead-secs', '0.5');
+          await native.setProperty('cache-secs', '2');
+          await native.setProperty('demuxer-cache-wait', 'no');
+          await native.setProperty('initial-audio-sync', 'no');
+        } else {
+          // --- VOD / SERIES: seekable, larger cache, no framedrop ---
+          // video-sync=display-resample works better for fixed-fps VOD files
+          await native.setProperty('video-sync', 'display-resample');
+          // Never drop frames on VOD — buffer more instead
+          await native.setProperty('framedrop', 'no');
+          // Large demuxer cache so MPV can build a full seek index
+          await native.setProperty('cache', 'yes');
+          await native.setProperty('demuxer-max-bytes', '64MiB');
+          await native.setProperty('demuxer-max-back-bytes', '32MiB');
+          await native.setProperty('demuxer-readahead-secs', '5.0');
+          await native.setProperty('cache-secs', '30');
+          // Allow demuxer to fill cache before starting — ensures seek works
+          await native.setProperty('demuxer-cache-wait', 'yes');
+          await native.setProperty('initial-audio-sync', 'yes');
+          // Smooth A/V sync for VOD
+          await native.setProperty('audio-buffer', '0.2');
+        }
       } else {
-        // Desktop
+        // --- Desktop: same split ---
         await native.setProperty('hwdec', 'auto');
         await native.setProperty('hwdec-codecs', 'all');
-        await native.setProperty('video-sync', 'audio');
         await native.setProperty('interpolation', 'no');
         await native.setProperty('tscale', 'oversample');
         await native.setProperty('deinterlace', 'no');
-        await native.setProperty('framedrop', 'no');
-        await native.setProperty('demuxer-max-bytes', '50MiB');
-        await native.setProperty('demuxer-max-back-bytes', '10MiB');
-        await native.setProperty('cache-secs', '5');
+
+        if (contentItem.contentType == ContentType.liveStream) {
+          await native.setProperty('video-sync', 'audio');
+          await native.setProperty('framedrop', 'no');
+          await native.setProperty('demuxer-max-bytes', '50MiB');
+          await native.setProperty('demuxer-max-back-bytes', '10MiB');
+          await native.setProperty('cache-secs', '5');
+        } else {
+          // VOD/series on desktop
+          await native.setProperty('video-sync', 'display-resample');
+          await native.setProperty('framedrop', 'no');
+          await native.setProperty('demuxer-max-bytes', '150MiB');
+          await native.setProperty('demuxer-max-back-bytes', '50MiB');
+          await native.setProperty('cache-secs', '60');
+          await native.setProperty('audio-buffer', '0.2');
+        }
       }
     } catch (e) {
       debugPrint('[Player] Pre-open MPV properties failed: $e');
@@ -252,6 +279,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Future<void> _applyLowLatencyProperties() async {
+    // Low latency is meaningless and harmful for VOD/series — skip
+    if (contentItem.contentType != ContentType.liveStream) return;
+
     final native = _player.platform;
     if (native is! NativePlayer) return;
     try {
