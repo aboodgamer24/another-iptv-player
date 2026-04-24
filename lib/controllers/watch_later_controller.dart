@@ -148,6 +148,7 @@ class WatchLaterController extends ChangeNotifier {
         AppState.currentPlaylist!.id,
       );
 
+      if (!context.mounted) return;
       navigateByContentType(
         context,
         ContentItem(
@@ -165,6 +166,7 @@ class WatchLaterController extends ChangeNotifier {
         item.streamId,
       );
 
+      if (!context.mounted) return;
       navigateByContentType(
         context,
         ContentItem(
@@ -199,6 +201,7 @@ class WatchLaterController extends ChangeNotifier {
         AppState.currentPlaylist!.id,
       );
 
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -227,6 +230,7 @@ class WatchLaterController extends ChangeNotifier {
         return;
       }
 
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(

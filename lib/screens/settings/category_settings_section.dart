@@ -65,10 +65,11 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(
       value: widget.controller,
-      child: WillPopScope(
-        onWillPop: () async {
+      child: PopScope(
+        canPop: false,
+        onPopInvokedWithResult: (bool didPop, dynamic result) {
+          if (didPop) return;
           Navigator.pop(context, _hasChanges);
-          return false;
         },
         child: Scaffold(
           appBar: AppBar(

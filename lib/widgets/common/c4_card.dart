@@ -295,7 +295,7 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
-                              color: _contentTypeBadgeColor(widget.contentType!).withOpacity(0.85),
+                              color: _contentTypeBadgeColor(widget.contentType!).withValues(alpha: 0.85),
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Row(

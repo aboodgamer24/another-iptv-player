@@ -25,7 +25,7 @@ QueryExecutor driftDatabase({
         // Depending how central local persistence is to your app, you may want
         // to show a warning to the user if only unrealiable implemetentations
         // are available.
-        print(
+        debugPrint(
           'Using ${result.chosenImplementation} due to missing browser '
           'features: ${result.missingFeatures}',
         );

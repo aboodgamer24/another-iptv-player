@@ -12,8 +12,6 @@ import 'package:flutter/material.dart';
 class M3UHomeController extends ChangeNotifier {
   late PageController _pageController;
   final M3uRepository _repository = AppState.m3uRepository!;
-  String? _errorMessage;
-  ViewState _viewState = ViewState.idle;
 
   int _currentIndex = 0;
   bool _isLoading = true;
@@ -96,13 +94,6 @@ class M3UHomeController extends ChangeNotifier {
     }
   }
 
-  void _setViewState(ViewState state) {
-    _viewState = state;
-    if (state != ViewState.error) {
-      _errorMessage = null;
-    }
-    notifyListeners();
-  }
 
   Future<void> _loadM3uItems() async {
     try {
@@ -115,8 +106,7 @@ class M3UHomeController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'M3U items cannot loaded: $e';
-      _setViewState(ViewState.error);
+      debugPrint('M3U items cannot loaded: $e');
       _isLoading = false;
     }
   }
@@ -189,8 +179,7 @@ class M3UHomeController extends ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     } catch (e) {
-      _errorMessage = 'Kategoriler yüklenemedi: $e';
-      _setViewState(ViewState.error);
+      debugPrint('Kategoriler yüklenemedi: $e');
       _isLoading = false;
     }
   }

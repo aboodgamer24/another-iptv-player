@@ -186,9 +186,9 @@ class _MobileLiveTvScreenState extends State<MobileLiveTvScreen> {
                       margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
                       decoration: BoxDecoration(
-                        color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.2) : Colors.transparent,
+                        color: isSelected ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
-                        border: isSelected ? Border.all(color: Theme.of(context).primaryColor.withOpacity(0.5)) : null,
+                        border: isSelected ? Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.5)) : null,
                       ),
                       child: Row(
                         children: [

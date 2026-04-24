@@ -210,7 +210,7 @@ class _AccountScreenState extends State<AccountScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                Text(email, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6))),
+                Text(email, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
               ],
             ),
           ],
@@ -222,7 +222,8 @@ class _AccountScreenState extends State<AccountScreen> {
           subtitle: 'Push all local data to server',
           onTap: () async {
             await _pushAll();
-            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Synced successfully')));
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Synced successfully')));
           },
         ),
         _SyncTile(
@@ -231,7 +232,8 @@ class _AccountScreenState extends State<AccountScreen> {
           subtitle: 'Overwrite local data with server data',
           onTap: () async {
             await _pullAndApply();
-            if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data pulled from server')));
+            if (!context.mounted) return;
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data pulled from server')));
           },
         ),
         const SizedBox(height: 24),
@@ -245,7 +247,7 @@ class _AccountScreenState extends State<AccountScreen> {
             label: const Text('Sign Out'),
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.colorScheme.error,
-              side: BorderSide(color: theme.colorScheme.error.withOpacity(0.4)),
+              side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.4)),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
@@ -265,7 +267,7 @@ class _AccountScreenState extends State<AccountScreen> {
         const SizedBox(height: 8),
         Text(
           'Connect to your self-hosted sync server',
-          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withOpacity(0.6)),
+          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
         ),
         const SizedBox(height: 32),
         TextField(
@@ -314,7 +316,7 @@ class _AccountScreenState extends State<AccountScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: theme.colorScheme.error.withOpacity(0.1),
+              color: theme.colorScheme.error.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Row(
@@ -362,11 +364,11 @@ class _SyncTile extends StatelessWidget {
       contentPadding: EdgeInsets.zero,
       leading: Container(
         width: 40, height: 40,
-        decoration: BoxDecoration(color: theme.colorScheme.primary.withOpacity(0.1), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
         child: Icon(icon, color: theme.colorScheme.primary, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withOpacity(0.6), fontSize: 13)),
+      subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
       onTap: onTap,
     );
   }

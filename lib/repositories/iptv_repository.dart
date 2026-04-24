@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:drift/drift.dart' as drift;
 import 'package:http/http.dart' as http;
 import 'package:another_iptv_player/database/database.dart';
@@ -72,7 +73,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('Player Info Error: $e');
+      debugPrint('Player Info Error: $e');
       return null;
     }
   }
@@ -109,7 +110,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('Live Channels Error: $e');
+      debugPrint('Live Channels Error: $e');
       return null;
     }
   }
@@ -125,7 +126,7 @@ class IptvRepository {
         return liveStreams;
       }
     } catch (e) {
-      print('Live Channels Error: $e');
+      debugPrint('Live Channels Error: $e');
       return null;
     }
     return null;
@@ -147,7 +148,7 @@ class IptvRepository {
         return liveStreams;
       }
     } catch (e) {
-      print('Live Channels Error: $e');
+      debugPrint('Live Channels Error: $e');
       return null;
     }
     return null;
@@ -161,7 +162,7 @@ class IptvRepository {
       );
       return liveStream;
     } catch (e) {
-      print('Live Channels Error: $e');
+      debugPrint('Live Channels Error: $e');
       return null;
     }
   }
@@ -200,7 +201,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('Movies Error: $e');
+      debugPrint('Movies Error: $e');
       return null;
     }
   }
@@ -229,7 +230,7 @@ class IptvRepository {
         }
       }
     } catch (e) {
-      print('Movies Error: $e');
+      debugPrint('Movies Error: $e');
       return null;
     }
     return null;
@@ -269,7 +270,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('Series Error: $e');
+      debugPrint('Series Error: $e');
       return null;
     }
   }
@@ -298,7 +299,7 @@ class IptvRepository {
         }
       }
     } catch (e) {
-      print('Series Error: $e');
+      debugPrint('Series Error: $e');
       return null;
     }
     return null;
@@ -327,7 +328,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('VOD Info Error: $e');
+      debugPrint('VOD Info Error: $e');
       return null;
     }
   }
@@ -394,7 +395,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('${type.value} Categories Error: $e');
+      debugPrint('${type.value} Categories Error: $e');
       // Hata durumunda cache'den dön
       final cachedCategories = await _database.getCategoriesByTypeAndPlaylist(
         _playlistId,
@@ -420,7 +421,7 @@ class IptvRepository {
         CategoryType.series: results[2] ?? [],
       };
     } catch (e) {
-      print('Get All Categories Error: $e');
+      debugPrint('Get All Categories Error: $e');
       return await _database.getAllCategoriesByPlaylist(_playlistId);
     }
   }
@@ -543,7 +544,7 @@ class IptvRepository {
         );
       }
     } catch (e) {
-      print('Series Info Error: $e');
+      debugPrint('Series Info Error: $e');
       return null;
     }
   }
@@ -574,7 +575,7 @@ class IptvRepository {
         _playlistId,
       );
     } catch (e) {
-      print('Get Episodes By Season Error: $e');
+      debugPrint('Get Episodes By Season Error: $e');
       return [];
     }
   }
@@ -694,7 +695,7 @@ class IptvRepository {
               try {
                 await _database.insertEpisode(episodeCompanion);
               } catch (e) {
-                print(
+                debugPrint(
                   'Error inserting episode ${episode['id']} for series $seriesId: $e',
                 );
               }
@@ -749,16 +750,16 @@ class IptvRepository {
             );
 
             await _database.insertSeason(seasonCompanion);
-            print(
+            debugPrint(
               'Created missing season: $seasonNumber with $episodeCount episodes',
             );
           }
         }
       }
 
-      print('Series data saved to database successfully');
+      debugPrint('Series data saved to database successfully');
     } catch (e) {
-      print('Save series data to database error: $e');
+      debugPrint('Save series data to database error: $e');
       rethrow;
     }
   }

@@ -249,9 +249,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
                           end: Alignment.bottomCenter,
                           stops: const [0.0, 0.7, 1.0],
                           colors: [
-                            Colors.black.withOpacity(0.1),
-                            Colors.black.withOpacity(0.3),
-                            Colors.black.withOpacity(0.8),
+                            Colors.black.withValues(alpha: 0.1),
+                            Colors.black.withValues(alpha: 0.3),
+                            Colors.black.withValues(alpha: 0.8),
                           ],
                         ),
                       ),
@@ -322,7 +322,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                                     widget.contentItem.seriesStream?.genre ??
                                     '',
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.9),
+                                  color: Colors.white.withValues(alpha: 0.9),
                                   fontSize: 14,
                                   shadows: const [
                                     Shadow(
@@ -351,7 +351,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
                 Theme.of(context).scaffoldBackgroundColor,
               ],
             ),
@@ -460,7 +460,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
               ? []
               : [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.2),
+                    color: Colors.black.withValues(alpha: 0.2),
                     blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
@@ -520,7 +520,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.amber.withOpacity(0.1),
+            color: Colors.amber.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -557,9 +557,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+              border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
             ),
             child: Row(
               children: [
@@ -600,9 +600,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
       width: 200,
       margin: const EdgeInsets.only(right: 12),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.1),
+        color: Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
       ),
       child: Material(
         color: Colors.transparent,
@@ -621,7 +621,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withOpacity(0.1),
+                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -895,10 +895,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: isRecent
-            ? Colors.green.withOpacity(0.1)
-            : Colors.grey.withOpacity(0.1),
+            ? Colors.green.withValues(alpha: 0.1)
+            : Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -915,7 +915,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                 width: 60,
                 height: 60,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor.withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child:
@@ -1029,7 +1029,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.amber.withOpacity(0.1),
+                        color: Colors.amber.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -1099,7 +1099,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
             if (loadingProgress == null) return child;
 
             return Container(
-              color: Colors.grey.withOpacity(0.2),
+              color: Colors.grey.withValues(alpha: 0.2),
               child: Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -1137,7 +1137,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: Colors.grey.withOpacity(0.2),
+      color: Colors.grey.withValues(alpha: 0.2),
       child: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -1145,7 +1145,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.grey.withOpacity(0.1),
+                color: Colors.grey.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(Icons.tv, size: 64, color: Colors.grey.shade500),
@@ -1184,16 +1184,16 @@ class _SeriesScreenState extends State<SeriesScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.grey.withOpacity(0.1),
+        color: Colors.grey.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
       ),
       child: Row(
         children: [
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(icon, size: 20, color: Colors.blue),
@@ -1249,6 +1249,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
         try {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         } catch (e) {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(context.loc.error_occurred_title)),
           );
@@ -1257,16 +1258,16 @@ class _SeriesScreenState extends State<SeriesScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Colors.grey.withOpacity(0.1),
+          color: Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withOpacity(0.2), width: 1),
+          border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(

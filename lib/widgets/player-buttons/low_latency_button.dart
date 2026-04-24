@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:another_iptv_player/repositories/user_preferences.dart';
-import 'package:another_iptv_player/services/player_state.dart';
 import 'package:another_iptv_player/services/event_bus.dart';
-import 'package:media_kit/media_kit.dart' hide PlayerState;
 
 class LowLatencyButton extends StatefulWidget {
   const LowLatencyButton({super.key});
@@ -52,8 +50,8 @@ class _LowLatencyButtonState extends State<LowLatencyButton> {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
           decoration: BoxDecoration(
             color: _lowLatency
-                ? Colors.orange.withOpacity(0.85)
-                : Colors.white.withOpacity(0.15),
+                ? Colors.orange.withValues(alpha: 0.85)
+                : Colors.white.withValues(alpha: 0.15),
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
               color: _lowLatency ? Colors.orange : Colors.white38,

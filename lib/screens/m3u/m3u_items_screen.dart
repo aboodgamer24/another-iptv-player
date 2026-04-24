@@ -170,7 +170,7 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
                         borderRadius: BorderRadius.circular(8),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withOpacity(0.1),
+                            color: Colors.grey.withValues(alpha: 0.1),
                             spreadRadius: 1,
                             blurRadius: 2,
                             offset: const Offset(0, 1),
@@ -224,7 +224,7 @@ class _M3uItemsScreenState extends State<M3uItemsScreen> {
                                 decoration: BoxDecoration(
                                   color: _getContentTypeColor(
                                     channel,
-                                  ).withOpacity(0.1),
+                                  ).withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(

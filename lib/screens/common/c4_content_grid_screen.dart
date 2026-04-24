@@ -163,7 +163,7 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
             width: 320,
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: theme.colorScheme.surface.withOpacity(0.5),
+              color: theme.colorScheme.surface.withValues(alpha: 0.5),
               border: Border(left: BorderSide(color: theme.dividerColor, width: 0.5)),
             ),
             child: SingleChildScrollView(

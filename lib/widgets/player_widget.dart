@@ -21,10 +21,7 @@ import '../services/fullscreen_notifier.dart';
 import '../utils/responsive_helper.dart';
 import '../services/upscale_service.dart';
 
-class _SeriesEpisodePanelConfig {
-  final List<ContentItem> allEpisodes;
-  _SeriesEpisodePanelConfig({required this.allEpisodes});
-}
+
 
 class PlayerWidget extends StatefulWidget {
   final ContentItem contentItem;
@@ -292,7 +289,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
     } catch (e) {
       // Silently handle database errors to prevent crashes
       // The next save attempt will retry
-      print('Error saving watch history: $e');
+      debugPrint('Error saving watch history: $e');
     }
   }
 
@@ -401,6 +398,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               contentItem.contentType == ContentType.liveStream &&
               contentItem.url.isNotEmpty) {
             try {
+              if (!mounted) return;
               ScaffoldMessenger.of(context).clearSnackBars();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
@@ -420,12 +418,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
               }
               if (mounted) setState(() => isLoading = false);
             } catch (e) {
-              print('Error opening media: $e');
+              debugPrint('Error opening media: $e');
             }
           }
           _wasDisconnected = false;
         } else {
           _wasDisconnected = true;
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -512,7 +511,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
 
       _player.stream.error.listen((error) async {
-        print('PLAYER ERROR -> $error');
+        debugPrint('PLAYER ERROR -> $error');
         if (error.contains('Failed to open')) {
           _errorHandler.handleError(
             error,
@@ -528,6 +527,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               }
             },
             (errorMessage) {
+              if (!mounted) return;
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(
                   content: Text(errorMessage),
@@ -860,7 +860,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               ? Theme.of(
                   context,
                 ).colorScheme.primaryContainer.withValues(alpha: 0.3)
-              : Colors.white.withOpacity(0.05),
+              : Colors.white.withValues(alpha: 0.05),
           borderRadius: BorderRadius.circular(8),
           border: isSelected
               ? Border.all(

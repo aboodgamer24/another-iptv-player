@@ -170,6 +170,7 @@ class WatchHistoryController extends ChangeNotifier {
         history.contentType,
         liveStream: liveStream,
       );
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -198,6 +199,7 @@ class WatchHistoryController extends ChangeNotifier {
         history.contentType,
         m3uItem: liveStream,
       );
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -224,6 +226,7 @@ class WatchHistoryController extends ChangeNotifier {
         AppState.currentPlaylist!.id,
       );
 
+      if (!context.mounted) return;
       navigateByContentType(
         context,
         ContentItem(
@@ -241,6 +244,7 @@ class WatchHistoryController extends ChangeNotifier {
         history.streamId,
       );
 
+      if (!context.mounted) return;
       navigateByContentType(
         context,
         ContentItem(
@@ -265,6 +269,7 @@ class WatchHistoryController extends ChangeNotifier {
         episode!.seriesId,
       );
 
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -290,6 +295,7 @@ class WatchHistoryController extends ChangeNotifier {
         history.streamId,
       );
 
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(

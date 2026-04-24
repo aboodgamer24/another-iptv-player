@@ -141,15 +141,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             ),
           ),
         ),
-        ...presets.map((preset) => RadioListTile<String>(
-          title: Text(upscalePresetLabel(preset)),
-          subtitle: Text(
-            upscalePresetDescription(preset),
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-            ),
-          ),
-          value: preset,
+        RadioGroup<String>(
           groupValue: _upscalePreset,
           onChanged: (value) async {
             if (value == null) return;
@@ -160,7 +152,19 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
               await applyUpscalePreset(player, value);
             }
           },
-        )),
+          child: Column(
+            children: presets.map((preset) => RadioListTile<String>(
+              title: Text(upscalePresetLabel(preset)),
+              subtitle: Text(
+                upscalePresetDescription(preset),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              value: preset,
+            )).toList(),
+          ),
+        ),
         const Divider(),
       ],
     );
@@ -236,12 +240,13 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           onTap: () async {
             await UserPreferences.removeLastPlaylist();
             if (mounted) {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => PlaylistScreen(),
-                ),
-              );
+            if (!mounted) return;
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PlaylistScreen(),
+              ),
+            );
             }
           },
         ),
@@ -322,6 +327,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                     ),
                   );
 
+                    if (!mounted) return;
                     if (isXtreamCode) {
                       Navigator.pushReplacement(
                         context,
@@ -523,7 +529,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   child: ListTile(
                     leading: CircleAvatar(
                       radius: 18,
-                      backgroundColor: theme.colorScheme.primary.withOpacity(0.15),
+                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
                       child: Icon(
                         SyncService.instance.isLoggedIn ? Icons.account_circle_rounded : Icons.person_outline_rounded,
                         color: theme.colorScheme.primary,
@@ -536,7 +542,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                     ),
                     subtitle: Text(
                       SyncService.instance.isLoggedIn ? 'Manage your account and cloud sync' : 'Connect to your sync server',
-                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withOpacity(0.6)),
+                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
@@ -630,6 +636,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
     List<M3uItem> newM3uItems = [];
 
     if (AppState.currentPlaylist!.url!.startsWith('http')) {
+      if (!mounted) return;
       showLoadingDialog(context, context.loc.loading_m3u);
       final params = {
         'id': AppState.currentPlaylist!.id,
@@ -639,7 +646,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
     } else {
       await _pickFile();
       if (_selectedFilePath == null) return;
-
+      if (!mounted) return;
       showLoadingDialog(context, context.loc.loading_m3u);
       final params = {
         'id': AppState.currentPlaylist!.id,
@@ -655,6 +662,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
 
     await database.deleteAllM3uItems(AppState.currentPlaylist!.id);
 
+    if (!mounted) return;
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
@@ -682,6 +690,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
         });
       }
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(context.loc.file_selection_error)));

@@ -16,8 +16,6 @@ import '../models/series.dart';
 class XtreamCodeHomeController extends ChangeNotifier {
   late PageController _pageController;
   final IptvRepository _repository = AppState.xtreamCodeRepository!;
-  String? _errorMessage;
-  ViewState _viewState = ViewState.idle;
 
   int _currentIndex = 0;
   bool _isLoading = false;
@@ -130,13 +128,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
     }
   }
 
-  void _setViewState(ViewState state) {
-    _viewState = state;
-    if (state != ViewState.error) {
-      _errorMessage = null;
-    }
-    notifyListeners();
-  }
 
   Future<void> _loadCategories(bool all) async {
     try {
@@ -252,9 +243,9 @@ class XtreamCodeHomeController extends ChangeNotifier {
       notifyListeners();
     } catch (e, st) {
       debugPrint(st.toString());
-      _errorMessage = 'Veri yüklenemedi: $e';
+      debugPrint('Veri yüklenemedi: $e');
       _isLoading = false;
-      _setViewState(ViewState.error);
+      notifyListeners();
     }
   }
 

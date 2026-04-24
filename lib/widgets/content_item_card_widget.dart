@@ -10,10 +10,10 @@ class ContentItemCardWidget extends StatefulWidget {
   final double cardHeight;
   final Function(ContentItem)? onContentTap;
   final List<ContentItem> contentItems;
-  int initialSelectedIndex;
+  final int initialSelectedIndex;
   final bool isSelectionModeEnabled;
 
-  ContentItemCardWidget({
+  const ContentItemCardWidget({
     super.key,
     required this.cardHeight,
     required this.cardWidth,

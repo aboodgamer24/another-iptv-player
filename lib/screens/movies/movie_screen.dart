@@ -348,7 +348,7 @@ class _MovieScreenState extends State<MovieScreen> {
         leading: Container(
           margin: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             shape: BoxShape.circle,
           ),
           child: IconButton(
@@ -360,7 +360,7 @@ class _MovieScreenState extends State<MovieScreen> {
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -377,7 +377,7 @@ class _MovieScreenState extends State<MovieScreen> {
           Container(
             margin: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.5),
+              color: Colors.black.withValues(alpha: 0.5),
               shape: BoxShape.circle,
             ),
             child: IconButton(
@@ -458,7 +458,7 @@ class _MovieScreenState extends State<MovieScreen> {
             sigmaX: _backdropUrl != null ? 5 : 15,
             sigmaY: _backdropUrl != null ? 5 : 15,
           ),
-          child: Container(color: Colors.black.withOpacity(0.5)),
+          child: Container(color: Colors.black.withValues(alpha: 0.5)),
         ),
         // Gradient overlay
         Container(
@@ -468,8 +468,8 @@ class _MovieScreenState extends State<MovieScreen> {
               end: Alignment.bottomCenter,
               colors: [
                 Colors.transparent,
-                Colors.black.withOpacity(0.2),
-                Theme.of(context).scaffoldBackgroundColor.withOpacity(0.8),
+                Colors.black.withValues(alpha: 0.2),
+                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
                 Theme.of(context).scaffoldBackgroundColor,
               ],
               stops: const [0.0, 0.4, 0.8, 1.0],
@@ -565,7 +565,7 @@ class _MovieScreenState extends State<MovieScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -599,7 +599,7 @@ class _MovieScreenState extends State<MovieScreen> {
         shadows: [
           Shadow(
             blurRadius: 10,
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             offset: const Offset(0, 2),
           ),
         ],
@@ -808,7 +808,7 @@ class _MovieScreenState extends State<MovieScreen> {
       icon: const Icon(Icons.ondemand_video),
       label: Text(context.loc.trailer),
       style: FilledButton.styleFrom(
-        backgroundColor: Colors.red.withOpacity(0.2),
+        backgroundColor: Colors.red.withValues(alpha: 0.2),
         foregroundColor: Colors.white,
       ),
     );
@@ -866,7 +866,7 @@ class _MovieScreenState extends State<MovieScreen> {
             borderRadius: BorderRadius.circular(12),
           ),
           elevation: 8,
-          shadowColor: theme.colorScheme.primary.withOpacity(0.5),
+          shadowColor: theme.colorScheme.primary.withValues(alpha: 0.5),
         ),
         icon: const Icon(Icons.play_arrow_rounded, size: 32),
         label: Text(
@@ -926,10 +926,11 @@ class _MovieScreenState extends State<MovieScreen> {
     final uri = Uri.parse(urlString);
     final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
 
-    if (!launched && mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.loc.error_occurred_title)));
+    if (!launched) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.loc.error_occurred_title)),
+      );
     }
   }
 
@@ -966,9 +967,9 @@ class _InfoChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -1005,7 +1006,7 @@ class _DetailCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.08),
+        color: Colors.white.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(

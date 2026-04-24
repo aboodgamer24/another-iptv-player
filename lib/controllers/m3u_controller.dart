@@ -311,37 +311,7 @@ class M3uController extends ChangeNotifier {
     return success;
   }
 
-  Future<List<M3uItem>> _parseFile(String playlistId, String filePath) async {
-    try {
-      final file = File(filePath);
-      final content = await file.readAsString(encoding: utf8);
-      return _parseM3u(playlistId, content);
-    } catch (e) {
-      print('M3U file parse error: $e');
-      throw Exception('M3U dosyası okunamadı: ${e.toString()}');
-    }
-  }
 
-  Future<List<M3uItem>> _parseUrl(String playlistId, String url) async {
-    try {
-      final client = HttpClient();
-      final request = await client.getUrl(Uri.parse(url));
-      final response = await request.close();
-
-      if (response.statusCode != 200) {
-        throw Exception(
-          'HTTP ${response.statusCode}: M3U URL\'sine erişilemedi',
-        );
-      }
-
-      final content = await response.transform(utf8.decoder).join();
-      client.close();
-      return _parseM3u(playlistId, content);
-    } catch (e) {
-      print('M3U URL parse error: $e');
-      throw Exception('M3U URL\'si okunamadı: ${e.toString()}');
-    }
-  }
 
   Map<CategoryWithContentType, List<M3uItem>> _groupChannels(
     List<M3uItem> channels,
@@ -460,7 +430,10 @@ class M3uController extends ChangeNotifier {
 
   // Kategori bazlı filtreleme metodları
   List<M3uItem> getChannelsByGroup(String groupTitle) {
-    return _groupedChannels?[groupTitle] ?? [];
+    final entry = _groupedChannels?.entries.firstWhereOrNull(
+      (e) => e.key.categoryName == groupTitle,
+    );
+    return entry?.value ?? [];
   }
 
   List<M3uItem> getChannelsByContentType(ContentType contentType) {

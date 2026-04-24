@@ -27,14 +27,16 @@ class ServerInfoWidget extends StatelessWidget {
                 icon: Icons.access_time,
                 label: context.loc.timezone,
                 value:
-                    serverInfo.serverInfo.timezone ??
+                    serverInfo.serverInfo.timezone.isNotEmpty ?
+                    serverInfo.serverInfo.timezone :
                     context.loc.not_found_in_category,
               ),
               InfoTileWidget(
                 icon: Icons.message,
                 label: context.loc.server_message,
                 value:
-                    serverInfo.userInfo.message ??
+                    serverInfo.userInfo.message.isNotEmpty ?
+                    serverInfo.userInfo.message :
                     context.loc.not_found_in_category,
               ),
             ],

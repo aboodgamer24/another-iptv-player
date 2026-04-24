@@ -91,7 +91,7 @@ class PlaylistContentState {
         allLiveStreams.addAll(items);
       }
     } catch (e) {
-      print('Error loading live streams: $e');
+      debugPrint('Error loading live streams: $e');
     }
   }
 
@@ -130,7 +130,7 @@ class PlaylistContentState {
         allMovies.addAll(items);
       }
     } catch (e) {
-      print('Error loading movies: $e');
+      debugPrint('Error loading movies: $e');
     }
   }
 
@@ -168,7 +168,7 @@ class PlaylistContentState {
         allSeries.addAll(items);
       }
     } catch (e) {
-      print('Error loading series: $e');
+      debugPrint('Error loading series: $e');
     }
   }
 

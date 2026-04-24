@@ -141,7 +141,7 @@ class WatchHistoryCard extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            _getContentTypeColor(history.contentType).withOpacity(0.8),
+            _getContentTypeColor(history.contentType).withValues(alpha: 0.8),
             _getContentTypeColor(history.contentType),
           ],
         ),
@@ -208,31 +208,7 @@ class WatchHistoryCard extends StatelessWidget {
     }
   }
 
-  String _getContentTypeText(ContentType type) {
-    switch (type) {
-      case ContentType.liveStream:
-        return 'CANLI';
-      case ContentType.vod:
-        return 'FİLM';
-      case ContentType.series:
-        return 'DİZİ';
-    }
-  }
 
-  String _formatLastWatched(DateTime dateTime) {
-    final now = DateTime.now();
-    final difference = now.difference(dateTime);
-
-    if (difference.inDays > 0) {
-      return '${difference.inDays}g önce';
-    } else if (difference.inHours > 0) {
-      return '${difference.inHours}s önce';
-    } else if (difference.inMinutes > 0) {
-      return '${difference.inMinutes}dk önce';
-    } else {
-      return 'Az önce';
-    }
-  }
 
   String _formatDuration(Duration duration) {
     String twoDigits(int n) => n.toString().padLeft(2, "0");

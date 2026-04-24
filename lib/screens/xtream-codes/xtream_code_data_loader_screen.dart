@@ -122,6 +122,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
       AppState.currentPlaylist = widget.playlist;
       await UserPreferences.setLastPlaylist(widget.playlist.id);
       SettingsSync.push(); // Push last_playlist_id to settings sync
+      if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
@@ -197,7 +198,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                       BoxShadow(
                                         color: Color(
                                           0xFF00d4ff,
-                                        ).withOpacity(0.3),
+                                        ).withValues(alpha: 0.3),
                                         blurRadius: 20,
                                         spreadRadius: 5,
                                       ),
@@ -227,7 +228,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                             context.loc.slogan,
                             style: TextStyle(
                               fontSize: 14,
-                              color: Colors.white.withOpacity(0.7),
+                              color: Colors.white.withValues(alpha: 0.7),
                               letterSpacing: 1,
                             ),
                           ),
@@ -261,7 +262,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                             shape: BoxShape.circle,
                                             border: Border.all(
                                               color: Color(0xFF00d4ff)
-                                                  .withOpacity(
+                                                  .withValues(alpha: 
                                                     (1 - _waveAnimation.value) *
                                                         (0.3 - i * 0.1),
                                                   ),
@@ -326,7 +327,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                   borderRadius: BorderRadius.circular(4),
                                   color: isActive
                                       ? Color(0xFF00d4ff)
-                                      : Colors.white.withOpacity(0.3),
+                                      : Colors.white.withValues(alpha: 0.3),
                                 ),
                               );
                             }).toList(),
@@ -347,7 +348,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                     height: 6,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(3),
-                                      color: Colors.white.withOpacity(0.1),
+                                      color: Colors.white.withValues(alpha: 0.1),
                                     ),
                                     child: FractionallySizedBox(
                                       alignment: Alignment.centerLeft,
@@ -387,10 +388,10 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                             Container(
                               padding: EdgeInsets.all(20),
                               decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
+                                color: Colors.red.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
-                                  color: Colors.red.withOpacity(0.3),
+                                  color: Colors.red.withValues(alpha: 0.3),
                                 ),
                               ),
                               child: Column(
@@ -417,7 +418,7 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                     ),
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.white.withOpacity(0.8),
+                                      color: Colors.white.withValues(alpha: 0.8),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

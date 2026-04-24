@@ -463,24 +463,22 @@ class _C4DashboardState extends State<C4Dashboard> {
         }
       }
 
-      if (mounted) {
-        if (mapped != null) {
-          navigateByContentType(context, mapped);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('This title is not available in your playlist'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
+      if (!mounted) return;
+      if (mapped != null) {
+        navigateByContentType(context, mapped);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('This title is not available in your playlist'),
+            duration: Duration(seconds: 2),
+          ),
+        );
       }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error matching content: $e')));
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Error matching content: $e')));
     }
   }
 }

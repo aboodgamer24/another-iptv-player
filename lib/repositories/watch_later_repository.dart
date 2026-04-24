@@ -18,7 +18,6 @@ class WatchLaterRepository {
       return; // DO NOT support Watch Later for Live TV
     }
 
-    final existingItems = await _database.getWatchLaterItems(playlistId);
 
     final entry = WatchLaterData(
       id: _uuid.v4(),

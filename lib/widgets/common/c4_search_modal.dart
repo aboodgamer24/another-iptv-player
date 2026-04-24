@@ -14,7 +14,7 @@ class C4SearchModal extends StatefulWidget {
       context: context,
       barrierDismissible: true,
        barrierLabel: 'Search',
-      barrierColor: Colors.black.withOpacity(0.85),
+      barrierColor: Colors.black.withValues(alpha: 0.85),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
         return const C4SearchModal();
@@ -128,7 +128,7 @@ class _C4SearchModalState extends State<C4SearchModal> {
                     borderSide: BorderSide.none,
                   ),
                   filled: true,
-                  fillColor: Colors.white.withOpacity(0.05),
+                  fillColor: Colors.white.withValues(alpha: 0.05),
                 ),
               ),
               const SizedBox(height: 40),

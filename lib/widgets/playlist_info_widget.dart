@@ -80,17 +80,18 @@ class _PlaylistInfoWidgetState extends State<PlaylistInfoWidget> {
                     },
                   ),
                   onTap: () async {
+                    final messenger = ScaffoldMessenger.of(context);
+                    final loc = context.loc;
                     await Clipboard.setData(
                       ClipboardData(text: widget.playlist.password!),
                     );
-                    if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(context.loc.copied_to_clipboard),
-                          duration: const Duration(seconds: 2),
-                        ),
-                      );
-                    }
+                    if (!mounted) return;
+                    messenger.showSnackBar(
+                      SnackBar(
+                        content: Text(loc.copied_to_clipboard),
+                        duration: const Duration(seconds: 2),
+                      ),
+                    );
                   },
                 ),
               ],

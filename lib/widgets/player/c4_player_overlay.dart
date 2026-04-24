@@ -139,7 +139,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
             setState(() {
               if (newFps != null && newFps > 0) _fps = newFps;
               if (newBitrate != null && newBitrate > 0) _bitrate = newBitrate;
-              if (newCodec != null && newCodec!.isNotEmpty) _codec = newCodec;
+              if (newCodec != null && newCodec.isNotEmpty) _codec = newCodec;
               if (newW != null && newW > 0) _resW = newW;
               if (newH != null && newH > 0) _resH = newH;
             });
@@ -1245,7 +1245,7 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
         
         return ListTile(
           selected: isPlaying,
-          selectedTileColor: theme.colorScheme.primary.withOpacity(0.1),
+          selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.1),
           leading: Container(
             width: 40,
             height: 40,

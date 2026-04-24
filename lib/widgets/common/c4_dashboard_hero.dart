@@ -53,7 +53,7 @@ class C4DashboardHero extends StatelessWidget {
                 end: Alignment.topCenter,
                 colors: [
                   theme.scaffoldBackgroundColor,
-                  theme.scaffoldBackgroundColor.withOpacity(0.8),
+                  theme.scaffoldBackgroundColor.withValues(alpha: 0.8),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.3, 1.0],
@@ -68,7 +68,7 @@ class C4DashboardHero extends StatelessWidget {
                 end: Alignment.centerRight,
                 colors: [
                   theme.scaffoldBackgroundColor,
-                  theme.scaffoldBackgroundColor.withOpacity(0.5),
+                  theme.scaffoldBackgroundColor.withValues(alpha: 0.5),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.4, 0.8],
