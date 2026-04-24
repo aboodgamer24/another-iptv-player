@@ -48,6 +48,39 @@ android {
         versionName = flutter.versionName
     }
 
+    // Assign unique versionCodes per ABI so APK splits can upgrade
+    // each other and any previously installed universal APK.
+    // arm32=1x, arm64=2x, x86_64=3x prefix (e.g. versionCode 15 → arm64 = 2015)
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a", "x86_64")
+            isUniversalApk = false
+        }
+    }
+
+    // ABI → versionCode multiplier map
+    val abiCodes = mapOf(
+        "armeabi-v7a" to 1,
+        "arm64-v8a"   to 2,
+        "x86_64"      to 3,
+    )
+
+    androidComponents {
+        onVariants { variant ->
+            variant.outputs.forEach { output ->
+                val abi = output.filters.find {
+                    it.filterType == com.android.build.api.variant.FilterConfiguration.FilterType.ABI
+                }?.identifier
+                val abiOffset = abiCodes[abi] ?: 0
+                // prefix: 1000 * multiplier + original versionCode
+                // e.g. arm64 + versionCode 15 = 2015
+                output.versionCode.set(1000 * abiOffset + (output.versionCode.get() ?: 0))
+            }
+        }
+    }
+
     buildTypes {
         getByName("release") {
             if (keystorePropertiesFile.exists()) {

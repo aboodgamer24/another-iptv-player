@@ -2,29 +2,38 @@
 setlocal enabledelayedexpansion
 
 if "%~1"=="" (
-    echo Usage: update_version.bat ^<version^> ^<buildNumber^>
-    echo Example: update_version.bat 1.5.0 22
-    echo          update_version.bat 1.5.0-alpha 23
-    exit /b 1
-)
-if "%~2"=="" (
-    echo ERROR: Build number is required.
-    echo Usage: update_version.bat ^<version^> ^<buildNumber^>
-    echo Example: update_version.bat 1.5.0 22
+    echo Usage: update_version.bat ^<version^> [buildNumber]
+    echo Example: update_version.bat 1.5.0
+    echo          update_version.bat 1.5.0-alpha
+    echo          update_version.bat 1.5.0 42   ^(force build number^)
     exit /b 1
 )
 
 set "NEW_VERSION=%~1"
-set "BUILD_NUMBER=%~2"
 
-:: Strip pre-release suffix (e.g. -alpha, -beta, -rc1) for pubspec.yaml
-:: pubspec only accepts X.Y.Z+N format
+:: Read current build number from pubspec.yaml
+for /f "tokens=2 delims=+" %%A in ('findstr /r "^version:" pubspec.yaml') do set "CURRENT_BUILD=%%A"
+if "%CURRENT_BUILD%"=="" set "CURRENT_BUILD=0"
+
+:: Auto-increment if not provided
+if "%~2"=="" (
+    set /a "BUILD_NUMBER=CURRENT_BUILD+1"
+    echo [INFO] Auto-incremented build number: %CURRENT_BUILD% ^> !BUILD_NUMBER!
+) else (
+    set /a "BUILD_NUMBER=%~2"
+    if !BUILD_NUMBER! LEQ %CURRENT_BUILD% (
+        echo ERROR: Build number !BUILD_NUMBER! must be greater than current %CURRENT_BUILD%
+        exit /b 1
+    )
+)
+
+:: Strip pre-release suffix for pubspec.yaml (needs X.Y.Z+N format)
 for /f "tokens=1 delims=-" %%A in ("%NEW_VERSION%") do set "PUBSPEC_VERSION=%%A"
 
 echo.
 echo ==========================================
-echo   Updating version to %NEW_VERSION%+%BUILD_NUMBER%
-echo   pubspec version: %PUBSPEC_VERSION%+%BUILD_NUMBER%
+echo   Updating version to %NEW_VERSION%+!BUILD_NUMBER!
+echo   pubspec version: %PUBSPEC_VERSION%+!BUILD_NUMBER!
 echo ==========================================
 echo.
 
@@ -33,7 +42,7 @@ if exist "%PS_TMP%" del "%PS_TMP%"
 
 >> "%PS_TMP%" echo $v = '%NEW_VERSION%'
 >> "%PS_TMP%" echo $pv = '%PUBSPEC_VERSION%'
->> "%PS_TMP%" echo $b = '%BUILD_NUMBER%'
+>> "%PS_TMP%" echo $b = '!BUILD_NUMBER!'
 >> "%PS_TMP%" echo $content = Get-Content 'pubspec.yaml'
 >> "%PS_TMP%" echo $content = $content -replace '^version: .*$', "version: $pv+$b"
 >> "%PS_TMP%" echo Set-Content 'pubspec.yaml' $content
@@ -43,7 +52,7 @@ if exist "%PS_TMP%" del "%PS_TMP%"
 >> "%PS_TMP%" echo Set-Content 'build_installer.bat' $content
 >> "%PS_TMP%" echo Write-Host '[2/3] build_installer.bat updated.'
 >> "%PS_TMP%" echo $content = Get-Content 'installer.iss'
->> "%PS_TMP%" echo $content = $content -replace '#define MyAppVersion "[^"]*"', ('#define MyAppVersion "' + $v + '"')
+>> "%PS_TMP%" echo $content = $content -replace '#define MyAppVersion \"[^\"]*\"', ('#define MyAppVersion \"' + $v + '"')
 >> "%PS_TMP%" echo Set-Content 'installer.iss' $content
 >> "%PS_TMP%" echo Write-Host '[3/3] installer.iss updated.'
 
@@ -54,9 +63,10 @@ del "%PS_TMP%"
 
 echo.
 echo Done!
-echo   pubspec.yaml  ^<-- %PUBSPEC_VERSION%+%BUILD_NUMBER%
+echo   pubspec.yaml      ^<-- %PUBSPEC_VERSION%+!BUILD_NUMBER!
 echo   build_installer.bat + installer.iss ^<-- %NEW_VERSION%
 echo.
-echo Run .\build_installer.bat to build.
+echo Run .\build_installer.bat to build Windows installer.
+echo Run bash ~/build_apk.sh %NEW_VERSION% to build Android APKs.
 echo.
 endlocal

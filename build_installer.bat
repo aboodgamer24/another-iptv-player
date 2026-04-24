@@ -7,7 +7,7 @@ echo ================================================
 echo.
 
 :: ── CONFIG ──────────────────────────────────────
-set VERSION=0.6.0-alpha
+set VERSION=0.6.1-alpha
 set APP_NAME=C4-TV
 set OUT_DIR=release_bundle
 set NSIS_PATH=C:\Program Files (x86)\NSIS\makensis.exe
