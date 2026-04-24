@@ -64,7 +64,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _volumeGesture = false;
   bool _seekGesture = false;
   bool _speedUpOnLongPress = true;
-  bool _seekOnDoubleTap = true;
 
   // Enhancement values — MPV ranges
   double _sharpness = 0.0;      // range: -1.0 to 1.0, default 0
@@ -237,14 +236,12 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final v = await UserPreferences.getVolumeGesture();
     final s = await UserPreferences.getSeekGesture();
     final lp = await UserPreferences.getSpeedUpOnLongPress();
-    final dt = await UserPreferences.getSeekOnDoubleTap();
     if (mounted) {
       setState(() {
         _brightnessGesture = b;
         _volumeGesture = v;
         _seekGesture = s;
         _speedUpOnLongPress = lp;
-        _seekOnDoubleTap = dt;
       });
     }
   }
@@ -432,7 +429,15 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isLive = _duration.inSeconds == 0;
+    // Use contentType as the primary signal for live vs seekable content.
+    // Fall back to duration==0 only when contentType is unknown.
+    final contentType = widget.contentType ??
+        app_player_state.PlayerState.currentContent?.contentType;
+    final isLive = contentType == ContentType.liveStream
+        ? true
+        : contentType == ContentType.vod || contentType == ContentType.series
+            ? false
+            : _duration.inSeconds == 0;
     final videoTrack = widget.player.state.track.video;
 
     return ValueListenableBuilder<bool>(
@@ -496,16 +501,6 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
                             : null,
                         onLongPressEnd: _speedUpOnLongPress
                             ? (_) => widget.player.setRate(1.0)
-                            : null,
-                        onDoubleTapDown: _seekOnDoubleTap
-                            ? (details) {
-                                final width = MediaQuery.sizeOf(context).width;
-                                final isLeft = details.localPosition.dx < width / 2;
-                                widget.player.seek(isLeft
-                                    ? _position - const Duration(seconds: 10)
-                                    : _position + const Duration(seconds: 10));
-                                _showOverlay();
-                              }
                             : null,
                         child: const SizedBox.expand(),
                       ),
