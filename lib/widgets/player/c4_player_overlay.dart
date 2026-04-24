@@ -16,6 +16,7 @@ import '../../models/playlist_content_model.dart';
 import '../../repositories/user_preferences.dart';
 import '../player-buttons/low_latency_button.dart';
 import '../player-buttons/video_settings_widget.dart';
+import '../../models/playlist_model.dart';
 
 class C4PlayerOverlay extends StatefulWidget {
   final Player player;
@@ -259,7 +260,12 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   void _toggleVisibility() {
     setState(() {
       _isVisible = !_isVisible;
-      if (_isVisible) _startHideTimer();
+      if (_isVisible) {
+        _startHideTimer();
+      } else {
+        _hideTimer?.cancel();
+        _hideTimer = null;
+      }
     });
   }
 
@@ -443,51 +449,76 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
           },
           child: Stack(
             children: [
-              // 1. Transparent tap-catcher — always active, always receives taps
+              // 1. Gesture layer — covers ONLY the middle "safe zone" for tap-to-toggle
+              // and swipe gestures. Top/bottom bars handle their own taps.
               Positioned.fill(
-                child: GestureDetector(
-                  onTap: _toggleVisibility,
-                  behavior: HitTestBehavior.translucent,
-                  // Volume / Brightness — vertical swipe on halves
-                  onVerticalDragUpdate: (_volumeGesture || _brightnessGesture) ? (details) {
-                    final width = MediaQuery.sizeOf(context).width;
-                    final isLeft = details.localPosition.dx < width / 2;
-                    if (isLeft && _brightnessGesture) {
-                      // Brightness placeholder (requires package, for now just show overlay)
-                      _showOverlay();
-                    } else if (!isLeft && _volumeGesture) {
-                      final delta = -details.primaryDelta! / 200;
-                      _adjustVolume(delta);
-                      _showOverlay();
-                    }
-                  } : null,
-                  // Seek — horizontal swipe
-                  onHorizontalDragUpdate: _seekGesture ? (details) {
-                    final delta = details.primaryDelta! * 0.5;
-                    final newPos = _position + Duration(seconds: delta.toInt());
-                    widget.player.seek(newPos);
-                    _showOverlay();
-                  } : null,
-                  // Speed up on long press
-                  onLongPressStart: _speedUpOnLongPress ? (_) {
-                    widget.player.setRate(2.0);
-                    _showOverlay();
-                  } : null,
-                  onLongPressEnd: _speedUpOnLongPress ? (_) {
-                    widget.player.setRate(1.0);
-                  } : null,
-                  // Seek on double tap (halves)
-                  onDoubleTapDown: _seekOnDoubleTap ? (details) {
-                    final width = MediaQuery.sizeOf(context).width;
-                    final isLeft = details.localPosition.dx < width / 2;
-                    if (isLeft) {
-                      widget.player.seek(_position - const Duration(seconds: 10));
-                    } else {
-                      widget.player.seek(_position + const Duration(seconds: 10));
-                    }
-                    _showOverlay();
-                  } : null,
-                  child: const SizedBox.expand(), // transparent — just catches gestures
+                child: Column(
+                  children: [
+                    // Top safe zone — tap here shows overlay (does NOT toggle hide)
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: _isVisible ? null : _showOverlay,
+                      child: SizedBox(
+                        height: MediaQuery.sizeOf(context).shortestSide < 600 ? 56 : 80,
+                      ),
+                    ),
+                    // Middle zone — tap toggles visibility, swipe/long-press gestures
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: _toggleVisibility,
+                        behavior: HitTestBehavior.translucent,
+                        onVerticalDragUpdate: (_volumeGesture || _brightnessGesture)
+                            ? (details) {
+                                final width = MediaQuery.sizeOf(context).width;
+                                final isLeft = details.localPosition.dx < width / 2;
+                                if (isLeft && _brightnessGesture) {
+                                  _showOverlay();
+                                } else if (!isLeft && _volumeGesture) {
+                                  final delta = -details.primaryDelta! / 200;
+                                  _adjustVolume(delta);
+                                  _showOverlay();
+                                }
+                              }
+                            : null,
+                        onHorizontalDragUpdate: _seekGesture
+                            ? (details) {
+                                final delta = details.primaryDelta! * 0.5;
+                                final newPos = _position + Duration(seconds: delta.toInt());
+                                widget.player.seek(newPos);
+                                _showOverlay();
+                              }
+                            : null,
+                        onLongPressStart: _speedUpOnLongPress
+                            ? (_) {
+                                widget.player.setRate(2.0);
+                                _showOverlay();
+                              }
+                            : null,
+                        onLongPressEnd: _speedUpOnLongPress
+                            ? (_) => widget.player.setRate(1.0)
+                            : null,
+                        onDoubleTapDown: _seekOnDoubleTap
+                            ? (details) {
+                                final width = MediaQuery.sizeOf(context).width;
+                                final isLeft = details.localPosition.dx < width / 2;
+                                widget.player.seek(isLeft
+                                    ? _position - const Duration(seconds: 10)
+                                    : _position + const Duration(seconds: 10));
+                                _showOverlay();
+                              }
+                            : null,
+                        child: const SizedBox.expand(),
+                      ),
+                    ),
+                    // Bottom safe zone — tap here shows overlay (does NOT toggle hide)
+                    GestureDetector(
+                      behavior: HitTestBehavior.translucent,
+                      onTap: _isVisible ? null : _showOverlay,
+                      child: SizedBox(
+                        height: MediaQuery.sizeOf(context).shortestSide < 600 ? 80 : 110,
+                      ),
+                    ),
+                  ],
                 ),
               ),
 
@@ -526,310 +557,329 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildTopBar(ThemeData theme, bool isFullscreen) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final isPhone = screenSize.shortestSide < 600;
+    final safePadding = MediaQuery.paddingOf(context);
+    final compact = isPhone || screenSize.width < 500;
+    final isXtreamCode = getPlaylistType() == PlaylistType.xtream;
+
     return Positioned(
       top: 0, left: 0, right: 0,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 600;
-          return Container(
-            height: compact ? 52 : 120,
-            padding: EdgeInsets.symmetric(
-              horizontal: compact ? 10 : 40,
-              vertical: compact ? 8 : 40,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Colors.black87, Colors.transparent],
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 10 : 40,
+          (compact ? 8 : 40) + safePadding.top,
+          compact ? 10 : 40,
+          compact ? 8 : 16,
+        ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.black87, Colors.transparent],
+          ),
+        ),
+        child: Row(
+          children: [
+            if (!widget.isInline) ...[
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                icon: Icon(Icons.arrow_back_ios_new_rounded,
+                    color: Colors.white, size: compact ? 18 : 22),
+                onPressed: () => Navigator.pop(context),
+              ),
+              SizedBox(width: compact ? 6 : 20),
+            ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    app_player_state.PlayerState.title,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: compact ? 12 : null,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (!compact && isXtreamCode)
+                    Text(
+                      'Live TV Stream',
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: Colors.white70),
+                    ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                if (!widget.isInline) ...[
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(Icons.arrow_back_ios_new_rounded,
-                        color: Colors.white, size: compact ? 18 : 22),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  SizedBox(width: compact ? 6 : 20),
-                ],
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        app_player_state.PlayerState.title,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: compact ? 12 : null,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (!compact && isXtreamCode)
-                        Text(
-                          'Live TV Stream',
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: Colors.white70),
-                        ),
-                    ],
-                  ),
+            if (!compact)
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+                iconSize: 20,
+                icon: Icon(
+                  Icons.tune_rounded,
+                  color: _showEnhancementPanel
+                      ? theme.colorScheme.primary
+                      : Colors.white,
                 ),
-                if (!compact)
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
-                    iconSize: 20,
-                    icon: Icon(
-                      Icons.tune_rounded,
-                      color: _showEnhancementPanel
-                          ? theme.colorScheme.primary
-                          : Colors.white,
-                    ),
-                    onPressed: () => setState(() {
-                      _showEnhancementPanel = !_showEnhancementPanel;
-                      _showInfoPanel = false;
-                      _showSidePanel = false;
-                      _startHideTimer();
-                    }),
-                  ),
-                if (!compact) const SizedBox(width: 8),
-                if (!compact)
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(
-                      _showInfoPanel
-                          ? Icons.info_rounded
-                          : Icons.info_outline_rounded,
-                      color: _showInfoPanel
-                          ? theme.colorScheme.primary
-                          : Colors.white,
-                    ),
-                    onPressed: () => setState(() {
-                      _showInfoPanel = !_showInfoPanel;
-                      _showSidePanel = false;
-                      _showEnhancementPanel = false;
-                      _startHideTimer();
-                    }),
-                  ),
-                if (!compact) const SizedBox(width: 8),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  icon: Icon(
-                    _showSidePanel
-                        ? Icons.menu_open_rounded
-                        : Icons.menu_rounded,
-                    color: _showSidePanel
-                        ? theme.colorScheme.primary
-                        : Colors.white,
-                    size: compact ? 20 : 24,
-                  ),
-                  onPressed: () => setState(() {
-                    _showSidePanel = !_showSidePanel;
-                    _showInfoPanel = false;
-                    _showEnhancementPanel = false;
-                    _startHideTimer();
-                  }),
+                onPressed: () => setState(() {
+                  _showEnhancementPanel = !_showEnhancementPanel;
+                  _showInfoPanel = false;
+                  _showSidePanel = false;
+                  _startHideTimer();
+                }),
+              ),
+            if (!compact) const SizedBox(width: 8),
+            if (!compact)
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                icon: Icon(
+                  _showInfoPanel
+                      ? Icons.info_rounded
+                      : Icons.info_outline_rounded,
+                  color: _showInfoPanel
+                      ? theme.colorScheme.primary
+                      : Colors.white,
                 ),
-                if (!compact)
-                  IconButton(
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                    icon: Icon(
-                      Icons.subtitles_rounded,
-                      color: app_player_state.PlayerState.selectedSubtitle ==
-                              SubtitleTrack.no()
-                          ? Colors.white
-                          : theme.colorScheme.primary,
-                    ),
-                    onPressed: _openSubtitleSelector,
-                  ),
-                if (!compact) const SizedBox(width: 8),
-                IconButton(
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                  icon: Icon(
-                    (_nativeFullscreen || isFullscreen)
-                        ? Icons.fullscreen_exit_rounded
-                        : Icons.fullscreen_rounded,
-                    color: Colors.white,
-                    size: compact ? 20 : 24,
-                  ),
-                  onPressed: _toggleFullscreen,
-                ),
-              ],
+                onPressed: () => setState(() {
+                  _showInfoPanel = !_showInfoPanel;
+                  _showSidePanel = false;
+                  _showEnhancementPanel = false;
+                  _startHideTimer();
+                }),
+              ),
+            if (!compact) const SizedBox(width: 8),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: Icon(
+                _showSidePanel
+                    ? Icons.menu_open_rounded
+                    : Icons.menu_rounded,
+                color: _showSidePanel
+                    ? theme.colorScheme.primary
+                    : Colors.white,
+                size: compact ? 20 : 24,
+              ),
+              onPressed: () => setState(() {
+                _showSidePanel = !_showSidePanel;
+                _showInfoPanel = false;
+                _showEnhancementPanel = false;
+                _startHideTimer();
+              }),
             ),
-          );
-        },
+            if (!compact)
+              IconButton(
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+                icon: Icon(
+                  Icons.subtitles_rounded,
+                  color: app_player_state.PlayerState.selectedSubtitle ==
+                          SubtitleTrack.no()
+                      ? Colors.white
+                      : theme.colorScheme.primary,
+                ),
+                onPressed: _openSubtitleSelector,
+              ),
+            if (!compact) const SizedBox(width: 8),
+            IconButton(
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+              icon: Icon(
+                (_nativeFullscreen || isFullscreen)
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+                color: Colors.white,
+                size: compact ? 20 : 24,
+              ),
+              onPressed: _toggleFullscreen,
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildBottomBar(ThemeData theme, bool isLive) {
+    final screenSize = MediaQuery.sizeOf(context);
+    final isPhone = screenSize.shortestSide < 600;
+    final compact = isPhone || screenSize.width < 500;
+    final safePadding = MediaQuery.paddingOf(context);
+
     return Positioned(
       bottom: 0, left: 0, right: 0,
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final compact = constraints.maxWidth < 600;
-          return Container(
-            padding: EdgeInsets.fromLTRB(
-              compact ? 12 : 60,
-              compact ? 16 : 40,
-              compact ? 12 : 60,
-              compact ? 12 : 60,
-            ),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black87, Colors.transparent],
-              ),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                if (!isLive) ...[
-                    ValueListenableBuilder<Duration>(
-                      valueListenable: _positionNotifier,
-                      builder: (context, position, _) {
-                        return ValueListenableBuilder<Duration>(
-                          valueListenable: _durationNotifier,
-                          builder: (context, duration, _) {
-                            final total = duration.inSeconds.toDouble().clamp(1.0, double.infinity);
-                            final current = position.inSeconds.toDouble().clamp(0.0, total);
-                            return Column(
-                              mainAxisSize: MainAxisSize.min,
+      child: Container(
+        padding: EdgeInsets.fromLTRB(
+          compact ? 12 : 60,
+          compact ? 8 : 40,
+          compact ? 12 : 60,
+          (compact ? 12 : 60) + safePadding.bottom,
+        ),
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+            colors: [Colors.black87, Colors.transparent],
+          ),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isLive) ...[
+                ValueListenableBuilder<Duration>(
+                  valueListenable: _positionNotifier,
+                  builder: (context, position, _) {
+                    return ValueListenableBuilder<Duration>(
+                      valueListenable: _durationNotifier,
+                      builder: (context, duration, _) {
+                        final total = duration.inSeconds.toDouble().clamp(1.0, double.infinity);
+                        final current = position.inSeconds.toDouble().clamp(0.0, total);
+                        return Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            SliderTheme(
+                              data: SliderTheme.of(context).copyWith(
+                                activeTrackColor: theme.colorScheme.primary,
+                                inactiveTrackColor: Colors.white24,
+                                thumbColor: theme.colorScheme.primary,
+                                overlayColor:
+                                    theme.colorScheme.primary.withValues(alpha: 0.2),
+                                trackHeight: compact ? 2 : 4,
+                                thumbShape: RoundSliderThumbShape(
+                                  enabledThumbRadius: compact ? 4 : 6,
+                                ),
+                              ),
+                              child: Slider(
+                                value: current,
+                                max: total,
+                                onChanged: (val) =>
+                                    widget.player.seek(Duration(seconds: val.toInt())),
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    activeTrackColor: theme.colorScheme.primary,
-                                    inactiveTrackColor: Colors.white24,
-                                    thumbColor: theme.colorScheme.primary,
-                                    overlayColor:
-                                        theme.colorScheme.primary.withValues(alpha: 0.2),
-                                    trackHeight: compact ? 2 : 4,
-                                    thumbShape: RoundSliderThumbShape(
-                                      enabledThumbRadius: compact ? 4 : 6,
-                                    ),
-                                  ),
-                                  child: Slider(
-                                    value: current,
-                                    max: total,
-                                    onChanged: (val) =>
-                                        widget.player.seek(Duration(seconds: val.toInt())),
+                                Text(
+                                  _formatDuration(position),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: compact ? 10 : 13,
                                   ),
                                 ),
-                                if (!compact) ...[
-                                  const SizedBox(height: 8),
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(_formatDuration(position),
-                                          style: const TextStyle(color: Colors.white70)),
-                                      Text(_formatDuration(duration),
-                                          style: const TextStyle(color: Colors.white70)),
-                                    ],
+                                Text(
+                                  _formatDuration(duration),
+                                  style: TextStyle(
+                                    color: Colors.white70,
+                                    fontSize: compact ? 10 : 13,
                                   ),
-                                ],
+                                ),
                               ],
-                            );
-                          },
+                            ),
+                          ],
                         );
                       },
-                    ),
-                ] else
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Icon(Icons.circle,
-                          color: Colors.red, size: compact ? 8 : 10),
-                      SizedBox(width: compact ? 4 : 8),
-                      Text(
-                        'LIVE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: compact ? 10 : 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                SizedBox(height: compact ? 8 : 24),
-                Row(
-                  children: [
-                    _PlayerControlBtn(
-                      icon: widget.player.state.playing
-                          ? Icons.pause_rounded
-                          : Icons.play_arrow_rounded,
-                      isLarge: !compact,
-                      size: compact ? 32 : 64,
-                      iconSize: compact ? 20 : 40,
-                      onPressed: () => widget.player.playOrPause(),
-                    ),
-                    SizedBox(width: compact ? 8 : 32),
-                    Icon(
-                      _isMuted || _volume == 0
-                          ? Icons.volume_off_rounded
-                          : _volume < 0.5
-                              ? Icons.volume_down_rounded
-                              : Icons.volume_up_rounded,
-                      color: Colors.white70,
-                      size: compact ? 18 : 24,
-                    ),
-                    if (!compact)
-                      SizedBox(
-                        width: 150,
-                        child: SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            activeTrackColor: Colors.white,
-                            inactiveTrackColor: Colors.white12,
-                            thumbColor: Colors.white,
-                            trackHeight: 2,
-                            thumbShape: const RoundSliderThumbShape(
-                                enabledThumbRadius: 6),
-                          ),
-                          child: Slider(
-                            value: _volume,
-                            onChanged: (val) =>
-                                widget.player.setVolume(val * 100),
-                          ),
-                        ),
-                      ),
-                    const Spacer(),
-                    if (!isLive && !compact) ...[
-                      _PlayerControlBtn(
-                        icon: Icons.replay_10_rounded,
-                        size: 48,
-                        iconSize: 24,
-                        onPressed: () => widget.player
-                            .seek(_position - const Duration(seconds: 10)),
-                      ),
-                      const SizedBox(width: 16),
-                      _PlayerControlBtn(
-                        icon: Icons.forward_10_rounded,
-                        size: 48,
-                        iconSize: 24,
-                        onPressed: () => widget.player
-                            .seek(_position + const Duration(seconds: 10)),
-                      ),
-                    ],
-                    const SizedBox(width: 16),
-                    const LowLatencyButton(),
-                    const SizedBox(width: 8),
-                    const VideoSettingsWidget(),
-                  ],
+                    );
+                  },
                 ),
+            ] else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(Icons.circle,
+                      color: Colors.red, size: compact ? 8 : 10),
+                  SizedBox(width: compact ? 4 : 8),
+                  Text(
+                    'LIVE',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: compact ? 10 : 12,
+                    ),
+                  ),
+                ],
+              ),
+            SizedBox(height: compact ? 8 : 24),
+            Row(
+              children: [
+                _PlayerControlBtn(
+                  icon: widget.player.state.playing
+                      ? Icons.pause_rounded
+                      : Icons.play_arrow_rounded,
+                  isLarge: !compact,
+                  size: compact ? 32 : 64,
+                  iconSize: compact ? 20 : 40,
+                  onPressed: () => widget.player.playOrPause(),
+                ),
+                SizedBox(width: compact ? 8 : 32),
+                GestureDetector(
+                  onTap: () {
+                    if (_isMuted || _volume == 0) {
+                      widget.player.setVolume(100);
+                    } else {
+                      widget.player.setVolume(0);
+                    }
+                  },
+                  child: Icon(
+                    _isMuted || _volume == 0
+                        ? Icons.volume_off_rounded
+                        : _volume < 0.5
+                            ? Icons.volume_down_rounded
+                            : Icons.volume_up_rounded,
+                    color: Colors.white70,
+                    size: compact ? 22 : 24,
+                  ),
+                ),
+                if (!compact)
+                  SizedBox(
+                    width: 150,
+                    child: SliderTheme(
+                      data: SliderTheme.of(context).copyWith(
+                        activeTrackColor: Colors.white,
+                        inactiveTrackColor: Colors.white12,
+                        thumbColor: Colors.white,
+                        trackHeight: 2,
+                        thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 6),
+                      ),
+                      child: Slider(
+                        value: _volume,
+                        onChanged: (val) =>
+                            widget.player.setVolume(val * 100),
+                      ),
+                    ),
+                  ),
+                const Spacer(),
+                if (!isLive) ...[
+                  _PlayerControlBtn(
+                    icon: Icons.replay_10_rounded,
+                    size: compact ? 36 : 48,
+                    iconSize: compact ? 18 : 24,
+                    onPressed: () =>
+                        widget.player.seek(_position - const Duration(seconds: 10)),
+                  ),
+                  SizedBox(width: compact ? 8 : 16),
+                  _PlayerControlBtn(
+                    icon: Icons.forward_10_rounded,
+                    size: compact ? 36 : 48,
+                    iconSize: compact ? 18 : 24,
+                    onPressed: () =>
+                        widget.player.seek(_position + const Duration(seconds: 10)),
+                  ),
+                ],
+                const SizedBox(width: 16),
+                const LowLatencyButton(),
+                const SizedBox(width: 8),
+                const VideoSettingsWidget(),
               ],
             ),
-          );
-        },
+          ],
+        ),
       ),
     );
   }
@@ -863,101 +913,107 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildEnhancementPanel(ThemeData theme) {
-    return Positioned(
-      top: 130,
-      right: 40,
-      child: Container(
-        width: 320,
-        constraints: BoxConstraints(
-          maxHeight: MediaQuery.sizeOf(context).height * 0.65,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.85),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
-        ),
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Enhancement',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+    return Builder(builder: (context) {
+      final screenSize = MediaQuery.sizeOf(context);
+      final isPhone = screenSize.shortestSide < 600;
+      final panelWidth = (screenSize.width * 0.85).clamp(260.0, 340.0);
+      return Positioned(
+        top: isPhone ? 60 : 130,
+        right: isPhone ? (screenSize.width - panelWidth) / 2 : 40,
+        left: isPhone ? (screenSize.width - panelWidth) / 2 : null,
+        child: Container(
+          width: isPhone ? panelWidth : 320,
+          constraints: BoxConstraints(
+            maxHeight: screenSize.height * (isPhone ? 0.70 : 0.65),
+          ),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.85),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Enhancement',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              _buildEnhancementSlider(
-                theme,
-                label: 'Sharpness',
-                icon: Icons.landscape_rounded,
-                value: _sharpness,
-                min: -1.0,
-                max: 1.0,
-                onChanged: (val) {
-                  setState(() => _sharpness = val);
-                  _applyEnhancement();
-                },
-              ),
-              _buildEnhancementSlider(
-                theme,
-                label: 'Contrast',
-                icon: Icons.contrast_rounded,
-                value: _contrast,
-                min: -1.0,
-                max: 1.0,
-                onChanged: (val) {
-                  setState(() => _contrast = val);
-                  _applyEnhancement();
-                },
-              ),
-              _buildEnhancementSlider(
-                theme,
-                label: 'Saturation',
-                icon: Icons.color_lens_rounded,
-                value: _saturation,
-                min: -1.0,
-                max: 1.0,
-                onChanged: (val) {
-                  setState(() => _saturation = val);
-                  _applyEnhancement();
-                },
-              ),
-              _buildEnhancementSlider(
-                theme,
-                label: 'Noise Reduction',
-                icon: Icons.grain_rounded,
-                value: _noiseReduction,
-                min: 0.0,
-                max: 1.0,
-                onChanged: (val) {
-                  setState(() => _noiseReduction = val);
-                  _applyEnhancement();
-                },
-              ),
-              const SizedBox(height: 8),
-              TextButton.icon(
-                onPressed: () {
-                  setState(() {
-                    _sharpness = 0.0;
-                    _contrast = 0.0;
-                    _saturation = 0.0;
-                    _noiseReduction = 0.0;
-                  });
-                  _applyEnhancement();
-                },
-                icon: const Icon(Icons.restart_alt_rounded, size: 16),
-                label: const Text('Reset All'),
-                style: TextButton.styleFrom(foregroundColor: Colors.white38),
-              ),
-            ],
+                const SizedBox(height: 20),
+                _buildEnhancementSlider(
+                  theme,
+                  label: 'Sharpness',
+                  icon: Icons.landscape_rounded,
+                  value: _sharpness,
+                  min: -1.0,
+                  max: 1.0,
+                  onChanged: (val) {
+                    setState(() => _sharpness = val);
+                    _applyEnhancement();
+                  },
+                ),
+                _buildEnhancementSlider(
+                  theme,
+                  label: 'Contrast',
+                  icon: Icons.contrast_rounded,
+                  value: _contrast,
+                  min: -1.0,
+                  max: 1.0,
+                  onChanged: (val) {
+                    setState(() => _contrast = val);
+                    _applyEnhancement();
+                  },
+                ),
+                _buildEnhancementSlider(
+                  theme,
+                  label: 'Saturation',
+                  icon: Icons.color_lens_rounded,
+                  value: _saturation,
+                  min: -1.0,
+                  max: 1.0,
+                  onChanged: (val) {
+                    setState(() => _saturation = val);
+                    _applyEnhancement();
+                  },
+                ),
+                _buildEnhancementSlider(
+                  theme,
+                  label: 'Noise Reduction',
+                  icon: Icons.grain_rounded,
+                  value: _noiseReduction,
+                  min: 0.0,
+                  max: 1.0,
+                  onChanged: (val) {
+                    setState(() => _noiseReduction = val);
+                    _applyEnhancement();
+                  },
+                ),
+                const SizedBox(height: 8),
+                TextButton.icon(
+                  onPressed: () {
+                    setState(() {
+                      _sharpness = 0.0;
+                      _contrast = 0.0;
+                      _saturation = 0.0;
+                      _noiseReduction = 0.0;
+                    });
+                    _applyEnhancement();
+                  },
+                  icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                  label: const Text('Reset All'),
+                  style: TextButton.styleFrom(foregroundColor: Colors.white38),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildEnhancementSlider(
@@ -1016,43 +1072,49 @@ class _C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildInfoPanel(ThemeData theme, VideoTrack track) {
-    return Positioned(
-      top: 130,
-      right: 40,
-      child: Container(
-        width: 300,
-        padding: const EdgeInsets.all(24),
-        decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.8),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white10),
+    return Builder(builder: (context) {
+      final screenSize = MediaQuery.sizeOf(context);
+      final isPhone = screenSize.shortestSide < 600;
+      final panelWidth = (screenSize.width * 0.85).clamp(240.0, 310.0);
+      return Positioned(
+        top: isPhone ? 60 : 130,
+        right: isPhone ? (screenSize.width - panelWidth) / 2 : 40,
+        left: isPhone ? (screenSize.width - panelWidth) / 2 : null,
+        child: Container(
+          width: isPhone ? panelWidth : 300,
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.black.withValues(alpha: 0.8),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white10),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Stream Information',
+                style: theme.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _InfoRow(label: 'Title', value: app_player_state.PlayerState.title),
+              _InfoRow(
+                label: 'Resolution', 
+                value: (_resW != null && _resH != null && _resW! > 0) ? '$_resW x $_resH' : 'N/A'
+              ),
+              _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
+              _InfoRow(label: 'Codec', value: (_codec != null && _codec!.isNotEmpty) ? _codec! : 'N/A'),
+              _InfoRow(
+                label: 'Upscaler',
+                value: (_upscalerPreset == null || _upscalerPreset!.isEmpty || _upscalerPreset == 'none')
+                    ? 'Disabled'
+                    : _upscalerPreset!,
+              ),
+            ],
+          ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Stream Information',
-              style: theme.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            _InfoRow(label: 'Title', value: app_player_state.PlayerState.title),
-            _InfoRow(
-              label: 'Resolution', 
-              value: (_resW != null && _resH != null && _resW! > 0) ? '$_resW x $_resH' : 'N/A'
-            ),
-            _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
-            _InfoRow(label: 'Codec', value: (_codec != null && _codec!.isNotEmpty) ? _codec! : 'N/A'),
-            _InfoRow(
-              label: 'Upscaler',
-              value: (_upscalerPreset == null || _upscalerPreset!.isEmpty || _upscalerPreset == 'none')
-                  ? 'Disabled'
-                  : _upscalerPreset!,
-            ),
-          ],
-        ),
-      ),
-    );
+      );
+    });
   }
 
   Widget _buildSidePanel(ThemeData theme) {

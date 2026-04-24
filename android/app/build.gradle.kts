@@ -48,17 +48,7 @@ android {
         versionName = flutter.versionName
     }
 
-    // Assign unique versionCodes per ABI so APK splits can upgrade
-    // each other and any previously installed universal APK.
-    // arm32=1x, arm64=2x, x86_64=3x prefix (e.g. versionCode 15 → arm64 = 2015)
-    splits {
-        abi {
-            isEnable = true
-            reset()
-            include("armeabi-v7a", "arm64-v8a", "x86_64")
-            isUniversalApk = false
-        }
-    }
+
 
     // ABI → versionCode multiplier map
     val abiCodes = mapOf(
