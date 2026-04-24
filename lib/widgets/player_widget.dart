@@ -79,6 +79,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Duration? _pendingWatchDuration;
   Duration? _pendingTotalDuration;
   Duration _lastSavedPosition = Duration.zero;
+  DateTime _lastSeekTime = DateTime.fromMillisecondsSinceEpoch(0);
+  Duration _lastPosition = Duration.zero;
 
   @override
   void initState() {
@@ -371,7 +373,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
 
         if (contentItem.contentType != ContentType.liveStream) {
-          _overlayKey.currentState?.resetContentState();
+          _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           await _player.open(
             Playlist(medias, index: currentItemIndex),
             play: true,
@@ -382,7 +384,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           }
           if (mounted) setState(() => isLoading = false);
         } else {
-          _overlayKey.currentState?.resetContentState();
+          _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
@@ -391,7 +393,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           if (mounted) setState(() => isLoading = false);
         }
       } else {
-        _overlayKey.currentState?.resetContentState();
+        _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
         await _player.open(
           Playlist([
             Media(
@@ -447,7 +449,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               );
 
               // TODO: Implement watch history duration for vod and series
-              _overlayKey.currentState?.resetContentState();
+              _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
               await _player.open(Media(contentItem.url));
               await _applyUserPreferenceProperties();
               if (await UserPreferences.getLowLatencyMode()) {
@@ -526,6 +528,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
         _pendingWatchDuration = position;
         _pendingTotalDuration = _player.state.duration;
 
+        // Detect manual seek jumps (> 5 seconds)
+        if ((position - _lastPosition).abs() > const Duration(seconds: 5)) {
+          _lastSeekTime = DateTime.now();
+        }
+        _lastPosition = position;
+
         // Only reschedule a save if position moved more than 5 seconds
         // since the last save trigger — avoids timer churn during pause/seek.
         if ((position - _lastSavedPosition).abs() > const Duration(seconds: 5)) {
@@ -559,8 +567,16 @@ class _PlayerWidgetState extends State<PlayerWidget>
             error,
             () async {
               if (_isSwitchingChannel) return;
+
+              // Guard against transient errors during/immediately after a seek
+              final timeSinceSeek = DateTime.now().difference(_lastSeekTime);
+              if (timeSinceSeek.inSeconds < 3) {
+                debugPrint('Ignoring player error due to recent seek: $error');
+                return;
+              }
+
               if (contentItem.contentType == ContentType.liveStream) {
-                _overlayKey.currentState?.resetContentState();
+                _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
                 await _player.open(Media(contentItem.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -586,7 +602,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (!mounted) return;
 
         if (contentItem.contentType == ContentType.liveStream ||
-            contentItem.contentType == ContentType.series) {
+            contentItem.contentType == ContentType.series ||
+            contentItem.contentType == ContentType.vod) {
           return;
         }
 
@@ -608,11 +625,19 @@ class _PlayerWidgetState extends State<PlayerWidget>
       _player.stream.completed.listen((completed) async {
         if (!completed) return; // false = stopped, not finished — ignore
         if (_isSwitchingChannel) return;
+
+        // Guard against transient completion events during/immediately after a seek
+        final timeSinceSeek = DateTime.now().difference(_lastSeekTime);
+        if (timeSinceSeek.inSeconds < 3) {
+          debugPrint('Ignoring player completion due to recent seek');
+          return;
+        }
+
         // Only auto-restart live streams on true completion.
         // VOD/Series completion is handled by the Playlist — do nothing.
         if (contentItem.contentType == ContentType.liveStream) {
           if (!mounted) return;
-          _overlayKey.currentState?.resetContentState();
+          _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
@@ -644,7 +669,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
                 _errorHandler.reset();
 
-                _overlayKey.currentState?.resetContentState();
+                _overlayKey.currentState?.resetContentState(newUrl: item.url);
                 await _player.open(Media(item.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -675,7 +700,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
               );
               final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
-              _overlayKey.currentState?.resetContentState();
+              _overlayKey.currentState?.resetContentState(newUrl: item.url);
               await _player.open(
                 Media(item.url, start: Duration(milliseconds: startMs)),
                 play: true,

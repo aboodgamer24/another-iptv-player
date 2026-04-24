@@ -78,6 +78,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   // Locked once we see a real duration > 0 for non-live content.
   // Prevents duration=0 during early buffering from hiding the seek bar.
   bool _confirmedNonLive = false;
+  Duration _lastSolidDuration = Duration.zero;
+  String? _currentUrl;
   bool _isDragging = false;
   double _dragValue = 0.0;
   bool _isSeeking = false;
@@ -111,25 +113,34 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
         _position = p; // always track real position for ±10s skip buttons
       }),
       widget.player.stream.duration.listen((d) {
-        // Always track the real position for internal calculations.
-        _duration = d;
+        // Track any duration >= 60s as a "solid" non-live duration.
+        if (d.inSeconds >= 60) {
+          _lastSolidDuration = d;
+        }
 
         if (d.inSeconds > 0) {
-          // Update the notifier with the real duration.
+          // GUARD: If we have already confirmed this is non-live content, never let a transient
+          // near-zero duration (the 14-18s cache window artifact) overwrite our real duration.
+          // We only allow the update if the new duration is also "solid" (> 60s) or if we 
+          // haven't confirmed non-live yet.
+          if (_confirmedNonLive && d.inSeconds < 60 && _lastSolidDuration.inSeconds >= 60) {
+            return;
+          }
+
+          // Update the notifier and our local cache with the real duration.
+          _duration = d;
           _durationNotifier.value = d;
+
           if (!_confirmedNonLive) {
             // Lock this content as non-live for its entire playback lifetime.
             if (mounted) setState(() => _confirmedNonLive = true);
           }
-          // Once locked, do NOT allow a temporary duration=0 (seek buffering)
-          // to overwrite _durationNotifier — keep the last good value frozen.
         } else if (!_confirmedNonLive) {
           // Only propagate duration=0 while we have NOT yet confirmed it is non-live.
           // This handles true live streams that never report a real duration.
+          _duration = d;
           _durationNotifier.value = d;
         }
-        // If _confirmedNonLive is true and d.inSeconds == 0, we intentionally
-        // ignore the update — it is a transient seek-buffering artefact.
       }),
       widget.player.stream.volume.listen((v) {
         if (!mounted) return;
@@ -457,14 +468,22 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
 
   /// Called by the parent widget (PlayerWidget) when new content starts loading.
   /// Resets the live/non-live detection so the new content is evaluated fresh.
-  void resetContentState() {
+  /// If [newUrl] is the same as the current URL, it preserves the existing
+  /// duration memory to prevent timeline collapse during stream reloads.
+  void resetContentState({String? newUrl}) {
     if (mounted) {
+      final isSameMedia = newUrl != null && newUrl == _currentUrl;
+      _currentUrl = newUrl;
+
       setState(() {
-        _confirmedNonLive = false;
+        if (!isSameMedia) {
+          _confirmedNonLive = false;
+          _lastSolidDuration = Duration.zero;
+          _duration = Duration.zero;
+          _durationNotifier.value = Duration.zero;
+        }
         _position = Duration.zero;
-        _duration = Duration.zero;
         _positionNotifier.value = Duration.zero;
-        _durationNotifier.value = Duration.zero;
       });
     }
   }
@@ -810,8 +829,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       builder: (context, duration, _) {
                         // If we have confirmed this is non-live content, never let a transient
                         // near-zero duration collapse the slider range.
-                        final effectiveDuration = (_confirmedNonLive && duration.inSeconds < 60)
-                            ? _duration   // use the cached real duration
+                        final effectiveDuration = (_confirmedNonLive && duration.inSeconds < 60 && _lastSolidDuration.inSeconds >= 60)
+                            ? _lastSolidDuration
                             : duration;
 
                         final total = effectiveDuration.inSeconds.toDouble().clamp(1.0, double.infinity);
@@ -895,7 +914,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                                           ),
                                         ),
                                       Text(
-                                        _formatDuration(duration),
+                                        _formatDuration(effectiveDuration),
                                         style: TextStyle(
                                           color: Colors.white70,
                                           fontSize: compact ? 10 : 13,
