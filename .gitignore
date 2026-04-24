@@ -112,9 +112,9 @@ app.*.symbols
 firebase_options.dart
 
 # API Keys and sensitive files
-**/*config.dart
-**/*secrets.dart
-**/*keys.dart
+# **/*config.dart removed to fix app crash
+# **/*secrets.dart removed
+# **/*keys.dart removed
 
 # Platform-specific build outputs
 **/android/app/outputs/
