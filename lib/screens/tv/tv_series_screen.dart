@@ -78,10 +78,17 @@ class _TvSeriesScreenState extends State<TvSeriesScreen> {
           .toList();
       if (mounted) setState(() { _currentItems = items; _loadingVirtual = false; });
     } else {
-      setState(() {
-        _currentItems = ctrl.getSeriesByCategory(catId);
-        _loadingVirtual = false;
-      });
+      final realCats = ctrl.seriesCategories;
+      final realIndex = realCats.indexWhere((c) => c.category.categoryId == catId);
+      if (realIndex != -1) {
+        await ctrl.loadItemsForCategory(realCats[realIndex], ContentType.series);
+      }
+      if (mounted) {
+        setState(() {
+          _currentItems = ctrl.getSeriesByCategory(catId);
+          _loadingVirtual = false;
+        });
+      }
     }
   }
 

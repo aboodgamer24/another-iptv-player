@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../models/playlist_content_model.dart';
+import '../../models/content_type.dart';
 import '../../repositories/favorites_repository.dart';
 import 'tv_player_screen.dart';
 
@@ -108,6 +109,7 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
                         focusNode: _catNode(i),
                         onFocusChange: (has) {
                           if (has) {
+                            ctrl.loadItemsForCategory(cat, ContentType.liveStream);
                             setState(() { _catIndex = i; _chanIndex = 0; });
                             Scrollable.ensureVisible(_catNode(i).context!,
                               alignment: 0.3,

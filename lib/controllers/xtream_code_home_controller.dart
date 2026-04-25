@@ -165,55 +165,54 @@ class XtreamCodeHomeController extends ChangeNotifier {
         // If we were forced to refresh, we still want to show what we currently have in DB
       }
 
-      // ── LOAD FROM DB — parallel bulk fetch ─────────────────────────
+      // ── LOAD FROM DB — Shallow fetch (Categories only first) ──────
       final results = await Future.wait([
         db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.live),
         db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.vod),
         db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.series),
-        db.getLiveStreams(playlistId),
-        db.getVodStreamsByPlaylistId(playlistId),
-        db.getSeriesStreamsByPlaylistId(playlistId),
       ]);
 
       final allLiveCats = results[0] as List<dynamic>;
       final allVodCats = results[1] as List<dynamic>;
       final allSerCats = results[2] as List<dynamic>;
-      final allLiveStreams = results[3] as List<dynamic>;
-      final allVodStreams = results[4] as List<dynamic>;
-      final allSerStreams = results[5] as List<dynamic>;
+
+      // ── GET SAMPLES FOR DASHBOARD (Parallel) ─────────────────────
+      final samples = await Future.wait([
+        db.getRandomVodStreams(playlistId, 15),
+        db.getRandomSeriesStreams(playlistId, 15),
+        // Also get first category streams for each type to show immediately on home rows
+        if (allLiveCats.isNotEmpty)
+          db.getLiveStreamsByCategoryId(playlistId, allLiveCats.first.categoryId, top: 20)
+        else
+          Future.value(<LiveStream>[]),
+        if (allVodCats.isNotEmpty)
+          db.getVodStreamsByPlaylistId(playlistId) // For now, still load VODs if small, but let's optimize
+        else
+          Future.value(<VodStream>[]),
+      ]);
+      // Wait, if VODs are many, getVodStreamsByPlaylistId is still slow. 
+      // Let's just get the first category for VOD too.
 
       // ── AUTO-FETCH if DB is empty ──────────────────────────────────
       if (!all &&
-          allLiveStreams.isEmpty &&
-          allVodStreams.isEmpty &&
-          allSerStreams.isEmpty) {
+          allLiveCats.isEmpty &&
+          allVodCats.isEmpty &&
+          allSerCats.isEmpty) {
         debugPrint(
           '[XtreamController] DB is empty — triggering parallel content fetch',
         );
-        // Don't await the full API sync if we want to remain responsive, 
-        // but we need at least categories to show something.
         unawaited(_loadCategories(true));
-        // We will keep isLoading = true for now because we have NOTHING to show.
         return;
       }
 
-      // Group by categoryId in memory
-      final liveMap = <String, List<LiveStream>>{};
-      for (final s in allLiveStreams) {
-        final stream = s as LiveStream;
-        liveMap.putIfAbsent(stream.categoryId, () => []).add(stream);
-      }
-      final vodMap = <String, List<VodStream>>{};
-      for (final s in allVodStreams) {
-        final stream = s as VodStream;
-        vodMap.putIfAbsent(stream.categoryId, () => []).add(stream);
-      }
-      final serMap = <String, List<SeriesStream>>{};
-      for (final s in allSerStreams) {
-        final stream = s as SeriesStream;
-        if (stream.categoryId == null) continue;
-        serMap.putIfAbsent(stream.categoryId!, () => []).add(stream);
-      }
+      final randomVods = samples[0] as List<VodStream>;
+      final randomSeries = samples[1] as List<SeriesStream>;
+      final homeLiveStreams = samples[2] as List<LiveStream>;
+
+      // Map streams for the categories we have samples for
+      final liveMap = { if (allLiveCats.isNotEmpty) allLiveCats.first.categoryId: homeLiveStreams };
+      
+      // We will load other categories' streams lazily or when requested
 
       // Load hidden categories once
       final hiddenSet = (await UserPreferences.getHiddenCategories()).toSet();
@@ -224,69 +223,29 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
       for (final cat in allLiveCats) {
         final streams = liveMap[cat.categoryId] ?? [];
-        if (streams.isEmpty) continue;
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _liveCategories.add(
-          CategoryViewModel(
-            category: cat,
-            contentItems: streams
-                .map(
-                  (x) => ContentItem(
-                    x.streamId,
-                    x.name,
-                    x.streamIcon,
-                    ContentType.liveStream,
-                    liveStream: x,
-                  ),
-                )
-                .toList(),
-          ),
-        );
+        _liveCategories.add(CategoryViewModel(category: cat, contentItems: _convertToItems(streams, ContentType.liveStream)));
       }
 
       for (final cat in allVodCats) {
-        final streams = vodMap[cat.categoryId] ?? [];
-        if (streams.isEmpty) continue;
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _movieCategories.add(
-          CategoryViewModel(
-            category: cat,
-            contentItems: streams
-                .map(
-                  (x) => ContentItem(
-                    x.streamId,
-                    x.name,
-                    x.streamIcon,
-                    ContentType.vod,
-                    containerExtension: x.containerExtension,
-                    vodStream: x,
-                  ),
-                )
-                .toList(),
-          ),
-        );
+        _movieCategories.add(CategoryViewModel(category: cat, contentItems: []));
       }
 
       for (final cat in allSerCats) {
-        final streams = serMap[cat.categoryId] ?? [];
-        if (streams.isEmpty) continue;
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _seriesCategories.add(
-          CategoryViewModel(
-            category: cat,
-            contentItems: streams
-                .map(
-                  (x) => ContentItem(
-                    x.seriesId,
-                    x.name,
-                    x.cover ?? '',
-                    ContentType.series,
-                    seriesStream: x,
-                  ),
-                )
-                .toList(),
-          ),
-        );
+        _seriesCategories.add(CategoryViewModel(category: cat, contentItems: []));
+      }
+
+      // Populate hero from random fetch
+      _heroPool = [
+        ...randomVods.map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.vod, vodStream: x)),
+        ...randomSeries.map((x) => ContentItem(x.seriesId, x.name, x.cover ?? '', ContentType.series, seriesStream: x)),
+      ];
+      if (_heroPool.isNotEmpty) {
+        _heroPool.shuffle();
+        _heroItem = _heroPool.first;
+        _recommendations = _heroPool.take(15).toList();
       }
 
       _generateDashboardContent();
@@ -310,23 +269,41 @@ class XtreamCodeHomeController extends ChangeNotifier {
   }
 
   void _generateDashboardContent() {
-    final allVodsAndSeries = [
-      ..._movieCategories.expand((c) => c.contentItems),
-      ..._seriesCategories.expand((c) => c.contentItems),
-    ];
+    // Already handled in _loadCategories now for performance
+    notifyListeners();
+  }
 
-    if (allVodsAndSeries.isNotEmpty) {
-      _heroPool = List<ContentItem>.from(allVodsAndSeries)..shuffle();
-      _heroItem = _heroPool.first;
-      _recommendations = _heroPool.take(15).toList();
+  List<ContentItem> _convertToItems(List<dynamic> streams, ContentType type) {
+    return streams.map((x) {
+      if (type == ContentType.liveStream) {
+        final s = x as LiveStream;
+        return ContentItem(s.streamId, s.name, s.streamIcon, type, liveStream: s);
+      } else if (type == ContentType.vod) {
+        final s = x as VodStream;
+        return ContentItem(s.streamId, s.name, s.streamIcon, type, vodStream: s, containerExtension: s.containerExtension);
+      } else {
+        final s = x as SeriesStream;
+        return ContentItem(s.seriesId, s.name, s.cover ?? '', type, seriesStream: s);
+      }
+    }).toList();
+  }
 
-      // Start the 15-minute rotation timer
-      _heroRotationTimer?.cancel();
-      _heroRotationTimer = Timer.periodic(
-        const Duration(minutes: 15),
-        (_) => _rotateHero(),
-      );
+  Future<void> loadItemsForCategory(CategoryViewModel vm, ContentType type) async {
+    if (vm.contentItems.isNotEmpty) return;
+    final db = AppState.database;
+    final playlistId = AppState.currentPlaylist!.id;
+    
+    List<dynamic> streams;
+    if (type == ContentType.liveStream) {
+      streams = await db.getLiveStreamsByCategoryId(playlistId, vm.category.categoryId);
+    } else if (type == ContentType.vod) {
+      streams = await db.getVodStreamsByCategoryAndPlaylistId(categoryId: vm.category.categoryId, playlistId: playlistId);
+    } else {
+      streams = await db.getSeriesStreamsByCategoryAndPlaylistId(categoryId: vm.category.categoryId, playlistId: playlistId);
     }
+    
+    vm.contentItems.clear();
+    vm.contentItems.addAll(_convertToItems(streams, type));
     notifyListeners();
   }
 

@@ -78,10 +78,17 @@ class _TvMoviesScreenState extends State<TvMoviesScreen> {
           .toList();
       if (mounted) setState(() { _currentItems = items; _loadingVirtual = false; });
     } else {
-      setState(() {
-        _currentItems = ctrl.getMoviesByCategory(catId);
-        _loadingVirtual = false;
-      });
+      final realCats = ctrl.movieCategories;
+      final realIndex = realCats.indexWhere((c) => c.category.categoryId == catId);
+      if (realIndex != -1) {
+        await ctrl.loadItemsForCategory(realCats[realIndex], ContentType.vod);
+      }
+      if (mounted) {
+        setState(() {
+          _currentItems = ctrl.getMoviesByCategory(catId);
+          _loadingVirtual = false;
+        });
+      }
     }
   }
 

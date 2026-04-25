@@ -474,10 +474,12 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(children: [
-              _Tab(label: 'Tracks',   i: 0, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
+              _Tab(label: 'Subtitle', i: 0, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
               _Tab(label: 'Info',     i: 1, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
               if (_item.contentType == ContentType.liveStream)
                 _Tab(label: 'Channels', i: 2, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
+              if (_item.contentType == ContentType.series)
+                _Tab(label: 'Episodes', i: 3, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
             ]),
           ),
           const Divider(color: Colors.white12, height: 1),
@@ -485,6 +487,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
             0 => _tracksTab(context),
             1 => _infoTab(),
             2 => _channelsTab(context),
+            3 => _episodesTab(context),
             _ => const SizedBox.shrink(),
           }),
         ],
@@ -553,25 +556,97 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       itemBuilder: (_, i) {
         final ch = widget.queue[i];
         final sel = i == _idx;
-        return ListTile(
-          dense: true,
-          selected: sel,
-          selectedTileColor: primary.withValues(alpha: 0.2),
-          selectedColor: Colors.white,
-          leading: ch.imagePath.isNotEmpty
-              ? Image.network(ch.imagePath, width: 32, height: 32, fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) => const Icon(Icons.live_tv, size: 20, color: Colors.white38))
-              : const Icon(Icons.live_tv, size: 20, color: Colors.white38),
-          title: Text(ch.name,
-            style: TextStyle(color: sel ? Colors.white : Colors.white60, fontSize: 13, fontWeight: sel ? FontWeight.bold : FontWeight.normal),
-            maxLines: 1, overflow: TextOverflow.ellipsis),
-          onTap: () {
-            _switchTo(i);
-            _push(_ui.copyWith(panelOpen: false));
+        return Focus(
+          onKeyEvent: (node, event) {
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+              _switchTo(i);
+              _push(_ui.copyWith(panelOpen: false));
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
           },
+          child: Builder(builder: (ctx) {
+            final f = Focus.of(ctx).hasFocus;
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: f ? Colors.white10 : (sel ? primary.withValues(alpha: 0.1) : Colors.transparent),
+                borderRadius: BorderRadius.circular(8),
+                border: f ? Border.all(color: primary, width: 2) : Border.all(color: Colors.transparent, width: 2),
+              ),
+              child: ListTile(
+                dense: true,
+                selected: sel,
+                leading: ch.imagePath.isNotEmpty
+                    ? Image.network(ch.imagePath, width: 32, height: 32, fit: BoxFit.contain,
+                        errorBuilder: (_, __, ___) => const Icon(Icons.live_tv, size: 20, color: Colors.white38))
+                    : const Icon(Icons.live_tv, size: 20, color: Colors.white38),
+                title: Text(ch.name,
+                  style: TextStyle(color: f || sel ? Colors.white : Colors.white60, fontSize: 13, fontWeight: sel ? FontWeight.bold : FontWeight.normal),
+                  maxLines: 1, overflow: TextOverflow.ellipsis),
+                onTap: () {
+                  _switchTo(i);
+                  _push(_ui.copyWith(panelOpen: false));
+                },
+              ),
+            );
+          }),
         );
       },
     );
+  }
+
+  Widget _episodesTab(BuildContext context) {
+    if (_item.episodes == null || _item.episodes!.isEmpty) {
+      return const Center(child: Text('No episodes found', style: TextStyle(color: Colors.white38)));
+    }
+    final primary = Theme.of(context).colorScheme.primary;
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: _item.episodes!.length,
+      itemBuilder: (_, i) {
+        final ep = _item.episodes![i];
+        return Focus(
+          onKeyEvent: (node, event) {
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+              _switchToEpisode(ep);
+              return KeyEventResult.handled;
+            }
+            return KeyEventResult.ignored;
+          },
+          child: Builder(builder: (ctx) {
+            final f = Focus.of(ctx).hasFocus;
+            return Container(
+              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: f ? Colors.white10 : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: f ? Border.all(color: primary, width: 2) : Border.all(color: Colors.transparent, width: 2),
+              ),
+              child: ListTile(
+                dense: true,
+                title: Text(ep.name,
+                  style: TextStyle(color: f ? Colors.white : Colors.white60, fontSize: 13),
+                  maxLines: 2, overflow: TextOverflow.ellipsis),
+                onTap: () => _switchToEpisode(ep),
+              ),
+            );
+          }),
+        );
+      },
+    );
+  }
+
+  void _switchToEpisode(ContentItem ep) {
+    // Implement episode switching logic
+    _push(_ui.copyWith(panelOpen: false));
+    // Since TvPlayerScreen takes a contentItem, we might need to reload or update _item
+    // For now, let's just push a NEW screen for simplicity or update the current one
+    Navigator.pushReplacement(context, MaterialPageRoute(
+      builder: (_) => TvPlayerScreen(contentItem: ep, queue: _item.episodes ?? [], initialIndex: _item.episodes?.indexOf(ep) ?? 0),
+    ));
   }
 }
 
@@ -600,19 +675,34 @@ class _Tab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final active = i == cur;
-    return GestureDetector(
-      onTap: () => onTap(i),
-      child: Container(
-        margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: active ? Theme.of(context).colorScheme.primary : Colors.white10,
-          borderRadius: BorderRadius.circular(6)),
-        child: Text(label,
-          style: TextStyle(
-            color: active ? Colors.white : Colors.white54,
-            fontSize: 12, fontWeight: FontWeight.bold)),
-      ),
+    return Focus(
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+          onTap(i);
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Builder(builder: (ctx) {
+        final f = Focus.of(ctx).hasFocus;
+        return GestureDetector(
+          onTap: () => onTap(i),
+          child: Container(
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+            decoration: BoxDecoration(
+                color: f ? Colors.white24 : (active ? Theme.of(context).colorScheme.primary : Colors.white10),
+                borderRadius: BorderRadius.circular(6),
+                border: f ? Border.all(color: Colors.white, width: 2) : null,
+            ),
+            child: Text(label,
+              style: TextStyle(
+                color: f || active ? Colors.white : Colors.white54,
+                fontSize: 12, fontWeight: f || active ? FontWeight.bold : FontWeight.normal)),
+          ),
+        );
+      }),
     );
   }
 }
