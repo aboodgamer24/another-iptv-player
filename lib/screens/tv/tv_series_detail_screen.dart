@@ -174,20 +174,15 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
                             ),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 120),
-                              transform: hasFocus
-                                  ? (Matrix4.diagonal3Values(1.05, 1.05, 1.0))
-                                  : Matrix4.identity(),
                               decoration: BoxDecoration(
-                                color: Colors.grey,
+                                color: Colors.white10,
                                 borderRadius: BorderRadius.circular(8),
                                 border: hasFocus
                                     ? Border.all(
-                                        color: Theme.of(
-                                          context,
-                                        ).colorScheme.primary,
-                                        width: 2,
+                                        color: Theme.of(context).colorScheme.primary,
+                                        width: 3,
                                       )
-                                    : Border.all(color: Colors.white12),
+                                    : Border.all(color: Colors.white12, width: 3),
                               ),
                               child: Stack(
                                 fit: StackFit.expand,

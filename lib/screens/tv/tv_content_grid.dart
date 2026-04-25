@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/playlist_content_model.dart';
-import '../../services/tv_focus_service.dart';
 
 class TvContentGrid extends StatefulWidget {
   final String sectionKey;
   final List<ContentItem> items;
   final void Function(ContentItem item, int index, List<ContentItem> queue)
-  onSelect;
+      onSelect;
   final int crossAxisCount;
+  final VoidCallback? onEdgeLeft;
 
   const TvContentGrid({
     super.key,
@@ -16,6 +16,7 @@ class TvContentGrid extends StatefulWidget {
     required this.items,
     required this.onSelect,
     this.crossAxisCount = 5,
+    this.onEdgeLeft,
   });
 
   @override
@@ -25,74 +26,89 @@ class TvContentGrid extends StatefulWidget {
 class _TvContentGridState extends State<TvContentGrid> {
   late ScrollController _scrollController;
   int _focusedIndex = 0;
+  final Map<int, FocusNode> _focusNodePool = {};
 
   @override
   void initState() {
     super.initState();
-    _focusedIndex = TvFocusService.instance.getLastIndex(widget.sectionKey);
+    _focusedIndex = 0;
     _scrollController = ScrollController();
   }
 
   @override
   void dispose() {
+    for (final node in _focusNodePool.values) {
+      node.dispose();
+    }
     _scrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToIndex(int index) {
-    if (!_scrollController.hasClients) return;
-    final row = (index / widget.crossAxisCount).floor();
-    final cardHeight = 180.0; // approximate
-    final target = row * cardHeight;
-    _scrollController.animateTo(
-      target.clamp(0, _scrollController.position.maxScrollExtent),
-      duration: const Duration(milliseconds: 250),
-      curve: Curves.easeOut,
+  FocusNode _getFocusNode(int index) {
+    if (!_focusNodePool.containsKey(index)) {
+      _focusNodePool[index] = FocusNode();
+    }
+    return _focusNodePool[index]!;
+  }
+
+  void _ensureVisible(BuildContext context) {
+    Scrollable.ensureVisible(
+      context,
+      alignment: 0.5,
+      duration: const Duration(milliseconds: 150),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final nodes = TvFocusService.instance.getNodes(
-      widget.sectionKey,
-      widget.items.length,
-    );
-
-    return GridView.builder(
-      controller: _scrollController,
-      padding: const EdgeInsets.all(24),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: widget.crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 2 / 3,
-      ),
-      itemCount: widget.items.length,
-      itemBuilder: (ctx, i) {
-        final item = widget.items[i];
-        return Focus(
-          focusNode: nodes[i],
-          onFocusChange: (hasFocus) {
-            if (hasFocus) {
-              setState(() => _focusedIndex = i);
-              TvFocusService.instance.saveIndex(widget.sectionKey, i);
-              _scrollToIndex(i);
-            }
-          },
-          onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.select) {
-              widget.onSelect(item, i, widget.items);
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: GestureDetector(
-            onTap: () => widget.onSelect(item, i, widget.items),
-            child: _TvContentCard(item: item, isFocused: _focusedIndex == i),
-          ),
-        );
+    return Focus(
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+            _focusedIndex % widget.crossAxisCount == 0) {
+          widget.onEdgeLeft?.call();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
       },
+      child: GridView.builder(
+        controller: _scrollController,
+        padding: const EdgeInsets.all(32),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: widget.crossAxisCount,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 2 / 3,
+        ),
+        itemCount: widget.items.length,
+        itemBuilder: (ctx, i) {
+          final item = widget.items[i];
+          final node = _getFocusNode(i);
+          return Focus(
+            focusNode: node,
+            onFocusChange: (hasFocus) {
+              if (hasFocus) {
+                setState(() => _focusedIndex = i);
+                _ensureVisible(node.context!);
+              }
+            },
+            onKeyEvent: (node, event) {
+              if (event is KeyDownEvent &&
+                  (event.logicalKey == LogicalKeyboardKey.select ||
+                      event.logicalKey == LogicalKeyboardKey.enter ||
+                      event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+                widget.onSelect(item, i, widget.items);
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: GestureDetector(
+              onTap: () => widget.onSelect(item, i, widget.items),
+              child: _TvContentCard(item: item, isFocused: _focusedIndex == i),
+            ),
+          );
+        },
+      ),
     );
   }
 }
@@ -105,87 +121,68 @@ class _TvContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedScale(
-      scale: isFocused ? 1.08 : 1.0,
+    return AnimatedContainer(
       duration: const Duration(milliseconds: 150),
-      curve: Curves.easeOut,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(10),
-          border: isFocused
-              ? Border.all(
-                  color: Theme.of(context).colorScheme.primary,
-                  width: 3,
-                )
-              : Border.all(color: Colors.white12, width: 1),
-          boxShadow: isFocused
-              ? [
-                  BoxShadow(
-                    color: Theme.of(
-                      context,
-                    ).colorScheme.primary.withValues(alpha: 0.4),
-                    blurRadius: 16,
-                    spreadRadius: 2,
-                  ),
-                ]
-              : [],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(9),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // Poster image
-              item.imagePath.isNotEmpty
-                  ? Image.network(
-                      item.imagePath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        color: Colors.grey,
-                        child: const Icon(
-                          Icons.movie,
-                          color: Colors.white24,
-                          size: 40,
-                        ),
-                      ),
-                    )
-                  : Container(
-                      color: Colors.grey,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        border: isFocused
+            ? Border.all(color: Theme.of(context).colorScheme.primary, width: 3)
+            : Border.all(color: Colors.transparent, width: 3),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(5),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            // Poster image
+            item.imagePath.isNotEmpty
+                ? Image.network(
+                    item.imagePath,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Container(
+                      color: Colors.white10,
                       child: const Icon(
                         Icons.movie,
                         color: Colors.white24,
                         size: 40,
                       ),
                     ),
-              // Bottom gradient + title
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(8, 24, 8, 8),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [Colors.black87, Colors.transparent],
+                  )
+                : Container(
+                    color: Colors.white10,
+                    child: const Icon(
+                      Icons.movie,
+                      color: Colors.white24,
+                      size: 40,
                     ),
                   ),
-                  child: Text(
-                    item.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
+            // Bottom gradient + title
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(8, 24, 8, 8),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.bottomCenter,
+                    end: Alignment.topCenter,
+                    colors: [Colors.black87, Colors.transparent],
                   ),
                 ),
+                child: Text(
+                  item.name,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

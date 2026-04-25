@@ -123,15 +123,6 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
         Expanded(
           child: FocusScope(
             node: _channelScope,
-            onKeyEvent: (node, event) {
-              if (event is KeyDownEvent &&
-                  event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                // Only return to categories if focus is on the leftmost column
-                _categoryScope.requestFocus();
-                return KeyEventResult.handled;
-              }
-              return KeyEventResult.ignored;
-            },
             child: GridView.builder(
               padding: const EdgeInsets.all(20),
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -145,10 +136,18 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
                 final ch = channels[i];
                 return Focus(
                   onKeyEvent: (node, event) {
-                    if (event is KeyDownEvent &&
-                        event.logicalKey == LogicalKeyboardKey.select) {
-                      _openChannel(ch, channels, i);
-                      return KeyEventResult.handled;
+                    if (event is KeyDownEvent) {
+                      if (event.logicalKey == LogicalKeyboardKey.arrowLeft &&
+                          i % 6 == 0) {
+                        _categoryScope.requestFocus();
+                        return KeyEventResult.handled;
+                      }
+                      if (event.logicalKey == LogicalKeyboardKey.select ||
+                          event.logicalKey == LogicalKeyboardKey.enter ||
+                          event.logicalKey == LogicalKeyboardKey.gameButtonA) {
+                        _openChannel(ch, channels, i);
+                        return KeyEventResult.handled;
+                      }
                     }
                     return KeyEventResult.ignored;
                   },
@@ -159,20 +158,15 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
                         onTap: () => _openChannel(ch, channels, i),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 120),
-                          transform: hasFocus
-                              ? (Matrix4.diagonal3Values(1.06, 1.06, 1.0))
-                              : Matrix4.identity(),
                           decoration: BoxDecoration(
                             color: const Color(0xFF1E1E3A),
                             borderRadius: BorderRadius.circular(8),
                             border: hasFocus
                                 ? Border.all(
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                    width: 2,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    width: 3,
                                   )
-                                : Border.all(color: Colors.white12),
+                                : Border.all(color: Colors.white12, width: 3),
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,

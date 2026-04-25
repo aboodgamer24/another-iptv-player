@@ -273,10 +273,6 @@ class _TvHomeRow extends StatelessWidget {
                       onTap: () => onSelect(item, i, items),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 120),
-                        transform: hasFocus
-                            ? (Matrix4.diagonal3Values(1.07, 1.07, 1.0))
-                            : Matrix4.identity(),
-                        transformAlignment: Alignment.center,
                         margin: const EdgeInsets.only(right: 12),
                         width: 200,
                         decoration: BoxDecoration(
@@ -284,27 +280,18 @@ class _TvHomeRow extends StatelessWidget {
                           border: hasFocus
                               ? Border.all(
                                   color: Theme.of(context).colorScheme.primary,
-                                  width: 2,
+                                  width: 3,
                                 )
-                              : Border.all(color: Colors.white12),
-                          boxShadow: hasFocus
-                              ? [
-                                  BoxShadow(
-                                    color: Theme.of(context).colorScheme.primary
-                                        .withValues(alpha: 0.4),
-                                    blurRadius: 12,
-                                  ),
-                                ]
-                              : [],
+                              : Border.all(color: Colors.white12, width: 3),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(7),
+                          borderRadius: BorderRadius.circular(5),
                           child: item.imagePath.isNotEmpty
                               ? Image.network(
                                   item.imagePath,
                                   fit: BoxFit.cover,
                                   errorBuilder: (_, __, ___) => Container(
-                                    color: Colors.grey,
+                                    color: Colors.white10,
                                     child: const Icon(
                                       Icons.tv,
                                       color: Colors.white24,
@@ -312,7 +299,7 @@ class _TvHomeRow extends StatelessWidget {
                                   ),
                                 )
                               : Container(
-                                  color: Colors.grey,
+                                  color: Colors.white10,
                                   child: const Icon(
                                     Icons.tv,
                                     color: Colors.white24,

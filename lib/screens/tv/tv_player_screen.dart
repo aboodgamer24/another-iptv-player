@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:media_kit/media_kit.dart';
+import 'package:media_kit_video/media_kit_video.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
-import '../../widgets/player_widget.dart';
-import '../../services/event_bus.dart';
 
 class TvPlayerScreen extends StatefulWidget {
   final ContentItem contentItem;
@@ -23,12 +23,19 @@ class TvPlayerScreen extends StatefulWidget {
 }
 
 class _TvPlayerScreenState extends State<TvPlayerScreen> {
-  bool _osdVisible = false;
+  late final Player _player;
+  late final VideoController _videoController;
+
   Timer? _osdTimer;
+  Timer? _updateDebounce;
+  bool _osdVisible = false;
+  bool _isBuffering = false;
+  Duration _position = Duration.zero;
+  Duration _duration = Duration.zero;
+
   late ContentItem _currentItem;
   late int _currentIndex;
 
-  // Dedicated, stable FocusNode so KeyboardListener always has keyboard focus
   final FocusNode _keyboardFocus = FocusNode();
 
   @override
@@ -36,21 +43,67 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     super.initState();
     _currentItem = widget.contentItem;
     _currentIndex = widget.initialIndex;
-    // Grab focus immediately so remote keys work without tapping first
+
+    _player = Player(
+      configuration: const PlayerConfiguration(
+        logLevel: MPVLogLevel.warn,
+      ),
+    );
+
+    _videoController = VideoController(_player);
+
+    _initPlayer();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _keyboardFocus.requestFocus();
     });
   }
 
+  Future<void> _initPlayer() async {
+    // Basic MPV properties for TV performance
+    final native = _player.platform;
+    if (native is NativePlayer) {
+      await native.setProperty('hwdec', 'mediacodec-copy');
+      await native.setProperty('cache', 'yes');
+      await native.setProperty('demuxer-max-bytes', '32MiB');
+    }
+
+    _player.stream.position.listen((pos) {
+      _position = pos;
+      _scheduleUpdate();
+    });
+
+    _player.stream.duration.listen((dur) {
+      _duration = dur;
+      _scheduleUpdate();
+    });
+
+    _player.stream.buffering.listen((buffering) {
+      _isBuffering = buffering;
+      _scheduleUpdate();
+    });
+
+    await _player.open(Media(_currentItem.url));
+  }
+
   @override
   void dispose() {
     _osdTimer?.cancel();
+    _updateDebounce?.cancel();
+    _player.dispose();
     _keyboardFocus.dispose();
     super.dispose();
   }
 
+  void _scheduleUpdate() {
+    if (_updateDebounce?.isActive ?? false) return;
+    _updateDebounce = Timer(const Duration(milliseconds: 500), () {
+      if (mounted) setState(() {});
+    });
+  }
+
   void _showOsd() {
-    setState(() => _osdVisible = true);
+    if (mounted) setState(() => _osdVisible = true);
     _osdTimer?.cancel();
     _osdTimer = Timer(const Duration(seconds: 4), () {
       if (mounted) setState(() => _osdVisible = false);
@@ -63,11 +116,12 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       widget.queue.length - 1,
     );
     if (newIndex == _currentIndex) return;
-    setState(() {
-      _currentIndex = newIndex;
-      _currentItem = widget.queue[newIndex];
-    });
-    EventBus().emit('player_content_item_index_changed', newIndex);
+    
+    _currentIndex = newIndex;
+    _currentItem = widget.queue[newIndex];
+    _player.open(Media(_currentItem.url));
+    _showOsd();
+    _scheduleUpdate();
   }
 
   @override
@@ -75,13 +129,11 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       body: KeyboardListener(
-        autofocus: true,
         focusNode: _keyboardFocus,
         onKeyEvent: (event) {
           if (event is! KeyDownEvent) return;
           _showOsd();
 
-          // Back key — exit player
           if (event.logicalKey == LogicalKeyboardKey.escape ||
               event.logicalKey == LogicalKeyboardKey.goBack ||
               event.logicalKey == LogicalKeyboardKey.browserBack) {
@@ -89,7 +141,6 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
             return;
           }
 
-          // Channel up/down for live streams (also OK on arrow keys)
           if (_currentItem.contentType == ContentType.liveStream) {
             if (event.logicalKey == LogicalKeyboardKey.arrowUp ||
                 event.logicalKey == LogicalKeyboardKey.channelUp) {
@@ -98,34 +149,33 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
                 event.logicalKey == LogicalKeyboardKey.channelDown) {
               _switchChannel(1);
             }
-          }
-
-          // LEFT/RIGHT for VOD seek — forward to PlayerWidget via EventBus
-          if (_currentItem.contentType != ContentType.liveStream) {
+          } else {
             if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-              EventBus().emit('player_seek_forward', null);
+              _player.seek(_position + const Duration(seconds: 10));
             } else if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-              EventBus().emit('player_seek_backward', null);
+              _player.seek(_position - const Duration(seconds: 10));
             }
           }
 
-          // OK/Select = play/pause
           if (event.logicalKey == LogicalKeyboardKey.select ||
               event.logicalKey == LogicalKeyboardKey.enter ||
               event.logicalKey == LogicalKeyboardKey.gameButtonA) {
-            EventBus().emit('player_toggle_pause', null);
+            _player.playOrPause();
           }
         },
         child: Stack(
           children: [
-            PlayerWidget(
-              contentItem: _currentItem,
-              queue: widget.queue,
-              showControls: true,
-              showPersistentSidebar: false,
+            RepaintBoundary(
+              child: Video(
+                controller: _videoController,
+                controls: NoVideoControls,
+              ),
             ),
-            if (_osdVisible)
-              Positioned(bottom: 0, left: 0, right: 0, child: _buildOsd()),
+            if (_isBuffering)
+              const Center(
+                child: CircularProgressIndicator(color: Colors.white24),
+              ),
+            if (_osdVisible) _buildOsd(),
           ],
         ),
       ),
@@ -133,11 +183,14 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   }
 
   Widget _buildOsd() {
-    return AnimatedOpacity(
-      opacity: _osdVisible ? 1.0 : 0.0,
-      duration: const Duration(milliseconds: 250),
+    final isLive = _currentItem.contentType == ContentType.liveStream;
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+        padding: const EdgeInsets.all(32),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
@@ -145,26 +198,62 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
             colors: [Colors.black87, Colors.transparent],
           ),
         ),
-        child: Row(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Expanded(
-              child: Text(
-                _currentItem.name,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+            if (!isLive) ...[
+              LinearProgressIndicator(
+                value: _duration.inSeconds > 0
+                    ? _position.inSeconds / _duration.inSeconds
+                    : 0,
+                backgroundColor: Colors.white10,
+                color: Theme.of(context).colorScheme.primary,
+                minHeight: 4,
+              ),
+              const SizedBox(height: 16),
+            ],
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    _currentItem.name,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                 ),
-              ),
+                if (isLive)
+                  Text(
+                    'CH ${_currentIndex + 1}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  )
+                else
+                  Text(
+                    '${_formatDuration(_position)} / ${_formatDuration(_duration)}',
+                    style: const TextStyle(
+                      color: Colors.white70,
+                      fontSize: 18,
+                    ),
+                  ),
+              ],
             ),
-            if (_currentItem.contentType == ContentType.liveStream)
-              Text(
-                '${_currentIndex + 1} / ${widget.queue.length}',
-                style: const TextStyle(color: Colors.white70, fontSize: 16),
-              ),
           ],
         ),
       ),
     );
+  }
+
+  String _formatDuration(Duration d) {
+    final h = d.inHours;
+    final m = d.inMinutes.remainder(60);
+    final s = d.inSeconds.remainder(60);
+    if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return '$m:${s.toString().padLeft(2, '0')}';
   }
 }

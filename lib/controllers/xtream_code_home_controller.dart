@@ -81,6 +81,13 @@ class XtreamCodeHomeController extends ChangeNotifier {
   ContentItem? get heroItem => _heroItem;
   List<ContentItem> get recommendations => _recommendations;
 
+  List<ContentItem> get allLiveChannels =>
+      liveCategories?.expand((c) => getLiveChannelsByCategory(c.category.categoryId)).toList() ?? [];
+  List<ContentItem> get allMovies =>
+      movieCategories.expand((c) => getMoviesByCategory(c.category.categoryId)).toList();
+  List<ContentItem> get allSeries =>
+      seriesCategories.expand((c) => getSeriesByCategory(c.category.categoryId)).toList();
+
   XtreamCodeHomeController(bool all) {
     _pageController = PageController();
     _loadCategories(all);
