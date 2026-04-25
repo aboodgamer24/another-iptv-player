@@ -51,6 +51,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       curve: Curves.easeOut,
     );
     _fadeController.forward();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _loginToggleFocus.requestFocus();
+    });
   }
 
   @override
@@ -327,7 +330,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               _buildTextField(
                 controller: _serverUrlController,
                 focusNode: _serverUrlFocus,
-                autofocus: true,
+                autofocus: false,
                 label: 'Server URL',
                 hint: 'http://your-server:7000',
                 icon: Icons.dns_outlined,
@@ -617,70 +620,87 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     Widget? suffixIcon,
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
+    VoidCallback? onUpKey,
+    VoidCallback? onDownKey,
     ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return TextFormField(
-      controller: controller,
-      focusNode: focusNode,
-      autofocus: autofocus,
-      obscureText: obscure,
-      keyboardType: keyboardType,
-      textInputAction: textInputAction,
-      onFieldSubmitted: onFieldSubmitted,
-      validator: validator,
-      style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        hintStyle: TextStyle(
-          color: colorScheme.onSurface.withValues(alpha: 0.3),
-          fontSize: 14,
-        ),
-        labelStyle: TextStyle(
-          color: colorScheme.onSurface.withValues(alpha: 0.6),
-        ),
-        prefixIcon: icon != null
-            ? Icon(
-                icon,
-                size: 20,
-                color: colorScheme.primary.withValues(alpha: 0.7),
-              )
-            : null,
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+    return Focus(
+      onKeyEvent: (node, event) {
+        if (event is! KeyDownEvent) return KeyEventResult.ignored;
+        if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+          FocusScope.of(context).previousFocus();
+          return KeyEventResult.handled;
+        }
+        if (event.logicalKey == LogicalKeyboardKey.arrowDown ||
+            event.logicalKey == LogicalKeyboardKey.tab) {
+          FocusScope.of(context).nextFocus();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: TextFormField(
+        controller: controller,
+        focusNode: focusNode,
+        autofocus: autofocus,
+        obscureText: obscure,
+        keyboardType: keyboardType,
+        textInputAction: textInputAction,
+        onFieldSubmitted: onFieldSubmitted,
+        validator: validator,
+        style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          hintStyle: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: 0.3),
+            fontSize: 14,
           ),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+          labelStyle: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: 0.6),
           ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error.withValues(alpha: 0.5),
+          prefixIcon: icon != null
+              ? Icon(
+                  icon,
+                  size: 20,
+                  color: colorScheme.primary.withValues(alpha: 0.7),
+                )
+              : null,
+          suffixIcon: suffixIcon,
+          filled: true,
+          fillColor: colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
           ),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: colorScheme.error, width: 1.5),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 14,
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: colorScheme.outlineVariant.withValues(alpha: 0.3),
+            ),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
+          ),
+          errorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(
+              color: colorScheme.error.withValues(alpha: 0.5),
+            ),
+          ),
+          focusedErrorBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: colorScheme.error, width: 1.5),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );

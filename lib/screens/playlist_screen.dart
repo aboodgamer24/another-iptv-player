@@ -18,6 +18,14 @@ class PlaylistScreen extends StatefulWidget {
 
 class PlaylistScreenState extends State<PlaylistScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) FocusScope.of(context).requestFocus();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
       create: (_) => PlaylistController(),

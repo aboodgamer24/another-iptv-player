@@ -27,6 +27,9 @@ class _MainNavigationScreenProviderState
     } else {
       _controller = M3UHomeController();
     }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) FocusScope.of(context).requestFocus();
+    });
   }
 
   @override
