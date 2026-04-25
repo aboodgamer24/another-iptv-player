@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:video_player/video_player.dart'; // ExoPlayer on Android
+import 'package:video_player/video_player.dart'; 
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 import '../../models/watch_history.dart';
 import '../../services/app_state.dart';
 import '../../services/watch_history_service.dart';
 import '../../utils/get_playlist_type.dart';
+import '../../widgets/player/tv_player_overlay.dart';
 
 // ─────────────────────────────────────────────────
 // UI state — drives only the overlay, never the video
@@ -287,7 +288,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     if (k == LogicalKeyboardKey.escape  ||
         k == LogicalKeyboardKey.goBack  ||
         k == LogicalKeyboardKey.browserBack) {
-      Navigator.of(context).maybePop();
+      _closeAndPop();
       return;
     }
 
@@ -304,8 +305,11 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
         return;
       }
       if (k == LogicalKeyboardKey.arrowLeft) {
-        final t = _controller!.value.position - const Duration(seconds: 10);
-        _controller!.seekTo(t < Duration.zero ? Duration.zero : t);
+        final pos = _controller!.value.position;
+        final targetMs = pos.inMilliseconds - (10 * 1000);
+        final durMs = _controller!.value.duration.inMilliseconds;
+        final clampedMs = targetMs.clamp(0, durMs);
+        _controller!.seekTo(Duration(milliseconds: clampedMs));
         return;
       }
     }
@@ -333,6 +337,20 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     return h > 0 ? '$h:$m:$s' : '$m:$s';
   }
 
+  Future<void> _closeAndPop() async {
+    if (!mounted) return;
+    
+    // Stop playback immediately to prevent ghost audio
+    final vpc = _controller;
+    if (vpc != null) {
+      await vpc.pause();
+    }
+    
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+  }
+
   // ── Lifecycle ─────────────────────────────────────────────────────────────
   @override
   void dispose() {
@@ -340,8 +358,12 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     _historyTimer?.cancel();
     _uiCtrl.close();
     _focus.dispose();
-    _controller?.removeListener(_vpcListener);
-    _controller?.dispose();
+    final vpc = _controller;
+    if (vpc != null) {
+      vpc.removeListener(_vpcListener);
+      vpc.pause();
+      vpc.dispose();
+    }
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
@@ -388,20 +410,34 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
                   stream: _uiCtrl.stream,
                   builder: (_, snap) {
                     final ui = snap.data ?? _ui;
-                    return _Overlay(
-                      ui      : ui,
-                      item    : _item,
-                      queue   : widget.queue,
-                      curIdx  : _idx,
-                      fmt     : _fmt,
-                      onOsd   : _showOsd,
-                      onPanelToggle : () => _push(_ui.copyWith(panelOpen: !_ui.panelOpen)),
-                      onPanelClose  : () => _push(_ui.copyWith(panelOpen: false)),
-                      onPanelTab    : (t) => _push(_ui.copyWith(panelTab: t)),
-                      onChannelTap  : (i) {
-                        _switchTo(i);
-                        _push(_ui.copyWith(panelOpen: false));
-                      },
+                    if (_controller == null) return const SizedBox.shrink();
+
+                    return Stack(
+                      children: [
+                        // New Rich Overlay
+                        TvPlayerOverlay(
+                          controller: _controller!,
+                          item: _item,
+                          isLive: ui.isLive,
+                          isVisible: ui.osdVisible,
+                          onShowOsd: _showOsd,
+                          onTogglePanel: () => _push(_ui.copyWith(panelOpen: !_ui.panelOpen, osdVisible: true)),
+                        ),
+                        
+                        // Legacy panel for Tracks/Info (reused for now but can be styled)
+                        if (ui.panelOpen)
+                          Positioned(
+                            top: 0, bottom: 0,
+                            right: 0, width: 400,
+                            child: _buildPanel(context, ui),
+                          ),
+
+                        // Buffering indicator
+                        if (ui.isBuffering)
+                          const Center(
+                            child: CircularProgressIndicator(color: Colors.white70),
+                          ),
+                      ],
                     );
                   },
                 ),
@@ -412,170 +448,9 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       ),
     );
   }
-}
 
-// ─────────────────────────────────────────────────────────────────────────────
-// OVERLAY — pure StatelessWidget, receives all data via constructor.
-// ─────────────────────────────────────────────────────────────────────────────
-class _Overlay extends StatelessWidget {
-  final _UiState          ui;
-  final ContentItem       item;
-  final List<ContentItem> queue;
-  final int               curIdx;
-  final String Function(Duration) fmt;
-  final VoidCallback  onOsd;
-  final VoidCallback  onPanelToggle;
-  final VoidCallback  onPanelClose;
-  final void Function(int)           onPanelTab;
-  final void Function(int)           onChannelTap;
-
-  const _Overlay({
-    required this.ui,
-    required this.item,
-    required this.queue,
-    required this.curIdx,
-    required this.fmt,
-    required this.onOsd,
-    required this.onPanelToggle,
-    required this.onPanelClose,
-    required this.onPanelTab,
-    required this.onChannelTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      fit: StackFit.expand,
-      children: [
-        // Buffering spinner
-        if (ui.isBuffering)
-          const Center(
-            child: SizedBox(
-              width: 56, height: 56,
-              child: CircularProgressIndicator(
-                color: Colors.white70, strokeWidth: 3),
-            ),
-          ),
-
-        // OSD bottom bar
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOut,
-          bottom: ui.osdVisible ? 0 : -140,
-          left: 0, right: 0,
-          child: _buildOsd(context),
-        ),
-
-        // Side panel
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 220),
-          curve: Curves.easeOut,
-          top: 0, bottom: 0,
-          right: ui.panelOpen ? 0 : -400,
-          width: 400,
-          child: _buildPanel(context),
-        ),
-      ],
-    );
-  }
-
-  // ── OSD ───────────────────────────────────────────────────────────────────
-  Widget _buildOsd(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return Container(
-      padding: const EdgeInsets.fromLTRB(36, 18, 36, 24),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.bottomCenter,
-          end: Alignment.topCenter,
-          colors: [Color(0xDD000000), Colors.transparent],
-        ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Title row
-          Row(children: [
-            Expanded(
-              child: Text(ui.title,
-                style: const TextStyle(
-                  color: Colors.white, fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  shadows: [Shadow(color: Colors.black54, blurRadius: 6)]),
-                maxLines: 1, overflow: TextOverflow.ellipsis),
-            ),
-
-            // Hamburger
-            IconButton(
-              icon: const Icon(Icons.menu_rounded, color: Colors.white70, size: 22),
-              onPressed: onPanelToggle,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              padding: EdgeInsets.zero,
-            ),
-            const SizedBox(width: 12),
-
-            if (ui.isLive) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.red,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: const Text('LIVE',
-                  style: TextStyle(
-                    color: Colors.white, fontSize: 12,
-                    fontWeight: FontWeight.bold, letterSpacing: 1)),
-              ),
-              if (ui.channelTotal > 1) ...[
-                const SizedBox(width: 10),
-                Text('${ui.channelIndex + 1} / ${ui.channelTotal}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 13)),
-              ],
-            ] else
-              Text('${fmt(ui.position)}  /  ${fmt(ui.duration)}',
-                style: const TextStyle(color: Colors.white70, fontSize: 15)),
-          ]),
-
-          // Progress bar (VOD only)
-          if (!ui.isLive && ui.duration.inSeconds > 0) ...[
-            const SizedBox(height: 10),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(2),
-              child: LinearProgressIndicator(
-                value: ui.position.inMilliseconds /
-                       ui.duration.inMilliseconds.clamp(1, double.infinity),
-                backgroundColor: Colors.white24,
-                valueColor: AlwaysStoppedAnimation<Color>(primary),
-                minHeight: 4,
-              ),
-            ),
-          ],
-
-          // Hints
-          const SizedBox(height: 8),
-          Row(children: [
-            const _Hint(icon: Icons.arrow_back, label: 'Back'),
-            const SizedBox(width: 18),
-            if (ui.isLive)
-              const _Hint(icon: Icons.swap_vert, label: '↑↓ Channel')
-            else ...[
-              const _Hint(icon: Icons.fast_rewind, label: '←  -10s'),
-              const SizedBox(width: 12),
-              const _Hint(icon: Icons.fast_forward, label: '→  +10s'),
-              const SizedBox(width: 12),
-              const _Hint(icon: Icons.check_circle_outline, label: 'OK Play/Pause'),
-            ],
-            const SizedBox(width: 18),
-            const _Hint(icon: Icons.menu, label: 'MENU Options'),
-          ]),
-        ],
-      ),
-    );
-  }
-
-  // ── Side panel ────────────────────────────────────────────────────────────
-  Widget _buildPanel(BuildContext context) {
+  // Refactored panel builder (previously in _Overlay)
+  Widget _buildPanel(BuildContext context, _UiState ui) {
     return Container(
       decoration: const BoxDecoration(
         color: Color(0xF2101020),
@@ -584,33 +459,28 @@ class _Overlay extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header
           Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 8, 0),
             child: Row(children: [
               Expanded(
-                child: Text(item.name,
-                  style: const TextStyle(
-                    color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                child: Text(_item.name,
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   maxLines: 1, overflow: TextOverflow.ellipsis)),
               IconButton(
                 icon: const Icon(Icons.close, color: Colors.white54, size: 20),
-                onPressed: onPanelClose),
+                onPressed: () => _push(_ui.copyWith(panelOpen: false))),
             ]),
           ),
-
-          // Tabs
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
             child: Row(children: [
-              _Tab(label: 'Tracks',   i: 0, cur: ui.panelTab, onTap: onPanelTab),
-              _Tab(label: 'Info',     i: 1, cur: ui.panelTab, onTap: onPanelTab),
-              if (item.contentType == ContentType.liveStream)
-                _Tab(label: 'Channels', i: 2, cur: ui.panelTab, onTap: onPanelTab),
+              _Tab(label: 'Tracks',   i: 0, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
+              _Tab(label: 'Info',     i: 1, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
+              if (_item.contentType == ContentType.liveStream)
+                _Tab(label: 'Channels', i: 2, cur: ui.panelTab, onTap: (t) => _push(_ui.copyWith(panelTab: t))),
             ]),
           ),
           const Divider(color: Colors.white12, height: 1),
-
           Expanded(child: switch (ui.panelTab) {
             0 => _tracksTab(context),
             1 => _infoTab(),
@@ -646,33 +516,29 @@ class _Overlay extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (item.imagePath.isNotEmpty)
+          if (_item.imagePath.isNotEmpty)
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(item.imagePath,
+                child: Image.network(_item.imagePath,
                   width: 160, height: 120, fit: BoxFit.cover,
                   errorBuilder: (_, __, ___) => const SizedBox.shrink()),
               ),
             ),
           const SizedBox(height: 16),
-          Text(item.name,
-            style: const TextStyle(
-              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-          if (item.contentType == ContentType.liveStream) ...[
+          Text(_item.name,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          if (_item.contentType == ContentType.liveStream) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(
-                color: Colors.red, borderRadius: BorderRadius.circular(4)),
-              child: const Text('LIVE',
-                style: TextStyle(
-                  color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+              decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
+              child: const Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
             ),
           ],
-          if (item.m3uItem?.groupTitle?.isNotEmpty == true) ...[
+          if (_item.m3uItem?.groupTitle?.isNotEmpty == true) ...[
             const SizedBox(height: 10),
-            _IRow(label: 'Category', value: item.m3uItem!.groupTitle!),
+            _IRow(label: 'Category', value: _item.m3uItem!.groupTitle!),
           ],
         ],
       ),
@@ -683,28 +549,26 @@ class _Overlay extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: queue.length,
+      itemCount: widget.queue.length,
       itemBuilder: (_, i) {
-        final ch = queue[i];
-        final sel = i == curIdx;
+        final ch = widget.queue[i];
+        final sel = i == _idx;
         return ListTile(
           dense: true,
           selected: sel,
           selectedTileColor: primary.withValues(alpha: 0.2),
           selectedColor: Colors.white,
           leading: ch.imagePath.isNotEmpty
-              ? Image.network(ch.imagePath,
-                  width: 32, height: 32, fit: BoxFit.contain,
-                  errorBuilder: (_, __, ___) =>
-                      const Icon(Icons.live_tv, size: 20, color: Colors.white38))
+              ? Image.network(ch.imagePath, width: 32, height: 32, fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => const Icon(Icons.live_tv, size: 20, color: Colors.white38))
               : const Icon(Icons.live_tv, size: 20, color: Colors.white38),
           title: Text(ch.name,
-            style: TextStyle(
-              color: sel ? Colors.white : Colors.white60,
-              fontSize: 13,
-              fontWeight: sel ? FontWeight.bold : FontWeight.normal),
+            style: TextStyle(color: sel ? Colors.white : Colors.white60, fontSize: 13, fontWeight: sel ? FontWeight.bold : FontWeight.normal),
             maxLines: 1, overflow: TextOverflow.ellipsis),
-          onTap: () => onChannelTap(i),
+          onTap: () {
+            _switchTo(i);
+            _push(_ui.copyWith(panelOpen: false));
+          },
         );
       },
     );

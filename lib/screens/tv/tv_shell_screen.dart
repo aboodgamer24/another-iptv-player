@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../utils/tv_utils.dart';
 
 /// TV sidebar width constants
 const double kTvRailExpanded = 220.0;
@@ -191,17 +192,24 @@ class _TvShellScreenState extends State<TvShellScreen>
               child: FocusScope(
                 node: _contentScope,
                 onKeyEvent: (node, event) {
-                  if (event is KeyDownEvent &&
-                      event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                    _railScope.requestFocus();
-                    _expandRail();
-                    return KeyEventResult.handled;
-                  }
+                  // No longer catching global arrowLeft here to prevent accidental jumps.
+                  // Content screens now explicitly handle edge navigation.
                   return KeyEventResult.ignored;
                 },
-                child: KeyedSubtree(
-                  key: ValueKey(widget.selectedIndex),
-                  child: widget.child,
+                child: Actions(
+                  actions: {
+                    MoveToRailIntent: CallbackAction<MoveToRailIntent>(
+                      onInvoke: (_) {
+                        _railScope.requestFocus();
+                        _expandRail();
+                        return null;
+                      },
+                    ),
+                  },
+                  child: KeyedSubtree(
+                    key: ValueKey(widget.selectedIndex),
+                    child: widget.child,
+                  ),
                 ),
               ),
             ),

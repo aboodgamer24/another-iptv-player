@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../models/playlist_content_model.dart';
+import '../../utils/tv_utils.dart';
 
 class TvContentGrid extends StatefulWidget {
   final String sectionKey;
@@ -101,9 +102,13 @@ class _TvContentGridState extends State<TvContentGrid> {
                 return KeyEventResult.handled;
               }
 
-              // LEFT on the leftmost column  →  exit to category panel
+              // LEFT on the leftmost column  →  exit to category panel or rail
               if (event.logicalKey == LogicalKeyboardKey.arrowLeft && col == 0) {
-                widget.onEdgeLeft?.call();
+                if (widget.onEdgeLeft != null) {
+                  widget.onEdgeLeft!.call();
+                } else {
+                  TvNavigation.requestRailFocus(context);
+                }
                 return KeyEventResult.handled; // ← CRITICAL: consume the event
               }
 

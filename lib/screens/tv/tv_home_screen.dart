@@ -3,9 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../models/playlist_content_model.dart';
+import '../../utils/tv_utils.dart';
 import 'tv_player_screen.dart';
 
-// Max items shown per home row — prevents building thousands of nodes
 const _kHomeRowMax = 30;
 
 class TvHomeScreen extends StatefulWidget {
@@ -16,16 +16,15 @@ class TvHomeScreen extends StatefulWidget {
 }
 
 class _TvHomeScreenState extends State<TvHomeScreen> {
-  // Cache the lists so getLive/getMovies are not called on every rebuild
   List<ContentItem>? _liveCache;
   List<ContentItem>? _moviesCache;
+  List<ContentItem>? _seriesCache;
   String? _liveCatId;
   String? _moviesCatId;
+  String? _seriesCatId;
 
   @override
   Widget build(BuildContext context) {
-    // Use .watch only for the loading flag — avoid rebuilding on every
-    // notifyListeners() by reading the controller once and caching results.
     final ctrl = context.watch<XtreamCodeHomeController>();
 
     if (ctrl.isLoading) {
@@ -35,51 +34,72 @@ class _TvHomeScreenState extends State<TvHomeScreen> {
           children: [
             CircularProgressIndicator(color: Colors.white54),
             SizedBox(height: 16),
-            Text('Loading…',
-              style: TextStyle(color: Colors.white54, fontSize: 14)),
+            Text('Loading…', style: TextStyle(color: Colors.white54, fontSize: 14)),
           ],
         ),
       );
     }
 
-    // Compute live row — only when category id changes
+    // Refresh caches if categories changed
     final liveCatId  = ctrl.liveCategories?.firstOrNull?.category.categoryId;
     final movieCatId = ctrl.movieCategories.firstOrNull?.category.categoryId;
+    final seriesCatId = ctrl.seriesCategories.firstOrNull?.category.categoryId;
 
     if (liveCatId != null && liveCatId != _liveCatId) {
-      _liveCatId   = liveCatId;
-      final all    = ctrl.getLiveChannelsByCategory(liveCatId);
-      _liveCache   = all.length > _kHomeRowMax ? all.sublist(0, _kHomeRowMax) : all;
+      _liveCatId = liveCatId;
+      final all = ctrl.getLiveChannelsByCategory(liveCatId);
+      _liveCache = all.take(_kHomeRowMax).toList();
     }
     if (movieCatId != null && movieCatId != _moviesCatId) {
       _moviesCatId = movieCatId;
-      final all    = ctrl.getMoviesByCategory(movieCatId);
-      _moviesCache = all.length > _kHomeRowMax ? all.sublist(0, _kHomeRowMax) : all;
+      final all = ctrl.getMoviesByCategory(movieCatId);
+      _moviesCache = all.take(_kHomeRowMax).toList();
+    }
+    if (seriesCatId != null && seriesCatId != _seriesCatId) {
+      _seriesCatId = seriesCatId;
+      final all = ctrl.getSeriesByCategory(seriesCatId);
+      _seriesCache = all.take(_kHomeRowMax).toList();
     }
 
-    final featured = _liveCache?.firstOrNull;
+    final featured = _liveCache?.firstOrNull ?? _moviesCache?.firstOrNull;
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (featured != null) _TvHeroBanner(item: featured),
-          const SizedBox(height: 24),
-          if (_liveCache != null && _liveCache!.isNotEmpty)
-            _TvHomeRow(
+    return CustomScrollView(
+      slivers: [
+        if (featured != null)
+          SliverToBoxAdapter(child: _TvHeroBanner(item: featured)),
+        
+        if (_liveCache != null && _liveCache!.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _TvHomeRow(
               title: 'Live TV',
               items: _liveCache!,
               onSelect: _openPlayer,
             ),
-          if (_moviesCache != null && _moviesCache!.isNotEmpty)
-            _TvHomeRow(
-              title: 'Movies',
+          ),
+
+        if (_moviesCache != null && _moviesCache!.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _TvHomeRow(
+              title: 'Recent Movies',
               items: _moviesCache!,
               onSelect: _openPlayer,
             ),
-          const SizedBox(height: 32),
-        ],
-      ),
+          ),
+
+        if (_seriesCache != null && _seriesCache!.isNotEmpty)
+          SliverToBoxAdapter(
+            child: _TvHomeRow(
+              title: 'Recent Series',
+              items: _seriesCache!,
+              onSelect: (item, idx, queue) {
+                // Navigate to series detail screen if needed, or play first episode
+                _openPlayer(item, idx, queue);
+              },
+            ),
+          ),
+
+        const SliverPadding(padding: EdgeInsets.only(bottom: 40)),
+      ],
     );
   }
 
@@ -96,136 +116,97 @@ class _TvHomeScreenState extends State<TvHomeScreen> {
   }
 }
 
-// ── Hero banner ──────────────────────────────────────────────────────────────
-class _TvHeroBanner extends StatefulWidget {
+class _TvHeroBanner extends StatelessWidget {
   final ContentItem item;
   const _TvHeroBanner({required this.item});
-  @override
-  State<_TvHeroBanner> createState() => _TvHeroBannerState();
-}
-
-class _TvHeroBannerState extends State<_TvHeroBanner> {
-  final _focus = FocusNode();
-
-  @override
-  void dispose() {
-    _focus.dispose();
-    super.dispose();
-  }
-
-  void _open() => Navigator.push(
-    context,
-    PageRouteBuilder(
-      pageBuilder: (_, __, ___) => TvPlayerScreen(
-        contentItem: widget.item,
-        queue: [widget.item],
-        initialIndex: 0,
-      ),
-      transitionDuration: Duration.zero,
-      reverseTransitionDuration: Duration.zero,
-    ),
-  );
 
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: _focus,
       onKeyEvent: (_, ev) {
-        if (ev is KeyDownEvent &&
-            (ev.logicalKey == LogicalKeyboardKey.select  ||
-             ev.logicalKey == LogicalKeyboardKey.enter   ||
-             ev.logicalKey == LogicalKeyboardKey.gameButtonA)) {
-          _open();
+        if (ev is! KeyDownEvent) return KeyEventResult.ignored;
+        if (ev.logicalKey == LogicalKeyboardKey.arrowLeft) {
+          TvNavigation.requestRailFocus(context);
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       },
-      child: AnimatedBuilder(
-        animation: _focus,
-        builder: (ctx, _) {
-          final f = _focus.hasFocus;
-          return GestureDetector(
-            onTap: _open,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              height: 300,
-              decoration: BoxDecoration(
-                border: f
-                    ? Border.all(
-                        color: Theme.of(ctx).colorScheme.primary, width: 3)
-                    : null,
+      child: Builder(builder: (ctx) {
+        final f = Focus.of(ctx).hasFocus;
+        return GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => TvPlayerScreen(
+                contentItem: item,
+                queue: [item],
+                initialIndex: 0,
               ),
-              child: Stack(fit: StackFit.expand, children: [
-                if (widget.item.imagePath.isNotEmpty)
-                  Image.network(
-                    widget.item.imagePath,
-                    fit: BoxFit.cover,
-                    // Limit decode size — we don't need 4K hero image
-                    cacheWidth: 1280,
-                    errorBuilder: (_, __, ___) =>
-                        Container(color: Colors.black45)),
-                Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerRight,
-                      end: Alignment.centerLeft,
-                      colors: [Colors.transparent, Colors.black87],
+              transitionDuration: Duration.zero,
+            ),
+          ),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            height: 350,
+            margin: const EdgeInsets.fromLTRB(32, 24, 32, 24),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: f ? Border.all(color: Theme.of(ctx).colorScheme.primary, width: 4) : null,
+              boxShadow: f ? [BoxShadow(color: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 20)] : null,
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 1280),
+                  Container(
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.bottomCenter,
+                        end: Alignment.topCenter,
+                        colors: [Colors.black87, Colors.transparent],
+                      ),
                     ),
                   ),
-                ),
-                Positioned(
-                  left: 48, bottom: 40,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(widget.item.name,
-                        style: const TextStyle(
-                          color: Colors.white, fontSize: 32,
-                          fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 14),
-                      AnimatedContainer(
-                        duration: const Duration(milliseconds: 150),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 22, vertical: 11),
-                        decoration: BoxDecoration(
-                          color: f
-                              ? Theme.of(ctx).colorScheme.primaryContainer
-                              : Theme.of(ctx).colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: const Row(
-                          mainAxisSize: MainAxisSize.min,
+                  Positioned(
+                    left: 32, bottom: 32,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(item.name, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 12),
+                        Row(
                           children: [
-                            Icon(Icons.play_arrow, color: Colors.white),
-                            SizedBox(width: 8),
-                            Text('Watch Now',
-                              style: TextStyle(color: Colors.white, fontSize: 15)),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                              decoration: BoxDecoration(
+                                color: Theme.of(ctx).colorScheme.primary,
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Text('Watch Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                            ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-              ]),
+                ],
+              ),
             ),
-          );
-        },
-      ),
+          ),
+        );
+      }),
     );
   }
 }
 
-// ── Horizontal row ────────────────────────────────────────────────────────────
 class _TvHomeRow extends StatelessWidget {
   final String title;
   final List<ContentItem> items;
   final void Function(ContentItem, int, List<ContentItem>) onSelect;
 
-  const _TvHomeRow({
-    required this.title,
-    required this.items,
-    required this.onSelect,
-  });
+  const _TvHomeRow({required this.title, required this.items, required this.onSelect});
 
   @override
   Widget build(BuildContext context) {
@@ -233,78 +214,74 @@ class _TvHomeRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
-          child: Text(title,
-            style: const TextStyle(
-              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+          padding: const EdgeInsets.fromLTRB(32, 16, 32, 12),
+          child: Text(title, style: const TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.bold)),
         ),
         SizedBox(
-          height: 150,
+          height: 160,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 32),
-            // addRepaintBoundaries: true (default) isolates each card paint
             itemCount: items.length,
             itemBuilder: (ctx, i) {
-              final item = items[i];
-              return Focus(
-                onKeyEvent: (_, ev) {
-                  if (ev is KeyDownEvent &&
-                      (ev.logicalKey == LogicalKeyboardKey.select  ||
-                       ev.logicalKey == LogicalKeyboardKey.enter   ||
-                       ev.logicalKey == LogicalKeyboardKey.gameButtonA)) {
-                    onSelect(item, i, items);
-                    return KeyEventResult.handled;
-                  }
-                  return KeyEventResult.ignored;
-                },
-                child: Builder(builder: (ctx) {
-                  final f = Focus.of(ctx).hasFocus;
-                  return GestureDetector(
-                    onTap: () => onSelect(item, i, items),
-                    child: RepaintBoundary(
-                      child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 130),
-                        margin: const EdgeInsets.only(right: 12),
-                        width: 190,
-                        // scale-up on focus instead of border for perf
-                        transform: f
-                            ? Matrix4.diagonal3Values(1.06, 1.06, 1.0)
-                            : Matrix4.identity(),
-                        transformAlignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: f
-                                ? Theme.of(ctx).colorScheme.primary
-                                : Colors.white12,
-                            width: 2),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(6),
-                          child: item.imagePath.isNotEmpty
-                              ? Image.network(
-                                  item.imagePath,
-                                  fit: BoxFit.cover,
-                                  cacheWidth: 300, // decode at display size
-                                  errorBuilder: (_, __, ___) =>
-                                      Container(color: Colors.white10,
-                                        child: const Icon(Icons.tv,
-                                          color: Colors.white24)))
-                              : Container(color: Colors.white10,
-                                  child: const Icon(Icons.tv,
-                                    color: Colors.white24)),
-                        ),
-                      ),
-                    ),
-                  );
-                }),
+              return _TvHomeCard(
+                item: items[i],
+                index: i,
+                onTap: () => onSelect(items[i], i, items),
               );
             },
           ),
         ),
-        const SizedBox(height: 24),
       ],
+    );
+  }
+}
+
+class _TvHomeCard extends StatelessWidget {
+  final ContentItem item;
+  final int index;
+  final VoidCallback onTap;
+
+  const _TvHomeCard({required this.item, required this.index, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Focus(
+      onKeyEvent: (_, ev) {
+        if (ev is! KeyDownEvent) return KeyEventResult.ignored;
+        if (ev.logicalKey == LogicalKeyboardKey.arrowLeft && index == 0) {
+          TvNavigation.requestRailFocus(context);
+          return KeyEventResult.handled;
+        }
+        if (ev.logicalKey == LogicalKeyboardKey.select || ev.logicalKey == LogicalKeyboardKey.enter) {
+          onTap();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Builder(builder: (ctx) {
+        final f = Focus.of(ctx).hasFocus;
+        return GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            width: 220,
+            margin: const EdgeInsets.only(right: 16),
+            transform: f ? Matrix4.diagonal3Values(1.05, 1.05, 1.0) : Matrix4.identity(),
+            transformAlignment: Alignment.center,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: f ? Theme.of(ctx).colorScheme.primary : Colors.white12, width: 2),
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: item.imageUrl.isNotEmpty
+                  ? Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 400)
+                  : Container(color: Colors.white10, child: const Icon(Icons.tv, color: Colors.white24)),
+            ),
+          ),
+        );
+      }),
     );
   }
 }

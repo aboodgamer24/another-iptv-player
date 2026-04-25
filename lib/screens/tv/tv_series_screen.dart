@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../utils/tv_utils.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
@@ -109,9 +110,13 @@ class _TvSeriesScreenState extends State<TvSeriesScreen> {
         FocusScope(
           node: _catScope,
           onKeyEvent: (node, event) {
-            if (event is KeyDownEvent &&
-                event.logicalKey == LogicalKeyboardKey.arrowRight) {
+            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+            if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
               _gridScope.requestFocus();
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+              TvNavigation.requestRailFocus(context);
               return KeyEventResult.handled;
             }
             return KeyEventResult.ignored;
