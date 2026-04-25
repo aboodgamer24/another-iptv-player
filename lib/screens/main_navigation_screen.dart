@@ -31,6 +31,8 @@ import 'tv/tv_live_tv_screen.dart';
 import 'tv/tv_movies_screen.dart';
 import 'tv/tv_series_screen.dart';
 import 'tv/tv_search_screen.dart';
+import 'tv/tv_favorites_screen.dart';
+import 'tv/tv_watch_later_screen.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final Playlist playlist;
@@ -61,6 +63,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         return context.loc.rail_watch_later;
       case 6:
         return context.loc.settings;
+      case 7:
+        return 'Favorites';
+      case 8:
+        return 'Watch Later';
       default:
         return 'Another IPTV Player';
     }
@@ -90,6 +96,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             return const TvSearchScreen();
           case 5:
             return XtreamCodePlaylistSettingsScreen(playlist: widget.playlist);
+          case 6:
+            return const TvFavoritesScreen();
+          case 7:
+            return const TvWatchLaterScreen();
           default:
             return const SizedBox.shrink();
         }
@@ -182,6 +192,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           TvNavItem(icon: Icons.tv_rounded, label: 'Series'),
           TvNavItem(icon: Icons.search_rounded, label: 'Search'),
           TvNavItem(icon: Icons.settings_rounded, label: 'Settings'),
+          TvNavItem(icon: Icons.favorite_rounded, label: 'Favorites'),
+          TvNavItem(icon: Icons.watch_later_rounded, label: 'Watch Later'),
         ],
         child: content,
       );

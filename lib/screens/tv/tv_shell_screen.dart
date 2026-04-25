@@ -57,103 +57,153 @@ class _TvShellScreenState extends State<TvShellScreen>
   void _expandRail() => setState(() => _railExpanded = true);
   void _collapseRail() => setState(() => _railExpanded = false);
 
+  void _showExitDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Exit App?',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: const Text('Are you sure you want to exit?',
+            style: TextStyle(color: Colors.white70)),
+        actions: [
+          TextButton(
+            autofocus: true, // D-pad focuses this first
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              SystemNavigator.pop(); // exit app
+            },
+            child: Text('Exit',
+                style: TextStyle(
+                    color: Theme.of(context).colorScheme.error,
+                    fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final railWidth = _railExpanded ? kTvRailExpanded : kTvRailCollapsed;
 
-    return Scaffold(
-      backgroundColor: Colors.black,
-      body: Row(
-        children: [
-          // ── LEFT RAIL ──
-          AnimatedContainer(
-            duration: const Duration(milliseconds: 200),
-            curve: Curves.easeInOut,
-            width: railWidth,
-            color: const Color(0xFF1A1A2E),
-            child: FocusScope(
-              node: _railScope,
-              onKeyEvent: (node, event) {
-                if (event is KeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.arrowRight) {
-                  _collapseRail();
-                  _contentScope.requestFocus();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: Column(
-                children: [
-                  // App logo area
-                  SizedBox(
-                    height: 72,
-                    child: Center(
-                      child: _railExpanded
-                          ? const Text(
-                              'C4·TV',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 22,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 2,
+    return PopScope(
+      canPop: false, // intercept ALL back presses
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (_railExpanded) {
+          // If rail is expanded, just collapse it
+          _collapseRail();
+          return;
+        }
+        if (widget.selectedIndex != 0) {
+          // If not on Home tab, go back to Home
+          widget.onItemSelected(0);
+          return;
+        }
+        // On Home tab — show exit confirmation dialog
+        _showExitDialog(context);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black,
+        body: Row(
+          children: [
+            // ── LEFT RAIL ──
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              curve: Curves.easeInOut,
+              width: railWidth,
+              color: const Color(0xFF1A1A2E),
+              child: FocusScope(
+                node: _railScope,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                    _collapseRail();
+                    _contentScope.requestFocus();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Column(
+                  children: [
+                    // App logo area
+                    SizedBox(
+                      height: 72,
+                      child: Center(
+                        child: _railExpanded
+                            ? const Text(
+                                'C4·TV',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 2,
+                                ),
+                              )
+                            : const Icon(
+                                Icons.tv,
+                                color: Colors.white70,
+                                size: 28,
                               ),
-                            )
-                          : const Icon(
-                              Icons.tv,
-                              color: Colors.white70,
-                              size: 28,
-                            ),
+                      ),
                     ),
-                  ),
-                  const Divider(color: Colors.white12, height: 1),
-                  const SizedBox(height: 8),
-                  // Nav items
-                  Expanded(
-                    child: ListView.builder(
-                      padding: EdgeInsets.zero,
-                      itemCount: widget.items.length,
-                      itemBuilder: (ctx, i) {
-                        final item = widget.items[i];
-                        final isSelected = widget.selectedIndex == i;
-                        return _TvNavTile(
-                          focusNode: _itemFocusNodes[i],
-                          icon: item.icon,
-                          label: item.label,
-                          isSelected: isSelected,
-                          expanded: _railExpanded,
-                          onTap: () {
-                            widget.onItemSelected(i);
-                            _collapseRail();
-                            _contentScope.requestFocus();
-                          },
-                          onFocusChange: (hasFocus) {
-                            if (hasFocus && !_railExpanded) _expandRail();
-                          },
-                        );
-                      },
+                    const Divider(color: Colors.white12, height: 1),
+                    const SizedBox(height: 8),
+                    // Nav items
+                    Expanded(
+                      child: ListView.builder(
+                        padding: EdgeInsets.zero,
+                        itemCount: widget.items.length,
+                        itemBuilder: (ctx, i) {
+                          final item = widget.items[i];
+                          final isSelected = widget.selectedIndex == i;
+                          return _TvNavTile(
+                            focusNode: _itemFocusNodes[i],
+                            icon: item.icon,
+                            label: item.label,
+                            isSelected: isSelected,
+                            expanded: _railExpanded,
+                            onTap: () {
+                              widget.onItemSelected(i);
+                              _collapseRail();
+                              _contentScope.requestFocus();
+                            },
+                            onFocusChange: (hasFocus) {
+                              if (hasFocus && !_railExpanded) _expandRail();
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
-          ),
-          // ── CONTENT ──
-          Expanded(
-            child: FocusScope(
-              node: _contentScope,
-              onKeyEvent: (node, event) {
-                if (event is KeyDownEvent &&
-                    event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                  _railScope.requestFocus();
-                  _expandRail();
-                  return KeyEventResult.handled;
-                }
-                return KeyEventResult.ignored;
-              },
-              child: widget.child,
+            // ── CONTENT ──
+            Expanded(
+              child: FocusScope(
+                node: _contentScope,
+                onKeyEvent: (node, event) {
+                  if (event is KeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                    _railScope.requestFocus();
+                    _expandRail();
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: widget.child,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
