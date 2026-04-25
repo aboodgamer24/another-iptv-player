@@ -199,7 +199,10 @@ class _TvShellScreenState extends State<TvShellScreen>
                   }
                   return KeyEventResult.ignored;
                 },
-                child: widget.child,
+                child: KeyedSubtree(
+                  key: ValueKey(widget.selectedIndex),
+                  child: widget.child,
+                ),
               ),
             ),
           ],

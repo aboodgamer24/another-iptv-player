@@ -205,9 +205,11 @@ class _TvMoviesScreenState extends State<TvMoviesScreen> {
                         items: _currentItems,
                         crossAxisCount: 5,
                         onSelect: (item, idx, queue) {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => TvPlayerScreen(
+                          Navigator.push(context, PageRouteBuilder(
+                            pageBuilder: (_, __, ___) => TvPlayerScreen(
                               contentItem: item, queue: queue, initialIndex: idx),
+                            transitionDuration: Duration.zero,
+                            reverseTransitionDuration: Duration.zero,
                           ));
                         },
                         onEdgeLeft: () => _catScope.requestFocus(),

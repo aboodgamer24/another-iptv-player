@@ -57,13 +57,17 @@ class _TvWatchLaterScreenState extends State<TvWatchLaterScreen> {
 
   void _onSelect(ContentItem item, int idx, List<ContentItem> queue) {
     if (item.contentType == ContentType.series) {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => TvSeriesDetailScreen(series: item),
+      Navigator.push(context, PageRouteBuilder(
+        pageBuilder: (_, __, ___) => TvSeriesDetailScreen(series: item),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ));
     } else {
-      Navigator.push(context, MaterialPageRoute(
-        builder: (_) => TvPlayerScreen(
+      Navigator.push(context, PageRouteBuilder(
+        pageBuilder: (_, __, ___) => TvPlayerScreen(
           contentItem: item, queue: queue, initialIndex: idx),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ));
     }
   }

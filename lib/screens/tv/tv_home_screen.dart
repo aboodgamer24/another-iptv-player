@@ -39,12 +39,14 @@ class TvHomeScreen extends StatelessWidget {
                 : [],
             onSelect: (item, idx, queue) => Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => TvPlayerScreen(
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => TvPlayerScreen(
                   contentItem: item,
                   queue: queue,
                   initialIndex: idx,
                 ),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
               ),
             ),
           ),
@@ -57,12 +59,14 @@ class TvHomeScreen extends StatelessWidget {
                 : [],
             onSelect: (item, idx, queue) => Navigator.push(
               context,
-              MaterialPageRoute(
-                builder: (_) => TvPlayerScreen(
+              PageRouteBuilder(
+                pageBuilder: (_, __, ___) => TvPlayerScreen(
                   contentItem: item,
                   queue: queue,
                   initialIndex: idx,
                 ),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
               ),
             ),
           ),
@@ -93,12 +97,14 @@ class _TvHeroBannerState extends State<_TvHeroBanner> {
   void _activate(BuildContext context) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => TvPlayerScreen(
+      PageRouteBuilder(
+        pageBuilder: (_, __, ___) => TvPlayerScreen(
           contentItem: widget.item,
           queue: [widget.item],
           initialIndex: 0,
         ),
+        transitionDuration: Duration.zero,
+        reverseTransitionDuration: Duration.zero,
       ),
     );
   }

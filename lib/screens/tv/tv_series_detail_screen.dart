@@ -146,12 +146,14 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
                             event.logicalKey == LogicalKeyboardKey.select) {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(
-                              builder: (_) => TvPlayerScreen(
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => TvPlayerScreen(
                                 contentItem: ep,
                                 queue: _episodes,
                                 initialIndex: i,
                               ),
+                              transitionDuration: Duration.zero,
+                              reverseTransitionDuration: Duration.zero,
                             ),
                           );
                           return KeyEventResult.handled;
@@ -164,12 +166,14 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
                           return GestureDetector(
                             onTap: () => Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => TvPlayerScreen(
+                              PageRouteBuilder(
+                                pageBuilder: (_, __, ___) => TvPlayerScreen(
                                   contentItem: ep,
                                   queue: _episodes,
                                   initialIndex: i,
                                 ),
+                                transitionDuration: Duration.zero,
+                                reverseTransitionDuration: Duration.zero,
                               ),
                             ),
                             child: AnimatedContainer(

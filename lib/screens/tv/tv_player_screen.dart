@@ -35,6 +35,8 @@ class _TvPlayerUiState {
   final Duration duration;
   final bool isBuffering;
   final bool isLive;
+  final bool panelOpen;     // side panel visible
+  final int  panelTab;      // 0=tracks, 1=info, 2=channels(live only)
 
   const _TvPlayerUiState({
     required this.osdVisible,
@@ -45,6 +47,8 @@ class _TvPlayerUiState {
     required this.duration,
     required this.isBuffering,
     required this.isLive,
+    this.panelOpen = false,
+    this.panelTab = 0,
   });
 
   _TvPlayerUiState copyWith({
@@ -56,6 +60,8 @@ class _TvPlayerUiState {
     Duration? duration,
     bool? isBuffering,
     bool? isLive,
+    bool? panelOpen,
+    int? panelTab,
   }) {
     return _TvPlayerUiState(
       osdVisible: osdVisible ?? this.osdVisible,
@@ -66,6 +72,8 @@ class _TvPlayerUiState {
       duration: duration ?? this.duration,
       isBuffering: isBuffering ?? this.isBuffering,
       isLive: isLive ?? this.isLive,
+      panelOpen: panelOpen ?? this.panelOpen,
+      panelTab: panelTab ?? this.panelTab,
     );
   }
 }
@@ -82,6 +90,13 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   Timer? _osdHideTimer;
   Timer? _watchHistoryTimer;
   Duration _lastSavedPosition = Duration.zero;
+
+  List<AudioTrack>    _audioTracks    = [];
+  List<SubtitleTrack> _subtitleTracks = [];
+  List<VideoTrack>    _videoTracks    = [];
+  AudioTrack?         _currentAudio;
+  SubtitleTrack?      _currentSubtitle;
+  VideoTrack?         _currentVideo;
 
   // StreamController drives ONLY the OSD overlay — video surface never rebuilds
   final _uiStream = StreamController<_TvPlayerUiState>.broadcast();
@@ -119,6 +134,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       _player,
       configuration: const VideoControllerConfiguration(
         enableHardwareAcceleration: true,
+        // Use nv12 — the default — but pair it with mediacodec-copy zero-copy below
       ),
     );
 
@@ -152,9 +168,13 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     final native = _player.platform;
     if (native is! NativePlayer) return;
     try {
-      // Android TV MPV properties — optimized for weak hardware
+      // ── ZERO-COPY HARDWARE DECODE ──────────────────────────────────────────
+      // mediacodec-copy passes the decoded buffer directly to the GL surface.
+      // This eliminates the CPU YUV→RGB blit that kills 4K performance.
       await native.setProperty('hwdec', 'mediacodec-copy');
       await native.setProperty('hwdec-codecs', 'all');
+
+      // ── DISABLE ALL SOFTWARE VIDEO PROCESSING ─────────────────────────────
       await native.setProperty('interpolation', 'no');
       await native.setProperty('scale', 'bilinear');
       await native.setProperty('cscale', 'bilinear');
@@ -165,29 +185,52 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       await native.setProperty('correct-downscaling', 'no');
       await native.setProperty('deinterlace', 'no');
 
+      // ── GPU RENDERER — opengl-hq is default but heavy; force plain opengl ──
+      await native.setProperty('vo', 'gpu');
+      await native.setProperty('gpu-api', 'opengl');
+      // Disable dither — expensive at 4K, visually invisible on most TVs
+      await native.setProperty('dither', 'no');
+      // No tone mapping — let the TV handle HDR natively via surface metadata
+      await native.setProperty('tone-mapping', 'clip');
+      await native.setProperty('hdr-compute-peak', 'no');
+
       if (_currentItem.contentType == ContentType.liveStream) {
+        // ── LIVE: minimum latency, no readahead ────────────────────────────
         await native.setProperty('video-sync', 'audio');
         await native.setProperty('framedrop', 'decoder+vo');
         await native.setProperty('cache', 'yes');
-        await native.setProperty('demuxer-max-bytes', '16MiB'); // TV: half of phone
+        await native.setProperty('demuxer-max-bytes', '8MiB');
         await native.setProperty('demuxer-max-back-bytes', '2MiB');
-        await native.setProperty('demuxer-readahead-secs', '0.5');
-        await native.setProperty('cache-secs', '2');
+        await native.setProperty('demuxer-readahead-secs', '0.3');
+        await native.setProperty('cache-secs', '1');
         await native.setProperty('demuxer-cache-wait', 'no');
         await native.setProperty('initial-audio-sync', 'no');
-        // TV-specific: skip loop filter on live to reduce CPU load
         await native.setProperty('vd-lavc-skiploopfilter', 'nonref');
+        // Skip B-frame decoding on very weak hardware live streams
+        await native.setProperty('vd-lavc-skipframe', 'nonref');
       } else {
-        await native.setProperty('video-sync', 'audio'); // audio sync is lighter than display-resample on TV
+        // ── VOD / SERIES: balanced quality + seek performance ─────────────
+        await native.setProperty('video-sync', 'audio');
         await native.setProperty('framedrop', 'decoder');
         await native.setProperty('cache', 'yes');
         await native.setProperty('demuxer-max-bytes', '32MiB');
         await native.setProperty('demuxer-max-back-bytes', '8MiB');
-        await native.setProperty('demuxer-readahead-secs', '3.0');
-        await native.setProperty('cache-secs', '15');
+        // CRITICAL: was 3.0 — 0 means "don't pre-read before first frame"
+        // This eliminates the 2-second freeze on 4K file open
+        await native.setProperty('demuxer-readahead-secs', '0');
+        await native.setProperty('cache-secs', '10');
         await native.setProperty('demuxer-cache-wait', 'no');
         await native.setProperty('initial-audio-sync', 'yes');
         await native.setProperty('audio-buffer', '0.2');
+        // After first frame appears, MPV will build cache in background.
+        // Set readahead to 5 AFTER open via a delayed call.
+        Future.delayed(const Duration(seconds: 3), () async {
+          if (mounted) {
+            try {
+              await native.setProperty('demuxer-readahead-secs', '5.0');
+            } catch (_) {}
+          }
+        });
       }
     } catch (e) {
       debugPrint('[TvPlayer] MPV properties error: $e');
@@ -245,6 +288,23 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       play: true,
     );
 
+    _player.stream.tracks.listen((tracks) {
+      if (!mounted) return;
+      setState(() {
+        _audioTracks    = tracks.audio;
+        _subtitleTracks = tracks.subtitle;
+        _videoTracks    = tracks.video;
+      });
+    });
+    _player.stream.track.listen((track) {
+      if (!mounted) return;
+      setState(() {
+        _currentAudio    = track.audio;
+        _currentSubtitle = track.subtitle;
+        _currentVideo    = track.video;
+      });
+    });
+
     _pushUi(_uiState.copyWith(
       title: _currentItem.name,
       channelIndex: _currentIndex,
@@ -254,9 +314,8 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     ));
   }
 
-  Future<void> _switchChannel(int direction) async {
-    final newIndex = (_currentIndex + direction)
-        .clamp(0, widget.queue.length - 1);
+  Future<void> _switchChannel(int targetIndex) async {
+    final newIndex = targetIndex.clamp(0, widget.queue.length - 1);
     if (newIndex == _currentIndex) return;
     _currentIndex = newIndex;
     _currentItem = widget.queue[newIndex];
@@ -305,6 +364,34 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
 
     final key = event.logicalKey;
 
+    // MENU key = toggle side panel
+    if (key == LogicalKeyboardKey.contextMenu ||
+        key == LogicalKeyboardKey.f1 ||
+        // Android TV "Options" / "Menu" button keycode 82
+        event.logicalKey.keyId == 0x00100000052) {
+      _pushUi(_uiState.copyWith(
+        panelOpen: !_uiState.panelOpen,
+        osdVisible: true,
+      ));
+      _osdHideTimer?.cancel();
+      if (!_uiState.panelOpen) {
+        // Reset hide timer only when closing panel
+        _osdHideTimer = Timer(const Duration(seconds: 4), () {
+          _pushUi(_uiState.copyWith(osdVisible: false));
+        });
+      }
+      return;
+    }
+
+    // Escape while panel is open → close panel first, don't pop
+    if ((key == LogicalKeyboardKey.escape ||
+         key == LogicalKeyboardKey.goBack ||
+         key == LogicalKeyboardKey.browserBack) &&
+        _uiState.panelOpen) {
+      _pushUi(_uiState.copyWith(panelOpen: false));
+      return;
+    }
+
     // Back / Escape — pop player
     if (key == LogicalKeyboardKey.escape ||
         key == LogicalKeyboardKey.goBack ||
@@ -317,12 +404,12 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     if (_currentItem.contentType == ContentType.liveStream) {
       if (key == LogicalKeyboardKey.arrowUp ||
           key == LogicalKeyboardKey.channelUp) {
-        _switchChannel(-1);
+        _switchChannel(_currentIndex - 1);
         return;
       }
       if (key == LogicalKeyboardKey.arrowDown ||
           key == LogicalKeyboardKey.channelDown) {
-        _switchChannel(1);
+        _switchChannel(_currentIndex + 1);
         return;
       }
     }
@@ -410,6 +497,17 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
                           right: 0,
                           child: _buildOsd(ui),
                         ),
+
+                        // Side panel
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOut,
+                          top: 0,
+                          bottom: 0,
+                          right: ui.panelOpen ? 0 : -380,
+                          width: 380,
+                          child: _buildSidePanel(ui),
+                        ),
                       ],
                     );
                   },
@@ -480,6 +578,41 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
                     fontSize: 16,
                   ),
                 ),
+              const SizedBox(width: 12),
+              // Subtitle quick-toggle
+              IconButton(
+                icon: Icon(
+                  _currentSubtitle != null && _currentSubtitle!.id != 'no'
+                      ? Icons.subtitles_rounded
+                      : Icons.subtitles_off_outlined,
+                  color: Colors.white70,
+                  size: 22,
+                ),
+                onPressed: () {
+                  // Cycle to next subtitle track
+                  final tracks = [SubtitleTrack.no(), ..._subtitleTracks
+                      .where((t) => t.id != 'no')];
+                  final currentIdx = tracks.indexWhere(
+                    (t) => t.id == (_currentSubtitle?.id ?? 'no'));
+                  final nextIdx = (currentIdx + 1) % tracks.length;
+                  _player.setSubtitleTrack(tracks[nextIdx]);
+                },
+                tooltip: 'Subtitles',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
+              const SizedBox(width: 4),
+              // Hamburger — opens side panel
+              IconButton(
+                icon: const Icon(Icons.menu_rounded, color: Colors.white70, size: 22),
+                onPressed: () {
+                  _pushUi(_uiState.copyWith(panelOpen: true, osdVisible: true));
+                  _osdHideTimer?.cancel();
+                },
+                tooltip: 'More options',
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+              ),
               if (ui.isLive && ui.channelTotal > 1) ...[
                 const SizedBox(width: 12),
                 Text(
@@ -546,4 +679,271 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       ),
     );
   }
+
+  Widget _buildSidePanel(_TvPlayerUiState ui) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: Color(0xF0101020),
+        border: Border(left: BorderSide(color: Colors.white12)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Panel header
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 8, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(_currentItem.name,
+                    style: const TextStyle(
+                      color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    maxLines: 1, overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.white54, size: 20),
+                  onPressed: () => _pushUi(_uiState.copyWith(panelOpen: false)),
+                ),
+              ],
+            ),
+          ),
+
+          // Tab bar
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            child: Row(
+              children: [
+                _PanelTab(label: 'Tracks', index: 0, current: ui.panelTab,
+                  onTap: (t) => _pushUi(_uiState.copyWith(panelTab: t))),
+                _PanelTab(label: 'Info', index: 1, current: ui.panelTab,
+                  onTap: (t) => _pushUi(_uiState.copyWith(panelTab: t))),
+                if (_currentItem.contentType == ContentType.liveStream)
+                  _PanelTab(label: 'Channels', index: 2, current: ui.panelTab,
+                    onTap: (t) => _pushUi(_uiState.copyWith(panelTab: t))),
+              ],
+            ),
+          ),
+
+          const Divider(color: Colors.white12, height: 1),
+
+          // Panel body
+          Expanded(
+            child: switch (ui.panelTab) {
+              0 => _buildTracksTab(),
+              1 => _buildInfoTab(),
+              2 => _buildChannelsTab(),
+              _ => const SizedBox.shrink(),
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTracksTab() {
+    return ListView(
+      padding: const EdgeInsets.all(12),
+      children: [
+        if (_audioTracks.isNotEmpty) ...[
+          _SectionLabel('Audio'),
+          ..._audioTracks.map((t) => _TrackTile(
+            label: t.language ?? t.title ?? 'Track ${t.id}',
+            selected: _currentAudio?.id == t.id,
+            onTap: () => _player.setAudioTrack(t),
+          )),
+          const SizedBox(height: 12),
+        ],
+        if (_subtitleTracks.isNotEmpty) ...[
+          _SectionLabel('Subtitles'),
+          _TrackTile(
+            label: 'Off',
+            selected: _currentSubtitle == null || _currentSubtitle!.id == 'no',
+            onTap: () => _player.setSubtitleTrack(SubtitleTrack.no()),
+          ),
+          ..._subtitleTracks
+              .where((t) => t.id != 'no')
+              .map((t) => _TrackTile(
+                label: t.language ?? t.title ?? 'Track ${t.id}',
+                selected: _currentSubtitle?.id == t.id,
+                onTap: () => _player.setSubtitleTrack(t),
+              )),
+          const SizedBox(height: 12),
+        ],
+        if (_videoTracks.length > 1) ...[
+          _SectionLabel('Video'),
+          ..._videoTracks.map((t) => _TrackTile(
+            label: t.title ?? 'Track ${t.id}',
+            selected: _currentVideo?.id == t.id,
+            onTap: () => _player.setVideoTrack(t),
+          )),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildInfoTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (_currentItem.imagePath.isNotEmpty)
+            Center(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  _currentItem.imagePath,
+                  width: 160, height: 120,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
+              ),
+            ),
+          const SizedBox(height: 16),
+          Text(_currentItem.name,
+            style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          if (_currentItem.contentType == ContentType.liveStream) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text('LIVE',
+                style: TextStyle(
+                  color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+          ],
+          if (_currentItem.m3uItem?.groupTitle?.isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            _InfoRow(label: 'Category', value: _currentItem.m3uItem!.groupTitle!),
+          ] else if (_currentItem.liveStream?.categoryId.isNotEmpty == true) ...[
+            const SizedBox(height: 10),
+            _InfoRow(label: 'Category ID', value: _currentItem.liveStream!.categoryId),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChannelsTab() {
+    final channels = widget.queue;
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      itemCount: channels.length,
+      itemBuilder: (ctx, i) {
+        final ch = channels[i];
+        final isCurrent = i == _currentIndex;
+        return ListTile(
+          dense: true,
+          selected: isCurrent,
+          selectedColor: Colors.white,
+          selectedTileColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.2),
+          leading: ch.imagePath.isNotEmpty
+              ? Image.network(ch.imagePath, width: 32, height: 32,
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.live_tv, size: 20, color: Colors.white38))
+              : const Icon(Icons.live_tv, size: 20, color: Colors.white38),
+          title: Text(ch.name,
+            style: TextStyle(
+              color: isCurrent ? Colors.white : Colors.white60,
+              fontSize: 13, fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal),
+            maxLines: 1, overflow: TextOverflow.ellipsis,
+          ),
+          onTap: () {
+            _switchChannel(i);
+            _pushUi(_uiState.copyWith(panelOpen: false));
+          },
+        );
+      },
+    );
+  }
+}
+
+class _PanelTab extends StatelessWidget {
+  final String label;
+  final int index;
+  final int current;
+  final void Function(int) onTap;
+  const _PanelTab({
+    required this.label, required this.index,
+    required this.current, required this.onTap,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final active = index == current;
+    return GestureDetector(
+      onTap: () => onTap(index),
+      child: Container(
+        margin: const EdgeInsets.only(right: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: active ? Theme.of(context).colorScheme.primary : Colors.white10,
+          borderRadius: BorderRadius.circular(6),
+        ),
+        child: Text(label,
+          style: TextStyle(
+            color: active ? Colors.white : Colors.white54,
+            fontSize: 12, fontWeight: FontWeight.bold)),
+      ),
+    );
+  }
+}
+
+class _SectionLabel extends StatelessWidget {
+  final String text;
+  const _SectionLabel(this.text);
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(bottom: 6, top: 4),
+    child: Text(text.toUpperCase(),
+      style: const TextStyle(
+        color: Colors.white38, fontSize: 10, letterSpacing: 1.2,
+        fontWeight: FontWeight.bold)),
+  );
+}
+
+class _TrackTile extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  const _TrackTile({required this.label, required this.selected, required this.onTap});
+  @override
+  Widget build(BuildContext context) => ListTile(
+    dense: true,
+    title: Text(label,
+      style: TextStyle(
+        color: selected ? Colors.white : Colors.white60,
+        fontSize: 13)),
+    trailing: selected
+        ? Icon(Icons.check_circle_rounded,
+            color: Theme.of(context).colorScheme.primary, size: 18)
+        : null,
+    onTap: onTap,
+  );
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+  const _InfoRow({required this.label, required this.value});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.only(top: 6),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(width: 80,
+          child: Text('$label:',
+            style: const TextStyle(color: Colors.white38, fontSize: 12))),
+        Expanded(
+          child: Text(value,
+            style: const TextStyle(color: Colors.white70, fontSize: 12))),
+      ],
+    ),
+  );
 }

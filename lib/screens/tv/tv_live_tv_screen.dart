@@ -51,9 +51,11 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
   }
 
   void _openChannel(ContentItem ch, List<ContentItem> queue, int idx) {
-    Navigator.push(context, MaterialPageRoute(
-      builder: (_) => TvPlayerScreen(
+    Navigator.push(context, PageRouteBuilder(
+      pageBuilder: (_, __, ___) => TvPlayerScreen(
         contentItem: ch, queue: queue, initialIndex: idx),
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
     ));
   }
 
