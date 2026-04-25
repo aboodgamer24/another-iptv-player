@@ -71,24 +71,30 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
       duration: const Duration(milliseconds: 220),
     );
 
-    _scaleAnim = Tween<double>(begin: 1.0, end: 1.07).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-    _glowAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-    _labelSlideAnim = Tween<double>(begin: 6.0, end: 0.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-    );
-    _labelFadeAnim = Tween<double>(begin: 0.7, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-    _overlayFadeAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOut),
-    );
-    _innerShadowAnim = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-    );
+    _scaleAnim = Tween<double>(
+      begin: 1.0,
+      end: 1.07,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _glowAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _labelSlideAnim = Tween<double>(
+      begin: 6.0,
+      end: 0.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
+    _labelFadeAnim = Tween<double>(
+      begin: 0.7,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _overlayFadeAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOut));
+    _innerShadowAnim = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
   }
 
   @override
@@ -119,7 +125,8 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
       },
       onKeyEvent: (node, event) {
         if (_isFocused && event is KeyDownEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
+          if (event.logicalKey == LogicalKeyboardKey.select ||
+              event.logicalKey == LogicalKeyboardKey.enter) {
             widget.onTap?.call();
             return KeyEventResult.handled;
           }
@@ -267,10 +274,7 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                             if (widget.subtitle != null) ...[
                               const SizedBox(height: 4),
                               Transform.translate(
-                                offset: Offset(
-                                  0,
-                                  _labelSlideAnim.value * 1.3,
-                                ),
+                                offset: Offset(0, _labelSlideAnim.value * 1.3),
                                 child: Opacity(
                                   opacity: _labelFadeAnim.value * 0.85,
                                   child: Text(
@@ -293,9 +297,14 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                           top: 8,
                           left: 8,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
-                              color: _contentTypeBadgeColor(widget.contentType!).withValues(alpha: 0.85),
+                              color: _contentTypeBadgeColor(
+                                widget.contentType!,
+                              ).withValues(alpha: 0.85),
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Row(
@@ -320,7 +329,7 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                             ),
                           ),
                         ),
-                        
+
                       if (widget.badges != null)
                         Positioned(
                           top: 8,
@@ -332,7 +341,8 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                         ),
 
                       // Action buttons (keep existing _CircleIconButton logic)
-                      if (widget.onToggleFavorite != null || widget.onToggleWatchLater != null)
+                      if (widget.onToggleFavorite != null ||
+                          widget.onToggleWatchLater != null)
                         Positioned(
                           top: 8,
                           right: widget.badges != null ? 48.0 : 8.0,
@@ -344,17 +354,33 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                               children: [
                                 if (widget.onToggleWatchLater != null)
                                   _CircleIconButton(
-                                    icon: widget.isInWatchLater == true ? Icons.schedule_rounded : Icons.schedule_outlined,
+                                    icon: widget.isInWatchLater == true
+                                        ? Icons.schedule_rounded
+                                        : Icons.schedule_outlined,
                                     onPressed: () async {
                                       final was = widget.isInWatchLater == true;
                                       await widget.onToggleWatchLater!();
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text(was ? context.loc.removed_from_watch_later : context.loc.added_to_watch_later),
-                                          duration: const Duration(seconds: 2),
-                                          behavior: SnackBarBehavior.floating,
-                                          width: 250,
-                                        ));
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              was
+                                                  ? context
+                                                        .loc
+                                                        .removed_from_watch_later
+                                                  : context
+                                                        .loc
+                                                        .added_to_watch_later,
+                                            ),
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                            behavior: SnackBarBehavior.floating,
+                                            width: 250,
+                                          ),
+                                        );
                                       }
                                     },
                                     active: widget.isInWatchLater == true,
@@ -363,17 +389,33 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
                                 if (widget.onToggleFavorite != null) ...[
                                   const SizedBox(width: 6),
                                   _CircleIconButton(
-                                    icon: widget.isFavorite == true ? Icons.favorite_rounded : Icons.favorite_border_rounded,
+                                    icon: widget.isFavorite == true
+                                        ? Icons.favorite_rounded
+                                        : Icons.favorite_border_rounded,
                                     onPressed: () async {
                                       final was = widget.isFavorite == true;
                                       await widget.onToggleFavorite!();
                                       if (context.mounted) {
-                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                          content: Text(was ? context.loc.removed_from_favorites : context.loc.added_to_favorites),
-                                          duration: const Duration(seconds: 2),
-                                          behavior: SnackBarBehavior.floating,
-                                          width: 200,
-                                        ));
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              was
+                                                  ? context
+                                                        .loc
+                                                        .removed_from_favorites
+                                                  : context
+                                                        .loc
+                                                        .added_to_favorites,
+                                            ),
+                                            duration: const Duration(
+                                              seconds: 2,
+                                            ),
+                                            behavior: SnackBarBehavior.floating,
+                                            width: 200,
+                                          ),
+                                        );
                                       }
                                     },
                                     active: widget.isFavorite == true,
@@ -427,25 +469,34 @@ class _C4CardState extends State<C4Card> with SingleTickerProviderStateMixin {
 
   Color _contentTypeBadgeColor(ContentType type) {
     switch (type) {
-      case ContentType.liveStream: return const Color(0xFFE53935);
-      case ContentType.vod:        return const Color(0xFF1565C0);
-      case ContentType.series:     return const Color(0xFF2E7D32);
+      case ContentType.liveStream:
+        return const Color(0xFFE53935);
+      case ContentType.vod:
+        return const Color(0xFF1565C0);
+      case ContentType.series:
+        return const Color(0xFF2E7D32);
     }
   }
 
   IconData _contentTypeIcon(ContentType type) {
     switch (type) {
-      case ContentType.liveStream: return Icons.circle;
-      case ContentType.vod:        return Icons.movie_rounded;
-      case ContentType.series:     return Icons.tv_rounded;
+      case ContentType.liveStream:
+        return Icons.circle;
+      case ContentType.vod:
+        return Icons.movie_rounded;
+      case ContentType.series:
+        return Icons.tv_rounded;
     }
   }
 
   String _contentTypeLabel(ContentType type) {
     switch (type) {
-      case ContentType.liveStream: return 'LIVE';
-      case ContentType.vod:        return 'MOVIE';
-      case ContentType.series:     return 'SHOW';
+      case ContentType.liveStream:
+        return 'LIVE';
+      case ContentType.vod:
+        return 'MOVIE';
+      case ContentType.series:
+        return 'SHOW';
     }
   }
 }
@@ -494,8 +545,8 @@ class _CircleIconButtonState extends State<_CircleIconButton> {
             color: _isLoading
                 ? Colors.black.withValues(alpha: 0.3)
                 : (_isHovered
-                    ? Colors.white.withValues(alpha: 0.9)
-                    : Colors.black.withValues(alpha: 0.4)),
+                      ? Colors.white.withValues(alpha: 0.9)
+                      : Colors.black.withValues(alpha: 0.4)),
             shape: BoxShape.circle,
           ),
           child: _isLoading

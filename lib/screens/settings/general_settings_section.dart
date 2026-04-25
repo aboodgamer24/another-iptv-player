@@ -34,8 +34,6 @@ import '../../services/player_state.dart';
 import '../../services/sync_service.dart';
 import '../account/account_screen.dart';
 
-
-
 class GeneralSettingsWidget extends StatefulWidget {
   const GeneralSettingsWidget({super.key});
 
@@ -155,16 +153,22 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             }
           },
           child: Column(
-            children: presets.map((preset) => RadioListTile<String>(
-              title: Text(upscalePresetLabel(preset)),
-              subtitle: Text(
-                upscalePresetDescription(preset),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                ),
-              ),
-              value: preset,
-            )).toList(),
+            children: presets
+                .map(
+                  (preset) => RadioListTile<String>(
+                    title: Text(upscalePresetLabel(preset)),
+                    subtitle: Text(
+                      upscalePresetDescription(preset),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
+                    ),
+                    value: preset,
+                  ),
+                )
+                .toList(),
           ),
         ),
         const Divider(),
@@ -210,18 +214,15 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
         pageBuilder: (_, __, ___) => screen,
         transitionsBuilder: (_, animation, __, child) {
           return FadeTransition(
-            opacity: CurvedAnimation(
-              parent: animation,
-              curve: Curves.easeOut,
-            ),
+            opacity: CurvedAnimation(parent: animation, curve: Curves.easeOut),
             child: SlideTransition(
-              position: Tween<Offset>(
-                begin: const Offset(0.04, 0),
-                end: Offset.zero,
-              ).animate(CurvedAnimation(
-                parent: animation,
-                curve: Curves.easeOut,
-              )),
+              position:
+                  Tween<Offset>(
+                    begin: const Offset(0.04, 0),
+                    end: Offset.zero,
+                  ).animate(
+                    CurvedAnimation(parent: animation, curve: Curves.easeOut),
+                  ),
               child: child,
             ),
           );
@@ -244,9 +245,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             if (!context.mounted) return;
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                builder: (context) => PlaylistScreen(),
-              ),
+              MaterialPageRoute(builder: (context) => PlaylistScreen()),
             );
           },
         ),
@@ -296,9 +295,13 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   XtreamCodeHomeController? ctrl;
                   try {
                     ctrl = Provider.of<XtreamCodeHomeController>(
-                      context, listen: false);
+                      context,
+                      listen: false,
+                    );
                   } catch (e) {
-                    debugPrint('[GeneralSettings] XtreamCodeHomeController resolve error: $e');
+                    debugPrint(
+                      '[GeneralSettings] XtreamCodeHomeController resolve error: $e',
+                    );
                   }
 
                   await Navigator.push(
@@ -314,13 +317,16 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                             curve: Curves.easeOut,
                           ),
                           child: SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0.04, 0),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOut,
-                            )),
+                            position:
+                                Tween<Offset>(
+                                  begin: const Offset(0.04, 0),
+                                  end: Offset.zero,
+                                ).animate(
+                                  CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOut,
+                                  ),
+                                ),
                             child: child,
                           ),
                         );
@@ -329,18 +335,18 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                     ),
                   );
 
-                    if (!context.mounted) return;
-                    if (isXtreamCode) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => XtreamCodeDataLoaderScreen(
-                            playlist: AppState.currentPlaylist!,
-                            refreshAll: true,
-                          ),
+                  if (!context.mounted) return;
+                  if (isXtreamCode) {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => XtreamCodeDataLoaderScreen(
+                          playlist: AppState.currentPlaylist!,
+                          refreshAll: true,
                         ),
-                      );
-                    }
+                      ),
+                    );
+                  }
                 },
               ),
             ),
@@ -358,10 +364,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
               ),
             ],
             onChanged: (v) {
-              Provider.of<LocaleProvider>(
-                context,
-                listen: false,
-              ).setLocale(v!);
+              Provider.of<LocaleProvider>(context, listen: false).setLocale(v!);
             },
           ),
           const Divider(height: 1),
@@ -370,22 +373,10 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
             label: context.loc.theme,
             value: _selectedTheme,
             items: [
-              DropdownMenuItem(
-                value: 'light',
-                child: Text(context.loc.light),
-              ),
-              DropdownMenuItem(
-                value: 'dark',
-                child: Text(context.loc.dark),
-              ),
-              const DropdownMenuItem(
-                value: 'skyBlue',
-                child: Text('Sky Blue'),
-              ),
-              const DropdownMenuItem(
-                value: 'crimson',
-                child: Text('Crimson'),
-              ),
+              DropdownMenuItem(value: 'light', child: Text(context.loc.light)),
+              DropdownMenuItem(value: 'dark', child: Text(context.loc.dark)),
+              const DropdownMenuItem(value: 'skyBlue', child: Text('Sky Blue')),
+              const DropdownMenuItem(value: 'crimson', child: Text('Crimson')),
             ],
             onChanged: (value) async {
               if (value != null) {
@@ -420,9 +411,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           SwitchListTile(
             secondary: const Icon(Icons.play_circle_outline),
             title: Text(context.loc.continue_on_background),
-            subtitle: Text(
-              context.loc.continue_on_background_description,
-            ),
+            subtitle: Text(context.loc.continue_on_background_description),
             value: _backgroundPlayEnabled,
             onChanged: _saveBackgroundPlaySetting,
           ),
@@ -441,7 +430,6 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           ),
           if (!Platform.isAndroid) _buildUpscalerSection(Theme.of(context)),
           _buildStreamEnhancementSection(Theme.of(context)),
-
         ],
       ),
     );
@@ -483,9 +471,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: Text(context.loc.app_version),
-            subtitle: Text(
-              _appVersion.isNotEmpty ? _appVersion : 'Loading...',
-            ),
+            subtitle: Text(_appVersion.isNotEmpty ? _appVersion : 'Loading...'),
             dense: true,
           ),
           const Divider(height: 1),
@@ -502,10 +488,7 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   'https://github.com/bsogulcan/another-iptv-player',
                 );
                 if (await canLaunchUrl(url)) {
-                  await launchUrl(
-                    url,
-                    mode: LaunchMode.externalApplication,
-                  );
+                  await launchUrl(url, mode: LaunchMode.externalApplication);
                 }
               },
             ),
@@ -531,38 +514,62 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                   child: ListTile(
                     leading: CircleAvatar(
                       radius: 18,
-                      backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                      backgroundColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.15,
+                      ),
                       child: Icon(
-                        SyncService.instance.isLoggedIn ? Icons.account_circle_rounded : Icons.person_outline_rounded,
+                        SyncService.instance.isLoggedIn
+                            ? Icons.account_circle_rounded
+                            : Icons.person_outline_rounded,
                         color: theme.colorScheme.primary,
                         size: 20,
                       ),
                     ),
                     title: Text(
-                      SyncService.instance.isLoggedIn ? 'Account & Sync' : 'Sign In / Register',
+                      SyncService.instance.isLoggedIn
+                          ? 'Account & Sync'
+                          : 'Sign In / Register',
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     subtitle: Text(
-                      SyncService.instance.isLoggedIn ? 'Manage your account and cloud sync' : 'Connect to your sync server',
-                      style: TextStyle(fontSize: 13, color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+                      SyncService.instance.isLoggedIn
+                          ? 'Manage your account and cloud sync'
+                          : 'Connect to your sync server',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                      ),
                     ),
                     trailing: const Icon(Icons.chevron_right_rounded),
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AccountScreen())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const AccountScreen()),
+                    ),
                   ),
                 );
 
                 // All section widgets in order
-                final playlist       = _buildPlaylistCard(context);
-                final generalTitle   = SectionTitleWidget(title: context.loc.general_settings);
-                final generalCard    = _buildGeneralCard(context);
-                final playerTitle    = SectionTitleWidget(title: context.loc.player_settings);
-                final playerCard     = _buildPlayerCard(context);
-                final integrationTitle = SectionTitleWidget(title: context.loc.integration);
-                final integrationCard  = _buildIntegrationCard(context);
-                final homeTitle      = SectionTitleWidget(title: context.loc.home_customization);
-                final homeSection    = const HomeCustomizationSection();
-                final aboutTitle     = SectionTitleWidget(title: context.loc.about);
-                final aboutCard      = _buildAboutCard(context);
+                final playlist = _buildPlaylistCard(context);
+                final generalTitle = SectionTitleWidget(
+                  title: context.loc.general_settings,
+                );
+                final generalCard = _buildGeneralCard(context);
+                final playerTitle = SectionTitleWidget(
+                  title: context.loc.player_settings,
+                );
+                final playerCard = _buildPlayerCard(context);
+                final integrationTitle = SectionTitleWidget(
+                  title: context.loc.integration,
+                );
+                final integrationCard = _buildIntegrationCard(context);
+                final homeTitle = SectionTitleWidget(
+                  title: context.loc.home_customization,
+                );
+                final homeSection = const HomeCustomizationSection();
+                final aboutTitle = SectionTitleWidget(title: context.loc.about);
+                final aboutCard = _buildAboutCard(context);
 
                 if (!isWide) {
                   // Single column — original layout
@@ -573,15 +580,20 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                       const SizedBox(height: 10),
                       playlist,
                       const SizedBox(height: 10),
-                      generalTitle, generalCard,
+                      generalTitle,
+                      generalCard,
                       const SizedBox(height: 10),
-                      playerTitle, playerCard,
+                      playerTitle,
+                      playerCard,
                       const SizedBox(height: 10),
-                      integrationTitle, integrationCard,
+                      integrationTitle,
+                      integrationCard,
                       const SizedBox(height: 10),
-                      homeTitle, homeSection,
+                      homeTitle,
+                      homeSection,
                       const SizedBox(height: 10),
-                      aboutTitle, aboutCard,
+                      aboutTitle,
+                      aboutCard,
                     ],
                   );
                 }
@@ -604,9 +616,11 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              generalTitle, generalCard,
+                              generalTitle,
+                              generalCard,
                               const SizedBox(height: 10),
-                              playerTitle, playerCard,
+                              playerTitle,
+                              playerCard,
                             ],
                           ),
                         ),
@@ -616,11 +630,14 @@ class _GeneralSettingsWidgetState extends State<GeneralSettingsWidget>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              integrationTitle, integrationCard,
+                              integrationTitle,
+                              integrationCard,
                               const SizedBox(height: 10),
-                              homeTitle, homeSection,
+                              homeTitle,
+                              homeSection,
                               const SizedBox(height: 10),
-                              aboutTitle, aboutCard,
+                              aboutTitle,
+                              aboutCard,
                             ],
                           ),
                         ),

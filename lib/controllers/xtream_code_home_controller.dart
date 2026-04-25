@@ -23,7 +23,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
   final List<CategoryViewModel> _liveCategories = [];
   final List<CategoryViewModel> _movieCategories = [];
   final List<CategoryViewModel> _seriesCategories = [];
-  
+
   ContentItem? _heroItem;
   List<ContentItem> _recommendations = [];
   Timer? _heroRotationTimer;
@@ -128,7 +128,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
     }
   }
 
-
   Future<void> _loadCategories(bool all) async {
     try {
       _isLoading = true;
@@ -140,11 +139,14 @@ class XtreamCodeHomeController extends ChangeNotifier {
       if (all) {
         // Run categories+streams fetches in parallel per type
         await Future.wait([
-          _repository.getLiveCategories(forceRefresh: true)
+          _repository
+              .getLiveCategories(forceRefresh: true)
               .then((_) => _repository.getLiveChannelsFromApi()),
-          _repository.getVodCategories(forceRefresh: true)
+          _repository
+              .getVodCategories(forceRefresh: true)
               .then((_) => _repository.getMoviesFromApi()),
-          _repository.getSeriesCategories(forceRefresh: true)
+          _repository
+              .getSeriesCategories(forceRefresh: true)
               .then((_) => _repository.getSeriesFromApi()),
         ]);
       }
@@ -160,15 +162,20 @@ class XtreamCodeHomeController extends ChangeNotifier {
       ]);
 
       final allLiveCats = results[0] as List<dynamic>;
-      final allVodCats  = results[1] as List<dynamic>;
-      final allSerCats  = results[2] as List<dynamic>;
+      final allVodCats = results[1] as List<dynamic>;
+      final allSerCats = results[2] as List<dynamic>;
       final allLiveStreams = results[3] as List<dynamic>;
-      final allVodStreams  = results[4] as List<dynamic>;
-      final allSerStreams  = results[5] as List<dynamic>;
+      final allVodStreams = results[4] as List<dynamic>;
+      final allSerStreams = results[5] as List<dynamic>;
 
       // ── AUTO-FETCH if DB is empty ──────────────────────────────────
-      if (!all && allLiveStreams.isEmpty && allVodStreams.isEmpty && allSerStreams.isEmpty) {
-        debugPrint('[XtreamController] DB is empty — triggering parallel content fetch');
+      if (!all &&
+          allLiveStreams.isEmpty &&
+          allVodStreams.isEmpty &&
+          allSerStreams.isEmpty) {
+        debugPrint(
+          '[XtreamController] DB is empty — triggering parallel content fetch',
+        );
         // Re-trigger with 'all: true' set
         await _loadCategories(true);
         return;
@@ -203,39 +210,67 @@ class XtreamCodeHomeController extends ChangeNotifier {
         final streams = liveMap[cat.categoryId] ?? [];
         if (streams.isEmpty) continue;
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _liveCategories.add(CategoryViewModel(
-          category: cat,
-          contentItems: streams.map((x) => ContentItem(
-            x.streamId, x.name, x.streamIcon, ContentType.liveStream,
-            liveStream: x,
-          )).toList(),
-        ));
+        _liveCategories.add(
+          CategoryViewModel(
+            category: cat,
+            contentItems: streams
+                .map(
+                  (x) => ContentItem(
+                    x.streamId,
+                    x.name,
+                    x.streamIcon,
+                    ContentType.liveStream,
+                    liveStream: x,
+                  ),
+                )
+                .toList(),
+          ),
+        );
       }
 
       for (final cat in allVodCats) {
         final streams = vodMap[cat.categoryId] ?? [];
         if (streams.isEmpty) continue;
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _movieCategories.add(CategoryViewModel(
-          category: cat,
-          contentItems: streams.map((x) => ContentItem(
-            x.streamId, x.name, x.streamIcon, ContentType.vod,
-            containerExtension: x.containerExtension, vodStream: x,
-          )).toList(),
-        ));
+        _movieCategories.add(
+          CategoryViewModel(
+            category: cat,
+            contentItems: streams
+                .map(
+                  (x) => ContentItem(
+                    x.streamId,
+                    x.name,
+                    x.streamIcon,
+                    ContentType.vod,
+                    containerExtension: x.containerExtension,
+                    vodStream: x,
+                  ),
+                )
+                .toList(),
+          ),
+        );
       }
 
       for (final cat in allSerCats) {
         final streams = serMap[cat.categoryId] ?? [];
         if (streams.isEmpty) continue;
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _seriesCategories.add(CategoryViewModel(
-          category: cat,
-          contentItems: streams.map((x) => ContentItem(
-            x.seriesId, x.name, x.cover ?? '', ContentType.series,
-            seriesStream: x,
-          )).toList(),
-        ));
+        _seriesCategories.add(
+          CategoryViewModel(
+            category: cat,
+            contentItems: streams
+                .map(
+                  (x) => ContentItem(
+                    x.seriesId,
+                    x.name,
+                    x.cover ?? '',
+                    ContentType.series,
+                    seriesStream: x,
+                  ),
+                )
+                .toList(),
+          ),
+        );
       }
 
       _generateDashboardContent();
@@ -299,43 +334,55 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
   List<ContentItem> getLiveChannelsByCategory(String categoryId) {
     return _liveCategories
-        .firstWhere((c) => c.category.categoryId == categoryId,
-            orElse: () => CategoryViewModel(
-                category: Category(
-                    categoryId: '',
-                    categoryName: '',
-                    parentId: 0,
-                    playlistId: '',
-                    type: CategoryType.live),
-                contentItems: []))
+        .firstWhere(
+          (c) => c.category.categoryId == categoryId,
+          orElse: () => CategoryViewModel(
+            category: Category(
+              categoryId: '',
+              categoryName: '',
+              parentId: 0,
+              playlistId: '',
+              type: CategoryType.live,
+            ),
+            contentItems: [],
+          ),
+        )
         .contentItems;
   }
 
   List<ContentItem> getMoviesByCategory(String categoryId) {
     return _movieCategories
-        .firstWhere((c) => c.category.categoryId == categoryId,
-            orElse: () => CategoryViewModel(
-                category: Category(
-                    categoryId: '',
-                    categoryName: '',
-                    parentId: 0,
-                    playlistId: '',
-                    type: CategoryType.vod),
-                contentItems: []))
+        .firstWhere(
+          (c) => c.category.categoryId == categoryId,
+          orElse: () => CategoryViewModel(
+            category: Category(
+              categoryId: '',
+              categoryName: '',
+              parentId: 0,
+              playlistId: '',
+              type: CategoryType.vod,
+            ),
+            contentItems: [],
+          ),
+        )
         .contentItems;
   }
 
   List<ContentItem> getSeriesByCategory(String categoryId) {
     return _seriesCategories
-        .firstWhere((c) => c.category.categoryId == categoryId,
-            orElse: () => CategoryViewModel(
-                category: Category(
-                    categoryId: '',
-                    categoryName: '',
-                    parentId: 0,
-                    playlistId: '',
-                    type: CategoryType.series),
-                contentItems: []))
+        .firstWhere(
+          (c) => c.category.categoryId == categoryId,
+          orElse: () => CategoryViewModel(
+            category: Category(
+              categoryId: '',
+              categoryName: '',
+              parentId: 0,
+              playlistId: '',
+              type: CategoryType.series,
+            ),
+            contentItems: [],
+          ),
+        )
         .contentItems;
   }
 }

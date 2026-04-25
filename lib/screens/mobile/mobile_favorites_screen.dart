@@ -43,9 +43,15 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
           Expanded(
             child: Consumer<FavoritesController>(
               builder: (context, favCtrl, _) {
-                final live = favCtrl.favorites.where((f) => f.contentType == ContentType.liveStream).toList();
-                final movies = favCtrl.favorites.where((f) => f.contentType == ContentType.vod).toList();
-                final series = favCtrl.favorites.where((f) => f.contentType == ContentType.series).toList();
+                final live = favCtrl.favorites
+                    .where((f) => f.contentType == ContentType.liveStream)
+                    .toList();
+                final movies = favCtrl.favorites
+                    .where((f) => f.contentType == ContentType.vod)
+                    .toList();
+                final series = favCtrl.favorites
+                    .where((f) => f.contentType == ContentType.series)
+                    .toList();
 
                 return TabBarView(
                   children: [
@@ -61,7 +67,6 @@ class _MobileFavoritesScreenState extends State<MobileFavoritesScreen> {
       ),
     );
   }
-
 }
 
 class _LiveTab extends StatefulWidget {
@@ -81,7 +86,7 @@ class _LiveTabState extends State<_LiveTab> with AutomaticKeepAliveClientMixin {
   Widget build(BuildContext context) {
     super.build(context);
     if (widget.items.isEmpty) return const _EmptyState();
-    
+
     return ListView.builder(
       cacheExtent: 500,
       padding: const EdgeInsets.symmetric(vertical: 8),
@@ -97,7 +102,8 @@ class _LiveTabState extends State<_LiveTab> with AutomaticKeepAliveClientMixin {
             padding: const EdgeInsets.only(right: 20),
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          onDismissed: (_) => widget.favCtrl.toggleFavorite(item.toContentItem()),
+          onDismissed: (_) =>
+              widget.favCtrl.toggleFavorite(item.toContentItem()),
           child: ListTile(
             leading: ClipRRect(
               borderRadius: BorderRadius.circular(4),
@@ -106,12 +112,18 @@ class _LiveTabState extends State<_LiveTab> with AutomaticKeepAliveClientMixin {
                 width: 50,
                 height: 40,
                 fit: BoxFit.contain,
-                errorWidget: (_, __, ___) => const Icon(Icons.live_tv, color: Colors.white24),
+                errorWidget: (_, __, ___) =>
+                    const Icon(Icons.live_tv, color: Colors.white24),
               ),
             ),
-            title: Text(item.name, style: const TextStyle(color: Colors.white, fontSize: 14)),
+            title: Text(
+              item.name,
+              style: const TextStyle(color: Colors.white, fontSize: 14),
+            ),
             onTap: () async {
-              final resolved = await context.read<FavoritesController>().resolveContentItem(item);
+              final resolved = await context
+                  .read<FavoritesController>()
+                  .resolveContentItem(item);
               if (!context.mounted) return;
               await navigateByContentType(context, resolved);
             },
@@ -131,7 +143,8 @@ class _ContentTab extends StatefulWidget {
   State<_ContentTab> createState() => _ContentTabState();
 }
 
-class _ContentTabState extends State<_ContentTab> with AutomaticKeepAliveClientMixin {
+class _ContentTabState extends State<_ContentTab>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -156,11 +169,15 @@ class _ContentTabState extends State<_ContentTab> with AutomaticKeepAliveClientM
           key: ValueKey(item.id),
           direction: DismissDirection.endToStart,
           background: Container(
-            decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
             alignment: Alignment.center,
             child: const Icon(Icons.delete, color: Colors.white),
           ),
-          onDismissed: (_) => widget.favCtrl.toggleFavorite(item.toContentItem()),
+          onDismissed: (_) =>
+              widget.favCtrl.toggleFavorite(item.toContentItem()),
           child: _PosterCard(item: item.toContentItem()),
         );
       },
@@ -198,7 +215,11 @@ class _PosterCard extends StatelessWidget {
               padding: const EdgeInsets.all(8.0),
               child: Text(
                 item.name,
-                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),

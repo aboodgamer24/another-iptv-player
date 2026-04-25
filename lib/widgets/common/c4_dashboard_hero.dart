@@ -33,9 +33,8 @@ class C4DashboardHero extends StatelessWidget {
               fit: BoxFit.cover,
               alignment: Alignment.topCenter,
               fadeInDuration: const Duration(milliseconds: 300),
-              placeholder: (context, url) => const ColoredBox(
-                color: Color(0xFF13161C),
-              ),
+              placeholder: (context, url) =>
+                  const ColoredBox(color: Color(0xFF13161C)),
               errorWidget: (context, url, error) => const DecoratedBox(
                 decoration: BoxDecoration(color: Colors.black45),
               ),
@@ -60,7 +59,7 @@ class C4DashboardHero extends StatelessWidget {
               ),
             ),
           ),
-          
+
           Container(
             decoration: BoxDecoration(
               gradient: LinearGradient(
@@ -93,7 +92,8 @@ class C4DashboardHero extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 16),
-                if (item.vodStream?.genre != null || item.seriesStream?.genre != null)
+                if (item.vodStream?.genre != null ||
+                    item.seriesStream?.genre != null)
                   Text(
                     item.vodStream?.genre ?? item.seriesStream?.genre ?? '',
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -105,25 +105,35 @@ class C4DashboardHero extends StatelessWidget {
                 Row(
                   children: [
                     ElevatedButton.icon(
-                      onPressed: onPlay ?? () => navigateByContentType(context, item),
+                      onPressed:
+                          onPlay ?? () => navigateByContentType(context, item),
                       icon: const Icon(Icons.play_arrow_rounded),
                       label: const Text('Play'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
                         textStyle: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                     ),
                     const SizedBox(width: 16),
                     OutlinedButton.icon(
-                      onPressed: onInfo ?? () => navigateByContentType(context, item),
+                      onPressed:
+                          onInfo ?? () => navigateByContentType(context, item),
                       icon: const Icon(Icons.info_outline_rounded),
                       label: const Text('More Info'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.5)),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 24,
+                          vertical: 16,
+                        ),
+                        side: BorderSide(
+                          color: Colors.white.withValues(alpha: 0.5),
+                        ),
                       ),
                     ),
                   ],
@@ -156,9 +166,10 @@ class _HeroShimmerState extends State<_HeroShimmer>
       vsync: this,
       duration: const Duration(milliseconds: 1400),
     )..repeat();
-    _anim = Tween<double>(begin: -2, end: 2).animate(
-      CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
-    );
+    _anim = Tween<double>(
+      begin: -2,
+      end: 2,
+    ).animate(CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut));
   }
 
   @override

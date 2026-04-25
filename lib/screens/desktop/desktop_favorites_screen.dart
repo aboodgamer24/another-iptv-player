@@ -84,7 +84,9 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
               tabs: [
                 Tab(text: '${context.loc.live_tv} (${liveItems.length})'),
                 Tab(text: '${context.loc.movies} (${movieItems.length})'),
-                Tab(text: '${context.loc.series_plural} (${seriesItems.length})'),
+                Tab(
+                  text: '${context.loc.series_plural} (${seriesItems.length})',
+                ),
               ],
               labelColor: theme.colorScheme.primary,
               unselectedLabelColor: theme.hintColor,
@@ -104,7 +106,9 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                     : ReorderableListView.builder(
                         buildDefaultDragHandles: false,
                         padding: const EdgeInsets.symmetric(
-                            vertical: 8, horizontal: 16),
+                          vertical: 8,
+                          horizontal: 16,
+                        ),
                         itemCount: _liveOrder!.length,
                         onReorder: (oldIndex, newIndex) {
                           setState(() {
@@ -113,8 +117,11 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                             _liveOrder!.insert(newIndex, item);
                           });
                           // Persist new order to DB
-                          final orderedIds = _liveOrder!.map((f) => f.id).toList();
-                          context.read<FavoritesController>()
+                          final orderedIds = _liveOrder!
+                              .map((f) => f.id)
+                              .toList();
+                          context
+                              .read<FavoritesController>()
                               .reorderLiveFavorites(orderedIds);
                         },
                         itemBuilder: (context, index) {
@@ -125,7 +132,9 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                             child: ListTile(
                               key: ValueKey('tile_${item.id}'),
                               contentPadding: const EdgeInsets.symmetric(
-                                  horizontal: 8, vertical: 4),
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               leading: ClipRRect(
                                 borderRadius: BorderRadius.circular(4),
                                 child: (item.imagePath ?? '').isNotEmpty
@@ -135,16 +144,20 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                         height: 40,
                                         fit: BoxFit.cover,
                                         errorBuilder: (_, __, ___) =>
-                                            const Icon(Icons.live_tv,
-                                                size: 20,
-                                                color: Colors.white24),
+                                            const Icon(
+                                              Icons.live_tv,
+                                              size: 20,
+                                              color: Colors.white24,
+                                            ),
                                       )
                                     : const SizedBox(
                                         width: 40,
                                         height: 40,
-                                        child: Icon(Icons.live_tv,
-                                            size: 20,
-                                            color: Colors.white24),
+                                        child: Icon(
+                                          Icons.live_tv,
+                                          size: 20,
+                                          color: Colors.white24,
+                                        ),
                                       ),
                               ),
                               title: Text(
@@ -153,11 +166,15 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                                 overflow: TextOverflow.ellipsis,
                               ),
                               trailing: IconButton(
-                                icon: const Icon(Icons.favorite_rounded,
-                                    color: Colors.redAccent, size: 20),
+                                icon: const Icon(
+                                  Icons.favorite_rounded,
+                                  color: Colors.redAccent,
+                                  size: 20,
+                                ),
                                 tooltip: 'Remove from favourites',
-                                onPressed: () =>
-                                    favCtrl.toggleFavorite(item.toContentItem()),
+                                onPressed: () => favCtrl.toggleFavorite(
+                                  item.toContentItem(),
+                                ),
                               ),
                               onTap: () {
                                 final liveQueue = _liveOrder!
@@ -192,13 +209,21 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
                 movieItems.isEmpty
                     ? _buildEmpty(context.loc.no_favorites_found)
                     : _buildCardGrid(
-                        context, movieItems, favCtrl, watchLaterCtrl),
+                        context,
+                        movieItems,
+                        favCtrl,
+                        watchLaterCtrl,
+                      ),
 
                 // ── Series: card grid ─────────────────────────────
                 seriesItems.isEmpty
                     ? _buildEmpty(context.loc.no_favorites_found)
                     : _buildCardGrid(
-                        context, seriesItems, favCtrl, watchLaterCtrl),
+                        context,
+                        seriesItems,
+                        favCtrl,
+                        watchLaterCtrl,
+                      ),
               ],
             ),
           ),
@@ -213,46 +238,46 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
     FavoritesController favCtrl,
     WatchLaterController watchLaterCtrl,
   ) {
-    return LayoutBuilder(builder: (context, constraints) {
-      final cols = constraints.maxWidth > 1100
-          ? 6
-          : constraints.maxWidth > 800
-              ? 5
-              : constraints.maxWidth > 600
-                  ? 4
-                  : constraints.maxWidth > 400
-                      ? 3
-                      : 2;
-      return GridView.builder(
-        padding: const EdgeInsets.all(24),
-        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: cols,
-          childAspectRatio: 2 / 3,
-          crossAxisSpacing: 16,
-          mainAxisSpacing: 16,
-        ),
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          final item = items[index];
-          return C4Card(
-            title: item.name,
-            imageUrl: item.imageUrl,
-            contentType: item.contentType,
-            isFavorite: true,
-            onToggleFavorite: () => favCtrl.toggleFavorite(item),
-            isInWatchLater: watchLaterCtrl.watchLaterItems.any(
-              (w) =>
-                  w.streamId == item.id &&
-                  w.contentType == item.contentType,
-            ),
-            onToggleWatchLater: () =>
-                watchLaterCtrl.toggleWatchLater(item),
-            onFocusChanged: (_) {},
-            onTap: () => navigateByContentType(context, item),
-          );
-        },
-      );
-    });
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cols = constraints.maxWidth > 1100
+            ? 6
+            : constraints.maxWidth > 800
+            ? 5
+            : constraints.maxWidth > 600
+            ? 4
+            : constraints.maxWidth > 400
+            ? 3
+            : 2;
+        return GridView.builder(
+          padding: const EdgeInsets.all(24),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: cols,
+            childAspectRatio: 2 / 3,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+          ),
+          itemCount: items.length,
+          itemBuilder: (context, index) {
+            final item = items[index];
+            return C4Card(
+              title: item.name,
+              imageUrl: item.imageUrl,
+              contentType: item.contentType,
+              isFavorite: true,
+              onToggleFavorite: () => favCtrl.toggleFavorite(item),
+              isInWatchLater: watchLaterCtrl.watchLaterItems.any(
+                (w) =>
+                    w.streamId == item.id && w.contentType == item.contentType,
+              ),
+              onToggleWatchLater: () => watchLaterCtrl.toggleWatchLater(item),
+              onFocusChanged: (_) {},
+              onTap: () => navigateByContentType(context, item),
+            );
+          },
+        );
+      },
+    );
   }
 
   Widget _buildEmpty(String message) {
@@ -260,12 +285,13 @@ class _DesktopFavoritesScreenState extends State<DesktopFavoritesScreen>
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.favorite_border_rounded,
-              size: 48,
-              color: Theme.of(context).hintColor.withValues(alpha: 0.4)),
+          Icon(
+            Icons.favorite_border_rounded,
+            size: 48,
+            color: Theme.of(context).hintColor.withValues(alpha: 0.4),
+          ),
           const SizedBox(height: 16),
-          Text(message,
-              style: TextStyle(color: Theme.of(context).hintColor)),
+          Text(message, style: TextStyle(color: Theme.of(context).hintColor)),
           const SizedBox(height: 8),
           const Text(
             'Mark channels, movies or series as favorites to see them here.',

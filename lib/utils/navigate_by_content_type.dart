@@ -20,7 +20,10 @@ bool _isDesktop(BuildContext context) {
   return MediaQuery.of(context).size.width >= 900;
 }
 
-Future<void> navigateByContentType(BuildContext context, ContentItem content) async {
+Future<void> navigateByContentType(
+  BuildContext context,
+  ContentItem content,
+) async {
   XtreamCodeHomeController? xtreamHomeController;
   try {
     xtreamHomeController = context.read<XtreamCodeHomeController>();
@@ -66,7 +69,8 @@ Future<void> navigateByContentType(BuildContext context, ContentItem content) as
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => wrapWithProvider(LiveStreamScreen(content: content)),
+          builder: (context) =>
+              wrapWithProvider(LiveStreamScreen(content: content)),
         ),
       );
     case ContentType.vod:
@@ -74,22 +78,25 @@ Future<void> navigateByContentType(BuildContext context, ContentItem content) as
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => wrapWithProvider(MobileMovieDetailScreen(contentItem: content)),
+            builder: (context) =>
+                wrapWithProvider(MobileMovieDetailScreen(contentItem: content)),
           ),
         );
       } else if (desktop && isXtreamCode) {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                wrapWithProvider(DesktopMovieDetailScreen(contentItem: content)),
+            builder: (context) => wrapWithProvider(
+              DesktopMovieDetailScreen(contentItem: content),
+            ),
           ),
         );
       } else {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => wrapWithProvider(MovieScreen(contentItem: content)),
+            builder: (context) =>
+                wrapWithProvider(MovieScreen(contentItem: content)),
           ),
         );
       }
@@ -99,22 +106,26 @@ Future<void> navigateByContentType(BuildContext context, ContentItem content) as
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => wrapWithProvider(MobileSeriesDetailScreen(contentItem: content)),
+              builder: (context) => wrapWithProvider(
+                MobileSeriesDetailScreen(contentItem: content),
+              ),
             ),
           );
         } else if (desktop) {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) =>
-                  wrapWithProvider(DesktopSeriesDetailScreen(contentItem: content)),
+              builder: (context) => wrapWithProvider(
+                DesktopSeriesDetailScreen(contentItem: content),
+              ),
             ),
           );
         } else {
           await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => wrapWithProvider(SeriesScreen(contentItem: content)),
+              builder: (context) =>
+                  wrapWithProvider(SeriesScreen(contentItem: content)),
             ),
           );
         }
@@ -122,10 +133,10 @@ Future<void> navigateByContentType(BuildContext context, ContentItem content) as
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => wrapWithProvider(M3uSeriesScreen(contentItem: content)),
+            builder: (context) =>
+                wrapWithProvider(M3uSeriesScreen(contentItem: content)),
           ),
         );
       }
   }
 }
-

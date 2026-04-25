@@ -339,7 +339,9 @@ class _C4DashboardState extends State<C4Dashboard> {
           child: C4ContentRail(
             title: context.loc.rail_continue_watching,
             items: historyController.continueWatching
-                .where((WatchHistory h) => h.contentType != ContentType.liveStream)
+                .where(
+                  (WatchHistory h) => h.contentType != ContentType.liveStream,
+                )
                 .map(
                   (WatchHistory h) => ContentItem(
                     h.streamId,

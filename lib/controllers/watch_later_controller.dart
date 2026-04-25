@@ -57,7 +57,10 @@ class WatchLaterController extends ChangeNotifier {
     }
   }
 
-  Future<bool> removeFromWatchLater(String streamId, ContentType contentType) async {
+  Future<bool> removeFromWatchLater(
+    String streamId,
+    ContentType contentType,
+  ) async {
     try {
       _setError(null);
       await _repository.removeWatchLater(streamId, contentType);
@@ -77,32 +80,39 @@ class WatchLaterController extends ChangeNotifier {
 
     try {
       _setError(null);
-      
+
       final isCurrentlyIn = _watchLaterItems.any(
-        (i) => i.streamId == contentItem.id && i.contentType == contentItem.contentType,
+        (i) =>
+            i.streamId == contentItem.id &&
+            i.contentType == contentItem.contentType,
       );
 
       // Optimistic Update
       if (isCurrentlyIn) {
         _watchLaterItems.removeWhere(
-          (i) => i.streamId == contentItem.id && i.contentType == contentItem.contentType,
+          (i) =>
+              i.streamId == contentItem.id &&
+              i.contentType == contentItem.contentType,
         );
       } else {
         // Temporary entry for optimistic UI
-        _watchLaterItems.insert(0, WatchLaterData(
-          id: 'temp_${contentItem.id}',
-          playlistId: AppState.currentPlaylist?.id ?? '',
-          contentType: contentItem.contentType,
-          streamId: contentItem.id,
-          title: contentItem.name,
-          imagePath: contentItem.imagePath,
-          addedAt: DateTime.now(),
-        ));
+        _watchLaterItems.insert(
+          0,
+          WatchLaterData(
+            id: 'temp_${contentItem.id}',
+            playlistId: AppState.currentPlaylist?.id ?? '',
+            contentType: contentItem.contentType,
+            streamId: contentItem.id,
+            title: contentItem.name,
+            imagePath: contentItem.imagePath,
+            addedAt: DateTime.now(),
+          ),
+        );
       }
       notifyListeners();
 
       final result = await _repository.toggleWatchLater(contentItem);
-      
+
       // Sync with repository state
       await loadWatchLaterItems();
       _syncWatchLaterToServer();
@@ -260,14 +270,18 @@ class WatchLaterController extends ChangeNotifier {
 
   /// Fire-and-forget push of the current watch later list to the sync server.
   void _syncWatchLaterToServer() {
-    final data = _watchLaterItems.map((i) => {
-      'id': i.id,
-      'streamId': i.streamId,
-      'title': i.title,
-      'imagePath': i.imagePath,
-      'contentType': i.contentType.toString(),
-      'playlistId': i.playlistId,
-    }).toList();
+    final data = _watchLaterItems
+        .map(
+          (i) => {
+            'id': i.id,
+            'streamId': i.streamId,
+            'title': i.title,
+            'imagePath': i.imagePath,
+            'contentType': i.contentType.toString(),
+            'playlistId': i.playlistId,
+          },
+        )
+        .toList();
     SyncService.instance.pushField('watch_later', data);
   }
 }

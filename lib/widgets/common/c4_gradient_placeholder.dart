@@ -84,11 +84,7 @@ class _C4GradientPlaceholderState extends State<C4GradientPlaceholder>
             ),
           ),
           child: const Center(
-            child: Icon(
-              Icons.image_outlined,
-              color: Colors.white10,
-              size: 48,
-            ),
+            child: Icon(Icons.image_outlined, color: Colors.white10, size: 48),
           ),
         );
       },

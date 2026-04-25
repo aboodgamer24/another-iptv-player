@@ -60,7 +60,6 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
     widget.controller.refresh();
   }
 
-
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider.value(

@@ -74,10 +74,7 @@ class _MobileMovieDetailScreenState extends State<MobileMovieDetailScreen> {
       final streamId = isXtreamCode
           ? widget.contentItem.id
           : widget.contentItem.m3uItem?.id ?? widget.contentItem.id;
-      await _watchHistoryService.getWatchHistory(
-        playlist.id,
-        streamId,
-      );
+      await _watchHistoryService.getWatchHistory(playlist.id, streamId);
       if (mounted) setState(() {});
     } catch (_) {}
   }

@@ -348,8 +348,9 @@ class _VideoSettingsOverlayState extends State<_VideoSettingsOverlay> {
                   style: const TextStyle(color: Colors.white),
                 ),
                 duration: const Duration(seconds: 2),
-                backgroundColor:
-                    newValue ? Colors.orange.shade800 : Colors.grey.shade800,
+                backgroundColor: newValue
+                    ? Colors.orange.shade800
+                    : Colors.grey.shade800,
               ),
             );
           }

@@ -120,7 +120,9 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
   Future<void> _loadLastWatched() async {
     final playlistId = AppState.currentPlaylist!.id;
     final allHistory = await _watchHistoryService.getWatchHistoryByContentType(
-        ContentType.series, playlistId);
+      ContentType.series,
+      playlistId,
+    );
 
     if (!mounted || allHistory.isEmpty) return;
 
@@ -139,9 +141,13 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
 
   Future<void> _checkStatus() async {
     final isFav = await _favoritesController.isFavorite(
-        widget.contentItem.id, widget.contentItem.contentType);
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
     final isWL = await _watchLaterController.isWatchLater(
-        widget.contentItem.id, widget.contentItem.contentType);
+      widget.contentItem.id,
+      widget.contentItem.contentType,
+    );
     if (mounted) {
       setState(() {
         _isFavorite = isFav;
@@ -151,43 +157,55 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    final result =
-        await _favoritesController.toggleFavorite(widget.contentItem);
+    final result = await _favoritesController.toggleFavorite(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() => _isFavorite = result);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result
-            ? context.loc.added_to_favorites
-            : context.loc.removed_from_favorites),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_favorites
+                : context.loc.removed_from_favorites,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
   Future<void> _toggleWatchLater() async {
-    final result =
-        await _watchLaterController.toggleWatchLater(widget.contentItem);
+    final result = await _watchLaterController.toggleWatchLater(
+      widget.contentItem,
+    );
     if (mounted) {
       setState(() => _isInWatchLater = result);
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(result
-            ? context.loc.added_to_watch_later
-            : context.loc.removed_from_watch_later),
-        behavior: SnackBarBehavior.floating,
-      ));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            result
+                ? context.loc.added_to_watch_later
+                : context.loc.removed_from_watch_later,
+          ),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
   void _playEpisode(EpisodesData episode) {
     final allContents = _episodes
-        .map((x) => ContentItem(
-              x.episodeId,
-              x.title,
-              x.movieImage ?? '',
-              ContentType.series,
-              containerExtension: x.containerExtension,
-              season: x.season,
-            ))
+        .map(
+          (x) => ContentItem(
+            x.episodeId,
+            x.title,
+            x.movieImage ?? '',
+            ContentType.series,
+            containerExtension: x.containerExtension,
+            season: x.season,
+          ),
+        )
         .toList();
 
     setState(() => _lastWatchedEpisode = episode);
@@ -229,9 +247,7 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
   List<EpisodesData> get _currentSeasonEpisodes {
     if (_validSeasons.isEmpty) return [];
     final season = _validSeasons[_selectedSeasonIndex];
-    return _episodes
-        .where((ep) => ep.season == season.seasonNumber)
-        .toList();
+    return _episodes.where((ep) => ep.season == season.seasonNumber).toList();
   }
 
   String? get _coverUrl {
@@ -266,10 +282,11 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
       ),
       body: _isLoading
           ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF5A45FF)))
+              child: CircularProgressIndicator(color: Color(0xFF5A45FF)),
+            )
           : _error != null
-              ? _buildError()
-              : _buildContent(),
+          ? _buildError()
+          : _buildContent(),
     );
   }
 
@@ -280,8 +297,10 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
         children: [
           Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
           const SizedBox(height: 16),
-          Text(_error!,
-              style: const TextStyle(color: Colors.white70, fontSize: 16)),
+          Text(
+            _error!,
+            style: const TextStyle(color: Colors.white70, fontSize: 16),
+          ),
           const SizedBox(height: 16),
           ElevatedButton(
             onPressed: _loadAll,
@@ -402,10 +421,8 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
 
   Widget _buildSeriesInfo() {
     final name = _seriesInfo?.name ?? widget.contentItem.name;
-    final genre =
-        _seriesInfo?.genre ?? widget.contentItem.seriesStream?.genre;
-    final plot =
-        _seriesInfo?.plot ?? widget.contentItem.seriesStream?.plot;
+    final genre = _seriesInfo?.genre ?? widget.contentItem.seriesStream?.genre;
+    final plot = _seriesInfo?.plot ?? widget.contentItem.seriesStream?.plot;
     final rating = _seriesInfo?.rating5based ?? 0;
     final cast = _seriesInfo?.cast ?? widget.contentItem.seriesStream?.cast;
 
@@ -427,38 +444,52 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
         Row(
           children: [
             if (rating > 0) ...[
-              ...List.generate(5, (i) => Icon(
-                    i < rating.round()
-                        ? Icons.star_rounded
-                        : Icons.star_outline_rounded,
-                    color: Colors.amber,
-                    size: 20,
-                  )),
+              ...List.generate(
+                5,
+                (i) => Icon(
+                  i < rating.round()
+                      ? Icons.star_rounded
+                      : Icons.star_outline_rounded,
+                  color: Colors.amber,
+                  size: 20,
+                ),
+              ),
               const SizedBox(width: 8),
-              Text('${rating.toStringAsFixed(1)}/5',
-                  style: const TextStyle(
-                      color: Colors.amber, fontSize: 14)),
+              Text(
+                '${rating.toStringAsFixed(1)}/5',
+                style: const TextStyle(color: Colors.amber, fontSize: 14),
+              ),
               const SizedBox(width: 16),
             ],
             if (genre != null && genre.isNotEmpty)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1A1D24),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(color: const Color(0xFF262A35)),
                 ),
-                child: Text(genre,
-                    style: const TextStyle(
-                        color: Color(0xFFA0A5B5), fontSize: 12)),
+                child: Text(
+                  genre,
+                  style: const TextStyle(
+                    color: Color(0xFFA0A5B5),
+                    fontSize: 12,
+                  ),
+                ),
               ),
             const Spacer(),
             IconButton(
               onPressed: _toggleWatchLater,
               icon: Icon(
-                _isInWatchLater ? Icons.watch_later : Icons.watch_later_outlined,
-                color: _isInWatchLater ? Colors.blueAccent : const Color(0xFF747B8B),
+                _isInWatchLater
+                    ? Icons.watch_later
+                    : Icons.watch_later_outlined,
+                color: _isInWatchLater
+                    ? Colors.blueAccent
+                    : const Color(0xFF747B8B),
               ),
             ),
             IconButton(
@@ -482,13 +513,16 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
                 backgroundColor: const Color(0xFF5A45FF),
                 foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
               icon: const Icon(Icons.play_arrow_rounded, size: 24),
               label: Text(
                 'Continue: S${_lastWatchedEpisode!.season} E${_lastWatchedEpisode!.episodeNum}',
                 style: const TextStyle(
-                    fontSize: 14, fontWeight: FontWeight.w600),
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ),
@@ -500,7 +534,10 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
           Text(
             plot,
             style: const TextStyle(
-                color: Color(0xFFA0A5B5), fontSize: 14, height: 1.6),
+              color: Color(0xFFA0A5B5),
+              fontSize: 14,
+              height: 1.6,
+            ),
             maxLines: 5,
             overflow: TextOverflow.ellipsis,
           ),
@@ -512,15 +549,22 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text('Cast: ',
-                  style: TextStyle(
-                      color: Color(0xFF747B8B),
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600)),
+              const Text(
+                'Cast: ',
+                style: TextStyle(
+                  color: Color(0xFF747B8B),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               Expanded(
-                child: Text(cast,
-                    style: const TextStyle(
-                        color: Color(0xFFA0A5B5), fontSize: 13)),
+                child: Text(
+                  cast,
+                  style: const TextStyle(
+                    color: Color(0xFFA0A5B5),
+                    fontSize: 13,
+                  ),
+                ),
               ),
             ],
           ),
@@ -539,8 +583,9 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
         itemBuilder: (context, index) {
           final season = _validSeasons[index];
           final isSelected = index == _selectedSeasonIndex;
-          final epCount =
-              _episodes.where((e) => e.season == season.seasonNumber).length;
+          final epCount = _episodes
+              .where((e) => e.season == season.seasonNumber)
+              .length;
 
           return Padding(
             padding: const EdgeInsets.only(right: 8),
@@ -550,8 +595,10 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
                 onTap: () => setState(() => _selectedSeasonIndex = index),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFF5A45FF)
@@ -573,8 +620,9 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
                               ? Colors.white
                               : const Color(0xFFA0A5B5),
                           fontSize: 13,
-                          fontWeight:
-                              isSelected ? FontWeight.w600 : FontWeight.w500,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
                       ),
                       const SizedBox(width: 6),
@@ -609,8 +657,10 @@ class _DesktopSeriesDetailScreenState extends State<DesktopSeriesDetailScreen> {
           borderRadius: BorderRadius.circular(12),
         ),
         child: Center(
-          child: Text(context.loc.not_found_in_category,
-              style: const TextStyle(color: Color(0xFF747B8B))),
+          child: Text(
+            context.loc.not_found_in_category,
+            style: const TextStyle(color: Color(0xFF747B8B)),
+          ),
         ),
       );
     }
@@ -691,21 +741,30 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                             fit: BoxFit.cover,
                             errorWidget: (_, __, ___) => Container(
                               color: const Color(0xFF0F1115),
-                              child: const Icon(Icons.tv,
-                                  color: Color(0xFF262A35), size: 28),
+                              child: const Icon(
+                                Icons.tv,
+                                color: Color(0xFF262A35),
+                                size: 28,
+                              ),
                             ),
                           )
                         : Container(
                             color: const Color(0xFF0F1115),
-                            child: const Icon(Icons.tv,
-                                color: Color(0xFF262A35), size: 28),
+                            child: const Icon(
+                              Icons.tv,
+                              color: Color(0xFF262A35),
+                              size: 28,
+                            ),
                           ),
                     if (_hovered)
                       Container(
                         color: Colors.black.withValues(alpha: 0.5),
                         child: const Center(
-                          child: Icon(Icons.play_arrow_rounded,
-                              color: Colors.white, size: 32),
+                          child: Icon(
+                            Icons.play_arrow_rounded,
+                            color: Colors.white,
+                            size: 32,
+                          ),
                         ),
                       ),
                     // Progress bar
@@ -719,7 +778,8 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                           minHeight: 3,
                           backgroundColor: Colors.transparent,
                           valueColor: const AlwaysStoppedAnimation(
-                              Color(0xFF5A45FF)),
+                            Color(0xFF5A45FF),
+                          ),
                         ),
                       ),
                   ],
@@ -736,8 +796,9 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 14,
-                        fontWeight:
-                            _hovered ? FontWeight.w700 : FontWeight.w600,
+                        fontWeight: _hovered
+                            ? FontWeight.w700
+                            : FontWeight.w600,
                       ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
@@ -746,16 +807,19 @@ class _EpisodeCardState extends State<_EpisodeCard> {
                     Text(
                       'S${widget.episode.season} · Episode ${widget.episode.episodeNum}',
                       style: const TextStyle(
-                          color: Color(0xFF747B8B), fontSize: 12),
+                        color: Color(0xFF747B8B),
+                        fontSize: 12,
+                      ),
                     ),
                     if (widget.progress != null) ...[
                       const SizedBox(height: 4),
                       Text(
                         '${(widget.progress! * 100).toInt()}% watched',
                         style: const TextStyle(
-                            color: Color(0xFF5A45FF),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w500),
+                          color: Color(0xFF5A45FF),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                     ],
                   ],
@@ -764,8 +828,7 @@ class _EpisodeCardState extends State<_EpisodeCard> {
               // Play icon
               Icon(
                 Icons.chevron_right_rounded,
-                color:
-                    _hovered ? Colors.white : const Color(0xFF747B8B),
+                color: _hovered ? Colors.white : const Color(0xFF747B8B),
                 size: 24,
               ),
             ],

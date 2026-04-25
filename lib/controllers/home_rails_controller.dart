@@ -4,15 +4,15 @@ import '../repositories/user_preferences.dart';
 
 class HomeRailsController extends ChangeNotifier {
   static const List<HomeRailConfig> defaultRails = [
-    HomeRailConfig(id: 'recommended',       label: 'Recommended for you'),
-    HomeRailConfig(id: 'favorites_live',    label: 'Favorite Channels'),
-    HomeRailConfig(id: 'favorites_movies',  label: 'Favorite Movies'),
-    HomeRailConfig(id: 'favorites_series',  label: 'Favorite Series'),
-    HomeRailConfig(id: 'watch_later',       label: 'Watch Later'),
+    HomeRailConfig(id: 'recommended', label: 'Recommended for you'),
+    HomeRailConfig(id: 'favorites_live', label: 'Favorite Channels'),
+    HomeRailConfig(id: 'favorites_movies', label: 'Favorite Movies'),
+    HomeRailConfig(id: 'favorites_series', label: 'Favorite Series'),
+    HomeRailConfig(id: 'watch_later', label: 'Watch Later'),
     HomeRailConfig(id: 'continue_watching', label: 'Continue Watching'),
-    HomeRailConfig(id: 'live_history',      label: 'Recently Watched'),
-    HomeRailConfig(id: 'trending_movies',   label: 'Trending Movies'),
-    HomeRailConfig(id: 'trending_series',   label: 'Trending Series'),
+    HomeRailConfig(id: 'live_history', label: 'Recently Watched'),
+    HomeRailConfig(id: 'trending_movies', label: 'Trending Movies'),
+    HomeRailConfig(id: 'trending_series', label: 'Trending Series'),
   ];
 
   List<HomeRailConfig> _rails = List.from(defaultRails);
@@ -27,7 +27,8 @@ class HomeRailsController extends ChangeNotifier {
   }
 
   List<HomeRailConfig> get rails => _rails;
-  List<HomeRailConfig> get visibleRails => _rails.where((r) => r.visible).toList();
+  List<HomeRailConfig> get visibleRails =>
+      _rails.where((r) => r.visible).toList();
   bool get isLoaded => _loaded;
 
   Future<void> load() async {
@@ -37,13 +38,13 @@ class HomeRailsController extends ChangeNotifier {
     } else {
       // Merge saved rails with default rails to handle new rails in future updates
       final List<HomeRailConfig> merged = [];
-      
+
       // Add saved rails that are still in defaultRails
       for (var saved in savedRails) {
         if (defaultRails.any((d) => d.id == saved.id)) {
-           // Keep label from default for localization purposes if it changes
-           final def = defaultRails.firstWhere((d) => d.id == saved.id);
-           merged.add(saved.copyWith(label: def.label));
+          // Keep label from default for localization purposes if it changes
+          final def = defaultRails.firstWhere((d) => d.id == saved.id);
+          merged.add(saved.copyWith(label: def.label));
         }
       }
 
@@ -53,11 +54,11 @@ class HomeRailsController extends ChangeNotifier {
           merged.add(def);
         }
       }
-      
+
       _rails = merged;
     }
     _loaded = true;
-    
+
     // Safe notify: defer if we are currently in a build phase
     WidgetsBinding.instance.addPostFrameCallback((_) {
       notifyListeners();
@@ -79,4 +80,3 @@ class HomeRailsController extends ChangeNotifier {
     }
   }
 }
-

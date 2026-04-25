@@ -69,25 +69,50 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
       final results = await Future.wait([
         repo
             .searchLiveStreams(query)
-            .then((streams) => streams
-                .map((x) => ContentItem(x.streamId, x.name, x.streamIcon,
-                    ContentType.liveStream,
-                    liveStream: x))
-                .toList()),
+            .then(
+              (streams) => streams
+                  .map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.liveStream,
+                      liveStream: x,
+                    ),
+                  )
+                  .toList(),
+            ),
         repo
             .searchMovies(query)
-            .then((movies) => movies
-                .map((x) => ContentItem(
-                    x.streamId, x.name, x.streamIcon, ContentType.vod,
-                    containerExtension: x.containerExtension, vodStream: x))
-                .toList()),
+            .then(
+              (movies) => movies
+                  .map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.vod,
+                      containerExtension: x.containerExtension,
+                      vodStream: x,
+                    ),
+                  )
+                  .toList(),
+            ),
         repo
             .searchSeries(query)
-            .then((series) => series
-                .map((x) => ContentItem(
-                    x.seriesId, x.name, x.cover ?? '', ContentType.series,
-                    seriesStream: x))
-                .toList()),
+            .then(
+              (series) => series
+                  .map(
+                    (x) => ContentItem(
+                      x.seriesId,
+                      x.name,
+                      x.cover ?? '',
+                      ContentType.series,
+                      seriesStream: x,
+                    ),
+                  )
+                  .toList(),
+            ),
       ]);
 
       if (mounted) {
@@ -104,8 +129,11 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
     }
   }
 
-  List<ContentItem> get _allResults =>
-      [..._liveResults, ..._movieResults, ..._seriesResults];
+  List<ContentItem> get _allResults => [
+    ..._liveResults,
+    ..._movieResults,
+    ..._seriesResults,
+  ];
 
   int get _totalCount =>
       _liveResults.length + _movieResults.length + _seriesResults.length;
@@ -140,12 +168,18 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
                   decoration: InputDecoration(
                     hintText: 'Search Live TV, Movies, and Series...',
                     hintStyle: const TextStyle(color: Color(0xFF747B8B)),
-                    prefixIcon: const Icon(Icons.search,
-                        color: Color(0xFF747B8B), size: 22),
+                    prefixIcon: const Icon(
+                      Icons.search,
+                      color: Color(0xFF747B8B),
+                      size: 22,
+                    ),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear,
-                                color: Color(0xFF747B8B), size: 20),
+                            icon: const Icon(
+                              Icons.clear,
+                              color: Color(0xFF747B8B),
+                              size: 20,
+                            ),
                             onPressed: () {
                               _searchController.clear();
                               _onSearchChanged('');
@@ -159,7 +193,9 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
                       borderSide: BorderSide.none,
                     ),
                     contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -172,7 +208,9 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
                     labelColor: Colors.white,
                     unselectedLabelColor: const Color(0xFF747B8B),
                     labelStyle: const TextStyle(
-                        fontSize: 14, fontWeight: FontWeight.w600),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
                     tabs: [
                       Tab(text: 'All ($_totalCount)'),
                       Tab(text: 'Live TV (${_liveResults.length})'),
@@ -183,24 +221,24 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
               ],
             ),
           ),
-          if (_hasSearched)
-            const Divider(height: 1, color: Color(0xFF1E2128)),
+          if (_hasSearched) const Divider(height: 1, color: Color(0xFF1E2128)),
           // Results
           Expanded(
             child: _isSearching
                 ? const Center(
-                    child: CircularProgressIndicator(color: Color(0xFF5A45FF)))
+                    child: CircularProgressIndicator(color: Color(0xFF5A45FF)),
+                  )
                 : _hasSearched
-                    ? TabBarView(
-                        controller: _tabController,
-                        children: [
-                          _buildResultsGrid(_allResults),
-                          _buildResultsGrid(_liveResults),
-                          _buildResultsGrid(_movieResults),
-                          _buildResultsGrid(_seriesResults),
-                        ],
-                      )
-                    : _buildInitialState(),
+                ? TabBarView(
+                    controller: _tabController,
+                    children: [
+                      _buildResultsGrid(_allResults),
+                      _buildResultsGrid(_liveResults),
+                      _buildResultsGrid(_movieResults),
+                      _buildResultsGrid(_seriesResults),
+                    ],
+                  )
+                : _buildInitialState(),
           ),
         ],
       ),
@@ -219,8 +257,11 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
               shape: BoxShape.circle,
               color: const Color(0xFF1A1D24),
             ),
-            child: const Icon(Icons.search_rounded,
-                color: Color(0xFF747B8B), size: 32),
+            child: const Icon(
+              Icons.search_rounded,
+              color: Color(0xFF747B8B),
+              size: 32,
+            ),
           ),
           const SizedBox(height: 16),
           const Text(
@@ -238,8 +279,11 @@ class _DesktopGlobalSearchScreenState extends State<DesktopGlobalSearchScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.search_off_rounded,
-                size: 48, color: Color(0xFF747B8B)),
+            const Icon(
+              Icons.search_off_rounded,
+              size: 48,
+              color: Color(0xFF747B8B),
+            ),
             const SizedBox(height: 12),
             Text(
               context.loc.not_found_in_category,
@@ -304,7 +348,7 @@ class _SearchResultCardState extends State<_SearchResultCard> {
                       BoxShadow(
                         color: const Color(0xFF2C52FF).withValues(alpha: 0.2),
                         blurRadius: 16,
-                      )
+                      ),
                     ]
                   : null,
             ),
@@ -319,12 +363,12 @@ class _SearchResultCardState extends State<_SearchResultCard> {
                       widget.item.imagePath.isNotEmpty
                           ? CachedNetworkImage(
                               imageUrl: widget.item.imagePath,
-                              fit: widget.item.contentType ==
+                              fit:
+                                  widget.item.contentType ==
                                       ContentType.liveStream
                                   ? BoxFit.contain
                                   : BoxFit.cover,
-                              errorWidget: (_, __, ___) =>
-                                  _buildFallback(),
+                              errorWidget: (_, __, ___) => _buildFallback(),
                             )
                           : _buildFallback(),
                       if (_hovered)
@@ -337,13 +381,16 @@ class _SearchResultCardState extends State<_SearchResultCard> {
                                 gradient: LinearGradient(
                                   colors: [
                                     Color(0xFF5A45FF),
-                                    Color(0xFF00D1FF)
+                                    Color(0xFF00D1FF),
                                   ],
                                 ),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.play_arrow_rounded,
-                                  color: Colors.white, size: 24),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.white,
+                                size: 24,
+                              ),
                             ),
                           ),
                         ),
@@ -353,7 +400,9 @@ class _SearchResultCardState extends State<_SearchResultCard> {
                         right: 6,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.7),
                             borderRadius: BorderRadius.circular(4),
@@ -361,7 +410,9 @@ class _SearchResultCardState extends State<_SearchResultCard> {
                           child: Text(
                             _typeName(widget.item.contentType),
                             style: const TextStyle(
-                                color: Colors.white70, fontSize: 9),
+                              color: Colors.white70,
+                              fontSize: 9,
+                            ),
                           ),
                         ),
                       ),

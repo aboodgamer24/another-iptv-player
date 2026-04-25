@@ -66,67 +66,77 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   Widget _buildContent() {
     final isXtream = widget.playlist.type == PlaylistType.xtream;
-    
+
     if (isXtream) {
       final controller = Provider.of<XtreamCodeHomeController>(context);
 
-        if (PlatformUtils.isTV) {
-          switch (_selectedIndex) {
-            case 0: return TvHomeScreen(playlistId: widget.playlist.id);
-            case 1:
-              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-              return const TvLiveTvScreen();
-            case 2:
-              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-              return const TvMoviesScreen();
-            case 3:
-              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-              return const TvSeriesScreen();
-            default: return const SizedBox.shrink();
-          }
+      if (PlatformUtils.isTV) {
+        switch (_selectedIndex) {
+          case 0:
+            return TvHomeScreen(playlistId: widget.playlist.id);
+          case 1:
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
+            return const TvLiveTvScreen();
+          case 2:
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
+            return const TvMoviesScreen();
+          case 3:
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
+            return const TvSeriesScreen();
+          default:
+            return const SizedBox.shrink();
         }
+      }
 
-        if (PlatformUtils.isMobile) {
-          switch (_selectedIndex) {
-            case 0:
-              return MobileHomeScreen(playlistId: widget.playlist.id);
-            case 1:
-              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-              return MobileLiveTvScreen(
-                categories: controller.liveCategories ?? [],
-                title: context.loc.live_streams,
-              );
-            case 2:
-              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-              return MobileContentScreen(
-                categories: controller.movieCategories,
-                contentType: ContentType.vod,
-                title: context.loc.movies,
-              );
-            case 3:
-              if (controller.isLoading) return const Center(child: CircularProgressIndicator());
-              return MobileContentScreen(
-                categories: controller.seriesCategories,
-                contentType: ContentType.series,
-                title: context.loc.series_plural,
-              );
-            default:
-              return const SizedBox.shrink();
-          }
+      if (PlatformUtils.isMobile) {
+        switch (_selectedIndex) {
+          case 0:
+            return MobileHomeScreen(playlistId: widget.playlist.id);
+          case 1:
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
+            return MobileLiveTvScreen(
+              categories: controller.liveCategories ?? [],
+              title: context.loc.live_streams,
+            );
+          case 2:
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
+            return MobileContentScreen(
+              categories: controller.movieCategories,
+              contentType: ContentType.vod,
+              title: context.loc.movies,
+            );
+          case 3:
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
+            return MobileContentScreen(
+              categories: controller.seriesCategories,
+              contentType: ContentType.series,
+              title: context.loc.series_plural,
+            );
+          default:
+            return const SizedBox.shrink();
         }
- else {
+      } else {
         // Desktop Content
         switch (_selectedIndex) {
           case 0:
             return C4Dashboard(playlistId: widget.playlist.id);
           case 1:
-            if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
             return const C4LiveGridScreen();
           case 2:
-            if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
             return const C4ContentGridScreen(contentType: ContentType.vod);
           case 3:
-            if (controller.isLoading) return const Center(child: CircularProgressIndicator());
+            if (controller.isLoading)
+              return const Center(child: CircularProgressIndicator());
             return const C4ContentGridScreen(contentType: ContentType.series);
           case 4:
             return const DesktopFavoritesScreen();
@@ -202,9 +212,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
         onSettingsTap: () => Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => XtreamCodePlaylistSettingsScreen(
-              playlist: widget.playlist,
-            ),
+            builder: (_) =>
+                XtreamCodePlaylistSettingsScreen(playlist: widget.playlist),
           ),
         ),
         child: content,
@@ -222,5 +231,3 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
-
-

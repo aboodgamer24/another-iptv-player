@@ -29,14 +29,18 @@ class _LowLatencyButtonState extends State<LowLatencyButton> {
     EventBus().emit('low_latency_changed', newVal);
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text(
-          newVal ? '⚡ Low Latency ON' : '🔄 Normal Mode',
-          style: const TextStyle(color: Colors.white),
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newVal ? '⚡ Low Latency ON' : '🔄 Normal Mode',
+            style: const TextStyle(color: Colors.white),
+          ),
+          duration: const Duration(seconds: 2),
+          backgroundColor: newVal
+              ? Colors.orange.shade800
+              : Colors.grey.shade800,
         ),
-        duration: const Duration(seconds: 2),
-        backgroundColor: newVal ? Colors.orange.shade800 : Colors.grey.shade800,
-      ));
+      );
     }
   }
 

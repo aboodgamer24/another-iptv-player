@@ -7,11 +7,11 @@ import '../utils/app_config.dart';
 class TmdbService {
   static const String _baseUrl = 'https://api.themoviedb.org/3';
 
-  static const String _cacheKeyMovies  = 'tmdb_cache_trending_movies';
-  static const String _cacheKeyTv      = 'tmdb_cache_trending_tv';
+  static const String _cacheKeyMovies = 'tmdb_cache_trending_movies';
+  static const String _cacheKeyTv = 'tmdb_cache_trending_tv';
   static const String _cacheTimeMovies = 'tmdb_cache_time_movies';
-  static const String _cacheTimeTv     = 'tmdb_cache_time_tv';
-  static const Duration _cacheTtl      = Duration(hours: 6);
+  static const String _cacheTimeTv = 'tmdb_cache_time_tv';
+  static const Duration _cacheTtl = Duration(hours: 6);
 
   // ─── Public API ──────────────────────────────────────────────────────────
 
@@ -19,18 +19,18 @@ class TmdbService {
   /// If cache is empty, waits for network and caches the result.
   Future<List<Map<String, dynamic>>> getTrendingMovies() async {
     return _getCached(
-      cacheKey:    _cacheKeyMovies,
+      cacheKey: _cacheKeyMovies,
       cacheTimeKey: _cacheTimeMovies,
-      fetchFn:     _fetchTrendingMovies,
+      fetchFn: _fetchTrendingMovies,
     );
   }
 
   /// Returns cached TV shows immediately (if available), then refreshes in background.
   Future<List<Map<String, dynamic>>> getTrendingTv() async {
     return _getCached(
-      cacheKey:    _cacheKeyTv,
+      cacheKey: _cacheKeyTv,
       cacheTimeKey: _cacheTimeTv,
-      fetchFn:     _fetchTrendingTv,
+      fetchFn: _fetchTrendingTv,
     );
   }
 
@@ -61,9 +61,12 @@ class TmdbService {
       // Return cached data immediately
       if (!isFresh) {
         // Stale — refresh in background without blocking UI
-        fetchFn().then((fresh) {
-          if (fresh.isNotEmpty) _writeCache(prefs, cacheKey, cacheTimeKey, fresh);
-        }).catchError((_) {});
+        fetchFn()
+            .then((fresh) {
+              if (fresh.isNotEmpty)
+                _writeCache(prefs, cacheKey, cacheTimeKey, fresh);
+            })
+            .catchError((_) {});
       }
       return cached;
     }
@@ -117,9 +120,13 @@ class TmdbService {
   // ─── Network Fetchers ─────────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> _fetchTrendingMovies() async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/trending/movie/week?api_key=${AppConfig.tmdbApiKey}'),
-    ).timeout(const Duration(seconds: 10));
+    final response = await http
+        .get(
+          Uri.parse(
+            '$_baseUrl/trending/movie/week?api_key=${AppConfig.tmdbApiKey}',
+          ),
+        )
+        .timeout(const Duration(seconds: 10));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['results'] as List);
@@ -128,9 +135,13 @@ class TmdbService {
   }
 
   Future<List<Map<String, dynamic>>> _fetchTrendingTv() async {
-    final response = await http.get(
-      Uri.parse('$_baseUrl/trending/tv/week?api_key=${AppConfig.tmdbApiKey}'),
-    ).timeout(const Duration(seconds: 10));
+    final response = await http
+        .get(
+          Uri.parse(
+            '$_baseUrl/trending/tv/week?api_key=${AppConfig.tmdbApiKey}',
+          ),
+        )
+        .timeout(const Duration(seconds: 10));
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
       return List<Map<String, dynamic>>.from(data['results'] as List);

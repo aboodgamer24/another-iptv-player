@@ -83,13 +83,14 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
   ) {
     // Titles for the 4 bottom-nav tabs only
     final titles = [
-      context.loc.history,       // 0 - Home (or whatever the home tab loc key is)
-      context.loc.live,          // 1 - Live
-      context.loc.movies,        // 2 - Movies
+      context.loc.history, // 0 - Home (or whatever the home tab loc key is)
+      context.loc.live, // 1 - Live
+      context.loc.movies, // 2 - Movies
       context.loc.series_plural, // 3 - Series
     ];
     final currentTitle = titles[_mobileIndex.clamp(0, titles.length - 1)];
-    final showSearch = _mobileIndex == 1 || _mobileIndex == 2 || _mobileIndex == 3;
+    final showSearch =
+        _mobileIndex == 1 || _mobileIndex == 2 || _mobileIndex == 3;
 
     return MobileShellScreen(
       selectedIndex: _mobileIndex,
@@ -100,9 +101,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       currentTitle: currentTitle,
       onSearchTap: showSearch
           ? () => Navigator.push(
-                context,
-                slideUpRoute(builder: (_) => const MobileGlobalSearchScreen()),
-              )
+              context,
+              slideUpRoute(builder: (_) => const MobileGlobalSearchScreen()),
+            )
           : null,
 
       // Favorites → pushed as a full screen route
@@ -137,9 +138,8 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       onSettingsTap: () => Navigator.push(
         context,
         slideUpRoute(
-          builder: (_) => XtreamCodePlaylistSettingsScreen(
-            playlist: widget.playlist,
-          ),
+          builder: (_) =>
+              XtreamCodePlaylistSettingsScreen(playlist: widget.playlist),
         ),
       ),
 
@@ -147,7 +147,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       child: PageView(
         controller: _mobilePageController,
         physics: Platform.isAndroid
-            ? const BouncingScrollPhysics(parent: AlwaysScrollableScrollPhysics())
+            ? const BouncingScrollPhysics(
+                parent: AlwaysScrollableScrollPhysics(),
+              )
             : const NeverScrollableScrollPhysics(),
         onPageChanged: (index) {
           // Sync the bottom NavigationBar when user swipes
@@ -155,7 +157,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
         },
         children: [
           // 0 - Home
-          _KeepAlivePage(child: MobileHomeScreen(playlistId: widget.playlist.id)),
+          _KeepAlivePage(
+            child: MobileHomeScreen(playlistId: widget.playlist.id),
+          ),
           // 1 - Live TV
           _KeepAlivePage(
             child: MobileLiveTvScreen(
@@ -166,7 +170,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
           // 2 - Movies
           _KeepAlivePage(
             child: MobileContentScreen(
-              key: ValueKey('mobile_movies_${controller.movieCategories.length}'),
+              key: ValueKey(
+                'mobile_movies_${controller.movieCategories.length}',
+              ),
               categories: controller.movieCategories,
               contentType: ContentType.vod,
               title: context.loc.movies,
@@ -175,7 +181,9 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
           // 3 - Series
           _KeepAlivePage(
             child: MobileContentScreen(
-              key: ValueKey('mobile_series_${controller.seriesCategories.length}'),
+              key: ValueKey(
+                'mobile_series_${controller.seriesCategories.length}',
+              ),
               categories: controller.seriesCategories,
               contentType: ContentType.series,
               title: context.loc.series_plural,
@@ -185,7 +193,6 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
       ),
     );
   }
-
 
   // ========================
   // DESKTOP LAYOUT (sidebar-driven)
@@ -217,10 +224,7 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
 
   Widget _buildDesktopPageView(XtreamCodeHomeController controller) {
     _desktopPages ??= _buildDesktopPages(controller);
-    return IndexedStack(
-      index: _desktopIndex,
-      children: _desktopPages!,
-    );
+    return IndexedStack(index: _desktopIndex, children: _desktopPages!);
   }
 
   List<Widget> _buildDesktopPages(XtreamCodeHomeController controller) {

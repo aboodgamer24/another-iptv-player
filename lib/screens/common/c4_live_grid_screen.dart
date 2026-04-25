@@ -43,13 +43,16 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
   void initState() {
     super.initState();
     _searchController.addListener(() {
-      setState(() =>
-          _searchQuery = _searchController.text.toLowerCase().trim());
+      setState(
+        () => _searchQuery = _searchController.text.toLowerCase().trim(),
+      );
     });
     _categorySearchController.addListener(() {
-      setState(() =>
-          _categorySearchQuery =
-              _categorySearchController.text.toLowerCase().trim());
+      setState(
+        () => _categorySearchQuery = _categorySearchController.text
+            .toLowerCase()
+            .trim(),
+      );
     });
   }
 
@@ -120,10 +123,12 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     final filtered = _categorySearchQuery.isEmpty
         ? categories
         : categories
-            .where((c) => c.category.categoryName
-                .toLowerCase()
-                .contains(_categorySearchQuery))
-            .toList();
+              .where(
+                (c) => c.category.categoryName.toLowerCase().contains(
+                  _categorySearchQuery,
+                ),
+              )
+              .toList();
 
     return Container(
       width: _sidebarWidth,
@@ -139,8 +144,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
             child: Text(
               context.loc.live_streams.toUpperCase(),
               style: theme.textTheme.labelSmall?.copyWith(
@@ -152,36 +156,27 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
           ),
           // Search bar for categories
           Padding(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
             child: TextField(
               controller: _categorySearchController,
               style: const TextStyle(fontSize: 13),
               decoration: InputDecoration(
                 hintText: 'Search categories...',
-                hintStyle: TextStyle(
-                    fontSize: 13,
-                    color: theme.hintColor),
-                prefixIcon:
-                    const Icon(Icons.search_rounded, size: 18),
-                suffixIcon:
-                    _categorySearchQuery.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.close_rounded,
-                                size: 16),
-                            onPressed: () =>
-                                _categorySearchController.clear(),
-                          )
-                        : null,
+                hintStyle: TextStyle(fontSize: 13, color: theme.hintColor),
+                prefixIcon: const Icon(Icons.search_rounded, size: 18),
+                suffixIcon: _categorySearchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        onPressed: () => _categorySearchController.clear(),
+                      )
+                    : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor:
-                    theme.colorScheme.surface.withValues(alpha: 0.6),
-                contentPadding:
-                    const EdgeInsets.symmetric(vertical: 10),
+                fillColor: theme.colorScheme.surface.withValues(alpha: 0.6),
+                contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 isDense: true,
               ),
             ),
@@ -192,8 +187,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                 ? Center(
                     child: Text(
                       'No categories found',
-                      style: TextStyle(
-                          fontSize: 12, color: theme.hintColor),
+                      style: TextStyle(fontSize: 12, color: theme.hintColor),
                     ),
                   )
                 : ListView.builder(
@@ -203,12 +197,9 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                       final origIndex = _categorySearchQuery.isEmpty
                           ? index
                           : categories.indexOf(filtered[index]);
-                      final isSelected =
-                          _selectedCategoryIndex == origIndex;
+                      final isSelected = _selectedCategoryIndex == origIndex;
                       return _CategoryTile(
-                        title: filtered[index]
-                            .category
-                            .categoryName,
+                        title: filtered[index].category.categoryName,
                         isSelected: isSelected,
                         onTap: () {
                           setState(() {
@@ -224,7 +215,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     );
   }
 
-// ignore: unused_element
+  // ignore: unused_element
   Widget _buildSearchAndChannelList(
     ThemeData theme,
     FavoritesController favoritesController,
@@ -245,8 +236,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
               ),
               filled: true,
               fillColor: theme.colorScheme.surface,
-              contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 16,
+                vertical: 16,
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -272,15 +265,16 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                     border: isSelected
                         ? Border(
                             left: BorderSide(
-                                color: theme.colorScheme.primary, width: 3))
+                              color: theme.colorScheme.primary,
+                              width: 3,
+                            ),
+                          )
                         : null,
                   ),
                   child: InkWell(
-                    onTap: () =>
-                        setState(() => _selectedChannel = channel),
+                    onTap: () => setState(() => _selectedChannel = channel),
                     child: Padding(
-                      padding:
-                          const EdgeInsets.symmetric(horizontal: 16),
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Row(
                         children: [
                           Container(
@@ -292,10 +286,15 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                             ),
                             clipBehavior: Clip.antiAlias,
                             child: channel.imageUrl.isNotEmpty
-                                ? Image.network(channel.imageUrl,
-                                    fit: BoxFit.contain)
-                                : const Icon(Icons.live_tv_rounded,
-                                    size: 24, color: Colors.white24),
+                                ? Image.network(
+                                    channel.imageUrl,
+                                    fit: BoxFit.contain,
+                                  )
+                                : const Icon(
+                                    Icons.live_tv_rounded,
+                                    size: 24,
+                                    color: Colors.white24,
+                                  ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -339,21 +338,28 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     );
   }
 
-// ignore: unused_element
+  // ignore: unused_element
   Widget _buildInfoPanel(
-      ThemeData theme, FavoritesController favoritesController) {
+    ThemeData theme,
+    FavoritesController favoritesController,
+  ) {
     if (_selectedChannel == null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.tv_off_rounded,
-                size: 48,
-                color: theme.hintColor.withValues(alpha: 0.2)),
+            Icon(
+              Icons.tv_off_rounded,
+              size: 48,
+              color: theme.hintColor.withValues(alpha: 0.2),
+            ),
             const SizedBox(height: 16),
-            Text('No channel selected',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.hintColor)),
+            Text(
+              'No channel selected',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.hintColor,
+              ),
+            ),
           ],
         ),
       );
@@ -373,16 +379,22 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: [
                   BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.2),
-                      blurRadius: 20),
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 20,
+                  ),
                 ],
               ),
               clipBehavior: Clip.antiAlias,
               child: _selectedChannel!.imageUrl.isNotEmpty
-                  ? Image.network(_selectedChannel!.imageUrl,
-                      fit: BoxFit.contain)
-                  : const Icon(Icons.live_tv_rounded,
-                      size: 64, color: Colors.white10),
+                  ? Image.network(
+                      _selectedChannel!.imageUrl,
+                      fit: BoxFit.contain,
+                    )
+                  : const Icon(
+                      Icons.live_tv_rounded,
+                      size: 64,
+                      color: Colors.white10,
+                    ),
             ),
           ),
           const SizedBox(height: 32),
@@ -392,14 +404,14 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
               Expanded(
                 child: Text(
                   _selectedChannel!.name,
-                  style: theme.textTheme.headlineSmall
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: Colors.redAccent,
                   borderRadius: BorderRadius.circular(6),
@@ -407,9 +419,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                 child: const Text(
                   'LIVE',
                   style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold),
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -427,10 +440,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
               style: ElevatedButton.styleFrom(
                 backgroundColor: theme.colorScheme.primary,
                 foregroundColor: Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 20),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -442,32 +455,38 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                   favoritesController.toggleFavorite(_selectedChannel!),
               icon: Icon(
                 favoritesController.favorites.any(
-                        (f) => f.streamId == _selectedChannel!.id)
+                      (f) => f.streamId == _selectedChannel!.id,
+                    )
                     ? Icons.favorite_rounded
                     : Icons.favorite_border_rounded,
                 size: 18,
               ),
               label: Text(
                 favoritesController.favorites.any(
-                        (f) => f.streamId == _selectedChannel!.id)
+                      (f) => f.streamId == _selectedChannel!.id,
+                    )
                     ? 'Remove from Favorites'
                     : 'Add to Favorites',
               ),
               style: OutlinedButton.styleFrom(
-                foregroundColor: favoritesController.favorites
-                        .any((f) => f.streamId == _selectedChannel!.id)
+                foregroundColor:
+                    favoritesController.favorites.any(
+                      (f) => f.streamId == _selectedChannel!.id,
+                    )
                     ? Colors.redAccent
                     : Colors.white,
-                padding:
-                    const EdgeInsets.symmetric(vertical: 20),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 side: BorderSide(
-                  color: favoritesController.favorites.any(
-                          (f) => f.streamId == _selectedChannel!.id)
+                  color:
+                      favoritesController.favorites.any(
+                        (f) => f.streamId == _selectedChannel!.id,
+                      )
                       ? Colors.redAccent.withValues(alpha: 0.5)
                       : theme.dividerColor,
                 ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -481,9 +500,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
             ),
           ),
           const SizedBox(height: 16),
-          Text('No program info available.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: theme.hintColor)),
+          Text(
+            'No program info available.',
+            style: theme.textTheme.bodyMedium?.copyWith(color: theme.hintColor),
+          ),
         ],
       ),
     );
@@ -497,14 +517,12 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
     final filtered = _searchQuery.isEmpty
         ? channels
         : channels
-            .where((c) =>
-                c.name.toLowerCase().contains(_searchQuery))
-            .toList();
+              .where((c) => c.name.toLowerCase().contains(_searchQuery))
+              .toList();
 
     int selectedIndex = -1;
     if (_selectedChannel != null) {
-      selectedIndex =
-          filtered.indexWhere((c) => c.id == _selectedChannel!.id);
+      selectedIndex = filtered.indexWhere((c) => c.id == _selectedChannel!.id);
     }
 
     return Container(
@@ -521,19 +539,20 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
         children: [
           // Header
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
               color: Colors.black,
               border: Border(
-                bottom: BorderSide(
-                    color: Colors.grey.shade800, width: 1),
+                bottom: BorderSide(color: Colors.grey.shade800, width: 1),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.live_tv_rounded,
-                    size: 16, color: Colors.white54),
+                const Icon(
+                  Icons.live_tv_rounded,
+                  size: 16,
+                  color: Colors.white54,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -558,31 +577,36 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
               style: const TextStyle(fontSize: 13, color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search channels...',
-                hintStyle:
-                    TextStyle(fontSize: 13, color: Colors.grey.shade500),
-                prefixIcon: Icon(Icons.search_rounded,
-                    size: 18, color: Colors.grey.shade500),
+                hintStyle: TextStyle(fontSize: 13, color: Colors.grey.shade500),
+                prefixIcon: Icon(
+                  Icons.search_rounded,
+                  size: 18,
+                  color: Colors.grey.shade500,
+                ),
                 suffixIcon: _searchQuery.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.close_rounded,
-                            size: 16, color: Colors.grey.shade500),
+                        icon: Icon(
+                          Icons.close_rounded,
+                          size: 16,
+                          color: Colors.grey.shade500,
+                        ),
                         onPressed: () => _searchController.clear(),
                       )
                     : null,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide:
-                      BorderSide(color: Colors.grey.shade800, width: 1),
+                  borderSide: BorderSide(color: Colors.grey.shade800, width: 1),
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
-                  borderSide:
-                      BorderSide(color: Colors.grey.shade800, width: 1),
+                  borderSide: BorderSide(color: Colors.grey.shade800, width: 1),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                   borderSide: BorderSide(
-                      color: theme.colorScheme.primary, width: 1),
+                    color: theme.colorScheme.primary,
+                    width: 1,
+                  ),
                 ),
                 filled: true,
                 fillColor: Colors.grey.shade900,
@@ -598,7 +622,9 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                     child: Text(
                       'No channels found',
                       style: TextStyle(
-                          fontSize: 12, color: Colors.grey.shade600),
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                      ),
                     ),
                   )
                 : ListView.builder(
@@ -606,40 +632,39 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                     itemCount: filtered.length,
                     itemBuilder: (context, index) {
                       final channel = filtered[index];
-                      final isSelected =
-                          _selectedChannel?.id == channel.id;
-                      final isFavorited =
-                          favoritesController.favorites.any(
+                      final isSelected = _selectedChannel?.id == channel.id;
+                      final isFavorited = favoritesController.favorites.any(
                         (f) =>
                             f.streamId == channel.id &&
                             f.contentType == channel.contentType,
                       );
 
                       return InkWell(
-                        onTap: () => setState(
-                            () => _selectedChannel = channel),
+                        onTap: () => setState(() => _selectedChannel = channel),
                         child: Container(
                           height: 56,
                           margin: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
+                            horizontal: 8,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: isSelected
-                                ? theme.colorScheme.primary
-                                    .withValues(alpha: 0.18)
+                                ? theme.colorScheme.primary.withValues(
+                                    alpha: 0.18,
+                                  )
                                 : Colors.transparent,
-                            borderRadius:
-                                BorderRadius.circular(6),
+                            borderRadius: BorderRadius.circular(6),
                             border: isSelected
                                 ? Border.all(
-                                    color: theme.colorScheme.primary
-                                        .withValues(alpha: 0.5),
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.5,
+                                    ),
                                     width: 1,
                                   )
                                 : null,
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: Row(
                               children: [
                                 Container(
@@ -647,8 +672,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                                   height: 36,
                                   decoration: BoxDecoration(
                                     color: Colors.grey.shade900,
-                                    borderRadius:
-                                        BorderRadius.circular(4),
+                                    borderRadius: BorderRadius.circular(4),
                                   ),
                                   clipBehavior: Clip.antiAlias,
                                   child: channel.imageUrl.isNotEmpty
@@ -657,10 +681,10 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                                           fit: BoxFit.contain,
                                           errorBuilder: (_, __, ___) =>
                                               const Icon(
-                                            Icons.live_tv,
-                                            size: 18,
-                                            color: Colors.white24,
-                                          ),
+                                                Icons.live_tv,
+                                                size: 18,
+                                                color: Colors.white24,
+                                              ),
                                         )
                                       : const Icon(
                                           Icons.live_tv,
@@ -682,37 +706,32 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                                           : FontWeight.normal,
                                     ),
                                     maxLines: 2,
-                                    overflow:
-                                        TextOverflow.ellipsis,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
                                 // Favorite button
                                 IconButton(
                                   padding: EdgeInsets.zero,
-                                  constraints:
-                                      const BoxConstraints(
+                                  constraints: const BoxConstraints(
                                     minWidth: 32,
                                     minHeight: 32,
                                   ),
                                   icon: Icon(
                                     isFavorited
                                         ? Icons.favorite_rounded
-                                        : Icons
-                                            .favorite_border_rounded,
+                                        : Icons.favorite_border_rounded,
                                     color: isFavorited
                                         ? Colors.redAccent
                                         : Colors.grey.shade600,
                                     size: 18,
                                   ),
-                                  onPressed: () =>
-                                      favoritesController
-                                          .toggleFavorite(channel),
+                                  onPressed: () => favoritesController
+                                      .toggleFavorite(channel),
                                 ),
                                 if (isSelected)
                                   Icon(
                                     Icons.play_arrow_rounded,
-                                    color:
-                                        theme.colorScheme.primary,
+                                    color: theme.colorScheme.primary,
                                     size: 16,
                                   ),
                               ],
@@ -741,9 +760,6 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
 
     final categories = controller.liveCategories!;
 
-
-
-
     return ValueListenableBuilder<bool>(
       valueListenable: fullscreenNotifier,
       builder: (context, isFullscreen, _) {
@@ -755,8 +771,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
               if (!isFullscreen) ...[
                 SizedBox(
                   width: _sidebarWidth,
-                  child: _buildCategorySidebar(
-                      theme, controller, categories),
+                  child: _buildCategorySidebar(theme, controller, categories),
                 ),
 
                 // Sidebar splitter
@@ -766,16 +781,13 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                     behavior: HitTestBehavior.translucent,
                     onHorizontalDragUpdate: (d) {
                       setState(() {
-                        _sidebarWidth =
-                            (_sidebarWidth + d.delta.dx)
-                                .clamp(_minSidebarWidth,
-                                    _maxSidebarWidth);
+                        _sidebarWidth = (_sidebarWidth + d.delta.dx).clamp(
+                          _minSidebarWidth,
+                          _maxSidebarWidth,
+                        );
                       });
                     },
-                    child: Container(
-                      width: 8,
-                      color: Colors.transparent,
-                    ),
+                    child: Container(width: 8, color: Colors.transparent),
                   ),
                 ),
               ],
@@ -816,10 +828,7 @@ class _C4LiveGridScreenState extends State<C4LiveGridScreen>
                                   );
                             });
                           },
-                          child: Container(
-                            width: 8,
-                            color: Colors.transparent,
-                          ),
+                          child: Container(width: 8, color: Colors.transparent),
                         ),
                       ),
                       SizedBox(
@@ -861,8 +870,7 @@ class _CategoryTile extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(
-              horizontal: 16, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colorScheme.primary.withValues(alpha: 0.2)
@@ -878,9 +886,7 @@ class _CategoryTile extends StatelessWidget {
             title,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: isSelected ? Colors.white : theme.hintColor,
-              fontWeight: isSelected
-                  ? FontWeight.bold
-                  : FontWeight.normal,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,

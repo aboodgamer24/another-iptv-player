@@ -56,7 +56,8 @@ class PlaylistController extends ChangeNotifier {
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => MainNavigationScreenProvider(playlist: playlist),
+          builder: (context) =>
+              MainNavigationScreenProvider(playlist: playlist),
         ),
         (route) => false,
       );

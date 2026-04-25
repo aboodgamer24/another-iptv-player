@@ -4,6 +4,7 @@ import 'package:another_iptv_player/controllers/watch_later_controller.dart';
 import 'package:another_iptv_player/controllers/home_rails_controller.dart';
 import 'package:another_iptv_player/screens/app_initializer_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +14,6 @@ import 'l10n/app_localizations.dart';
 import 'l10n/supported_languages.dart';
 import 'services/sync_service.dart';
 import 'services/app_lifecycle_sync.dart';
-
 
 import 'package:another_iptv_player/utils/app_config.dart';
 import 'package:window_manager/window_manager.dart';
@@ -26,7 +26,7 @@ Future<void> main() async {
   await PlatformUtils.detectTV();
   await AppConfig.load();
   await SyncService.instance.init();
-  
+
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
@@ -66,7 +66,6 @@ class AppLifecycleSyncWrapper extends StatelessWidget {
   }
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -75,24 +74,38 @@ class MyApp extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return MaterialApp(
-      locale: localeProvider.locale,
-      supportedLocales: supportedLanguages
-          .map((lang) => Locale(lang['code']))
-          .toList(),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      title: 'Another IPTV Player',
-      // Use the named theme system — supports Light, Dark, and Sky Blue
-      theme: themeProvider.currentThemeData,
-      darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
-      themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
-      home: AppInitializerScreen(),
-      debugShowCheckedModeBanner: false,
+    return FocusTraversalGroup(
+      policy: ReadingOrderTraversalPolicy(),
+      child: MaterialApp(
+        locale: localeProvider.locale,
+        supportedLocales: supportedLanguages
+            .map((lang) => Locale(lang['code']))
+            .toList(),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        title: 'Another IPTV Player',
+        // Use the named theme system — supports Light, Dark, and Sky Blue
+        theme: themeProvider.currentThemeData,
+        darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
+        themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
+        home: const AppInitializerScreen(),
+        debugShowCheckedModeBanner: false,
+        shortcuts: {
+          ...WidgetsApp.defaultShortcuts,
+          const SingleActivator(LogicalKeyboardKey.arrowUp):
+              const DirectionalFocusIntent(TraversalDirection.up),
+          const SingleActivator(LogicalKeyboardKey.arrowDown):
+              const DirectionalFocusIntent(TraversalDirection.down),
+          const SingleActivator(LogicalKeyboardKey.arrowLeft):
+              const DirectionalFocusIntent(TraversalDirection.left),
+          const SingleActivator(LogicalKeyboardKey.arrowRight):
+              const DirectionalFocusIntent(TraversalDirection.right),
+        },
+      ),
     );
   }
 }

@@ -103,8 +103,7 @@ class _DesktopMovieDetailScreenState extends State<DesktopMovieDetailScreen> {
           _vodInfo = info;
         });
       }
-    } catch (_) {
-    }
+    } catch (_) {}
   }
 
   Future<void> _loadCategoryMovies() async {

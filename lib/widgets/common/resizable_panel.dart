@@ -42,8 +42,10 @@ class _ResizablePanelState extends State<ResizablePanel> {
               behavior: HitTestBehavior.translucent,
               onHorizontalDragUpdate: (details) {
                 setState(() {
-                  _width = (_width - details.delta.dx)
-                      .clamp(widget.minWidth, widget.maxWidth);
+                  _width = (_width - details.delta.dx).clamp(
+                    widget.minWidth,
+                    widget.maxWidth,
+                  );
                 });
               },
               child: Container(
@@ -52,9 +54,9 @@ class _ResizablePanelState extends State<ResizablePanel> {
                 child: Center(
                   child: Container(
                     width: 1,
-                    color: Theme.of(context)
-                        .dividerColor
-                        .withValues(alpha: 0.3),
+                    color: Theme.of(
+                      context,
+                    ).dividerColor.withValues(alpha: 0.3),
                   ),
                 ),
               ),

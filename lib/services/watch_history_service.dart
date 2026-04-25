@@ -109,16 +109,20 @@ class WatchHistoryService {
     () async {
       try {
         final entries = await getContinueWatching(playlistId);
-        final data = entries.map((h) => {
-          'streamId': h.streamId,
-          'title': h.title,
-          'imagePath': h.imagePath,
-          'contentType': h.contentType.toString(),
-          'playlistId': h.playlistId,
-          'lastWatched': h.lastWatched.toIso8601String(),
-          'watchDuration': h.watchDuration?.inMilliseconds,
-          'totalDuration': h.totalDuration?.inMilliseconds,
-        }).toList();
+        final data = entries
+            .map(
+              (h) => {
+                'streamId': h.streamId,
+                'title': h.title,
+                'imagePath': h.imagePath,
+                'contentType': h.contentType.toString(),
+                'playlistId': h.playlistId,
+                'lastWatched': h.lastWatched.toIso8601String(),
+                'watchDuration': h.watchDuration?.inMilliseconds,
+                'totalDuration': h.totalDuration?.inMilliseconds,
+              },
+            )
+            .toList();
         SyncService.instance.pushField('continue_watching', data);
       } catch (e) {
         debugPrint('[WatchHistory] Auto-sync failed: $e');

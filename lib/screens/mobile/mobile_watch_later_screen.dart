@@ -40,7 +40,12 @@ class _MobileWatchLaterScreenState extends State<MobileWatchLaterScreen> {
           itemCount: controller.watchLaterItems.length,
           itemBuilder: (context, index) {
             final item = controller.watchLaterItems[index];
-            final contentItem = ContentItem(item.streamId, item.title, item.imagePath ?? '', item.contentType);
+            final contentItem = ContentItem(
+              item.streamId,
+              item.title,
+              item.imagePath ?? '',
+              item.contentType,
+            );
 
             return Dismissible(
               key: ValueKey(item.id),
@@ -60,12 +65,18 @@ class _MobileWatchLaterScreenState extends State<MobileWatchLaterScreen> {
                     width: 80,
                     height: 56,
                     fit: BoxFit.cover,
-                    errorWidget: (_, __, ___) => const Icon(Icons.movie, color: Colors.white24),
+                    errorWidget: (_, __, ___) =>
+                        const Icon(Icons.movie, color: Colors.white24),
                   ),
                 ),
-                title: Text(item.title, style: const TextStyle(color: Colors.white, fontSize: 14)),
+                title: Text(
+                  item.title,
+                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                ),
                 subtitle: Text(
-                  item.contentType == ContentType.vod ? context.loc.movies : context.loc.series_plural,
+                  item.contentType == ContentType.vod
+                      ? context.loc.movies
+                      : context.loc.series_plural,
                   style: const TextStyle(color: Colors.white54, fontSize: 12),
                 ),
                 trailing: IconButton(
@@ -73,7 +84,7 @@ class _MobileWatchLaterScreenState extends State<MobileWatchLaterScreen> {
                   onPressed: () => controller.toggleWatchLater(contentItem),
                 ),
                 onTap: () {
-                   if (item.contentType == ContentType.series) {
+                  if (item.contentType == ContentType.series) {
                     navigateByContentType(context, contentItem);
                   } else {
                     controller.playContent(context, item);
@@ -94,7 +105,10 @@ class _MobileWatchLaterScreenState extends State<MobileWatchLaterScreen> {
         children: [
           const Icon(Icons.schedule, size: 64, color: Colors.white24),
           const SizedBox(height: 16),
-          Text(context.loc.watch_later_empty_message, style: const TextStyle(color: Colors.white54)),
+          Text(
+            context.loc.watch_later_empty_message,
+            style: const TextStyle(color: Colors.white54),
+          ),
         ],
       ),
     );

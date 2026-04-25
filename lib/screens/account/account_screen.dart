@@ -10,7 +10,6 @@ import '../welcome_screen.dart';
 import '../../utils/app_config.dart';
 import '../../utils/app_transitions.dart';
 
-
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
   @override
@@ -42,7 +41,10 @@ class _AccountScreenState extends State<AccountScreen> {
   }
 
   Future<void> _submit() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       if (_isRegister) {
         await SyncService.instance.register(
@@ -63,7 +65,12 @@ class _AccountScreenState extends State<AccountScreen> {
       _user = await UserPreferences.getSyncUser();
       setState(() => _loggedIn = true);
     } on Exception catch (e) {
-      setState(() => _error = e.toString().replaceAll('DioException', 'Connection error'));
+      setState(
+        () => _error = e.toString().replaceAll(
+          'DioException',
+          'Connection error',
+        ),
+      );
     } finally {
       setState(() => _loading = false);
     }
@@ -80,13 +87,14 @@ class _AccountScreenState extends State<AccountScreen> {
     try {
       // 1. Push everything before logging out (existing behaviour)
       await _pushAll();
-      
+
       // 2. Wipe all local data
       final db = getIt<AppDatabase>();
-      await db.deleteAllPlaylists();          // wipe all playlists
-      await db.deleteAllFavorites();          // wipe all favorites (all playlists)
-      await db.deleteAllWatchLater();         // wipe all watch later (all playlists)
-      await db.deleteAllWatchHistories();      // wipe all continue watching (all playlists)
+      await db.deleteAllPlaylists(); // wipe all playlists
+      await db.deleteAllFavorites(); // wipe all favorites (all playlists)
+      await db.deleteAllWatchLater(); // wipe all watch later (all playlists)
+      await db
+          .deleteAllWatchHistories(); // wipe all continue watching (all playlists)
       await UserPreferences.removeLastPlaylist();
       await AppConfig.setTmdbApiKey('');
       await UserPreferences.clearSyncedSettings();
@@ -94,7 +102,7 @@ class _AccountScreenState extends State<AccountScreen> {
 
       // 3. Clear auth session
       await SyncService.instance.logout();
-      
+
       // 4. Navigate to Welcome screen, removing all routes
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
@@ -118,41 +126,53 @@ class _AccountScreenState extends State<AccountScreen> {
       // Read favorites from Drift DB
       final db = getIt<AppDatabase>();
       final favorites = await db.getAllFavorites();
-      final favoritesJson = favorites.map((f) => {
-        'id': f.id,
-        'playlistId': f.playlistId,
-        'contentType': f.contentType.toString(),
-        'streamId': f.streamId,
-        'episodeId': f.episodeId,
-        'name': f.name,
-        'imagePath': f.imagePath,
-        'sortOrder': f.sortOrder,
-      }).toList();
+      final favoritesJson = favorites
+          .map(
+            (f) => {
+              'id': f.id,
+              'playlistId': f.playlistId,
+              'contentType': f.contentType.toString(),
+              'streamId': f.streamId,
+              'episodeId': f.episodeId,
+              'name': f.name,
+              'imagePath': f.imagePath,
+              'sortOrder': f.sortOrder,
+            },
+          )
+          .toList();
 
       // Read watch later from Drift DB
       final watchLaterItems = await db.getAllWatchLater();
-      final watchLaterJson = watchLaterItems.map((w) => {
-        'id': w.id,
-        'playlistId': w.playlistId,
-        'contentType': w.contentType.toString(),
-        'streamId': w.streamId,
-        'title': w.title,
-        'imagePath': w.imagePath,
-      }).toList();
+      final watchLaterJson = watchLaterItems
+          .map(
+            (w) => {
+              'id': w.id,
+              'playlistId': w.playlistId,
+              'contentType': w.contentType.toString(),
+              'streamId': w.streamId,
+              'title': w.title,
+              'imagePath': w.imagePath,
+            },
+          )
+          .toList();
 
       // Read watch history from Drift DB
       final watchHistories = await db.getAllWatchHistories();
-      final watchHistoriesJson = watchHistories.map((w) => {
-        'playlistId':    w.playlistId,
-        'contentType':   w.contentType.toString(),
-        'streamId':      w.streamId,
-        'seriesId':      w.seriesId,
-        'watchDuration': w.watchDuration,
-        'totalDuration': w.totalDuration,
-        'lastWatched':   w.lastWatched.toIso8601String(),
-        'imagePath':     w.imagePath,
-        'title':         w.title,
-      }).toList();
+      final watchHistoriesJson = watchHistories
+          .map(
+            (w) => {
+              'playlistId': w.playlistId,
+              'contentType': w.contentType.toString(),
+              'streamId': w.streamId,
+              'seriesId': w.seriesId,
+              'watchDuration': w.watchDuration,
+              'totalDuration': w.totalDuration,
+              'lastWatched': w.lastWatched.toIso8601String(),
+              'imagePath': w.imagePath,
+              'title': w.title,
+            },
+          )
+          .toList();
 
       // Build settings snapshot
       final settings = await _buildSettings();
@@ -165,7 +185,9 @@ class _AccountScreenState extends State<AccountScreen> {
         'settings': settings,
       });
 
-      debugPrint('[AccountScreen] pushAll: pushed ${playlistsJson.length} playlists, ${favoritesJson.length} favorites, ${watchLaterJson.length} watch later items, ${watchHistoriesJson.length} watch histories');
+      debugPrint(
+        '[AccountScreen] pushAll: pushed ${playlistsJson.length} playlists, ${favoritesJson.length} favorites, ${watchLaterJson.length} watch later items, ${watchHistoriesJson.length} watch histories',
+      );
     } catch (e) {
       debugPrint('[AccountScreen] _pushAll error: $e');
       rethrow;
@@ -191,7 +213,12 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget _buildProfile(ThemeData theme) {
     final name = _user['display_name'] ?? _user['email'] ?? 'User';
     final email = _user['email'] ?? '';
-    final color = Color(int.tryParse((_user['avatar_color'] ?? '#01696f').replaceAll('#', '0xFF')) ?? 0xFF01696f);
+    final color = Color(
+      int.tryParse(
+            (_user['avatar_color'] ?? '#01696f').replaceAll('#', '0xFF'),
+          ) ??
+          0xFF01696f,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -202,15 +229,29 @@ class _AccountScreenState extends State<AccountScreen> {
               backgroundColor: color,
               child: Text(
                 name.substring(0, 1).toUpperCase(),
-                style: const TextStyle(fontSize: 24, color: Colors.white, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 24,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(width: 16),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(name, style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold)),
-                Text(email, style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6))),
+                Text(
+                  name,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  email,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
               ],
             ),
           ],
@@ -223,7 +264,9 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () async {
             await _pushAll();
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Synced successfully')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Synced successfully')),
+            );
           },
         ),
         _SyncTile(
@@ -233,7 +276,9 @@ class _AccountScreenState extends State<AccountScreen> {
           onTap: () async {
             await _pullAndApply();
             if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Data pulled from server')));
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Data pulled from server')),
+            );
           },
         ),
         const SizedBox(height: 24),
@@ -247,7 +292,9 @@ class _AccountScreenState extends State<AccountScreen> {
             label: const Text('Sign Out'),
             style: OutlinedButton.styleFrom(
               foregroundColor: theme.colorScheme.error,
-              side: BorderSide(color: theme.colorScheme.error.withValues(alpha: 0.4)),
+              side: BorderSide(
+                color: theme.colorScheme.error.withValues(alpha: 0.4),
+              ),
               padding: const EdgeInsets.symmetric(vertical: 16),
             ),
           ),
@@ -262,12 +309,16 @@ class _AccountScreenState extends State<AccountScreen> {
       children: [
         Text(
           _isRegister ? 'Create Account' : 'Sign In',
-          style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           'Connect to your self-hosted sync server',
-          style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurface.withValues(alpha: 0.6)),
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
         ),
         const SizedBox(height: 32),
         TextField(
@@ -321,9 +372,21 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.error_outline_rounded, color: theme.colorScheme.error, size: 18),
+                Icon(
+                  Icons.error_outline_rounded,
+                  color: theme.colorScheme.error,
+                  size: 18,
+                ),
                 const SizedBox(width: 8),
-                Expanded(child: Text(_error!, style: TextStyle(color: theme.colorScheme.error, fontSize: 13))),
+                Expanded(
+                  child: Text(
+                    _error!,
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -333,17 +396,33 @@ class _AccountScreenState extends State<AccountScreen> {
           width: double.infinity,
           child: FilledButton(
             onPressed: _loading ? null : _submit,
-            style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 16)),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(vertical: 16),
+            ),
             child: _loading
-                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
                 : Text(_isRegister ? 'Create Account' : 'Sign In'),
           ),
         ),
         const SizedBox(height: 16),
         Center(
           child: TextButton(
-            onPressed: () => setState(() { _isRegister = !_isRegister; _error = null; }),
-            child: Text(_isRegister ? 'Already have an account? Sign In' : 'No account? Register'),
+            onPressed: () => setState(() {
+              _isRegister = !_isRegister;
+              _error = null;
+            }),
+            child: Text(
+              _isRegister
+                  ? 'Already have an account? Sign In'
+                  : 'No account? Register',
+            ),
           ),
         ),
       ],
@@ -356,19 +435,34 @@ class _SyncTile extends StatelessWidget {
   final String title;
   final String subtitle;
   final VoidCallback onTap;
-  const _SyncTile({required this.icon, required this.title, required this.subtitle, required this.onTap});
+  const _SyncTile({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: Container(
-        width: 40, height: 40,
-        decoration: BoxDecoration(color: theme.colorScheme.primary.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(10)),
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
         child: Icon(icon, color: theme.colorScheme.primary, size: 20),
       ),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle, style: TextStyle(color: theme.colorScheme.onSurface.withValues(alpha: 0.6), fontSize: 13)),
+      subtitle: Text(
+        subtitle,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+          fontSize: 13,
+        ),
+      ),
       onTap: onTap,
     );
   }

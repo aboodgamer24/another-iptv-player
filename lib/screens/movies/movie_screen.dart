@@ -1,4 +1,3 @@
-
 import 'package:another_iptv_player/l10n/localization_extension.dart';
 import 'package:another_iptv_player/models/api_configuration_model.dart';
 import 'package:another_iptv_player/models/content_type.dart';
@@ -465,7 +464,9 @@ class _MovieScreenState extends State<MovieScreen> {
               colors: [
                 Colors.transparent,
                 Colors.black.withValues(alpha: 0.2),
-                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
+                Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.8),
                 Theme.of(context).scaffoldBackgroundColor,
               ],
               stops: const [0.0, 0.4, 0.8, 1.0],
@@ -924,9 +925,9 @@ class _MovieScreenState extends State<MovieScreen> {
 
     if (!launched) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.loc.error_occurred_title)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.loc.error_occurred_title)));
     }
   }
 

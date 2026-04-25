@@ -19,11 +19,15 @@ class SyncService {
   bool get isLoggedIn => _token != null && _token!.isNotEmpty;
 
   Map<String, String> get _headers => {
-        'Content-Type': 'application/json',
-        if (_token != null) 'Authorization': 'Bearer $_token',
-      };
+    'Content-Type': 'application/json',
+    if (_token != null) 'Authorization': 'Bearer $_token',
+  };
 
-  Future<Map<String, dynamic>> login(String serverUrl, String email, String password) async {
+  Future<Map<String, dynamic>> login(
+    String serverUrl,
+    String email,
+    String password,
+  ) async {
     final response = await http.post(
       Uri.parse('$serverUrl/auth/login'),
       headers: {'Content-Type': 'application/json'},
@@ -37,11 +41,20 @@ class SyncService {
     throw Exception('Login failed: ${response.statusCode}');
   }
 
-  Future<Map<String, dynamic>> register(String serverUrl, String email, String password, String displayName) async {
+  Future<Map<String, dynamic>> register(
+    String serverUrl,
+    String email,
+    String password,
+    String displayName,
+  ) async {
     final response = await http.post(
       Uri.parse('$serverUrl/auth/register'),
       headers: {'Content-Type': 'application/json'},
-      body: json.encode({'email': email, 'password': password, 'displayName': displayName}),
+      body: json.encode({
+        'email': email,
+        'password': password,
+        'displayName': displayName,
+      }),
     );
     if (response.statusCode >= 200 && response.statusCode < 300) {
       final data = json.decode(response.body);

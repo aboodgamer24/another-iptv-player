@@ -11,10 +11,12 @@ class MobileGlobalSearchScreen extends StatefulWidget {
   const MobileGlobalSearchScreen({super.key});
 
   @override
-  State<MobileGlobalSearchScreen> createState() => _MobileGlobalSearchScreenState();
+  State<MobileGlobalSearchScreen> createState() =>
+      _MobileGlobalSearchScreenState();
 }
 
-class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> with SingleTickerProviderStateMixin {
+class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen>
+    with SingleTickerProviderStateMixin {
   final TextEditingController _searchController = TextEditingController();
   late TabController _tabController;
   Timer? _debounce;
@@ -41,7 +43,10 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
 
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce?.cancel();
-    _debounce = Timer(const Duration(milliseconds: 500), () => _performSearch(query));
+    _debounce = Timer(
+      const Duration(milliseconds: 500),
+      () => _performSearch(query),
+    );
   }
 
   Future<void> _performSearch(String query) async {
@@ -62,9 +67,52 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
       if (repo == null) return;
 
       final results = await Future.wait([
-        repo.searchLiveStreams(query).then((streams) => streams.map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.liveStream, liveStream: x)).toList()),
-        repo.searchMovies(query).then((movies) => movies.map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.vod, containerExtension: x.containerExtension, vodStream: x)).toList()),
-        repo.searchSeries(query).then((series) => series.map((x) => ContentItem(x.seriesId, x.name, x.cover ?? '', ContentType.series, seriesStream: x)).toList()),
+        repo
+            .searchLiveStreams(query)
+            .then(
+              (streams) => streams
+                  .map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.liveStream,
+                      liveStream: x,
+                    ),
+                  )
+                  .toList(),
+            ),
+        repo
+            .searchMovies(query)
+            .then(
+              (movies) => movies
+                  .map(
+                    (x) => ContentItem(
+                      x.streamId,
+                      x.name,
+                      x.streamIcon,
+                      ContentType.vod,
+                      containerExtension: x.containerExtension,
+                      vodStream: x,
+                    ),
+                  )
+                  .toList(),
+            ),
+        repo
+            .searchSeries(query)
+            .then(
+              (series) => series
+                  .map(
+                    (x) => ContentItem(
+                      x.seriesId,
+                      x.name,
+                      x.cover ?? '',
+                      ContentType.series,
+                      seriesStream: x,
+                    ),
+                  )
+                  .toList(),
+            ),
       ]);
 
       if (mounted) {
@@ -114,7 +162,10 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
                 controller: _tabController,
                 isScrollable: true,
                 tabs: [
-                  Tab(text: 'All (${_liveResults.length + _movieResults.length + _seriesResults.length})'),
+                  Tab(
+                    text:
+                        'All (${_liveResults.length + _movieResults.length + _seriesResults.length})',
+                  ),
                   Tab(text: 'Live (${_liveResults.length})'),
                   Tab(text: 'Movies (${_movieResults.length})'),
                   Tab(text: 'Series (${_seriesResults.length})'),
@@ -125,16 +176,20 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
       body: _isSearching
           ? const Center(child: CircularProgressIndicator())
           : _hasSearched
-              ? TabBarView(
-                  controller: _tabController,
-                  children: [
-                    _buildResultsList([..._liveResults, ..._movieResults, ..._seriesResults]),
-                    _buildResultsList(_liveResults),
-                    _buildResultsList(_movieResults),
-                    _buildResultsList(_seriesResults),
-                  ],
-                )
-              : _buildInitialState(),
+          ? TabBarView(
+              controller: _tabController,
+              children: [
+                _buildResultsList([
+                  ..._liveResults,
+                  ..._movieResults,
+                  ..._seriesResults,
+                ]),
+                _buildResultsList(_liveResults),
+                _buildResultsList(_movieResults),
+                _buildResultsList(_seriesResults),
+              ],
+            )
+          : _buildInitialState(),
     );
   }
 
@@ -145,7 +200,10 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
         children: [
           const Icon(Icons.search, size: 64, color: Colors.white24),
           const SizedBox(height: 16),
-          Text(context.loc.search, style: const TextStyle(color: Colors.white54)),
+          Text(
+            context.loc.search,
+            style: const TextStyle(color: Colors.white54),
+          ),
         ],
       ),
     );
@@ -153,7 +211,12 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
 
   Widget _buildResultsList(List<ContentItem> items) {
     if (items.isEmpty) {
-      return Center(child: Text(context.loc.not_found_in_category, style: const TextStyle(color: Colors.white54)));
+      return Center(
+        child: Text(
+          context.loc.not_found_in_category,
+          style: const TextStyle(color: Colors.white54),
+        ),
+      );
     }
 
     return ListView.builder(
@@ -168,13 +231,21 @@ class _MobileGlobalSearchScreenState extends State<MobileGlobalSearchScreen> wit
               imageUrl: item.imageUrl,
               width: 50,
               height: 40,
-              fit: item.contentType == ContentType.liveStream ? BoxFit.contain : BoxFit.cover,
-              errorWidget: (_, __, ___) => const Icon(Icons.movie, color: Colors.white24),
+              fit: item.contentType == ContentType.liveStream
+                  ? BoxFit.contain
+                  : BoxFit.cover,
+              errorWidget: (_, __, ___) =>
+                  const Icon(Icons.movie, color: Colors.white24),
             ),
           ),
-          title: Text(item.name, style: const TextStyle(color: Colors.white, fontSize: 14)),
+          title: Text(
+            item.name,
+            style: const TextStyle(color: Colors.white, fontSize: 14),
+          ),
           subtitle: Text(
-            item.contentType == ContentType.liveStream ? 'Live' : (item.contentType == ContentType.vod ? 'Movie' : 'Series'),
+            item.contentType == ContentType.liveStream
+                ? 'Live'
+                : (item.contentType == ContentType.vod ? 'Movie' : 'Series'),
             style: const TextStyle(color: Colors.white54, fontSize: 12),
           ),
           onTap: () => navigateByContentType(context, item),

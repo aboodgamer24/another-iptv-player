@@ -11,7 +11,6 @@ import '../services/playlist_service.dart';
 import 'main_navigation_screen_provider.dart';
 import 'playlist_screen.dart';
 
-
 class PostLoginChoiceScreen extends StatefulWidget {
   const PostLoginChoiceScreen({super.key});
 
@@ -81,8 +80,10 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
     // Step 2: Refresh playlist controller
     setState(() => _loadingMessage = 'Loading playlists...');
     try {
-      final playlistController =
-          Provider.of<PlaylistController>(context, listen: false);
+      final playlistController = Provider.of<PlaylistController>(
+        context,
+        listen: false,
+      );
       await playlistController.loadPlaylists(context);
     } catch (_) {}
 
@@ -117,11 +118,14 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
       try {
         final repo = AppState.xtreamCodeRepository!;
         await Future.wait([
-          repo.getLiveCategories(forceRefresh: true)
+          repo
+              .getLiveCategories(forceRefresh: true)
               .then((_) => repo.getLiveChannelsFromApi()),
-          repo.getVodCategories(forceRefresh: true)
+          repo
+              .getVodCategories(forceRefresh: true)
               .then((_) => repo.getMoviesFromApi()),
-          repo.getSeriesCategories(forceRefresh: true)
+          repo
+              .getSeriesCategories(forceRefresh: true)
               .then((_) => repo.getSeriesFromApi()),
         ]);
         debugPrint('[PostLoginChoice] Content pre-fetch complete');
@@ -237,7 +241,10 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
           child: SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 40,
+                ),
                 child: ConstrainedBox(
                   constraints: const BoxConstraints(maxWidth: 500),
                   child: Column(
@@ -282,8 +289,10 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
                         colorScheme: colorScheme,
                         icon: Icons.cloud_download_outlined,
                         title: 'Restore My Data',
-                        subtitle: 'Pull your playlists, favorites, and settings from your account',
-                        isLoading: false, // loading is handled by full-screen overlay now
+                        subtitle:
+                            'Pull your playlists, favorites, and settings from your account',
+                        isLoading:
+                            false, // loading is handled by full-screen overlay now
                         onTap: _restoreFromCloud,
                       ),
                       const SizedBox(height: 16),
@@ -353,7 +362,9 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
                           Text(
                             'Restoring your data...',
                             style: TextStyle(
-                              color: colorScheme.onSurface.withValues(alpha: 0.7),
+                              color: colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                           ),
                         ],
@@ -366,11 +377,7 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
                       SizedBox(
                         width: 48,
                         height: 48,
-                        child: Icon(
-                          icon,
-                          size: 40,
-                          color: colorScheme.primary,
-                        ),
+                        child: Icon(icon, size: 40, color: colorScheme.primary),
                       ),
                       const SizedBox(width: 16),
                       // Text content
@@ -391,7 +398,9 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
                               subtitle,
                               style: TextStyle(
                                 fontSize: 13,
-                                color: colorScheme.onSurface.withValues(alpha: 0.6),
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.6,
+                                ),
                               ),
                             ),
                           ],
@@ -409,5 +418,4 @@ class _PostLoginChoiceScreenState extends State<PostLoginChoiceScreen>
       ),
     );
   }
-
 }

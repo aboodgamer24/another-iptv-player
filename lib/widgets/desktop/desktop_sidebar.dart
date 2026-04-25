@@ -198,9 +198,7 @@ class _DesktopSidebarState extends State<DesktopSidebar>
           decoration: BoxDecoration(
             color: isSelected
                 ? const Color(0xFF2C52FF).withValues(alpha: 0.15)
-                : (isHovered
-                      ? const Color(0xFF1E2128)
-                      : Colors.transparent),
+                : (isHovered ? const Color(0xFF1E2128) : Colors.transparent),
             borderRadius: BorderRadius.circular(10),
             border: Border.all(
               color: isSelected
@@ -209,8 +207,9 @@ class _DesktopSidebarState extends State<DesktopSidebar>
             ),
           ),
           child: Row(
-            mainAxisAlignment:
-                showLabel ? MainAxisAlignment.start : MainAxisAlignment.center,
+            mainAxisAlignment: showLabel
+                ? MainAxisAlignment.start
+                : MainAxisAlignment.center,
             children: [
               Icon(
                 item.icon,
@@ -228,8 +227,9 @@ class _DesktopSidebarState extends State<DesktopSidebar>
                     item.label,
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight:
-                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontWeight: isSelected
+                          ? FontWeight.w600
+                          : FontWeight.w500,
                       color: isSelected
                           ? Colors.white
                           : (isHovered

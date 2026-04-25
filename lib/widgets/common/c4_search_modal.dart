@@ -13,7 +13,7 @@ class C4SearchModal extends StatefulWidget {
     return showGeneralDialog(
       context: context,
       barrierDismissible: true,
-       barrierLabel: 'Search',
+      barrierLabel: 'Search',
       barrierColor: Colors.black.withValues(alpha: 0.85),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
@@ -39,7 +39,7 @@ class _C4SearchModalState extends State<C4SearchModal> {
   final TextEditingController _controller = TextEditingController();
   final FocusNode _inputFocusNode = FocusNode();
   final IptvRepository _repository = AppState.xtreamCodeRepository!;
-  
+
   List<ContentItem> _results = [];
   bool _isLoading = false;
 
@@ -65,21 +65,57 @@ class _C4SearchModalState extends State<C4SearchModal> {
     }
 
     setState(() => _isLoading = true);
-    
+
     try {
       final List<ContentItem> allResults = [];
-      
+
       // 1. Search Live
       final live = await _repository.searchLiveStreams(query);
-      allResults.addAll(live.take(10).map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.liveStream, liveStream: x)));
-      
+      allResults.addAll(
+        live
+            .take(10)
+            .map(
+              (x) => ContentItem(
+                x.streamId,
+                x.name,
+                x.streamIcon,
+                ContentType.liveStream,
+                liveStream: x,
+              ),
+            ),
+      );
+
       // 2. Search Movies
       final movies = await _repository.searchMovies(query);
-      allResults.addAll(movies.take(10).map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.vod, vodStream: x)));
-      
+      allResults.addAll(
+        movies
+            .take(10)
+            .map(
+              (x) => ContentItem(
+                x.streamId,
+                x.name,
+                x.streamIcon,
+                ContentType.vod,
+                vodStream: x,
+              ),
+            ),
+      );
+
       // 3. Search Series
       final series = await _repository.searchSeries(query);
-      allResults.addAll(series.take(10).map((x) => ContentItem(x.seriesId, x.name, x.cover ?? '', ContentType.series, seriesStream: x)));
+      allResults.addAll(
+        series
+            .take(10)
+            .map(
+              (x) => ContentItem(
+                x.seriesId,
+                x.name,
+                x.cover ?? '',
+                ContentType.series,
+                seriesStream: x,
+              ),
+            ),
+      );
 
       if (mounted) {
         setState(() {
@@ -95,7 +131,7 @@ class _C4SearchModalState extends State<C4SearchModal> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Center(
@@ -115,14 +151,19 @@ class _C4SearchModalState extends State<C4SearchModal> {
                 controller: _controller,
                 focusNode: _inputFocusNode,
                 onChanged: _handleSearch,
-                style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Search for movies, series or channels...',
                   prefixIcon: const Icon(Icons.search, size: 32),
-                  suffixIcon: _isLoading ? const Padding(
-                    padding: EdgeInsets.all(12),
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ) : null,
+                  suffixIcon: _isLoading
+                      ? const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : null,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(16),
                     borderSide: BorderSide.none,
@@ -135,29 +176,39 @@ class _C4SearchModalState extends State<C4SearchModal> {
 
               // Results area
               Expanded(
-                child: _results.isEmpty 
-                  ? Center(child: Text(_controller.text.isEmpty ? 'Type to start searching' : 'No results found', style: theme.textTheme.titleMedium?.copyWith(color: theme.hintColor)))
-                  : GridView.builder(
-                      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                        crossAxisCount: 6,
-                        childAspectRatio: 2/3,
-                        crossAxisSpacing: 16,
-                        mainAxisSpacing: 16,
+                child: _results.isEmpty
+                    ? Center(
+                        child: Text(
+                          _controller.text.isEmpty
+                              ? 'Type to start searching'
+                              : 'No results found',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: theme.hintColor,
+                          ),
+                        ),
+                      )
+                    : GridView.builder(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 6,
+                              childAspectRatio: 2 / 3,
+                              crossAxisSpacing: 16,
+                              mainAxisSpacing: 16,
+                            ),
+                        itemCount: _results.length,
+                        itemBuilder: (context, index) {
+                          final item = _results[index];
+                          return C4Card(
+                            title: item.name,
+                            imageUrl: item.imageUrl,
+                            contentType: item.contentType,
+                            onTap: () {
+                              Navigator.pop(context);
+                              navigateByContentType(context, item);
+                            },
+                          );
+                        },
                       ),
-                      itemCount: _results.length,
-                      itemBuilder: (context, index) {
-                        final item = _results[index];
-                        return C4Card(
-                          title: item.name,
-                          imageUrl: item.imageUrl,
-                          contentType: item.contentType,
-                          onTap: () {
-                            Navigator.pop(context);
-                            navigateByContentType(context, item);
-                          },
-                        );
-                      },
-                    ),
               ),
             ],
           ),

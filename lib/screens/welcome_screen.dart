@@ -88,8 +88,12 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         await SyncService.instance.login(serverUrl, email, password);
       } else {
         final displayName = _displayNameController.text.trim();
-        await SyncService.instance
-            .register(serverUrl, email, password, displayName);
+        await SyncService.instance.register(
+          serverUrl,
+          email,
+          password,
+          displayName,
+        );
       }
 
       await UserPreferences.setHasSeenWelcome(true);
@@ -117,17 +121,17 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   void _proceedAfterAuth() {
     if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      fadeRoute(builder: (_) => const PostLoginChoiceScreen()),
-    );
+    Navigator.of(
+      context,
+    ).pushReplacement(fadeRoute(builder: (_) => const PostLoginChoiceScreen()));
   }
 
   void _proceedAsGuest() async {
     await UserPreferences.setHasSeenWelcome(true);
     if (mounted) {
-      Navigator.of(context).push(
-        slideRoute(builder: (_) => const PlaylistScreen()),
-      );
+      Navigator.of(
+        context,
+      ).push(slideRoute(builder: (_) => const PlaylistScreen()));
     }
   }
 
@@ -194,43 +198,49 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       const SizedBox(height: 24),
 
                       // ── Guest button ──
-                      Focus(
-                        focusNode: _guestFocus,
-                        child: Builder(
-                          builder: (context) {
-                            final isFocused = Focus.of(context).hasFocus;
-                            return AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                border: isFocused
-                                    ? Border.all(
-                                        color: colorScheme.primary,
-                                        width: 2,
-                                      )
-                                    : null,
-                              ),
-                              child: TextButton(
-                                focusNode: _guestFocus,
-                                onPressed: _isLoading ? null : _proceedAsGuest,
-                                style: TextButton.styleFrom(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                    vertical: 12,
+                      ValueListenableBuilder<bool>(
+                        valueListenable: ValueNotifier(_guestFocus.hasFocus),
+                        builder: (context, _, __) {
+                          return AnimatedBuilder(
+                            animation: _guestFocus,
+                            builder: (context, child) {
+                              final isFocused = _guestFocus.hasFocus;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: isFocused
+                                      ? Border.all(
+                                          color: colorScheme.primary,
+                                          width: 2,
+                                        )
+                                      : null,
+                                ),
+                                child: TextButton(
+                                  focusNode: _guestFocus,
+                                  onPressed: _isLoading
+                                      ? null
+                                      : _proceedAsGuest,
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 24,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    'Continue as Guest',
+                                    style: TextStyle(
+                                      color: colorScheme.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
+                                      fontSize: 15,
+                                    ),
                                   ),
                                 ),
-                                child: Text(
-                                  'Continue as Guest',
-                                  style: TextStyle(
-                                    color: colorScheme.onSurface
-                                        .withValues(alpha: 0.5),
-                                    fontSize: 15,
-                                  ),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
+                              );
+                            },
+                          );
+                        },
                       ),
                       const SizedBox(height: 8),
                       Text(
@@ -359,8 +369,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                           onFieldSubmitted: (_) =>
                               FocusScope.of(context).requestFocus(_emailFocus),
                           validator: (v) {
-                            if (!_isLogin &&
-                                (v == null || v.trim().isEmpty)) {
+                            if (!_isLogin && (v == null || v.trim().isEmpty)) {
                               return 'Display name is required';
                             }
                             return null;
@@ -439,8 +448,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                   ),
                   child: Row(
                     children: [
-                      Icon(Icons.error_outline,
-                          size: 18, color: colorScheme.error),
+                      Icon(
+                        Icons.error_outline,
+                        size: 18,
+                        color: colorScheme.error,
+                      ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
@@ -578,10 +590,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                     color: isSelected
                         ? colorScheme.onPrimary
                         : isFocused
-                            ? colorScheme.primary
-                            : colorScheme.onSurface.withValues(alpha: 0.6),
-                    fontWeight:
-                        isSelected || isFocused ? FontWeight.w600 : FontWeight.w500,
+                        ? colorScheme.primary
+                        : colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: isSelected || isFocused
+                        ? FontWeight.w600
+                        : FontWeight.w500,
                     fontSize: 14,
                   ),
                 ),
@@ -618,10 +631,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
       validator: validator,
-      style: TextStyle(
-        color: colorScheme.onSurface,
-        fontSize: 15,
-      ),
+      style: TextStyle(color: colorScheme.onSurface, fontSize: 15),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
@@ -633,9 +643,11 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           color: colorScheme.onSurface.withValues(alpha: 0.6),
         ),
         prefixIcon: icon != null
-            ? Icon(icon,
+            ? Icon(
+                icon,
                 size: 20,
-                color: colorScheme.primary.withValues(alpha: 0.7))
+                color: colorScheme.primary.withValues(alpha: 0.7),
+              )
             : null,
         suffixIcon: suffixIcon,
         filled: true,
@@ -654,10 +666,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.primary,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: colorScheme.primary, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
@@ -667,10 +676,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
         ),
         focusedErrorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: colorScheme.error,
-            width: 1.5,
-          ),
+          borderSide: BorderSide(color: colorScheme.error, width: 1.5),
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 16,

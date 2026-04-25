@@ -13,10 +13,12 @@ class XtreamCodeHomeScreenProvider extends StatefulWidget {
   const XtreamCodeHomeScreenProvider({super.key, required this.playlist});
 
   @override
-  State<XtreamCodeHomeScreenProvider> createState() => _XtreamCodeHomeScreenProviderState();
+  State<XtreamCodeHomeScreenProvider> createState() =>
+      _XtreamCodeHomeScreenProviderState();
 }
 
-class _XtreamCodeHomeScreenProviderState extends State<XtreamCodeHomeScreenProvider> {
+class _XtreamCodeHomeScreenProviderState
+    extends State<XtreamCodeHomeScreenProvider> {
   late final XtreamCodeHomeController _controller;
 
   @override

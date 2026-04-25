@@ -3,12 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
 class PlatformUtils {
-  static bool get isMobile =>
-      !kIsWeb && (Platform.isAndroid || Platform.isIOS);
+  static bool get isMobile => !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
   static bool get isDesktop =>
-      !kIsWeb &&
-      (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
+      !kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux);
 
   // NEW — true when running on Android TV / Fire TV
   static bool _isTV = false;
@@ -30,4 +28,3 @@ class PlatformUtils {
     }
   }
 }
-

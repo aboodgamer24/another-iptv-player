@@ -49,7 +49,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _showInfoPanel = false;
   bool _nativeFullscreen = false;
   _SidePanelMode _sidePanelMode = _SidePanelMode.channels;
-  
+
   // Stream metadata state
   int? _resW;
   int? _resH;
@@ -65,11 +65,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   bool _speedUpOnLongPress = true;
 
   // Enhancement values — MPV ranges
-  double _sharpness = 0.0;      // range: -1.0 to 1.0, default 0
-  double _contrast = 0.0;       // range: -1.0 to 1.0, default 0
-  double _saturation = 0.0;     // range: -1.0 to 1.0, default 0
+  double _sharpness = 0.0; // range: -1.0 to 1.0, default 0
+  double _contrast = 0.0; // range: -1.0 to 1.0, default 0
+  double _saturation = 0.0; // range: -1.0 to 1.0, default 0
   double _noiseReduction = 0.0; // range: 0.0 to 1.0, default 0
-  
+
   Timer? _hideTimer;
   Timer? _statsTimer;
   Duration _position = Duration.zero;
@@ -120,9 +120,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
         if (d.inSeconds > 0) {
           // GUARD: If we have already confirmed this is non-live content, never let a transient
           // near-zero duration (the 14-18s cache window artifact) overwrite our real duration.
-          // We only allow the update if the new duration is also "solid" (> 60s) or if we 
+          // We only allow the update if the new duration is also "solid" (> 60s) or if we
           // haven't confirmed non-live yet.
-          if (_confirmedNonLive && d.inSeconds < 60 && _lastSolidDuration.inSeconds >= 60) {
+          if (_confirmedNonLive &&
+              d.inSeconds < 60 &&
+              _lastSolidDuration.inSeconds >= 60) {
             return;
           }
 
@@ -155,7 +157,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
       // videoParams for resolution
       widget.player.stream.videoParams.listen((vp) {
         if (!mounted) return;
-        if ((vp.w != null && vp.w != _resW) || (vp.h != null && vp.h != _resH)) {
+        if ((vp.w != null && vp.w != _resW) ||
+            (vp.h != null && vp.h != _resH)) {
           setState(() {
             if (vp.w != null && vp.w! > 0) _resW = vp.w;
             if (vp.h != null && vp.h! > 0) _resH = vp.h;
@@ -174,8 +177,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
           final newCodec = vt.codec;
           final newW = vt.w;
           final newH = vt.h;
-          if (newFps != _fps || newBitrate != _bitrate || newCodec != _codec ||
-              newW != _resW || newH != _resH) {
+          if (newFps != _fps ||
+              newBitrate != _bitrate ||
+              newCodec != _codec ||
+              newW != _resW ||
+              newH != _resH) {
             setState(() {
               if (newFps != null && newFps > 0) _fps = newFps;
               if (newBitrate != null && newBitrate > 0) _bitrate = newBitrate;
@@ -229,9 +235,12 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
       final nativeP = widget.player.platform;
       if (nativeP is NativePlayer) {
         if (_showInfoPanel) {
-          nativeP.getProperty('scale').then((liveValue) {
-            if (mounted) setState(() => _upscalerPreset = liveValue);
-          }).catchError((_) {});
+          nativeP
+              .getProperty('scale')
+              .then((liveValue) {
+                if (mounted) setState(() => _upscalerPreset = liveValue);
+              })
+              .catchError((_) {});
         }
       }
     });
@@ -239,9 +248,12 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     // Read the actual live value from MPV so we show what is truly applied
     final nativeInit = widget.player.platform;
     if (nativeInit is NativePlayer) {
-      nativeInit.getProperty('scale').then((liveValue) {
-        if (mounted) setState(() => _upscalerPreset = liveValue);
-      }).catchError((_) {});
+      nativeInit
+          .getProperty('scale')
+          .then((liveValue) {
+            if (mounted) setState(() => _upscalerPreset = liveValue);
+          })
+          .catchError((_) {});
     }
 
     // Request focus once so keyboard shortcuts work,
@@ -342,9 +354,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final key = event.logicalKey;
     if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.pageUp) {
       _adjustVolume(0.05);
-    } else if (key == LogicalKeyboardKey.arrowDown || key == LogicalKeyboardKey.pageDown) {
+    } else if (key == LogicalKeyboardKey.arrowDown ||
+        key == LogicalKeyboardKey.pageDown) {
       _adjustVolume(-0.05);
-    } else if (key == LogicalKeyboardKey.escape || key == LogicalKeyboardKey.backspace) {
+    } else if (key == LogicalKeyboardKey.escape ||
+        key == LogicalKeyboardKey.backspace) {
       if (_showSidePanel) {
         setState(() => _showSidePanel = false);
       } else if (_showInfoPanel) {
@@ -366,7 +380,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Future<void> _toggleNativeFullscreen() async {
-    final isDesktop = defaultTargetPlatform == TargetPlatform.windows ||
+    final isDesktop =
+        defaultTargetPlatform == TargetPlatform.windows ||
         defaultTargetPlatform == TargetPlatform.linux ||
         defaultTargetPlatform == TargetPlatform.macOS;
     if (isDesktop) {
@@ -416,7 +431,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
               padding: const EdgeInsets.all(24.0),
               child: Text(
                 'Subtitle Selection',
-                style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const Divider(height: 1),
@@ -424,14 +441,27 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
               child: ListView(
                 shrinkWrap: true,
                 children: [
-                   _buildSubtitleTile('Auto', SubtitleTrack.auto(), selected, theme),
-                   _buildSubtitleTile('Off', SubtitleTrack.no(), selected, theme),
-                   ...subs.map((track) => _buildSubtitleTile(
-                     '${track.language ?? "Unknown"} ${track.title ?? ""}'.trim(), 
-                     track, 
-                     selected, 
-                     theme
-                   )),
+                  _buildSubtitleTile(
+                    'Auto',
+                    SubtitleTrack.auto(),
+                    selected,
+                    theme,
+                  ),
+                  _buildSubtitleTile(
+                    'Off',
+                    SubtitleTrack.no(),
+                    selected,
+                    theme,
+                  ),
+                  ...subs.map(
+                    (track) => _buildSubtitleTile(
+                      '${track.language ?? "Unknown"} ${track.title ?? ""}'
+                          .trim(),
+                      track,
+                      selected,
+                      theme,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -442,7 +472,12 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     );
   }
 
-  Widget _buildSubtitleTile(String title, SubtitleTrack track, SubtitleTrack selected, ThemeData theme) {
+  Widget _buildSubtitleTile(
+    String title,
+    SubtitleTrack track,
+    SubtitleTrack selected,
+    ThemeData theme,
+  ) {
     final isSelected = selected == track;
     return ListTile(
       leading: Icon(
@@ -458,11 +493,12 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
       ),
       onTap: () async {
         Navigator.pop(context);
-        
+
         // Let the player native backend do its thing, but set up a guard to catch it if it drops position to 0 asynchronously.
-        app_player_state.PlayerState.pendingTrackRestorePosition = widget.player.state.position;
+        app_player_state.PlayerState.pendingTrackRestorePosition =
+            widget.player.state.position;
         app_player_state.PlayerState.pendingTrackRestoreTime = DateTime.now();
-        
+
         await widget.player.setSubtitleTrack(track);
         await UserPreferences.setSubtitleTrack(track.language ?? 'null');
       },
@@ -507,15 +543,16 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final theme = Theme.of(context);
     // Use contentType as the primary signal for live vs seekable content.
     // Fall back to duration==0 only when contentType is unknown.
-    final contentType = widget.contentType ??
+    final contentType =
+        widget.contentType ??
         app_player_state.PlayerState.currentContent?.contentType;
     final isLive = contentType == ContentType.liveStream
         ? true
         : contentType == ContentType.vod || contentType == ContentType.series
-            ? false
-            // Unknown contentType: only treat as live if duration is still 0
-            // AND we have never seen a real duration (prevents flicker).
-            : !_confirmedNonLive && _duration.inSeconds == 0;
+        ? false
+        // Unknown contentType: only treat as live if duration is still 0
+        // AND we have never seen a real duration (prevents flicker).
+        : !_confirmedNonLive && _duration.inSeconds == 0;
     final videoTrack = widget.player.state.track.video;
 
     return ValueListenableBuilder<bool>(
@@ -525,8 +562,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
           focusNode: _keyboardFocusNode,
           onKeyEvent: (event) {
             // Only handle keys when no TextField has focus
-            if (FocusManager.instance.primaryFocus?.context
-                    ?.widget is! EditableText) {
+            if (FocusManager.instance.primaryFocus?.context?.widget
+                is! EditableText) {
               _onKey(event);
             }
           },
@@ -542,7 +579,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       behavior: HitTestBehavior.translucent,
                       onTap: _isVisible ? null : _showOverlay,
                       child: SizedBox(
-                        height: MediaQuery.sizeOf(context).shortestSide < 600 ? 56 : 80,
+                        height: MediaQuery.sizeOf(context).shortestSide < 600
+                            ? 56
+                            : 80,
                       ),
                     ),
                     // Middle zone — tap toggles visibility, swipe/long-press gestures
@@ -552,18 +591,25 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                           return GestureDetector(
                             onTap: _toggleVisibility,
                             behavior: HitTestBehavior.translucent,
-                            onVerticalDragUpdate: (_volumeGesture || _brightnessGesture)
+                            onVerticalDragUpdate:
+                                (_volumeGesture || _brightnessGesture)
                                 ? (details) {
                                     // Ignore drags that started in the bottom 35% of the zone
                                     // (that area belongs to the controls bar)
                                     final zoneHeight = constraints.maxHeight;
-                                    if (details.localPosition.dy > zoneHeight * 0.65) return;
-                                    final width = MediaQuery.sizeOf(context).width;
-                                    final isLeft = details.localPosition.dx < width / 2;
+                                    if (details.localPosition.dy >
+                                        zoneHeight * 0.65)
+                                      return;
+                                    final width = MediaQuery.sizeOf(
+                                      context,
+                                    ).width;
+                                    final isLeft =
+                                        details.localPosition.dx < width / 2;
                                     if (isLeft && _brightnessGesture) {
                                       _showOverlay();
                                     } else if (!isLeft && _volumeGesture) {
-                                      final delta = -details.primaryDelta! / 200;
+                                      final delta =
+                                          -details.primaryDelta! / 200;
                                       _adjustVolume(delta);
                                       _showOverlay();
                                     }
@@ -592,8 +638,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       onTap: _isVisible ? null : _showOverlay,
                       child: SizedBox(
                         height: MediaQuery.sizeOf(context).shortestSide < 600
-                            ? 120   // compact: covers full bottom bar
-                            : 220,  // normal: covers full bottom bar including seek slider
+                            ? 120 // compact: covers full bottom bar
+                            : 220, // normal: covers full bottom bar including seek slider
                       ),
                     ),
                   ],
@@ -604,8 +650,10 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
               AnimatedOpacity(
                 opacity: _isVisible ? 1.0 : 0.0,
                 duration: _isVisible
-                    ? const Duration(milliseconds: 60)  // show: near-instant
-                    : const Duration(milliseconds: 200), // hide: smooth fade-out
+                    ? const Duration(milliseconds: 60) // show: near-instant
+                    : const Duration(
+                        milliseconds: 200,
+                      ), // hide: smooth fade-out
                 curve: _isVisible ? Curves.easeOut : Curves.easeIn,
                 child: IgnorePointer(
                   ignoring: !_isVisible,
@@ -642,7 +690,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final isXtreamCode = getPlaylistType() == PlaylistType.xtream;
 
     return Positioned(
-      top: 0, left: 0, right: 0,
+      top: 0,
+      left: 0,
+      right: 0,
       child: Container(
         padding: EdgeInsets.fromLTRB(
           compact ? 10 : 40,
@@ -663,8 +713,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
               IconButton(
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
-                icon: Icon(Icons.arrow_back_ios_new_rounded,
-                    color: Colors.white, size: compact ? 18 : 22),
+                icon: Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: compact ? 18 : 22,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               SizedBox(width: compact ? 6 : 20),
@@ -687,8 +740,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                   if (!compact && isXtreamCode)
                     Text(
                       'Live TV Stream',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: Colors.white70),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.white70,
+                      ),
                     ),
                 ],
               ),
@@ -741,9 +795,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
               icon: Icon(
-                _showSidePanel
-                    ? Icons.menu_open_rounded
-                    : Icons.menu_rounded,
+                _showSidePanel ? Icons.menu_open_rounded : Icons.menu_rounded,
                 color: _showSidePanel
                     ? theme.colorScheme.primary
                     : Colors.white,
@@ -762,7 +814,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
                 icon: Icon(
                   Icons.subtitles_rounded,
-                  color: app_player_state.PlayerState.selectedSubtitle ==
+                  color:
+                      app_player_state.PlayerState.selectedSubtitle ==
                           SubtitleTrack.no()
                       ? Colors.white
                       : theme.colorScheme.primary,
@@ -795,7 +848,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final safePadding = MediaQuery.paddingOf(context);
 
     return Positioned(
-      bottom: 0, left: 0, right: 0,
+      bottom: 0,
+      left: 0,
+      right: 0,
       child: Container(
         padding: EdgeInsets.fromLTRB(
           compact ? 12 : 60,
@@ -814,129 +869,150 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isLive) ...[
-                ValueListenableBuilder<Duration>(
-                  valueListenable: _positionNotifier,
-                  builder: (context, position, _) {
-                    return ValueListenableBuilder<Duration>(
-                      valueListenable: _durationNotifier,
-                      builder: (context, duration, _) {
-                        // If we have confirmed this is non-live content, never let a transient
-                        // near-zero duration collapse the slider range.
-                        final effectiveDuration = (_confirmedNonLive && duration.inSeconds < 60 && _lastSolidDuration.inSeconds >= 60)
-                            ? _lastSolidDuration
-                            : duration;
+              ValueListenableBuilder<Duration>(
+                valueListenable: _positionNotifier,
+                builder: (context, position, _) {
+                  return ValueListenableBuilder<Duration>(
+                    valueListenable: _durationNotifier,
+                    builder: (context, duration, _) {
+                      // If we have confirmed this is non-live content, never let a transient
+                      // near-zero duration collapse the slider range.
+                      final effectiveDuration =
+                          (_confirmedNonLive &&
+                              duration.inSeconds < 60 &&
+                              _lastSolidDuration.inSeconds >= 60)
+                          ? _lastSolidDuration
+                          : duration;
 
-                        final total = effectiveDuration.inSeconds.toDouble().clamp(1.0, double.infinity);
-                        final current = position.inSeconds.toDouble().clamp(0.0, total);
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 120),
-                          curve: Curves.easeOut,
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                child: SliderTheme(
-                                  data: SliderTheme.of(context).copyWith(
-                                    activeTrackColor: theme.colorScheme.primary,
-                                    inactiveTrackColor: Colors.white24,
-                                    thumbColor: theme.colorScheme.primary,
-                                    overlayColor: theme.colorScheme.primary.withValues(alpha: 0.15),
-                                    // Larger thumb while dragging for easier grabbing
-                                    thumbShape: RoundSliderThumbShape(
-                                      enabledThumbRadius: _isDragging
-                                          ? (compact ? 7.0 : 9.0)
-                                          : (compact ? 5.0 : 7.0),
-                                    ),
-                                    trackHeight: _isDragging ? (compact ? 3.5 : 5.0) : (compact ? 2.0 : 4.0),
-                                    // Remove the ripple overlay delay — makes thumb feel instant
-                                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
+                      final total = effectiveDuration.inSeconds
+                          .toDouble()
+                          .clamp(1.0, double.infinity);
+                      final current = position.inSeconds.toDouble().clamp(
+                        0.0,
+                        total,
+                      );
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 120),
+                        curve: Curves.easeOut,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              child: SliderTheme(
+                                data: SliderTheme.of(context).copyWith(
+                                  activeTrackColor: theme.colorScheme.primary,
+                                  inactiveTrackColor: Colors.white24,
+                                  thumbColor: theme.colorScheme.primary,
+                                  overlayColor: theme.colorScheme.primary
+                                      .withValues(alpha: 0.15),
+                                  // Larger thumb while dragging for easier grabbing
+                                  thumbShape: RoundSliderThumbShape(
+                                    enabledThumbRadius: _isDragging
+                                        ? (compact ? 7.0 : 9.0)
+                                        : (compact ? 5.0 : 7.0),
                                   ),
-                                  child: Slider(
-                                    value: _isDragging ? _dragValue : current,
-                                    max: total,
-                                    onChangeStart: (val) {
-                                      _hideTimer?.cancel();
-                                      // OPTIMIZATION: Pause player during drag to prevent demuxer thrashing
-                                      if (widget.player.state.playing) {
-                                        widget.player.pause();
-                                      }
-                                      setState(() {
-                                        _isDragging = true;
-                                        _dragValue = val;
-                                      });
-                                    },
-                                    onChanged: (val) {
-                                      // Only rebuild the local drag value — no seek sent to player
-                                      setState(() => _dragValue = val);
-                                    },
-                                    onChangeEnd: (val) {
-                                      setState(() {
-                                        _isDragging = false;
-                                        _isSeeking = true;
-                                      });
-                                      // OPTIMIZATION: Seek and then resume playback to stabilize stream
-                                      widget.player.seek(Duration(seconds: val.toInt())).then((_) {
-                                        widget.player.play();
-                                      });
-                                      _startHideTimer();
-                                    },
+                                  trackHeight: _isDragging
+                                      ? (compact ? 3.5 : 5.0)
+                                      : (compact ? 2.0 : 4.0),
+                                  // Remove the ripple overlay delay — makes thumb feel instant
+                                  overlayShape: const RoundSliderOverlayShape(
+                                    overlayRadius: 18,
                                   ),
                                 ),
+                                child: Slider(
+                                  value: _isDragging ? _dragValue : current,
+                                  max: total,
+                                  onChangeStart: (val) {
+                                    _hideTimer?.cancel();
+                                    // OPTIMIZATION: Pause player during drag to prevent demuxer thrashing
+                                    if (widget.player.state.playing) {
+                                      widget.player.pause();
+                                    }
+                                    setState(() {
+                                      _isDragging = true;
+                                      _dragValue = val;
+                                    });
+                                  },
+                                  onChanged: (val) {
+                                    // Only rebuild the local drag value — no seek sent to player
+                                    setState(() => _dragValue = val);
+                                  },
+                                  onChangeEnd: (val) {
+                                    setState(() {
+                                      _isDragging = false;
+                                      _isSeeking = true;
+                                    });
+                                    // OPTIMIZATION: Seek and then resume playback to stabilize stream
+                                    widget.player
+                                        .seek(Duration(seconds: val.toInt()))
+                                        .then((_) {
+                                          widget.player.play();
+                                        });
+                                    _startHideTimer();
+                                  },
+                                ),
                               ),
-                              const SizedBox(height: 4),
-                              Stack(
-                                alignment: Alignment.center,
-                                children: [
-                                  // Normal left/right timestamps
-                                  Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                    children: [
-                                      Text(
-                                        _formatDuration(_isDragging
-                                            ? Duration(seconds: _dragValue.toInt())
-                                            : position),
-                                        style: TextStyle(
-                                          color: _isDragging
-                                              ? theme.colorScheme.primary
-                                              : Colors.white70,
-                                          fontSize: compact ? 10 : 13,
-                                          fontWeight: _isDragging ? FontWeight.bold : FontWeight.normal,
+                            ),
+                            const SizedBox(height: 4),
+                            Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                // Normal left/right timestamps
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      _formatDuration(
+                                        _isDragging
+                                            ? Duration(
+                                                seconds: _dragValue.toInt(),
+                                              )
+                                            : position,
+                                      ),
+                                      style: TextStyle(
+                                        color: _isDragging
+                                            ? theme.colorScheme.primary
+                                            : Colors.white70,
+                                        fontSize: compact ? 10 : 13,
+                                        fontWeight: _isDragging
+                                            ? FontWeight.bold
+                                            : FontWeight.normal,
+                                      ),
+                                    ),
+                                    if (_isSeeking)
+                                      SizedBox(
+                                        width: compact ? 10 : 14,
+                                        height: compact ? 10 : 14,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 1.5,
+                                          color: theme.colorScheme.primary,
                                         ),
                                       ),
-                                      if (_isSeeking)
-                                        SizedBox(
-                                          width: compact ? 10 : 14,
-                                          height: compact ? 10 : 14,
-                                          child: CircularProgressIndicator(
-                                            strokeWidth: 1.5,
-                                            color: theme.colorScheme.primary,
-                                          ),
-                                        ),
-                                      Text(
-                                        _formatDuration(effectiveDuration),
-                                        style: TextStyle(
-                                          color: Colors.white70,
-                                          fontSize: compact ? 10 : 13,
-                                        ),
+                                    Text(
+                                      _formatDuration(effectiveDuration),
+                                      style: TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: compact ? 10 : 13,
                                       ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
             ] else
               Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.circle,
-                      color: Colors.red, size: compact ? 8 : 10),
+                  Icon(Icons.circle, color: Colors.red, size: compact ? 8 : 10),
                   SizedBox(width: compact ? 4 : 8),
                   Text(
                     'LIVE',
@@ -974,8 +1050,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       _isMuted || _volume == 0
                           ? Icons.volume_off_rounded
                           : _volume < 0.5
-                              ? Icons.volume_down_rounded
-                              : Icons.volume_up_rounded,
+                          ? Icons.volume_down_rounded
+                          : Icons.volume_up_rounded,
                       color: Colors.white70,
                       size: compact ? 22 : 24,
                     ),
@@ -990,7 +1066,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                           thumbColor: Colors.white,
                           trackHeight: 2,
                           thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 6),
+                            enabledThumbRadius: 6,
+                          ),
                         ),
                         child: Slider(
                           value: _volume,
@@ -1009,9 +1086,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                         if (!isLive) {
                           final wasPlaying = widget.player.state.playing;
                           if (wasPlaying) widget.player.pause();
-                          widget.player.seek(_position - const Duration(seconds: 10)).then((_) {
-                            if (wasPlaying) widget.player.play();
-                          });
+                          widget.player
+                              .seek(_position - const Duration(seconds: 10))
+                              .then((_) {
+                                if (wasPlaying) widget.player.play();
+                              });
                         }
                       },
                     ),
@@ -1024,9 +1103,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                         if (!isLive) {
                           final wasPlaying = widget.player.state.playing;
                           if (wasPlaying) widget.player.pause();
-                          widget.player.seek(_position + const Duration(seconds: 10)).then((_) {
-                            if (wasPlaying) widget.player.play();
-                          });
+                          widget.player
+                              .seek(_position + const Duration(seconds: 10))
+                              .then((_) {
+                                if (wasPlaying) widget.player.play();
+                              });
                         }
                       },
                     ),
@@ -1069,7 +1150,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
       await native.setProperty('saturation', saturationVal.toString());
       if (_noiseReduction > 0.01) {
         await native.setProperty(
-          'vf', 'hqdn3d=${denoiseVal.toStringAsFixed(1)}:${denoiseVal.toStringAsFixed(1)}:6:6',
+          'vf',
+          'hqdn3d=${denoiseVal.toStringAsFixed(1)}:${denoiseVal.toStringAsFixed(1)}:6:6',
         );
       } else {
         await native.setProperty('vf', '');
@@ -1080,107 +1162,111 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildEnhancementPanel(ThemeData theme) {
-    return Builder(builder: (context) {
-      final screenSize = MediaQuery.sizeOf(context);
-      final isPhone = screenSize.shortestSide < 600;
-      final panelWidth = (screenSize.width * 0.85).clamp(260.0, 340.0);
-      return Positioned(
-        top: isPhone ? 60 : 130,
-        right: isPhone ? (screenSize.width - panelWidth) / 2 : 40,
-        left: isPhone ? (screenSize.width - panelWidth) / 2 : null,
-        child: Container(
-          width: isPhone ? panelWidth : 320,
-          constraints: BoxConstraints(
-            maxHeight: screenSize.height * (isPhone ? 0.70 : 0.65),
-          ),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.85),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white10),
-          ),
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'Enhancement',
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+    return Builder(
+      builder: (context) {
+        final screenSize = MediaQuery.sizeOf(context);
+        final isPhone = screenSize.shortestSide < 600;
+        final panelWidth = (screenSize.width * 0.85).clamp(260.0, 340.0);
+        return Positioned(
+          top: isPhone ? 60 : 130,
+          right: isPhone ? (screenSize.width - panelWidth) / 2 : 40,
+          left: isPhone ? (screenSize.width - panelWidth) / 2 : null,
+          child: Container(
+            width: isPhone ? panelWidth : 320,
+            constraints: BoxConstraints(
+              maxHeight: screenSize.height * (isPhone ? 0.70 : 0.65),
+            ),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Enhancement',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 20),
-                _buildEnhancementSlider(
-                  theme,
-                  label: 'Sharpness',
-                  icon: Icons.landscape_rounded,
-                  value: _sharpness,
-                  min: -1.0,
-                  max: 1.0,
-                  onChanged: (val) {
-                    setState(() => _sharpness = val);
-                    _scheduleEnhancement();
-                  },
-                ),
-                _buildEnhancementSlider(
-                  theme,
-                  label: 'Contrast',
-                  icon: Icons.contrast_rounded,
-                  value: _contrast,
-                  min: -1.0,
-                  max: 1.0,
-                  onChanged: (val) {
-                    setState(() => _contrast = val);
-                    _scheduleEnhancement();
-                  },
-                ),
-                _buildEnhancementSlider(
-                  theme,
-                  label: 'Saturation',
-                  icon: Icons.color_lens_rounded,
-                  value: _saturation,
-                  min: -1.0,
-                  max: 1.0,
-                  onChanged: (val) {
-                    setState(() => _saturation = val);
-                    _scheduleEnhancement();
-                  },
-                ),
-                _buildEnhancementSlider(
-                  theme,
-                  label: 'Noise Reduction',
-                  icon: Icons.grain_rounded,
-                  value: _noiseReduction,
-                  min: 0.0,
-                  max: 1.0,
-                  onChanged: (val) {
-                    setState(() => _noiseReduction = val);
-                    _scheduleEnhancement();
-                  },
-                ),
-                const SizedBox(height: 8),
-                TextButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _sharpness = 0.0;
-                      _contrast = 0.0;
-                      _saturation = 0.0;
-                      _noiseReduction = 0.0;
-                    });
-                    _applyEnhancement();
-                  },
-                  icon: const Icon(Icons.restart_alt_rounded, size: 16),
-                  label: const Text('Reset All'),
-                  style: TextButton.styleFrom(foregroundColor: Colors.white38),
-                ),
-              ],
+                  const SizedBox(height: 20),
+                  _buildEnhancementSlider(
+                    theme,
+                    label: 'Sharpness',
+                    icon: Icons.landscape_rounded,
+                    value: _sharpness,
+                    min: -1.0,
+                    max: 1.0,
+                    onChanged: (val) {
+                      setState(() => _sharpness = val);
+                      _scheduleEnhancement();
+                    },
+                  ),
+                  _buildEnhancementSlider(
+                    theme,
+                    label: 'Contrast',
+                    icon: Icons.contrast_rounded,
+                    value: _contrast,
+                    min: -1.0,
+                    max: 1.0,
+                    onChanged: (val) {
+                      setState(() => _contrast = val);
+                      _scheduleEnhancement();
+                    },
+                  ),
+                  _buildEnhancementSlider(
+                    theme,
+                    label: 'Saturation',
+                    icon: Icons.color_lens_rounded,
+                    value: _saturation,
+                    min: -1.0,
+                    max: 1.0,
+                    onChanged: (val) {
+                      setState(() => _saturation = val);
+                      _scheduleEnhancement();
+                    },
+                  ),
+                  _buildEnhancementSlider(
+                    theme,
+                    label: 'Noise Reduction',
+                    icon: Icons.grain_rounded,
+                    value: _noiseReduction,
+                    min: 0.0,
+                    max: 1.0,
+                    onChanged: (val) {
+                      setState(() => _noiseReduction = val);
+                      _scheduleEnhancement();
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _sharpness = 0.0;
+                        _contrast = 0.0;
+                        _saturation = 0.0;
+                        _noiseReduction = 0.0;
+                      });
+                      _applyEnhancement();
+                    },
+                    icon: const Icon(Icons.restart_alt_rounded, size: 16),
+                    label: const Text('Reset All'),
+                    style: TextButton.styleFrom(
+                      foregroundColor: Colors.white38,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget _buildEnhancementSlider(
@@ -1209,7 +1295,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
               Text(
                 value.toStringAsFixed(2),
                 style: TextStyle(
-                  color: value == 0.0 ? Colors.white38 : theme.colorScheme.primary,
+                  color: value == 0.0
+                      ? Colors.white38
+                      : theme.colorScheme.primary,
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1239,49 +1327,70 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
   }
 
   Widget _buildInfoPanel(ThemeData theme, VideoTrack track) {
-    return Builder(builder: (context) {
-      final screenSize = MediaQuery.sizeOf(context);
-      final isPhone = screenSize.shortestSide < 600;
-      final panelWidth = (screenSize.width * 0.85).clamp(240.0, 310.0);
-      return Positioned(
-        top: isPhone ? 60 : 130,
-        right: isPhone ? (screenSize.width - panelWidth) / 2 : 40,
-        left: isPhone ? (screenSize.width - panelWidth) / 2 : null,
-        child: Container(
-          width: isPhone ? panelWidth : 300,
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: Colors.black.withValues(alpha: 0.8),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white10),
+    return Builder(
+      builder: (context) {
+        final screenSize = MediaQuery.sizeOf(context);
+        final isPhone = screenSize.shortestSide < 600;
+        final panelWidth = (screenSize.width * 0.85).clamp(240.0, 310.0);
+        return Positioned(
+          top: isPhone ? 60 : 130,
+          right: isPhone ? (screenSize.width - panelWidth) / 2 : 40,
+          left: isPhone ? (screenSize.width - panelWidth) / 2 : null,
+          child: Container(
+            width: isPhone ? panelWidth : 300,
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.8),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: Colors.white10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Stream Information',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                _InfoRow(
+                  label: 'Title',
+                  value: app_player_state.PlayerState.title,
+                ),
+                _InfoRow(
+                  label: 'Resolution',
+                  value: (_resW != null && _resH != null && _resW! > 0)
+                      ? '$_resW x $_resH'
+                      : 'N/A',
+                ),
+                _InfoRow(
+                  label: 'FPS',
+                  value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A',
+                ),
+                _InfoRow(
+                  label: 'Codec',
+                  value: (_codec != null && _codec!.isNotEmpty)
+                      ? _codec!
+                      : 'N/A',
+                ),
+                _InfoRow(
+                  label: 'Upscaler',
+                  value:
+                      (_upscalerPreset == null ||
+                          _upscalerPreset!.isEmpty ||
+                          _upscalerPreset == 'none')
+                      ? 'Disabled'
+                      : _upscalerPreset!,
+                ),
+              ],
+            ),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                'Stream Information',
-                style: theme.textTheme.titleMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 16),
-              _InfoRow(label: 'Title', value: app_player_state.PlayerState.title),
-              _InfoRow(
-                label: 'Resolution', 
-                value: (_resW != null && _resH != null && _resW! > 0) ? '$_resW x $_resH' : 'N/A'
-              ),
-              _InfoRow(label: 'FPS', value: _fps != null ? _fps!.toStringAsFixed(2) : 'N/A'),
-              _InfoRow(label: 'Codec', value: (_codec != null && _codec!.isNotEmpty) ? _codec! : 'N/A'),
-              _InfoRow(
-                label: 'Upscaler',
-                value: (_upscalerPreset == null || _upscalerPreset!.isEmpty || _upscalerPreset == 'none')
-                    ? 'Disabled'
-                    : _upscalerPreset!,
-              ),
-            ],
-          ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 
   Widget _buildSidePanel(ThemeData theme) {
@@ -1308,12 +1417,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  safePadding.top + 12,
-                  8,
-                  12,
-                ),
+                padding: EdgeInsets.fromLTRB(16, safePadding.top + 12, 8, 12),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -1333,7 +1437,10 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       icon: const Icon(Icons.close_rounded),
                       iconSize: isPhone ? 20 : 24,
                       padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
+                      constraints: const BoxConstraints(
+                        minWidth: 36,
+                        minHeight: 36,
+                      ),
                       onPressed: () => setState(() => _showSidePanel = false),
                     ),
                   ],
@@ -1375,8 +1482,8 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                     label: Text(
                       _sidePanelMode == _SidePanelMode.channels
                           ? (widget.homeController != null
-                              ? 'Browse categories'
-                              : 'Categories unavailable')
+                                ? 'Browse categories'
+                                : 'Categories unavailable')
                           : 'Back to channels',
                       style: TextStyle(fontSize: isPhone ? 12 : 14),
                     ),
@@ -1401,15 +1508,16 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     final channels = _panelQueue ?? app_player_state.PlayerState.queue ?? [];
     final currentContent = app_player_state.PlayerState.currentContent;
     final isPhone = MediaQuery.sizeOf(context).shortestSide < 600;
-    
+
     return ListView.builder(
       padding: EdgeInsets.symmetric(vertical: isPhone ? 4 : 8),
       itemExtent: isPhone ? 56.0 : 64.0,
       itemCount: channels.length,
       itemBuilder: (context, index) {
         final channel = channels[index];
-        final isPlaying = currentContent != null && channel.id == currentContent.id;
-        
+        final isPlaying =
+            currentContent != null && channel.id == currentContent.id;
+
         return ListTile(
           selected: isPlaying,
           selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.1),
@@ -1424,8 +1532,11 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 ? Image.network(
                     channel.imageUrl,
                     fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => 
-                        const Icon(Icons.live_tv, size: 20, color: Colors.white24),
+                    errorBuilder: (context, error, stackTrace) => const Icon(
+                      Icons.live_tv,
+                      size: 20,
+                      color: Colors.white24,
+                    ),
                   )
                 : const Icon(Icons.live_tv, size: 20, color: Colors.white24),
           ),
@@ -1443,7 +1554,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
             app_player_state.PlayerState.queue = channels;
             EventBus().emit('player_queue_changed', channels);
             EventBus().emit('player_content_item_index_changed', index);
-            
+
             setState(() {
               _showSidePanel = false;
               _isVisible = true;
@@ -1455,13 +1566,20 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     );
   }
 
-  Widget _buildCategoryListView(ThemeData theme, XtreamCodeHomeController? homeController) {
-    final categories = homeController == null ? <CategoryViewModel>[] : (() {
-      final type = _currentContentType();
-      if (type == ContentType.vod) return homeController.visibleMovieCategories;
-      if (type == ContentType.series) return homeController.visibleSeriesCategories;
-      return homeController.liveCategories ?? [];
-    })();
+  Widget _buildCategoryListView(
+    ThemeData theme,
+    XtreamCodeHomeController? homeController,
+  ) {
+    final categories = homeController == null
+        ? <CategoryViewModel>[]
+        : (() {
+            final type = _currentContentType();
+            if (type == ContentType.vod)
+              return homeController.visibleMovieCategories;
+            if (type == ContentType.series)
+              return homeController.visibleSeriesCategories;
+            return homeController.liveCategories ?? [];
+          })();
 
     if (homeController == null || categories.isEmpty) {
       return const Center(
@@ -1475,19 +1593,23 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
         ),
       );
     }
-    
+
     return ListView.builder(
       padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: categories.length,
       itemBuilder: (context, index) {
         final categoryVM = categories[index];
-        
+
         return ListTile(
           title: Text(
             categoryVM.category.categoryName,
             style: const TextStyle(color: Colors.white),
           ),
-          trailing: const Icon(Icons.chevron_right_rounded, color: Colors.white24, size: 20),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: Colors.white24,
+            size: 20,
+          ),
           onTap: () {
             setState(() {
               _panelQueue = categoryVM.contentItems;
@@ -1524,7 +1646,11 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               value,
-              style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
         ],
@@ -1576,17 +1702,11 @@ class _PlayerControlBtnState extends State<_PlayerControlBtn> {
             shape: BoxShape.circle,
             color: _pressed
                 ? (widget.isLarge
-                    ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                    : Colors.white24)
-                : (widget.isLarge
-                    ? theme.colorScheme.primary
-                    : Colors.white10),
+                      ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                      : Colors.white24)
+                : (widget.isLarge ? theme.colorScheme.primary : Colors.white10),
           ),
-          child: Icon(
-            widget.icon,
-            color: Colors.white,
-            size: widget.iconSize,
-          ),
+          child: Icon(widget.icon, color: Colors.white, size: widget.iconSize),
         ),
       ),
     );

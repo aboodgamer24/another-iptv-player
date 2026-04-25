@@ -149,8 +149,8 @@ class ParentalControlService {
     final keywords = await getKeywords();
     if (keywords.isEmpty) return false;
 
-    final nameToCheck =
-        '${categoryName ?? ''} ${contentName ?? ''}'.toLowerCase();
+    final nameToCheck = '${categoryName ?? ''} ${contentName ?? ''}'
+        .toLowerCase();
     for (final keyword in keywords) {
       if (nameToCheck.contains(keyword)) return true;
     }

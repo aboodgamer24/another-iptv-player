@@ -5,44 +5,57 @@ import 'package:media_kit/media_kit.dart';
 /// Platforms where MPV property setting is supported.
 bool get isMpvSupported =>
     !kIsWeb &&
-    (Platform.isWindows || Platform.isLinux || Platform.isMacOS || Platform.isAndroid);
+    (Platform.isWindows ||
+        Platform.isLinux ||
+        Platform.isMacOS ||
+        Platform.isAndroid);
 
 /// Android supports spline36 but ewa_lanczos is too heavy for most devices.
 bool get isHighQualitySupported =>
-    !kIsWeb &&
-    (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
+    !kIsWeb && (Platform.isWindows || Platform.isLinux || Platform.isMacOS);
 
 /// Returns the list of preset keys available on the current platform.
 /// Returns empty list on unsupported platforms (iOS, web).
 List<String> get availableUpscalePresets {
   if (!isMpvSupported) return [];
-  if (isHighQualitySupported) return ['standard', 'enhanced', 'high_quality', 'ewa_lanczossharp'];
+  if (isHighQualitySupported)
+    return ['standard', 'enhanced', 'high_quality', 'ewa_lanczossharp'];
   // Android: only standard + enhanced (ewa_lanczos is too GPU-heavy)
   return ['standard', 'enhanced'];
 }
 
 String upscalePresetLabel(String preset) {
   switch (preset) {
-    case 'enhanced':         return 'Enhanced (spline36)';
-    case 'high_quality':      return 'High Quality (ewa_lanczos)';
-    case 'ewa_lanczossharp':  return 'Sharp (Sport/Live)';
-    default:                  return 'Standard (bilinear)';
+    case 'enhanced':
+      return 'Enhanced (spline36)';
+    case 'high_quality':
+      return 'High Quality (ewa_lanczos)';
+    case 'ewa_lanczossharp':
+      return 'Sharp (Sport/Live)';
+    default:
+      return 'Standard (bilinear)';
   }
 }
 
 String upscalePresetDescription(String preset) {
   switch (preset) {
-    case 'enhanced':         return 'Recommended — smoother edges, minimal GPU cost';
-    case 'high_quality':      return 'Best quality — requires a dedicated GPU';
-    case 'ewa_lanczossharp':  return 'Extra sharpness — ideal for sport and live broadcasts';
-    default:                  return 'Default — no processing, works on all hardware';
+    case 'enhanced':
+      return 'Recommended — smoother edges, minimal GPU cost';
+    case 'high_quality':
+      return 'Best quality — requires a dedicated GPU';
+    case 'ewa_lanczossharp':
+      return 'Extra sharpness — ideal for sport and live broadcasts';
+    default:
+      return 'Default — no processing, works on all hardware';
   }
 }
 
 Future<void> applyUpscalePreset(Player player, String preset) async {
   if (!isMpvSupported) return;
   // Clamp preset if requested one is not available on this platform (e.g. synced from desktop to mobile)
-  final String effectivePreset = availableUpscalePresets.contains(preset) ? preset : 'standard';
+  final String effectivePreset = availableUpscalePresets.contains(preset)
+      ? preset
+      : 'standard';
 
   // Access the underlying NativePlayer to call MPV properties
   final native = player.platform;
@@ -87,9 +100,13 @@ Future<void> applyUpscalePreset(Player player, String preset) async {
   await Future.delayed(const Duration(milliseconds: 200));
   try {
     final applied = await native.getProperty('scale');
-    debugPrint('[Upscaler] Requested: $effectivePreset | MPV applied: $applied');
+    debugPrint(
+      '[Upscaler] Requested: $effectivePreset | MPV applied: $applied',
+    );
     if (applied.trim() != effectivePreset.trim()) {
-      debugPrint('[Upscaler] WARNING: scale mismatch — upscaler may not be active');
+      debugPrint(
+        '[Upscaler] WARNING: scale mismatch — upscaler may not be active',
+      );
     }
   } catch (e) {
     debugPrint('[Upscaler] Could not verify scale property: $e');
@@ -113,7 +130,10 @@ Future<void> applyStreamEnhancement(Player player, bool enabled) async {
       } else {
         await native.setProperty('deband', 'no');
       }
-      await native.setProperty('video-sharpness', Platform.isAndroid ? '0' : '0.3');
+      await native.setProperty(
+        'video-sharpness',
+        Platform.isAndroid ? '0' : '0.3',
+      );
     } else {
       await native.setProperty('deband', 'no');
       await native.setProperty('deband-iterations', '1');
@@ -126,4 +146,3 @@ Future<void> applyStreamEnhancement(Player player, bool enabled) async {
     // Silently ignore unsupported properties
   }
 }
-

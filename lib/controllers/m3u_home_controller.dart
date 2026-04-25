@@ -93,7 +93,6 @@ class M3UHomeController extends ChangeNotifier {
     }
   }
 
-
   Future<void> _loadM3uItems() async {
     try {
       _isLoading = true;

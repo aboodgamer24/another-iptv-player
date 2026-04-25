@@ -18,7 +18,6 @@ class WatchLaterRepository {
       return; // DO NOT support Watch Later for Live TV
     }
 
-
     final entry = WatchLaterData(
       id: _uuid.v4(),
       playlistId: playlistId,
@@ -32,7 +31,10 @@ class WatchLaterRepository {
     await _database.insertWatchLater(entry);
   }
 
-  Future<void> removeWatchLater(String streamId, ContentType contentType) async {
+  Future<void> removeWatchLater(
+    String streamId,
+    ContentType contentType,
+  ) async {
     final playlistId = AppState.currentPlaylist!.id;
     await _database.deleteWatchLater(playlistId, streamId, contentType);
   }
@@ -40,7 +42,9 @@ class WatchLaterRepository {
   Future<bool> isWatchLater(String streamId, ContentType contentType) async {
     final playlistId = AppState.currentPlaylist!.id;
     final items = await _database.getWatchLaterItems(playlistId);
-    return items.any((e) => e.streamId == streamId && e.contentType == contentType);
+    return items.any(
+      (e) => e.streamId == streamId && e.contentType == contentType,
+    );
   }
 
   Future<List<WatchLaterData>> getAllWatchLaterItems() async {
@@ -50,7 +54,10 @@ class WatchLaterRepository {
   }
 
   Future<bool> toggleWatchLater(ContentItem contentItem) async {
-    final isCurrentlyIn = await isWatchLater(contentItem.id, contentItem.contentType);
+    final isCurrentlyIn = await isWatchLater(
+      contentItem.id,
+      contentItem.contentType,
+    );
     if (isCurrentlyIn) {
       await removeWatchLater(contentItem.id, contentItem.contentType);
       return false;

@@ -49,13 +49,41 @@ class _MainShellScreenState extends State<MainShellScreen> {
                   node: FocusScopeNode(),
                   child: C4Rail(
                     items: const [
-                      C4RailItem(icon: Icons.home_outlined, label: 'Home', route: '/home'),
-                      C4RailItem(icon: Icons.live_tv_outlined, label: 'Live', route: '/live'),
-                      C4RailItem(icon: Icons.movie_outlined, label: 'Movies', route: '/movies'),
-                      C4RailItem(icon: Icons.tv_outlined, label: 'Series', route: '/series'),
-                      C4RailItem(icon: Icons.favorite_outline, label: 'Favorites', route: '/favorites'),
-                      C4RailItem(icon: Icons.schedule_rounded, label: 'Watch Later', route: '/watch_later'),
-                      C4RailItem(icon: Icons.settings_outlined, label: 'Settings', route: '/settings'),
+                      C4RailItem(
+                        icon: Icons.home_outlined,
+                        label: 'Home',
+                        route: '/home',
+                      ),
+                      C4RailItem(
+                        icon: Icons.live_tv_outlined,
+                        label: 'Live',
+                        route: '/live',
+                      ),
+                      C4RailItem(
+                        icon: Icons.movie_outlined,
+                        label: 'Movies',
+                        route: '/movies',
+                      ),
+                      C4RailItem(
+                        icon: Icons.tv_outlined,
+                        label: 'Series',
+                        route: '/series',
+                      ),
+                      C4RailItem(
+                        icon: Icons.favorite_outline,
+                        label: 'Favorites',
+                        route: '/favorites',
+                      ),
+                      C4RailItem(
+                        icon: Icons.schedule_rounded,
+                        label: 'Watch Later',
+                        route: '/watch_later',
+                      ),
+                      C4RailItem(
+                        icon: Icons.settings_outlined,
+                        label: 'Settings',
+                        route: '/settings',
+                      ),
                     ],
                     selectedIndex: widget.selectedIndex,
                     onItemSelected: widget.onItemSelected,
@@ -75,9 +103,7 @@ class _MainShellScreenState extends State<MainShellScreen> {
                         onSearchTap: widget.onSearchTap,
                       ),
                     ),
-                    Expanded(
-                      child: widget.child,
-                    ),
+                    Expanded(child: widget.child),
                   ],
                 ),
               ),

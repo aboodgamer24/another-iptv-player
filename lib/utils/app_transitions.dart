@@ -6,11 +6,11 @@ import 'dart:io';
 bool get _isAndroid => Platform.isAndroid;
 
 // ─── Durations ───────────────────────────────────────────────────────────────
-const Duration _kEnter  = Duration(milliseconds: 320);
-const Duration _kExit   = Duration(milliseconds: 280);
+const Duration _kEnter = Duration(milliseconds: 320);
+const Duration _kExit = Duration(milliseconds: 280);
 
 // ─── Curves ──────────────────────────────────────────────────────────────────
-const Curve _kCurveIn  = Curves.easeOutCubic;
+const Curve _kCurveIn = Curves.easeOutCubic;
 const Curve _kCurveOut = Curves.easeInCubic;
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -48,9 +48,11 @@ Route<T> slideRoute<T>({
         end: const Offset(-0.06, 0),
       ).animate(CurvedAnimation(parent: secondaryAnimation, curve: _kCurveOut));
 
-      final fadeIn  = CurvedAnimation(parent: animation, curve: _kCurveIn);
-      final fadeOut = Tween<double>(begin: 1, end: 0.85)
-          .animate(CurvedAnimation(parent: secondaryAnimation, curve: _kCurveOut));
+      final fadeIn = CurvedAnimation(parent: animation, curve: _kCurveIn);
+      final fadeOut = Tween<double>(
+        begin: 1,
+        end: 0.85,
+      ).animate(CurvedAnimation(parent: secondaryAnimation, curve: _kCurveOut));
 
       return SlideTransition(
         position: slideOut,
@@ -77,7 +79,11 @@ Route<T> slideUpRoute<T>({
   RouteSettings? settings,
 }) {
   if (!_isAndroid) {
-    return MaterialPageRoute<T>(builder: builder, settings: settings, fullscreenDialog: true);
+    return MaterialPageRoute<T>(
+      builder: builder,
+      settings: settings,
+      fullscreenDialog: true,
+    );
   }
   return PageRouteBuilder<T>(
     settings: settings,

@@ -53,7 +53,7 @@ class WatchHistoryController extends ChangeNotifier {
 
   Future<void> loadWatchHistory() async {
     debugPrint('[WatchHistoryController] loadWatchHistory başladı');
-    
+
     _isLoading = true;
     _errorMessage = null;
     _continueWatching.clear();
@@ -61,7 +61,7 @@ class WatchHistoryController extends ChangeNotifier {
     _liveHistory.clear();
     _movieHistory.clear();
     _seriesHistory.clear();
-    
+
     // Single notify for loading state
     WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
 
@@ -154,6 +154,7 @@ class WatchHistoryController extends ChangeNotifier {
       WidgetsBinding.instance.addPostFrameCallback((_) => notifyListeners());
     }
   }
+
   Future<void> _playLiveStream(
     BuildContext context,
     WatchHistory history,
@@ -315,16 +316,20 @@ class WatchHistoryController extends ChangeNotifier {
 
   /// Fire-and-forget push of the continue_watching list to the sync server.
   void _syncContinueWatchingToServer() {
-    final data = _continueWatching.map((WatchHistory h) => {
-      'streamId': h.streamId,
-      'title': h.title,
-      'imagePath': h.imagePath,
-      'contentType': h.contentType.toString(),
-      'playlistId': h.playlistId,
-      'lastWatched': h.lastWatched.toIso8601String(),
-      'watchDuration': h.watchDuration?.inMilliseconds,
-      'totalDuration': h.totalDuration?.inMilliseconds,
-    }).toList();
+    final data = _continueWatching
+        .map(
+          (WatchHistory h) => {
+            'streamId': h.streamId,
+            'title': h.title,
+            'imagePath': h.imagePath,
+            'contentType': h.contentType.toString(),
+            'playlistId': h.playlistId,
+            'lastWatched': h.lastWatched.toIso8601String(),
+            'watchDuration': h.watchDuration?.inMilliseconds,
+            'totalDuration': h.totalDuration?.inMilliseconds,
+          },
+        )
+        .toList();
     SyncService.instance.pushField('continue_watching', data);
   }
 }

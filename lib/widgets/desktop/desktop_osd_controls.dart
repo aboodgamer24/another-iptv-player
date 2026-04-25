@@ -179,7 +179,9 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
                     duration: const Duration(milliseconds: 300),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
@@ -194,14 +196,19 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
                         children: [
                           if (widget.onBack != null)
                             IconButton(
-                              icon: const Icon(Icons.arrow_back,
-                                  color: Colors.white, size: 22),
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 22,
+                              ),
                               onPressed: widget.onBack,
                             ),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
-                              PlayerState.title.isNotEmpty ? PlayerState.title : widget.title,
+                              PlayerState.title.isNotEmpty
+                                  ? PlayerState.title
+                                  : widget.title,
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 16,
@@ -263,8 +270,11 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
                       shape: BoxShape.circle,
                       color: Colors.black.withValues(alpha: 0.5),
                     ),
-                    child: const Icon(Icons.play_arrow_rounded,
-                        color: Colors.white, size: 48),
+                    child: const Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.white,
+                      size: 48,
+                    ),
                   ),
                 ),
             ],
@@ -276,15 +286,18 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
 
   Widget _buildSeekBar() {
     final totalMs = _duration.inMilliseconds.toDouble();
-    final currentMs = (_isDragging
-            ? _dragPosition
-            : _position.inMilliseconds.toDouble())
-        .clamp(0.0, totalMs > 0 ? totalMs : 1.0);
+    final currentMs =
+        (_isDragging ? _dragPosition : _position.inMilliseconds.toDouble())
+            .clamp(0.0, totalMs > 0 ? totalMs : 1.0);
 
     return Row(
       children: [
-        Text(_fmt(_isDragging ? Duration(milliseconds: currentMs.toInt()) : _position),
-            style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          _fmt(
+            _isDragging ? Duration(milliseconds: currentMs.toInt()) : _position,
+          ),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
         const SizedBox(width: 12),
         Expanded(
           child: SliderTheme(
@@ -318,8 +331,10 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
           ),
         ),
         const SizedBox(width: 12),
-        Text(_fmt(_duration),
-            style: const TextStyle(color: Colors.white70, fontSize: 12)),
+        Text(
+          _fmt(_duration),
+          style: const TextStyle(color: Colors.white70, fontSize: 12),
+        ),
       ],
     );
   }
@@ -339,16 +354,18 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
           _OsdButton(
             icon: Icons.skip_previous_rounded,
             onTap: () => EventBus().emit(
-                'player_content_item_index_changed',
-                (PlayerState.currentIndex) - 1),
+              'player_content_item_index_changed',
+              (PlayerState.currentIndex) - 1,
+            ),
             size: 20,
           ),
           const SizedBox(width: 4),
           _OsdButton(
             icon: Icons.skip_next_rounded,
             onTap: () => EventBus().emit(
-                'player_content_item_index_changed',
-                (PlayerState.currentIndex) + 1),
+              'player_content_item_index_changed',
+              (PlayerState.currentIndex) + 1,
+            ),
             size: 20,
           ),
         ],
@@ -358,9 +375,12 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
           const SizedBox(width: 8),
           _OsdButton(
             icon: Icons.skip_next_rounded,
-            onTap: () => widget.player
-                .jump((widget.player.state.playlist.index + 1)
-                    .clamp(0, widget.player.state.playlist.medias.length - 1)),
+            onTap: () => widget.player.jump(
+              (widget.player.state.playlist.index + 1).clamp(
+                0,
+                widget.player.state.playlist.medias.length - 1,
+              ),
+            ),
             size: 20,
           ),
         ],
@@ -372,8 +392,8 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
           icon: _isMuted || _volume == 0
               ? Icons.volume_off_rounded
               : (_volume < 50
-                  ? Icons.volume_down_rounded
-                  : Icons.volume_up_rounded),
+                    ? Icons.volume_down_rounded
+                    : Icons.volume_up_rounded),
           onTap: _toggleMute,
           size: 20,
         ),
@@ -404,8 +424,7 @@ class _DesktopOsdControlsState extends State<DesktopOsdControls> {
           icon: Icons.list_rounded,
           onTap: () {
             PlayerState.showChannelList = !PlayerState.showChannelList;
-            EventBus()
-                .emit('toggle_channel_list', PlayerState.showChannelList);
+            EventBus().emit('toggle_channel_list', PlayerState.showChannelList);
           },
           size: 20,
         ),
@@ -419,11 +438,7 @@ class _OsdButton extends StatefulWidget {
   final VoidCallback onTap;
   final double size;
 
-  const _OsdButton({
-    required this.icon,
-    required this.onTap,
-    this.size = 24,
-  });
+  const _OsdButton({required this.icon, required this.onTap, this.size = 24});
 
   @override
   State<_OsdButton> createState() => _OsdButtonState();

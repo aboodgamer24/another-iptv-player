@@ -4,8 +4,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/home_rail_config.dart';
 import '../utils/app_config.dart';
 
-
-
 class UserPreferences {
   static const String _keyLastPlaylist = 'last_playlist';
   static const String _keyVolume = 'volume';
@@ -463,7 +461,11 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keySyncUser);
     if (raw == null || raw.isEmpty) return {};
-    try { return Map<String, dynamic>.from(jsonDecode(raw)); } catch (_) { return {}; }
+    try {
+      return Map<String, dynamic>.from(jsonDecode(raw));
+    } catch (_) {
+      return {};
+    }
   }
 
   static Future<void> setSyncUser(Map user) async {
@@ -481,10 +483,16 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keySyncedPlaylists);
     if (raw == null) return [];
-    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+    try {
+      return List<Map>.from(jsonDecode(raw));
+    } catch (_) {
+      return [];
+    }
   }
 
-  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
+  @Deprecated(
+    'Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()',
+  )
   static Future<void> setSyncedPlaylists(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedPlaylists, jsonEncode(data));
@@ -494,10 +502,16 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keySyncedFavorites);
     if (raw == null) return [];
-    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+    try {
+      return List<Map>.from(jsonDecode(raw));
+    } catch (_) {
+      return [];
+    }
   }
 
-  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
+  @Deprecated(
+    'Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()',
+  )
   static Future<void> setSyncedFavorites(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedFavorites, jsonEncode(data));
@@ -507,10 +521,16 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keySyncedWatchLater);
     if (raw == null) return [];
-    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+    try {
+      return List<Map>.from(jsonDecode(raw));
+    } catch (_) {
+      return [];
+    }
   }
 
-  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
+  @Deprecated(
+    'Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()',
+  )
   static Future<void> setSyncedWatchLater(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedWatchLater, jsonEncode(data));
@@ -520,10 +540,16 @@ class UserPreferences {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_keySyncedContinueWatching);
     if (raw == null) return [];
-    try { return List<Map>.from(jsonDecode(raw)); } catch (_) { return []; }
+    try {
+      return List<Map>.from(jsonDecode(raw));
+    } catch (_) {
+      return [];
+    }
   }
 
-  @Deprecated('Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()')
+  @Deprecated(
+    'Ghost data — use Drift DB directly via DatabaseService or db.getAllFavorites()',
+  )
   static Future<void> setSyncedContinueWatching(List<Map> data) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_keySyncedContinueWatching, jsonEncode(data));
@@ -539,7 +565,10 @@ class UserPreferences {
     return {
       'upscalePreset': prefs.getString('upscale_preset') ?? 'none',
       'streamEnhancement': prefs.getBool('stream_enhancement') ?? false,
-      'tmdbApiKey': prefs.getString('tmdb_api_key') ?? prefs.getString('tmdbApiKey') ?? '',
+      'tmdbApiKey':
+          prefs.getString('tmdb_api_key') ??
+          prefs.getString('tmdbApiKey') ??
+          '',
       'subtitleSize': prefs.getDouble('subtitle_size') ?? 1.0,
       'subtitleColor': prefs.getInt('subtitle_color') ?? 0xFFFFFFFF,
       'last_playlist_id': prefs.getString(_keyLastPlaylist) ?? '',
@@ -550,8 +579,10 @@ class UserPreferences {
   // Apply synced settings snapshot back to SharedPreferences
   static Future<void> applySyncedSettings(Map<String, dynamic> settings) async {
     final prefs = await SharedPreferences.getInstance();
-    if (settings['upscalePreset'] != null) await prefs.setString('upscale_preset', settings['upscalePreset']);
-    if (settings['streamEnhancement'] != null) await prefs.setBool('stream_enhancement', settings['streamEnhancement']);
+    if (settings['upscalePreset'] != null)
+      await prefs.setString('upscale_preset', settings['upscalePreset']);
+    if (settings['streamEnhancement'] != null)
+      await prefs.setBool('stream_enhancement', settings['streamEnhancement']);
     // Restore TMDB API key (handle both key variants)
     final tmdbKey = settings['tmdbApiKey'] ?? settings['tmdb_api_key'];
     if (tmdbKey != null && (tmdbKey as String).isNotEmpty) {
@@ -559,14 +590,21 @@ class UserPreferences {
       debugPrint('[UserPreferences] Restored TMDB API key from sync');
     }
 
-    if (settings['subtitleSize'] != null) await prefs.setDouble('subtitle_size', (settings['subtitleSize'] as num).toDouble());
-    if (settings['subtitleColor'] != null) await prefs.setInt('subtitle_color', settings['subtitleColor']);
+    if (settings['subtitleSize'] != null)
+      await prefs.setDouble(
+        'subtitle_size',
+        (settings['subtitleSize'] as num).toDouble(),
+      );
+    if (settings['subtitleColor'] != null)
+      await prefs.setInt('subtitle_color', settings['subtitleColor']);
     // Restore last used playlist
-    if (settings['last_playlist_id'] != null && (settings['last_playlist_id'] as String).isNotEmpty) {
+    if (settings['last_playlist_id'] != null &&
+        (settings['last_playlist_id'] as String).isNotEmpty) {
       await prefs.setString(_keyLastPlaylist, settings['last_playlist_id']);
     }
     // Restore home rails customization
-    if (settings['homeRailsConfig'] != null && (settings['homeRailsConfig'] as String).isNotEmpty) {
+    if (settings['homeRailsConfig'] != null &&
+        (settings['homeRailsConfig'] as String).isNotEmpty) {
       await prefs.setString(_homeRailsKey, settings['homeRailsConfig']);
       debugPrint('[UserPreferences] Restored homeRailsConfig from sync');
     }
@@ -597,4 +635,3 @@ class UserPreferences {
     debugPrint('[UserPreferences] clearSyncedSettings: all settings reset');
   }
 }
-

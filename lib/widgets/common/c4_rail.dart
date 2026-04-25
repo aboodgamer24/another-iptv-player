@@ -54,11 +54,7 @@ class _C4RailState extends State<C4Rail> {
         children: [
           const SizedBox(height: 40),
           // Logo or App Icon
-          Icon(
-            Icons.tv,
-            size: 32,
-            color: theme.colorScheme.primary,
-          ),
+          Icon(Icons.tv, size: 32, color: theme.colorScheme.primary),
           const SizedBox(height: 40),
           Expanded(
             child: ListView.separated(
@@ -75,7 +71,8 @@ class _C4RailState extends State<C4Rail> {
                   },
                   onKeyEvent: (node, event) {
                     if (event is KeyDownEvent) {
-                      if (event.logicalKey.debugName == 'Select' || event.logicalKey.debugName == 'Enter') {
+                      if (event.logicalKey.debugName == 'Select' ||
+                          event.logicalKey.debugName == 'Enter') {
                         widget.onItemSelected(index);
                         return KeyEventResult.handled;
                       }
@@ -93,11 +90,15 @@ class _C4RailState extends State<C4Rail> {
                           color: isSelected
                               ? theme.colorScheme.primary.withValues(alpha: 0.1)
                               : isFocused
-                                  ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
-                                  : Colors.transparent,
+                              ? theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.05,
+                                )
+                              : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isFocused ? theme.colorScheme.primary : Colors.transparent,
+                            color: isFocused
+                                ? theme.colorScheme.primary
+                                : Colors.transparent,
                             width: 2,
                           ),
                         ),
@@ -119,7 +120,9 @@ class _C4RailState extends State<C4Rail> {
                                 color: isSelected || isFocused
                                     ? theme.colorScheme.primary
                                     : theme.colorScheme.onSurfaceVariant,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
                               ),
                             ),
                           ],

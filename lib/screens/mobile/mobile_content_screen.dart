@@ -68,8 +68,10 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
 
     if (_searchQuery.isNotEmpty) {
       items = items
-          .where((item) =>
-              item.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+          .where(
+            (item) =>
+                item.name.toLowerCase().contains(_searchQuery.toLowerCase()),
+          )
           .toList();
     }
     return items;
@@ -90,12 +92,13 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
                 : GridView.builder(
                     cacheExtent: 500,
                     padding: const EdgeInsets.all(8),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.67,
-                      mainAxisSpacing: 12,
-                      crossAxisSpacing: 12,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.67,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                        ),
                     itemCount: _displayItems.length,
                     itemBuilder: (context, index) {
                       return _buildPosterCard(_displayItems[index]);
@@ -108,7 +111,9 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
   }
 
   Widget _buildSearchBar() {
-    final selectedLabel = _selectedCategoryIndex == 0 ? context.loc.all : widget.categories[_selectedCategoryIndex - 1].category.categoryName;
+    final selectedLabel = _selectedCategoryIndex == 0
+        ? context.loc.all
+        : widget.categories[_selectedCategoryIndex - 1].category.categoryName;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(8, 8, 8, 4),
@@ -126,13 +131,20 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.menu_rounded, color: Colors.white70, size: 18),
+                  const Icon(
+                    Icons.menu_rounded,
+                    color: Colors.white70,
+                    size: 18,
+                  ),
                   const SizedBox(width: 6),
                   ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 90),
                     child: Text(
                       selectedLabel,
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -189,7 +201,9 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
               child: Row(
                 children: [
                   Icon(
-                    widget.contentType == ContentType.vod ? Icons.movie_outlined : Icons.tv_outlined,
+                    widget.contentType == ContentType.vod
+                        ? Icons.movie_outlined
+                        : Icons.tv_outlined,
                     color: Colors.white70,
                     size: 20,
                   ),
@@ -213,8 +227,12 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
                 itemCount: widget.categories.length + 1, // +1 for "All"
                 itemBuilder: (context, index) {
                   final isSelected = _selectedCategoryIndex == index;
-                  final label = index == 0 ? context.loc.all : widget.categories[index - 1].category.categoryName;
-                  final count = index == 0 ? _allItems.length : widget.categories[index - 1].contentItems.length;
+                  final label = index == 0
+                      ? context.loc.all
+                      : widget.categories[index - 1].category.categoryName;
+                  final count = index == 0
+                      ? _allItems.length
+                      : widget.categories[index - 1].contentItems.length;
 
                   return InkWell(
                     onTap: () {
@@ -223,12 +241,28 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
                     },
                     child: AnimatedContainer(
                       duration: const Duration(milliseconds: 150),
-                      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                      margin: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 2,
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
                       decoration: BoxDecoration(
-                        color: isSelected ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : Colors.transparent,
+                        color: isSelected
+                            ? Theme.of(
+                                context,
+                              ).primaryColor.withValues(alpha: 0.2)
+                            : Colors.transparent,
                         borderRadius: BorderRadius.circular(8),
-                        border: isSelected ? Border.all(color: Theme.of(context).primaryColor.withValues(alpha: 0.5)) : null,
+                        border: isSelected
+                            ? Border.all(
+                                color: Theme.of(
+                                  context,
+                                ).primaryColor.withValues(alpha: 0.5),
+                              )
+                            : null,
                       ),
                       child: Row(
                         children: [
@@ -236,8 +270,12 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
                             child: Text(
                               label,
                               style: TextStyle(
-                                color: isSelected ? Colors.white : Colors.white70,
-                                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
+                                color: isSelected
+                                    ? Colors.white
+                                    : Colors.white70,
+                                fontWeight: isSelected
+                                    ? FontWeight.w600
+                                    : FontWeight.normal,
                                 fontSize: 14,
                               ),
                               maxLines: 2,
@@ -248,7 +286,9 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
                           Text(
                             '$count',
                             style: TextStyle(
-                              color: isSelected ? Theme.of(context).primaryColor : Colors.white38,
+                              color: isSelected
+                                  ? Theme.of(context).primaryColor
+                                  : Colors.white38,
                               fontSize: 12,
                             ),
                           ),

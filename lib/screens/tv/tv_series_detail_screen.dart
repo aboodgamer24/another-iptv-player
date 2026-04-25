@@ -14,19 +14,16 @@ class TvSeriesDetailScreen extends StatefulWidget {
 class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
   int _selectedSeason = 1;
 
-  List<ContentItem> get _episodes =>
-      (widget.series.episodes ?? [])
-          .where((e) => e.season == _selectedSeason)
-          .toList();
+  List<ContentItem> get _episodes => (widget.series.episodes ?? [])
+      .where((e) => e.season == _selectedSeason)
+      .toList();
 
   @override
   Widget build(BuildContext context) {
-    final seasons = (widget.series.episodes
-            ?.map((e) => e.season ?? 1)
-            .toSet()
-            .toList() ??
-        [1])
-      ..sort();
+    final seasons =
+        (widget.series.episodes?.map((e) => e.season ?? 1).toSet().toList() ??
+              [1])
+          ..sort();
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -40,7 +37,7 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
                 child: Image.network(
                   widget.series.imagePath,
                   fit: BoxFit.cover,
-                  errorBuilder: (_,__,___) => Container(color: Colors.black),
+                  errorBuilder: (_, __, ___) => Container(color: Colors.black),
                 ),
               ),
             ),
@@ -89,32 +86,42 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
                         onFocusChange: (hasFocus) {
                           if (hasFocus) setState(() => _selectedSeason = s);
                         },
-                        child: Builder(builder: (ctx) {
-                          final hasFocus = Focus.of(ctx).hasFocus;
-                          return GestureDetector(
-                            onTap: () => setState(() => _selectedSeason = s),
-                            child: Container(
-                              margin: const EdgeInsets.only(right: 12),
-                              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isSelected || hasFocus
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Colors.white12,
-                                borderRadius: BorderRadius.circular(8),
-                                border: hasFocus
-                                    ? Border.all(color: Colors.white, width: 1.5)
-                                    : null,
-                              ),
-                              child: Text(
-                                'Season $s',
-                                style: TextStyle(
-                                  color: isSelected || hasFocus ? Colors.white : Colors.white60,
-                                  fontWeight: FontWeight.bold,
+                        child: Builder(
+                          builder: (ctx) {
+                            final hasFocus = Focus.of(ctx).hasFocus;
+                            return GestureDetector(
+                              onTap: () => setState(() => _selectedSeason = s),
+                              child: Container(
+                                margin: const EdgeInsets.only(right: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 20,
+                                  vertical: 10,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isSelected || hasFocus
+                                      ? Theme.of(context).colorScheme.primary
+                                      : Colors.white12,
+                                  borderRadius: BorderRadius.circular(8),
+                                  border: hasFocus
+                                      ? Border.all(
+                                          color: Colors.white,
+                                          width: 1.5,
+                                        )
+                                      : null,
+                                ),
+                                child: Text(
+                                  'Season $s',
+                                  style: TextStyle(
+                                    color: isSelected || hasFocus
+                                        ? Colors.white
+                                        : Colors.white60,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
-                            ),
-                          );
-                        }),
+                            );
+                          },
+                        ),
                       );
                     }).toList(),
                   ),
@@ -151,69 +158,87 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
                         }
                         return KeyEventResult.ignored;
                       },
-                      child: Builder(builder: (ctx) {
-                        final hasFocus = Focus.of(ctx).hasFocus;
-                        return GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => TvPlayerScreen(
-                                contentItem: ep,
-                                queue: _episodes,
-                                initialIndex: i,
+                      child: Builder(
+                        builder: (ctx) {
+                          final hasFocus = Focus.of(ctx).hasFocus;
+                          return GestureDetector(
+                            onTap: () => Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => TvPlayerScreen(
+                                  contentItem: ep,
+                                  queue: _episodes,
+                                  initialIndex: i,
+                                ),
                               ),
                             ),
-                          ),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 120),
-                            transform: hasFocus
-                                ? (Matrix4.diagonal3Values(1.05, 1.05, 1.0))
-                                : Matrix4.identity(),
-                            decoration: BoxDecoration(
-                              color: Colors.grey,
-                              borderRadius: BorderRadius.circular(8),
-                              border: hasFocus
-                                  ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
-                                  : Border.all(color: Colors.white12),
-                            ),
-                            child: Stack(
-                              fit: StackFit.expand,
-                              children: [
-                                if (ep.imagePath.isNotEmpty)
-                                  ClipRRect(
-                                    borderRadius: BorderRadius.circular(7),
-                                    child: Image.network(ep.imagePath, fit: BoxFit.cover, errorBuilder: (_,__,___) => Container(color: Colors.black)),
-                                  ),
-                                Positioned(
-                                  bottom: 0,
-                                  left: 0,
-                                  right: 0,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(8),
-                                    decoration: const BoxDecoration(
-                                      gradient: LinearGradient(
-                                        begin: Alignment.bottomCenter,
-                                        end: Alignment.topCenter,
-                                        colors: [Colors.black87, Colors.transparent],
-                                      ),
-                                      borderRadius: BorderRadius.only(
-                                        bottomLeft: Radius.circular(7),
-                                        bottomRight: Radius.circular(7),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 120),
+                              transform: hasFocus
+                                  ? (Matrix4.diagonal3Values(1.05, 1.05, 1.0))
+                                  : Matrix4.identity(),
+                              decoration: BoxDecoration(
+                                color: Colors.grey,
+                                borderRadius: BorderRadius.circular(8),
+                                border: hasFocus
+                                    ? Border.all(
+                                        color: Theme.of(
+                                          context,
+                                        ).colorScheme.primary,
+                                        width: 2,
+                                      )
+                                    : Border.all(color: Colors.white12),
+                              ),
+                              child: Stack(
+                                fit: StackFit.expand,
+                                children: [
+                                  if (ep.imagePath.isNotEmpty)
+                                    ClipRRect(
+                                      borderRadius: BorderRadius.circular(7),
+                                      child: Image.network(
+                                        ep.imagePath,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, __, ___) =>
+                                            Container(color: Colors.black),
                                       ),
                                     ),
-                                    child: Text(
-                                      ep.name,
-                                      style: const TextStyle(color: Colors.white, fontSize: 12),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
+                                  Positioned(
+                                    bottom: 0,
+                                    left: 0,
+                                    right: 0,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: const BoxDecoration(
+                                        gradient: LinearGradient(
+                                          begin: Alignment.bottomCenter,
+                                          end: Alignment.topCenter,
+                                          colors: [
+                                            Colors.black87,
+                                            Colors.transparent,
+                                          ],
+                                        ),
+                                        borderRadius: BorderRadius.only(
+                                          bottomLeft: Radius.circular(7),
+                                          bottomRight: Radius.circular(7),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        ep.name,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             ),
-                          ),
-                        );
-                      }),
+                          );
+                        },
+                      ),
                     );
                   },
                 ),

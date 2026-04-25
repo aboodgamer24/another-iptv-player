@@ -18,10 +18,10 @@ class TvHomeScreen extends StatelessWidget {
 
     final featured = controller.liveCategories?.isNotEmpty == true
         ? controller
-            .getLiveChannelsByCategory(
-              controller.liveCategories!.first.category.categoryId,
-            )
-            .firstOrNull
+              .getLiveChannelsByCategory(
+                controller.liveCategories!.first.category.categoryId,
+              )
+              .firstOrNull
         : null;
 
     return SingleChildScrollView(
@@ -171,7 +171,9 @@ class _TvHeroBannerState extends State<_TvHeroBanner> {
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 150),
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 24, vertical: 12),
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           decoration: BoxDecoration(
                             color: hasFocus
                                 ? Theme.of(context).colorScheme.primaryContainer
@@ -185,7 +187,7 @@ class _TvHeroBannerState extends State<_TvHeroBanner> {
                                           .primary
                                           .withValues(alpha: 0.5),
                                       blurRadius: 16,
-                                    )
+                                    ),
                                   ]
                                 : [],
                           ),
@@ -197,7 +199,9 @@ class _TvHeroBannerState extends State<_TvHeroBanner> {
                               Text(
                                 'Watch Now',
                                 style: TextStyle(
-                                    color: Colors.white, fontSize: 16),
+                                  color: Colors.white,
+                                  fontSize: 16,
+                                ),
                               ),
                             ],
                           ),
@@ -262,59 +266,63 @@ class _TvHomeRow extends StatelessWidget {
                   }
                   return KeyEventResult.ignored;
                 },
-                child: Builder(builder: (ctx) {
-                  final hasFocus = Focus.of(ctx).hasFocus;
-                  return GestureDetector(
-                    onTap: () => onSelect(item, i, items),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 120),
-                      transform: hasFocus
-                          ? (Matrix4.diagonal3Values(1.07, 1.07, 1.0))
-                          : Matrix4.identity(),
-                      transformAlignment: Alignment.center,
-                      margin: const EdgeInsets.only(right: 12),
-                      width: 200,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        border: hasFocus
-                            ? Border.all(
-                                color: Theme.of(context).colorScheme.primary,
-                                width: 2,
-                              )
-                            : Border.all(color: Colors.white12),
-                        boxShadow: hasFocus
-                            ? [
-                                BoxShadow(
-                                  color: Theme.of(context)
-                                      .colorScheme
-                                      .primary
-                                      .withValues(alpha: 0.4),
-                                  blurRadius: 12,
+                child: Builder(
+                  builder: (ctx) {
+                    final hasFocus = Focus.of(ctx).hasFocus;
+                    return GestureDetector(
+                      onTap: () => onSelect(item, i, items),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 120),
+                        transform: hasFocus
+                            ? (Matrix4.diagonal3Values(1.07, 1.07, 1.0))
+                            : Matrix4.identity(),
+                        transformAlignment: Alignment.center,
+                        margin: const EdgeInsets.only(right: 12),
+                        width: 200,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(8),
+                          border: hasFocus
+                              ? Border.all(
+                                  color: Theme.of(context).colorScheme.primary,
+                                  width: 2,
                                 )
-                              ]
-                            : [],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(7),
-                        child: item.imagePath.isNotEmpty
-                            ? Image.network(
-                                item.imagePath,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Container(
+                              : Border.all(color: Colors.white12),
+                          boxShadow: hasFocus
+                              ? [
+                                  BoxShadow(
+                                    color: Theme.of(context).colorScheme.primary
+                                        .withValues(alpha: 0.4),
+                                    blurRadius: 12,
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(7),
+                          child: item.imagePath.isNotEmpty
+                              ? Image.network(
+                                  item.imagePath,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) => Container(
+                                    color: Colors.grey,
+                                    child: const Icon(
+                                      Icons.tv,
+                                      color: Colors.white24,
+                                    ),
+                                  ),
+                                )
+                              : Container(
                                   color: Colors.grey,
-                                  child: const Icon(Icons.tv,
-                                      color: Colors.white24),
+                                  child: const Icon(
+                                    Icons.tv,
+                                    color: Colors.white24,
+                                  ),
                                 ),
-                              )
-                            : Container(
-                                color: Colors.grey,
-                                child: const Icon(Icons.tv,
-                                    color: Colors.white24),
-                              ),
+                        ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               );
             },
           ),

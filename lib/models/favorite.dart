@@ -77,9 +77,8 @@ class Favorite {
   }
 
   /// Convert this Favorite back to a ContentItem for navigation/toggling.
-  ContentItem toContentItem() => ContentItem(
-    streamId, name, imagePath ?? '', contentType,
-  );
+  ContentItem toContentItem() =>
+      ContentItem(streamId, name, imagePath ?? '', contentType);
 
   @override
   String toString() {

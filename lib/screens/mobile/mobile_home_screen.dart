@@ -155,12 +155,14 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
       return const Center(child: CircularProgressIndicator());
     }
 
-    final continueWatching = context.select<WatchHistoryController, List<WatchHistory>>(
-      (c) => c.continueWatching,
-    );
-    final movieHistory = context.select<WatchHistoryController, List<WatchHistory>>(
-      (c) => c.movieHistory,
-    );
+    final continueWatching = context
+        .select<WatchHistoryController, List<WatchHistory>>(
+          (c) => c.continueWatching,
+        );
+    final movieHistory = context
+        .select<WatchHistoryController, List<WatchHistory>>(
+          (c) => c.movieHistory,
+        );
     final favItems = context.select<FavoritesController, List<Favorite>>(
       (c) => c.favorites,
     );
@@ -176,114 +178,119 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
         children: [
           if (heroItem != null) _buildHero(heroItem),
           const SizedBox(height: 16),
-          ...context.watch<HomeRailsController>().visibleRails.map((rail) {
-            switch (rail.id) {
-              case 'continue_watching':
-                if (continueWatchingFiltered.isEmpty) return const SizedBox.shrink();
-                return _buildSection(
-                  context.loc.continue_watching,
-                  continueWatchingFiltered
-                      .map(
-                        (h) => ContentItem(
-                          h.streamId,
-                          h.title,
-                          h.imagePath ?? '',
-                          h.contentType,
-                        ),
-                      )
-                      .toList(),
-                );
-              case 'favorites_live':
-                final liveItems = favItems
-                    .where((f) => f.contentType == ContentType.liveStream)
-                    .toList();
-                if (liveItems.isEmpty) return const SizedBox.shrink();
-                return _buildSection(
-                  context.loc.rail_favorites_live,
-                  liveItems
-                      .map(
-                        (f) => ContentItem(
-                          f.streamId,
-                          f.name,
-                          f.imagePath ?? '',
-                          f.contentType,
-                        ),
-                      )
-                      .toList(),
-                );
-              case 'favorites_movies':
-                final movieFavs = favItems
-                    .where((f) => f.contentType == ContentType.vod)
-                    .toList();
-                if (movieFavs.isEmpty) return const SizedBox.shrink();
-                return _buildSection(
-                  context.loc.rail_favorites_movies,
-                  movieFavs
-                      .map(
-                        (f) => ContentItem(
-                          f.streamId,
-                          f.name,
-                          f.imagePath ?? '',
-                          f.contentType,
-                        ),
-                      )
-                      .toList(),
-                );
-              case 'favorites_series':
-                final seriesFavs = favItems
-                    .where((f) => f.contentType == ContentType.series)
-                    .toList();
-                if (seriesFavs.isEmpty) return const SizedBox.shrink();
-                return _buildSection(
-                  context.loc.rail_favorites_series,
-                  seriesFavs
-                      .map(
-                        (f) => ContentItem(
-                          f.streamId,
-                          f.name,
-                          f.imagePath ?? '',
-                          f.contentType,
-                        ),
-                      )
-                      .toList(),
-                );
-              case 'watch_later':
-                // Watch later controller implementation pending
-                return const SizedBox.shrink();
-              case 'live_history':
-                // For now reuse movieHistory or similar if live history is not separate
-                if (movieHistory.isEmpty) return const SizedBox.shrink();
-                return _buildSection(
-                  context.loc.rail_live_history,
-                  movieHistory
-                      .map(
-                        (h) => ContentItem(
-                          h.streamId,
-                          h.title,
-                          h.imagePath ?? '',
-                          h.contentType,
-                        ),
-                      )
-                      .toList(),
-                );
-              case 'trending_movies':
-                if (_trendingMovies.isEmpty) return const SizedBox.shrink();
-                return _buildTmdbSection(
-                  context.loc.rail_trending_movies,
-                  _trendingMovies,
-                );
-              case 'trending_series':
-                if (_trendingSeries.isEmpty) return const SizedBox.shrink();
-                return _buildTmdbSection(
-                  context.loc.rail_trending_series,
-                  _trendingSeries,
-                );
-              case 'recommended':
-                return const SizedBox.shrink();
-              default:
-                return const SizedBox.shrink();
-            }
-          }).where((w) => w is! SizedBox),
+          ...context
+              .watch<HomeRailsController>()
+              .visibleRails
+              .map((rail) {
+                switch (rail.id) {
+                  case 'continue_watching':
+                    if (continueWatchingFiltered.isEmpty)
+                      return const SizedBox.shrink();
+                    return _buildSection(
+                      context.loc.continue_watching,
+                      continueWatchingFiltered
+                          .map(
+                            (h) => ContentItem(
+                              h.streamId,
+                              h.title,
+                              h.imagePath ?? '',
+                              h.contentType,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  case 'favorites_live':
+                    final liveItems = favItems
+                        .where((f) => f.contentType == ContentType.liveStream)
+                        .toList();
+                    if (liveItems.isEmpty) return const SizedBox.shrink();
+                    return _buildSection(
+                      context.loc.rail_favorites_live,
+                      liveItems
+                          .map(
+                            (f) => ContentItem(
+                              f.streamId,
+                              f.name,
+                              f.imagePath ?? '',
+                              f.contentType,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  case 'favorites_movies':
+                    final movieFavs = favItems
+                        .where((f) => f.contentType == ContentType.vod)
+                        .toList();
+                    if (movieFavs.isEmpty) return const SizedBox.shrink();
+                    return _buildSection(
+                      context.loc.rail_favorites_movies,
+                      movieFavs
+                          .map(
+                            (f) => ContentItem(
+                              f.streamId,
+                              f.name,
+                              f.imagePath ?? '',
+                              f.contentType,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  case 'favorites_series':
+                    final seriesFavs = favItems
+                        .where((f) => f.contentType == ContentType.series)
+                        .toList();
+                    if (seriesFavs.isEmpty) return const SizedBox.shrink();
+                    return _buildSection(
+                      context.loc.rail_favorites_series,
+                      seriesFavs
+                          .map(
+                            (f) => ContentItem(
+                              f.streamId,
+                              f.name,
+                              f.imagePath ?? '',
+                              f.contentType,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  case 'watch_later':
+                    // Watch later controller implementation pending
+                    return const SizedBox.shrink();
+                  case 'live_history':
+                    // For now reuse movieHistory or similar if live history is not separate
+                    if (movieHistory.isEmpty) return const SizedBox.shrink();
+                    return _buildSection(
+                      context.loc.rail_live_history,
+                      movieHistory
+                          .map(
+                            (h) => ContentItem(
+                              h.streamId,
+                              h.title,
+                              h.imagePath ?? '',
+                              h.contentType,
+                            ),
+                          )
+                          .toList(),
+                    );
+                  case 'trending_movies':
+                    if (_trendingMovies.isEmpty) return const SizedBox.shrink();
+                    return _buildTmdbSection(
+                      context.loc.rail_trending_movies,
+                      _trendingMovies,
+                    );
+                  case 'trending_series':
+                    if (_trendingSeries.isEmpty) return const SizedBox.shrink();
+                    return _buildTmdbSection(
+                      context.loc.rail_trending_series,
+                      _trendingSeries,
+                    );
+                  case 'recommended':
+                    return const SizedBox.shrink();
+                  default:
+                    return const SizedBox.shrink();
+                }
+              })
+              .where((w) => w is! SizedBox),
           const SizedBox(height: 32),
         ],
       ),
@@ -309,7 +316,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(
               children: [
-                const Icon(Icons.local_fire_department, color: Colors.orange, size: 18),
+                const Icon(
+                  Icons.local_fire_department,
+                  color: Colors.orange,
+                  size: 18,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   title,
@@ -338,8 +349,11 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                     // Rebuild maps lazily in case they were not ready at initState
                     _buildLocalContentMaps();
 
-                    final title = (item['title'] ?? item['name'] ?? '') as String;
-                    final isMovie = item.containsKey('title'); // movies have 'title', TV has 'name'
+                    final title =
+                        (item['title'] ?? item['name'] ?? '') as String;
+                    final isMovie = item.containsKey(
+                      'title',
+                    ); // movies have 'title', TV has 'name'
                     final localItem = isMovie
                         ? _matchTmdbToLocal(title, _localMoviesByTitle)
                         : _matchTmdbToLocal(title, _localSeriesByTitle);
@@ -351,7 +365,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                       // Not in local library — show a snack so user knows
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text('"$title" is not available in your playlist'),
+                          content: Text(
+                            '"$title" is not available in your playlist',
+                          ),
                           duration: const Duration(seconds: 2),
                           behavior: SnackBarBehavior.floating,
                         ),
@@ -378,16 +394,23 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                                 fit: BoxFit.cover,
                                 memCacheWidth: 220,
                                 memCacheHeight: 330,
-                                fadeInDuration: const Duration(milliseconds: 150),
-                                errorWidget: (_, __, ___) =>
-                                    const Icon(Icons.movie, color: Colors.white24),
+                                fadeInDuration: const Duration(
+                                  milliseconds: 150,
+                                ),
+                                errorWidget: (_, __, ___) => const Icon(
+                                  Icons.movie,
+                                  color: Colors.white24,
+                                ),
                               ),
                             ),
                             Padding(
                               padding: const EdgeInsets.all(4),
                               child: Text(
                                 name,
-                                style: const TextStyle(color: Colors.white, fontSize: 10),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 10,
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -395,29 +418,41 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                           ],
                         ),
                         // Green "available" badge — shown only if matched locally
-                        Builder(builder: (context) {
-                          _buildLocalContentMaps();
-                          final isMovie = item.containsKey('title');
-                          final localItem = isMovie
-                              ? _matchTmdbToLocal(name, _localMoviesByTitle)
-                              : _matchTmdbToLocal(name, _localSeriesByTitle);
-                          if (localItem == null) return const SizedBox.shrink();
-                          return Positioned(
-                            top: 4,
-                            right: 4,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.green.shade700.withValues(alpha: 0.9),
-                                borderRadius: BorderRadius.circular(4),
+                        Builder(
+                          builder: (context) {
+                            _buildLocalContentMaps();
+                            final isMovie = item.containsKey('title');
+                            final localItem = isMovie
+                                ? _matchTmdbToLocal(name, _localMoviesByTitle)
+                                : _matchTmdbToLocal(name, _localSeriesByTitle);
+                            if (localItem == null)
+                              return const SizedBox.shrink();
+                            return Positioned(
+                              top: 4,
+                              right: 4,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: Colors.green.shade700.withValues(
+                                    alpha: 0.9,
+                                  ),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: const Text(
+                                  '✓',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
                               ),
-                              child: const Text(
-                                '✓',
-                                style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          );
-                        }),
+                            );
+                          },
+                        ),
                       ],
                     ),
                   ),

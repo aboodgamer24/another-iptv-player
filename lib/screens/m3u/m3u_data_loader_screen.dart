@@ -262,8 +262,11 @@ class M3uDataLoaderScreenState extends State<M3uDataLoaderScreen>
                                             shape: BoxShape.circle,
                                             border: Border.all(
                                               color: Color(0xFF00d4ff)
-                                                  .withValues(alpha: 
-                                                    (1 - _waveAnimation.value) *
+                                                  .withValues(
+                                                    alpha:
+                                                        (1 -
+                                                            _waveAnimation
+                                                                .value) *
                                                         (0.3 - i * 0.1),
                                                   ),
                                               width: 2,
@@ -348,7 +351,9 @@ class M3uDataLoaderScreenState extends State<M3uDataLoaderScreen>
                                     height: 6,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(3),
-                                      color: Colors.white.withValues(alpha: 0.1),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
                                     ),
                                     child: FractionallySizedBox(
                                       alignment: Alignment.centerLeft,
@@ -418,7 +423,9 @@ class M3uDataLoaderScreenState extends State<M3uDataLoaderScreen>
                                     ),
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

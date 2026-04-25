@@ -45,15 +45,20 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
           _setupIndexSubscription();
           return;
         }
-        allContents = (await AppState.xtreamCodeRepository!
-                .getLiveChannelsByCategoryId(
+        allContents =
+            (await AppState.xtreamCodeRepository!.getLiveChannelsByCategoryId(
                   categoryId: widget.content.liveStream!.categoryId,
                 ))!
-            .map((x) => ContentItem(
-                  x.streamId, x.name, x.streamIcon,
-                  ContentType.liveStream, liveStream: x,
-                ))
-            .toList();
+                .map(
+                  (x) => ContentItem(
+                    x.streamId,
+                    x.name,
+                    x.streamIcon,
+                    ContentType.liveStream,
+                    liveStream: x,
+                  ),
+                )
+                .toList();
       } else {
         if (widget.content.m3uItem == null) {
           setState(() {
@@ -64,15 +69,20 @@ class _LiveStreamScreenState extends State<LiveStreamScreen> {
           _setupIndexSubscription();
           return;
         }
-        allContents = (await AppState.m3uRepository!
-                .getM3uItemsByCategoryId(
+        allContents =
+            (await AppState.m3uRepository!.getM3uItemsByCategoryId(
                   categoryId: widget.content.m3uItem!.categoryId!,
                 ))!
-            .map((x) => ContentItem(
-                  x.url, x.name ?? 'NO NAME', x.tvgLogo ?? '',
-                  ContentType.liveStream, m3uItem: x,
-                ))
-            .toList();
+                .map(
+                  (x) => ContentItem(
+                    x.url,
+                    x.name ?? 'NO NAME',
+                    x.tvgLogo ?? '',
+                    ContentType.liveStream,
+                    m3uItem: x,
+                  ),
+                )
+                .toList();
       }
 
       setState(() {

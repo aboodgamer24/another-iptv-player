@@ -126,7 +126,8 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(
-          builder: (context) => MainNavigationScreenProvider(playlist: widget.playlist),
+          builder: (context) =>
+              MainNavigationScreenProvider(playlist: widget.playlist),
         ),
         (route) => false,
       );
@@ -262,8 +263,11 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                             shape: BoxShape.circle,
                                             border: Border.all(
                                               color: Color(0xFF00d4ff)
-                                                  .withValues(alpha: 
-                                                    (1 - _waveAnimation.value) *
+                                                  .withValues(
+                                                    alpha:
+                                                        (1 -
+                                                            _waveAnimation
+                                                                .value) *
                                                         (0.3 - i * 0.1),
                                                   ),
                                               width: 2,
@@ -348,7 +352,9 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                     height: 6,
                                     decoration: BoxDecoration(
                                       borderRadius: BorderRadius.circular(3),
-                                      color: Colors.white.withValues(alpha: 0.1),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.1,
+                                      ),
                                     ),
                                     child: FractionallySizedBox(
                                       alignment: Alignment.centerLeft,
@@ -418,7 +424,9 @@ class XtreamCodeDataLoaderScreenState extends State<XtreamCodeDataLoaderScreen>
                                     ),
                                     style: TextStyle(
                                       fontSize: 14,
-                                      color: Colors.white.withValues(alpha: 0.8),
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
                                     ),
                                     textAlign: TextAlign.center,
                                   ),

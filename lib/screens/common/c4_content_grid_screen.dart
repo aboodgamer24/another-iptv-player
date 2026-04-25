@@ -31,9 +31,10 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final controller = context.watch<XtreamCodeHomeController>();
-    
-    final List<CategoryViewModel> categories = widget.contentType == ContentType.vod 
-        ? controller.movieCategories 
+
+    final List<CategoryViewModel> categories =
+        widget.contentType == ContentType.vod
+        ? controller.movieCategories
         : controller.seriesCategories;
 
     if (categories.isEmpty) {
@@ -50,16 +51,23 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
           width: _sidebarWidth,
           padding: const EdgeInsets.symmetric(vertical: 20),
           decoration: BoxDecoration(
-            border: Border(right: BorderSide(color: theme.dividerColor, width: 0.5)),
+            border: Border(
+              right: BorderSide(color: theme.dividerColor, width: 0.5),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 8,
+                ),
                 child: Text(
                   context.loc.categories,
-                  style: theme.textTheme.labelMedium?.copyWith(color: theme.hintColor),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.hintColor,
+                  ),
                 ),
               ),
               Expanded(
@@ -70,7 +78,8 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                     return _CategoryTile(
                       title: categories[index].category.categoryName,
                       isSelected: isSelected,
-                      onTap: () => setState(() => _selectedCategoryIndex = index),
+                      onTap: () =>
+                          setState(() => _selectedCategoryIndex = index),
                     );
                   },
                 ),
@@ -86,8 +95,10 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
             behavior: HitTestBehavior.translucent,
             onHorizontalDragUpdate: (details) {
               setState(() {
-                _sidebarWidth = (_sidebarWidth + details.delta.dx)
-                    .clamp(_minSidebarWidth, _maxSidebarWidth);
+                _sidebarWidth = (_sidebarWidth + details.delta.dx).clamp(
+                  _minSidebarWidth,
+                  _maxSidebarWidth,
+                );
               });
             },
             child: Container(
@@ -113,7 +124,9 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
               children: [
                 Text(
                   selectedCategory.category.categoryName,
-                  style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 const SizedBox(height: 20),
                 Expanded(
@@ -127,26 +140,35 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                     itemCount: items.length,
                     itemBuilder: (context, index) {
                       final item = items[index];
-                      final favoritesController = context.watch<FavoritesController>();
-                      final watchLaterController = context.watch<WatchLaterController>();
+                      final favoritesController = context
+                          .watch<FavoritesController>();
+                      final watchLaterController = context
+                          .watch<WatchLaterController>();
 
                       return C4Card(
                         title: item.name,
                         imageUrl: item.imageUrl,
                         contentType: item.contentType,
                         isFavorite: favoritesController.favorites.any(
-                          (f) => f.streamId == item.id && f.contentType == item.contentType,
+                          (f) =>
+                              f.streamId == item.id &&
+                              f.contentType == item.contentType,
                         ),
-                        onToggleFavorite: () => favoritesController.toggleFavorite(item),
-                        isInWatchLater: watchLaterController.watchLaterItems.any(
-                          (w) => w.streamId == item.id && w.contentType == item.contentType,
-                        ),
-                        onToggleWatchLater: () => watchLaterController.toggleWatchLater(item),
+                        onToggleFavorite: () =>
+                            favoritesController.toggleFavorite(item),
+                        isInWatchLater: watchLaterController.watchLaterItems
+                            .any(
+                              (w) =>
+                                  w.streamId == item.id &&
+                                  w.contentType == item.contentType,
+                            ),
+                        onToggleWatchLater: () =>
+                            watchLaterController.toggleWatchLater(item),
                         onFocusChanged: (focused) {
                           if (focused) setState(() => _focusedItem = item);
                         },
                         onTap: () {
-                           navigateByContentType(context, item);
+                          navigateByContentType(context, item);
                         },
                       );
                     },
@@ -164,7 +186,9 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface.withValues(alpha: 0.5),
-              border: Border(left: BorderSide(color: theme.dividerColor, width: 0.5)),
+              border: Border(
+                left: BorderSide(color: theme.dividerColor, width: 0.5),
+              ),
             ),
             child: SingleChildScrollView(
               child: Column(
@@ -186,22 +210,31 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                   const SizedBox(height: 24),
                   Text(
                     _focusedItem!.name,
-                    style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  if (widget.contentType == ContentType.vod && _focusedItem!.vodStream != null) ...[
-                     _buildRatingRow(theme, _focusedItem!.vodStream!.rating),
+                  if (widget.contentType == ContentType.vod &&
+                      _focusedItem!.vodStream != null) ...[
+                    _buildRatingRow(theme, _focusedItem!.vodStream!.rating),
                     const SizedBox(height: 16),
                   ],
-                  if (widget.contentType == ContentType.series && _focusedItem!.seriesStream != null) ...[
-                     _buildRatingRow(theme, _focusedItem!.seriesStream!.rating ?? ''),
+                  if (widget.contentType == ContentType.series &&
+                      _focusedItem!.seriesStream != null) ...[
+                    _buildRatingRow(
+                      theme,
+                      _focusedItem!.seriesStream!.rating ?? '',
+                    ),
                     const SizedBox(height: 16),
                   ],
                   const Divider(),
                   const SizedBox(height: 16),
                   Text(
                     context.loc.description,
-                    style: theme.textTheme.labelLarge?.copyWith(color: theme.hintColor),
+                    style: theme.textTheme.labelLarge?.copyWith(
+                      color: theme.hintColor,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -281,8 +314,7 @@ class _CategoryTile extends StatelessWidget {
             title,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: isSelected ? Colors.white : theme.hintColor,
-              fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               fontSize: 13,
             ),
             maxLines: 1,

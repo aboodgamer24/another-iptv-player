@@ -211,8 +211,9 @@ class _PinDialogState extends State<PinDialog>
 
             // Cancel button
             TextButton(
-              onPressed:
-                  _isLoading ? null : () => Navigator.of(context).pop(null),
+              onPressed: _isLoading
+                  ? null
+                  : () => Navigator.of(context).pop(null),
               child: Text(
                 'Cancel',
                 style: TextStyle(color: theme.colorScheme.onSurfaceVariant),

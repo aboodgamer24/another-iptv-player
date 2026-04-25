@@ -44,31 +44,41 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
 
   String _getRailIcon(String id) {
     switch (id) {
-      case 'continue_watching':  return 'play_circle_outline';
-      case 'recommended':        return 'thumb_up_alt_outlined';
-      case 'favorites_live':     return 'live_tv';
-      case 'favorites_movies':   return 'movie_outlined';
-      case 'favorites_series':   return 'video_library_outlined';
-      case 'watch_later':        return 'watch_later_outlined';
-      case 'live_history':       return 'history';
-      case 'trending_movies':    return 'trending_up';
-      case 'trending_series':    return 'auto_graph';
-      default:                   return 'widgets_outlined';
+      case 'continue_watching':
+        return 'play_circle_outline';
+      case 'recommended':
+        return 'thumb_up_alt_outlined';
+      case 'favorites_live':
+        return 'live_tv';
+      case 'favorites_movies':
+        return 'movie_outlined';
+      case 'favorites_series':
+        return 'video_library_outlined';
+      case 'watch_later':
+        return 'watch_later_outlined';
+      case 'live_history':
+        return 'history';
+      case 'trending_movies':
+        return 'trending_up';
+      case 'trending_series':
+        return 'auto_graph';
+      default:
+        return 'widgets_outlined';
     }
   }
 
   IconData _getIcon(String name) {
     const map = <String, IconData>{
-      'play_circle_outline':    Icons.play_circle_outline,
-      'thumb_up_alt_outlined':  Icons.thumb_up_alt_outlined,
-      'live_tv':                Icons.live_tv,
-      'movie_outlined':         Icons.movie_outlined,
+      'play_circle_outline': Icons.play_circle_outline,
+      'thumb_up_alt_outlined': Icons.thumb_up_alt_outlined,
+      'live_tv': Icons.live_tv,
+      'movie_outlined': Icons.movie_outlined,
       'video_library_outlined': Icons.video_library_outlined,
-      'watch_later_outlined':   Icons.watch_later_outlined,
-      'history':                Icons.history,
-      'trending_up':            Icons.trending_up,
-      'auto_graph':             Icons.auto_graph,
-      'widgets_outlined':       Icons.widgets_outlined,
+      'watch_later_outlined': Icons.watch_later_outlined,
+      'history': Icons.history,
+      'trending_up': Icons.trending_up,
+      'auto_graph': Icons.auto_graph,
+      'widgets_outlined': Icons.widgets_outlined,
     };
     return map[name] ?? Icons.widgets_outlined;
   }
@@ -88,8 +98,11 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
           padding: const EdgeInsets.fromLTRB(4, 0, 4, 12),
           child: Row(
             children: [
-              Icon(Icons.drag_indicator,
-                  size: 14, color: colorScheme.onSurface.withValues(alpha: 0.4)),
+              Icon(
+                Icons.drag_indicator,
+                size: 14,
+                color: colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
               const SizedBox(width: 6),
               Text(
                 context.loc.home_customization_subtitle,
@@ -115,10 +128,12 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
                 animation: animation,
                 builder: (context, child) {
                   final elevation = Tween<double>(begin: 0, end: 8)
-                      .animate(CurvedAnimation(
-                        parent: animation,
-                        curve: Curves.easeOut,
-                      ))
+                      .animate(
+                        CurvedAnimation(
+                          parent: animation,
+                          curve: Curves.easeOut,
+                        ),
+                      )
                       .value;
                   return Material(
                     elevation: elevation,
@@ -163,7 +178,9 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
                     children: [
                       ListTile(
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 4),
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
                         leading: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           padding: const EdgeInsets.all(8),
@@ -205,8 +222,9 @@ class _HomeCustomizationSectionState extends State<HomeCustomizationSection> {
                               cursor: SystemMouseCursors.grab,
                               child: Icon(
                                 Icons.drag_handle_rounded,
-                                color: colorScheme.onSurface
-                                    .withValues(alpha: 0.35),
+                                color: colorScheme.onSurface.withValues(
+                                  alpha: 0.35,
+                                ),
                                 size: 22,
                               ),
                             ),

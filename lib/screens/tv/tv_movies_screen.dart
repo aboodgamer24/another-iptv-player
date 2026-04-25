@@ -22,7 +22,9 @@ class _TvMoviesScreenState extends State<TvMoviesScreen> {
       return const Center(child: CircularProgressIndicator());
     }
     final selectedCat = categories[_selectedCategoryIndex];
-    final movies = controller.getMoviesByCategory(selectedCat.category.categoryId);
+    final movies = controller.getMoviesByCategory(
+      selectedCat.category.categoryId,
+    );
 
     return Column(
       children: [
@@ -40,32 +42,39 @@ class _TvMoviesScreenState extends State<TvMoviesScreen> {
                 onFocusChange: (hasFocus) {
                   if (hasFocus) setState(() => _selectedCategoryIndex = i);
                 },
-                child: Builder(builder: (ctx) {
-                  final hasFocus = Focus.of(ctx).hasFocus;
-                  return GestureDetector(
-                    onTap: () => setState(() => _selectedCategoryIndex = i),
-                    child: Container(
-                      margin: const EdgeInsets.only(right: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: isSelected || hasFocus
-                            ? Theme.of(context).colorScheme.primary
-                            : Colors.white12,
-                        borderRadius: BorderRadius.circular(20),
-                        border: hasFocus
-                            ? Border.all(color: Colors.white, width: 1.5)
-                            : null,
-                      ),
-                      child: Text(
-                        cat.category.categoryName,
-                        style: TextStyle(
-                          color: isSelected || hasFocus ? Colors.white : Colors.white60,
-                          fontSize: 13,
+                child: Builder(
+                  builder: (ctx) {
+                    final hasFocus = Focus.of(ctx).hasFocus;
+                    return GestureDetector(
+                      onTap: () => setState(() => _selectedCategoryIndex = i),
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected || hasFocus
+                              ? Theme.of(context).colorScheme.primary
+                              : Colors.white12,
+                          borderRadius: BorderRadius.circular(20),
+                          border: hasFocus
+                              ? Border.all(color: Colors.white, width: 1.5)
+                              : null,
+                        ),
+                        child: Text(
+                          cat.category.categoryName,
+                          style: TextStyle(
+                            color: isSelected || hasFocus
+                                ? Colors.white
+                                : Colors.white60,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  },
+                ),
               );
             },
           ),

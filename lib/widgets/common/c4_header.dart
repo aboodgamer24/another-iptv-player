@@ -41,13 +41,16 @@ class C4Header extends StatelessWidget {
               children: [
                 if (breadcrumbs != null)
                   Row(
-                    children: breadcrumbs!
-                        .expand((c) => [
-                              Text(c, style: theme.textTheme.labelSmall),
-                              const Icon(Icons.chevron_right, size: 12),
-                            ])
-                        .toList()
-                      ..removeLast(),
+                    children:
+                        breadcrumbs!
+                            .expand(
+                              (c) => [
+                                Text(c, style: theme.textTheme.labelSmall),
+                                const Icon(Icons.chevron_right, size: 12),
+                              ],
+                            )
+                            .toList()
+                          ..removeLast(),
                   ),
                 Text(
                   title,
@@ -72,7 +75,10 @@ class C4Header extends StatelessWidget {
           const SizedBox(width: 16),
           // Clock
           StreamBuilder<DateTime>(
-            stream: Stream.periodic(const Duration(minutes: 1), (_) => DateTime.now()),
+            stream: Stream.periodic(
+              const Duration(minutes: 1),
+              (_) => DateTime.now(),
+            ),
             initialData: DateTime.now(),
             builder: (context, snapshot) {
               final timeStr = DateFormat('HH:mm').format(snapshot.data!);
@@ -85,10 +91,7 @@ class C4Header extends StatelessWidget {
               );
             },
           ),
-          if (trailing != null) ...[
-            const SizedBox(width: 16),
-            trailing!,
-          ],
+          if (trailing != null) ...[const SizedBox(width: 16), trailing!],
         ],
       ),
     );

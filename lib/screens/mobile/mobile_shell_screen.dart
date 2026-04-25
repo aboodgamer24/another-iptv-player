@@ -4,7 +4,7 @@ import '../../services/fullscreen_notifier.dart';
 
 class MobileShellScreen extends StatefulWidget {
   final Widget child;
-  final int selectedIndex;          // 0=Home, 1=Live, 2=Movies, 3=Series
+  final int selectedIndex; // 0=Home, 1=Live, 2=Movies, 3=Series
   final ValueChanged<int> onItemSelected;
   final String currentTitle;
   final VoidCallback? onSearchTap;
@@ -81,10 +81,8 @@ class _MobileShellScreenState extends State<MobileShellScreen> {
                   duration: const Duration(milliseconds: 220),
                   switchInCurve: Curves.easeOutCubic,
                   switchOutCurve: Curves.easeInCubic,
-                  transitionBuilder: (child, animation) => FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  ),
+                  transitionBuilder: (child, animation) =>
+                      FadeTransition(opacity: animation, child: child),
                   child: KeyedSubtree(
                     key: ValueKey(widget.selectedIndex),
                     child: SafeArea(child: widget.child),

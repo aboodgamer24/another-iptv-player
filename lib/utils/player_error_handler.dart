@@ -17,7 +17,9 @@ class PlayerErrorHandler {
     // Exponential backoff (1s, 2s, 4s, 8s, 16s)
     int delayMs = (_baseDelayMs * (1 << _retryCount)).clamp(1000, 30000);
 
-    debugPrint('PLAYER ERROR -> $error (Retry: $_retryCount, Delay: ${delayMs}ms)');
+    debugPrint(
+      'PLAYER ERROR -> $error (Retry: $_retryCount, Delay: ${delayMs}ms)',
+    );
 
     if (error.contains('Failed to open') && _retryCount < _maxRetryCount) {
       _errorTimer = Timer(Duration(milliseconds: delayMs), () {

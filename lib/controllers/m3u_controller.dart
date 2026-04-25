@@ -309,8 +309,6 @@ class M3uController extends ChangeNotifier {
     return success;
   }
 
-
-
   Map<CategoryWithContentType, List<M3uItem>> _groupChannels(
     List<M3uItem> channels,
   ) {
@@ -344,7 +342,6 @@ class M3uController extends ChangeNotifier {
 
     return sortedGrouped;
   }
-
 
   // Kategori bazlı filtreleme metodları
   List<M3uItem> getChannelsByGroup(String groupTitle) {

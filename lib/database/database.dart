@@ -1321,14 +1321,17 @@ class AppDatabase extends _$AppDatabase {
     String seriesId,
     String playlistId,
   ) async {
-    final seriesData = await (select(seriesStreams)
-          ..where(
-            (tbl) =>
-                tbl.seriesId.equals(seriesId) & tbl.playlistId.equals(playlistId),
-          ))
-        .getSingleOrNull();
+    final seriesData =
+        await (select(seriesStreams)..where(
+              (tbl) =>
+                  tbl.seriesId.equals(seriesId) &
+                  tbl.playlistId.equals(playlistId),
+            ))
+            .getSingleOrNull();
 
-    return seriesData != null ? SeriesStream.fromDriftSeriesStream(seriesData) : null;
+    return seriesData != null
+        ? SeriesStream.fromDriftSeriesStream(seriesData)
+        : null;
   }
 
   Future<int> clearSeriesData(String seriesId, String playlistId) async {
@@ -1575,12 +1578,12 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<Favorite>> getAllFavorites() async {
-    final favoritesData = await (select(favorites)
-          ..orderBy([
-            (f) => OrderingTerm.asc(f.sortOrder),
-            (f) => OrderingTerm.desc(f.createdAt),
-          ]))
-        .get();
+    final favoritesData =
+        await (select(favorites)..orderBy([
+              (f) => OrderingTerm.asc(f.sortOrder),
+              (f) => OrderingTerm.desc(f.createdAt),
+            ]))
+            .get();
     return favoritesData.map((data) => Favorite.fromDrift(data)).toList();
   }
 
@@ -1663,9 +1666,9 @@ class AppDatabase extends _$AppDatabase {
   }
 
   Future<List<WatchLaterData>> getAllWatchLater() async {
-    return await (select(watchLaters)
-          ..orderBy([(tbl) => OrderingTerm.desc(tbl.addedAt)]))
-        .get();
+    return await (select(
+      watchLaters,
+    )..orderBy([(tbl) => OrderingTerm.desc(tbl.addedAt)])).get();
   }
 
   Future<void> insertWatchLater(WatchLaterData entry) async {
@@ -1687,22 +1690,21 @@ class AppDatabase extends _$AppDatabase {
     String streamId,
     ContentType contentType,
   ) async {
-    await (delete(watchLaters)
-          ..where(
-            (tbl) =>
-                tbl.playlistId.equals(playlistId) &
-                tbl.streamId.equals(streamId) &
-                tbl.contentType.equals(contentType.index),
-          ))
+    await (delete(watchLaters)..where(
+          (tbl) =>
+              tbl.playlistId.equals(playlistId) &
+              tbl.streamId.equals(streamId) &
+              tbl.contentType.equals(contentType.index),
+        ))
         .go();
   }
 
   // === DATA WIPE OPERATIONS ===
 
   Future<List<WatchHistoriesData>> getAllWatchHistories() async {
-    return await (select(watchHistories)
-          ..orderBy([(tbl) => OrderingTerm.desc(tbl.lastWatched)]))
-        .get();
+    return await (select(
+      watchHistories,
+    )..orderBy([(tbl) => OrderingTerm.desc(tbl.lastWatched)])).get();
   }
 
   Future<void> insertOrUpdateWatchHistory(WatchHistoriesData entry) async {
@@ -1772,7 +1774,7 @@ class AppDatabase extends _$AppDatabase {
       );
       // Add sort_order column if upgrading from schema < 10
       await customStatement(
-        'ALTER TABLE favorites ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;'
+        'ALTER TABLE favorites ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0;',
       ).catchError((_) {}); // ignore if column already exists
     },
   );

@@ -18,15 +18,15 @@ class AppLifecycleSync extends StatefulWidget {
 
 class _AppLifecycleSyncState extends State<AppLifecycleSync>
     with WidgetsBindingObserver {
-  
   _WindowCloseListener? _windowListener;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    
-    if (!kIsWeb && (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
+
+    if (!kIsWeb &&
+        (Platform.isWindows || Platform.isMacOS || Platform.isLinux)) {
       _windowListener = _WindowCloseListener(onClose: _backgroundPush);
       windowManager.addListener(_windowListener!);
     }
@@ -52,7 +52,9 @@ class _AppLifecycleSyncState extends State<AppLifecycleSync>
 
   Future<void> _backgroundPush() async {
     if (!SyncService.instance.isLoggedIn) return;
-    debugPrint('[AppLifecycleSync] App going background/closing — pushing data');
+    debugPrint(
+      '[AppLifecycleSync] App going background/closing — pushing data',
+    );
     try {
       final db = getIt<AppDatabase>();
       final playlists = await PlaylistService.getPlaylists();
@@ -63,35 +65,47 @@ class _AppLifecycleSyncState extends State<AppLifecycleSync>
 
       await SyncService.instance.pushAll({
         'playlists': playlists.map((p) => p.toJson()).toList(),
-        'favorites': favorites.map((f) => {
-          'id': f.id,
-          'playlistId': f.playlistId,
-          'contentType': f.contentType.toString(),
-          'streamId': f.streamId,
-          'episodeId': f.episodeId,
-          'name': f.name,
-          'imagePath': f.imagePath,
-          'sortOrder': f.sortOrder,
-        }).toList(),
-        'watch_later': watchLaterItems.map((w) => {
-          'id': w.id,
-          'playlistId': w.playlistId,
-          'contentType': w.contentType.toString(),
-          'streamId': w.streamId,
-          'title': w.title,
-          'imagePath': w.imagePath,
-        }).toList(),
-        'continue_watching': watchHistories.map((w) => {
-          'playlistId':    w.playlistId,
-          'contentType':   w.contentType.toString(),
-          'streamId':      w.streamId,
-          'seriesId':      w.seriesId,
-          'watchDuration': w.watchDuration,
-          'totalDuration': w.totalDuration,
-          'lastWatched':   w.lastWatched.toIso8601String(),
-          'imagePath':     w.imagePath,
-          'title':         w.title,
-        }).toList(),
+        'favorites': favorites
+            .map(
+              (f) => {
+                'id': f.id,
+                'playlistId': f.playlistId,
+                'contentType': f.contentType.toString(),
+                'streamId': f.streamId,
+                'episodeId': f.episodeId,
+                'name': f.name,
+                'imagePath': f.imagePath,
+                'sortOrder': f.sortOrder,
+              },
+            )
+            .toList(),
+        'watch_later': watchLaterItems
+            .map(
+              (w) => {
+                'id': w.id,
+                'playlistId': w.playlistId,
+                'contentType': w.contentType.toString(),
+                'streamId': w.streamId,
+                'title': w.title,
+                'imagePath': w.imagePath,
+              },
+            )
+            .toList(),
+        'continue_watching': watchHistories
+            .map(
+              (w) => {
+                'playlistId': w.playlistId,
+                'contentType': w.contentType.toString(),
+                'streamId': w.streamId,
+                'seriesId': w.seriesId,
+                'watchDuration': w.watchDuration,
+                'totalDuration': w.totalDuration,
+                'lastWatched': w.lastWatched.toIso8601String(),
+                'imagePath': w.imagePath,
+                'title': w.title,
+              },
+            )
+            .toList(),
         'settings': settings,
       });
       debugPrint('[AppLifecycleSync] Background push complete');

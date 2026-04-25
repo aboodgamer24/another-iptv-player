@@ -138,8 +138,14 @@ class AppThemes {
       contentTextStyle: const TextStyle(color: midnightTextPrimary),
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(color: midnightTextPrimary, fontWeight: FontWeight.bold),
-      headlineMedium: TextStyle(color: midnightTextPrimary, fontWeight: FontWeight.bold),
+      headlineLarge: TextStyle(
+        color: midnightTextPrimary,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineMedium: TextStyle(
+        color: midnightTextPrimary,
+        fontWeight: FontWeight.bold,
+      ),
       bodyLarge: TextStyle(color: midnightTextPrimary),
       bodyMedium: TextStyle(color: midnightTextSecondary),
     ),
@@ -295,8 +301,14 @@ class AppThemes {
       selectedColor: _crimsonPrimary.withValues(alpha: 0.3),
     ),
     textTheme: const TextTheme(
-      headlineLarge: TextStyle(color: _crimsonText, fontWeight: FontWeight.bold),
-      headlineMedium: TextStyle(color: _crimsonText, fontWeight: FontWeight.bold),
+      headlineLarge: TextStyle(
+        color: _crimsonText,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineMedium: TextStyle(
+        color: _crimsonText,
+        fontWeight: FontWeight.bold,
+      ),
       bodyLarge: TextStyle(color: _crimsonText),
       bodyMedium: TextStyle(color: _crimsonTextMuted),
     ),

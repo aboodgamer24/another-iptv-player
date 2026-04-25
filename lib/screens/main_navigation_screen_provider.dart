@@ -11,10 +11,12 @@ class MainNavigationScreenProvider extends StatefulWidget {
   const MainNavigationScreenProvider({super.key, required this.playlist});
 
   @override
-  State<MainNavigationScreenProvider> createState() => _MainNavigationScreenProviderState();
+  State<MainNavigationScreenProvider> createState() =>
+      _MainNavigationScreenProviderState();
 }
 
-class _MainNavigationScreenProviderState extends State<MainNavigationScreenProvider> {
+class _MainNavigationScreenProviderState
+    extends State<MainNavigationScreenProvider> {
   late dynamic _controller; // XtreamCodeHomeController or M3UHomeController
 
   @override

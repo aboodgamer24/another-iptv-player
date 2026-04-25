@@ -351,7 +351,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
               begin: Alignment.topCenter,
               end: Alignment.bottomCenter,
               colors: [
-                Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.8),
+                Theme.of(
+                  context,
+                ).scaffoldBackgroundColor.withValues(alpha: 0.8),
                 Theme.of(context).scaffoldBackgroundColor,
               ],
             ),
@@ -469,11 +471,7 @@ class _SeriesScreenState extends State<SeriesScreen> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.play_arrow_rounded,
-              size: 30,
-              color: contentColor,
-            ),
+            Icon(Icons.play_arrow_rounded, size: 30, color: contentColor),
             const SizedBox(width: 6),
             Flexible(
               fit: FlexFit.loose,
@@ -557,7 +555,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
             decoration: BoxDecoration(
               color: Colors.grey.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
+              border: Border.all(
+                color: Colors.grey.withValues(alpha: 0.2),
+                width: 1,
+              ),
             ),
             child: Row(
               children: [
@@ -619,7 +620,9 @@ class _SeriesScreenState extends State<SeriesScreen> {
                     Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                        color: Theme.of(
+                          context,
+                        ).primaryColor.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
@@ -740,18 +743,16 @@ class _SeriesScreenState extends State<SeriesScreen> {
       children: [
         _buildTrailerCard(),
         const SizedBox(height: 12),
-        ...details
-            .map(
-              (detail) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _buildDetailCard(
-                  icon: detail['icon'],
-                  title: detail['title'],
-                  value: detail['value'],
-                ),
-              ),
-            )
-            ,
+        ...details.map(
+          (detail) => Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: _buildDetailCard(
+              icon: detail['icon'],
+              title: detail['title'],
+              value: detail['value'],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -1260,7 +1261,10 @@ class _SeriesScreenState extends State<SeriesScreen> {
         decoration: BoxDecoration(
           color: Colors.grey.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.withValues(alpha: 0.2), width: 1),
+          border: Border.all(
+            color: Colors.grey.withValues(alpha: 0.2),
+            width: 1,
+          ),
         ),
         child: Row(
           children: [

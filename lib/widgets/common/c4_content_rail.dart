@@ -37,7 +37,7 @@ class _C4ContentRailState extends State<C4ContentRail> {
     super.initState();
     _scrollController = ScrollController();
     _scrollController.addListener(_updateScrollButtons);
-    
+
     // Initial check after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _updateScrollButtons();
@@ -52,10 +52,10 @@ class _C4ContentRailState extends State<C4ContentRail> {
 
   void _updateScrollButtons() {
     if (!_scrollController.hasClients) return;
-    
+
     final max = _scrollController.position.maxScrollExtent;
     final offset = _scrollController.offset;
-    
+
     final canScrollLeft = offset > 10.0; // Small threshold
     final canScrollRight = offset < (max - 10.0);
 
@@ -106,7 +106,9 @@ class _C4ContentRailState extends State<C4ContentRail> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
-        final horizontalPadding = width < 600 ? 16.0 : (width < 900 ? 24.0 : 48.0);
+        final horizontalPadding = width < 600
+            ? 16.0
+            : (width < 900 ? 24.0 : 48.0);
         const cardGap = 16.0;
 
         // Decide how many cards should be visible at once on desktop.
@@ -165,7 +167,9 @@ class _C4ContentRailState extends State<C4ContentRail> {
                     ),
                     child: ListView.builder(
                       controller: _scrollController,
-                      padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding,
+                      ),
                       scrollDirection: Axis.horizontal,
                       itemCount: widget.items.length,
                       clipBehavior: Clip.none,
@@ -173,7 +177,9 @@ class _C4ContentRailState extends State<C4ContentRail> {
                         final item = widget.items[index];
                         return Padding(
                           padding: EdgeInsets.only(
-                            right: index == widget.items.length - 1 ? 0 : cardGap,
+                            right: index == widget.items.length - 1
+                                ? 0
+                                : cardGap,
                           ),
                           child: Center(
                             child: C4Card(
@@ -183,15 +189,25 @@ class _C4ContentRailState extends State<C4ContentRail> {
                               width: cardWidth,
                               height: cardHeight,
                               isFavorite: favoritesController.favorites.any(
-                                (f) => f.streamId == item.id && f.contentType == item.contentType,
+                                (f) =>
+                                    f.streamId == item.id &&
+                                    f.contentType == item.contentType,
                               ),
-                              onToggleFavorite: () => favoritesController.toggleFavorite(item),
-                              isInWatchLater: watchLaterController.watchLaterItems.any(
-                                (w) => w.streamId == item.id && w.contentType == item.contentType,
-                              ),
-                              onToggleWatchLater: item.contentType == ContentType.liveStream 
-                                ? null 
-                                : () => watchLaterController.toggleWatchLater(item),
+                              onToggleFavorite: () =>
+                                  favoritesController.toggleFavorite(item),
+                              isInWatchLater: watchLaterController
+                                  .watchLaterItems
+                                  .any(
+                                    (w) =>
+                                        w.streamId == item.id &&
+                                        w.contentType == item.contentType,
+                                  ),
+                              onToggleWatchLater:
+                                  item.contentType == ContentType.liveStream
+                                  ? null
+                                  : () => watchLaterController.toggleWatchLater(
+                                      item,
+                                    ),
                               onTap: () {
                                 if (widget.onItemTap != null) {
                                   widget.onItemTap!(context, item);
@@ -205,7 +221,7 @@ class _C4ContentRailState extends State<C4ContentRail> {
                       },
                     ),
                   ),
-                  
+
                   // Left Arrow
                   if (_canScrollLeft)
                     Positioned(
@@ -219,7 +235,7 @@ class _C4ContentRailState extends State<C4ContentRail> {
                         ),
                       ),
                     ),
-                    
+
                   // Right Arrow
                   if (_canScrollRight)
                     Positioned(
@@ -248,10 +264,7 @@ class _RailArrowButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
 
-  const _RailArrowButton({
-    required this.icon,
-    required this.onTap,
-  });
+  const _RailArrowButton({required this.icon, required this.onTap});
 
   @override
   State<_RailArrowButton> createState() => _RailArrowButtonState();
@@ -272,8 +285,8 @@ class _RailArrowButtonState extends State<_RailArrowButton> {
           width: 44,
           height: 44,
           decoration: BoxDecoration(
-            color: _isHovered 
-                ? Colors.white.withValues(alpha: 0.9) 
+            color: _isHovered
+                ? Colors.white.withValues(alpha: 0.9)
                 : Colors.black.withValues(alpha: 0.5),
             shape: BoxShape.circle,
             boxShadow: [

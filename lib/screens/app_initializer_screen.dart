@@ -25,11 +25,10 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
   Playlist? _lastPlaylist;
   String _syncMessage = '';
 
-
   @override
   void initState() {
     super.initState();
-    _loadLastPlaylist();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadLastPlaylist());
   }
 
   Future<void> _loadLastPlaylist() async {
@@ -60,7 +59,6 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
 
     final lastPlaylistId = await UserPreferences.getLastPlaylist();
 
-
     if (lastPlaylistId != null) {
       final playlist = await PlaylistService.getPlaylistById(lastPlaylistId);
       if (playlist != null) {
@@ -90,28 +88,51 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
     if (_showWelcome) return const WelcomeScreen();
 
     if (_isLoading) {
-      final theme = Theme.of(context);
+      final colorScheme = Theme.of(context).colorScheme;
       return Scaffold(
         body: Center(
           child: Column(
-            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const CircularProgressIndicator(),
-              if (_syncMessage.isNotEmpty) ...[
-                const SizedBox(height: 20),
-                Text(
-                  _syncMessage,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+              Container(
+                width: 96,
+                height: 96,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: colorScheme.primary,
+                ),
+                child: ClipOval(
+                  child: Image.asset(
+                    'assets/logo.png',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => Icon(
+                      Icons.live_tv_rounded,
+                      size: 48,
+                      color: colorScheme.onPrimary,
+                    ),
                   ),
                 ),
+              ),
+              const SizedBox(height: 24),
+              const Text(
+                'C4-TV',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 2,
+                ),
+              ),
+              const SizedBox(height: 32),
+              const CircularProgressIndicator(),
+              if (_syncMessage.isNotEmpty) ...[
+                const SizedBox(height: 16),
+                Text(_syncMessage),
               ],
             ],
           ),
         ),
       );
     }
-
 
     if (_lastPlaylist == null) {
       return const PlaylistScreen();

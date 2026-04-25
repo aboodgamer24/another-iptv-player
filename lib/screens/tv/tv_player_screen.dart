@@ -58,8 +58,10 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   }
 
   void _switchChannel(int direction) {
-    final newIndex =
-        (_currentIndex + direction).clamp(0, widget.queue.length - 1);
+    final newIndex = (_currentIndex + direction).clamp(
+      0,
+      widget.queue.length - 1,
+    );
     if (newIndex == _currentIndex) return;
     setState(() {
       _currentIndex = newIndex;
@@ -123,12 +125,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
               showPersistentSidebar: false,
             ),
             if (_osdVisible)
-              Positioned(
-                bottom: 0,
-                left: 0,
-                right: 0,
-                child: _buildOsd(),
-              ),
+              Positioned(bottom: 0, left: 0, right: 0, child: _buildOsd()),
           ],
         ),
       ),
@@ -140,8 +137,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       opacity: _osdVisible ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 250),
       child: Container(
-        padding:
-            const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 20),
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.bottomCenter,
@@ -164,8 +160,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
             if (_currentItem.contentType == ContentType.liveStream)
               Text(
                 '${_currentIndex + 1} / ${widget.queue.length}',
-                style:
-                    const TextStyle(color: Colors.white70, fontSize: 16),
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
               ),
           ],
         ),

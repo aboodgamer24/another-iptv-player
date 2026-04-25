@@ -6,7 +6,8 @@ import '../../services/tv_focus_service.dart';
 class TvContentGrid extends StatefulWidget {
   final String sectionKey;
   final List<ContentItem> items;
-  final void Function(ContentItem item, int index, List<ContentItem> queue) onSelect;
+  final void Function(ContentItem item, int index, List<ContentItem> queue)
+  onSelect;
   final int crossAxisCount;
 
   const TvContentGrid({
@@ -88,10 +89,7 @@ class _TvContentGridState extends State<TvContentGrid> {
           },
           child: GestureDetector(
             onTap: () => widget.onSelect(item, i, widget.items),
-            child: _TvContentCard(
-              item: item,
-              isFocused: _focusedIndex == i,
-            ),
+            child: _TvContentCard(item: item, isFocused: _focusedIndex == i),
           ),
         );
       },
@@ -124,10 +122,9 @@ class _TvContentCard extends StatelessWidget {
           boxShadow: isFocused
               ? [
                   BoxShadow(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .primary
-                        .withValues(alpha: 0.4),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.4),
                     blurRadius: 16,
                     spreadRadius: 2,
                   ),
@@ -146,12 +143,20 @@ class _TvContentCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         color: Colors.grey,
-                        child: const Icon(Icons.movie, color: Colors.white24, size: 40),
+                        child: const Icon(
+                          Icons.movie,
+                          color: Colors.white24,
+                          size: 40,
+                        ),
                       ),
                     )
                   : Container(
                       color: Colors.grey,
-                      child: const Icon(Icons.movie, color: Colors.white24, size: 40),
+                      child: const Icon(
+                        Icons.movie,
+                        color: Colors.white24,
+                        size: 40,
+                      ),
                     ),
               // Bottom gradient + title
               Positioned(

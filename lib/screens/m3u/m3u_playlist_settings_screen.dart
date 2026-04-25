@@ -15,12 +15,10 @@ class M3uPlaylistSettingsScreen extends StatefulWidget {
 }
 
 class _N3uPlaylistSettingsScreenState extends State<M3uPlaylistSettingsScreen> {
-
   @override
   void initState() {
     super.initState();
   }
-
 
   @override
   Widget build(BuildContext context) {

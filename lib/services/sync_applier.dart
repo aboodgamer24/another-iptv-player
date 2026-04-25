@@ -21,7 +21,9 @@ class SyncApplier {
         return false;
       }
 
-      debugPrint('[SyncApplier] Server data: playlists=${(data['playlists'] as List?)?.length ?? 0}, favorites=${(data['favorites'] as List?)?.length ?? 0}, watch_later=${(data['watch_later'] as List?)?.length ?? 0}');
+      debugPrint(
+        '[SyncApplier] Server data: playlists=${(data['playlists'] as List?)?.length ?? 0}, favorites=${(data['favorites'] as List?)?.length ?? 0}, watch_later=${(data['watch_later'] as List?)?.length ?? 0}',
+      );
 
       // 1. Apply settings first (populates last_playlist_id, tmdb key, etc.)
       await _applySettings(data['settings']);
@@ -30,7 +32,9 @@ class SyncApplier {
       final rawLastPlaylistId = data['settings']?['last_playlist_id'];
       if (rawLastPlaylistId is String && rawLastPlaylistId.isNotEmpty) {
         await UserPreferences.setLastPlaylist(rawLastPlaylistId);
-        debugPrint('[SyncApplier] Set last_playlist_id from settings: $rawLastPlaylistId');
+        debugPrint(
+          '[SyncApplier] Set last_playlist_id from settings: $rawLastPlaylistId',
+        );
       }
 
       // 3. Restore playlists (will set fallback last_playlist_id if not set above)
@@ -71,10 +75,14 @@ class SyncApplier {
           // Write directly to DB — skip PlaylistService to avoid triggering
           // another pushField during bulk restore
           await DatabaseService.savePlaylist(playlist);
-          debugPrint('[SyncApplier] Restored playlist: ${playlist.name} (${playlist.type})');
+          debugPrint(
+            '[SyncApplier] Restored playlist: ${playlist.name} (${playlist.type})',
+          );
           firstRestoredId ??= playlist.id;
         } else {
-          debugPrint('[SyncApplier] Playlist already exists locally: ${playlist.name}');
+          debugPrint(
+            '[SyncApplier] Playlist already exists locally: ${playlist.name}',
+          );
           firstRestoredId ??= existing.id;
         }
       } catch (e) {
@@ -84,9 +92,12 @@ class SyncApplier {
 
     // Set last_playlist_id to first restored playlist if not already set
     final currentLast = await UserPreferences.getLastPlaylist();
-    if ((currentLast == null || currentLast.isEmpty) && firstRestoredId != null) {
+    if ((currentLast == null || currentLast.isEmpty) &&
+        firstRestoredId != null) {
       await UserPreferences.setLastPlaylist(firstRestoredId);
-      debugPrint('[SyncApplier] Set last playlist fallback to: $firstRestoredId');
+      debugPrint(
+        '[SyncApplier] Set last playlist fallback to: $firstRestoredId',
+      );
     }
   }
 
@@ -200,7 +211,8 @@ class SyncApplier {
           watchDuration: map['watchDuration'] as int?,
           totalDuration: map['totalDuration'] as int?,
           lastWatched: map['lastWatched'] != null
-              ? DateTime.tryParse(map['lastWatched'].toString()) ?? DateTime.now()
+              ? DateTime.tryParse(map['lastWatched'].toString()) ??
+                    DateTime.now()
               : DateTime.now(),
           imagePath: map['imagePath'] as String?,
           title: title,
@@ -221,7 +233,9 @@ class SyncApplier {
 
     // Clamp upscale_preset to platform supported values
     // Check both snake_case and camelCase (sync server vs local pref names)
-    final rawPreset = (settings['upscale_preset'] ?? settings['upscalePreset']) as String? ?? 'standard';
+    final rawPreset =
+        (settings['upscale_preset'] ?? settings['upscalePreset']) as String? ??
+        'standard';
     final clampedPreset = availableUpscalePresets.contains(rawPreset)
         ? rawPreset
         : 'standard';

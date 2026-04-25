@@ -30,11 +30,25 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
 
     final movieItems = items
         .where((i) => i.contentType == ContentType.vod)
-        .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
+        .map(
+          (i) => ContentItem(
+            i.streamId,
+            i.title,
+            i.imagePath ?? '',
+            i.contentType,
+          ),
+        )
         .toList();
     final seriesItems = items
         .where((i) => i.contentType == ContentType.series)
-        .map((i) => ContentItem(i.streamId, i.title, i.imagePath ?? '', i.contentType))
+        .map(
+          (i) => ContentItem(
+            i.streamId,
+            i.title,
+            i.imagePath ?? '',
+            i.contentType,
+          ),
+        )
         .toList();
 
     return Scaffold(
@@ -42,26 +56,26 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
       body: controller.isLoading && items.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : items.isEmpty
-              ? _buildEmptyState()
-              : ListView(
-                  padding: const EdgeInsets.only(top: 24, bottom: 64),
-                  children: [
-                    if (movieItems.isNotEmpty)
-                      C4ContentRail(
-                        title: context.loc.movies,
-                        items: movieItems,
-                        isPortrait: true,
-                        onItemTap: (ctx, item) => _playItem(ctx, item),
-                      ),
-                    if (seriesItems.isNotEmpty)
-                      C4ContentRail(
-                        title: context.loc.series_plural,
-                        items: seriesItems,
-                        isPortrait: true,
-                        onItemTap: (ctx, item) => _playItem(ctx, item),
-                      ),
-                  ],
-                ),
+          ? _buildEmptyState()
+          : ListView(
+              padding: const EdgeInsets.only(top: 24, bottom: 64),
+              children: [
+                if (movieItems.isNotEmpty)
+                  C4ContentRail(
+                    title: context.loc.movies,
+                    items: movieItems,
+                    isPortrait: true,
+                    onItemTap: (ctx, item) => _playItem(ctx, item),
+                  ),
+                if (seriesItems.isNotEmpty)
+                  C4ContentRail(
+                    title: context.loc.series_plural,
+                    items: seriesItems,
+                    isPortrait: true,
+                    onItemTap: (ctx, item) => _playItem(ctx, item),
+                  ),
+              ],
+            ),
     );
   }
 
@@ -82,7 +96,11 @@ class _WatchLaterScreenState extends State<WatchLaterScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.schedule_rounded, size: 64, color: Colors.white.withValues(alpha: 0.2)),
+          Icon(
+            Icons.schedule_rounded,
+            size: 64,
+            color: Colors.white.withValues(alpha: 0.2),
+          ),
           const SizedBox(height: 16),
           Text(
             context.loc.watch_later_empty_message,

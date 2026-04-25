@@ -75,9 +75,9 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
       await _service.setupPin(firstPin!);
       await _load();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN set successfully')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('PIN set successfully')));
       }
     }
   }
@@ -108,9 +108,9 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
       await _service.removePin();
       await _load();
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('PIN removed')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('PIN removed')));
       }
     }
   }
@@ -147,8 +147,10 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Parental Controls',
-            style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text(
+          'Parental Controls',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
       ),
       body: Center(
         child: ConstrainedBox(
@@ -165,8 +167,11 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                     shape: BoxShape.circle,
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   ),
-                  child: Icon(Icons.lock_rounded,
-                      size: 32, color: theme.colorScheme.primary),
+                  child: Icon(
+                    Icons.lock_rounded,
+                    size: 32,
+                    color: theme.colorScheme.primary,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -174,7 +179,8 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                 child: Text(
                   'Restrict content visibility using a PIN and keyword filters',
                   style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant),
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -185,13 +191,15 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                 theme,
                 child: SwitchListTile(
                   title: const Text('Enable Parental Controls'),
-                  subtitle: Text(_hasPin
-                      ? 'PIN is set'
-                      : 'Set a PIN to enable'),
+                  subtitle: Text(
+                    _hasPin ? 'PIN is set' : 'Set a PIN to enable',
+                  ),
                   value: _isEnabled,
                   onChanged: _toggleEnabled,
-                  secondary: Icon(Icons.shield_rounded,
-                      color: _isEnabled ? theme.colorScheme.primary : null),
+                  secondary: Icon(
+                    Icons.shield_rounded,
+                    color: _isEnabled ? theme.colorScheme.primary : null,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -217,7 +225,8 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                             TextButton(
                               onPressed: _removePin,
                               style: TextButton.styleFrom(
-                                  foregroundColor: Colors.red),
+                                foregroundColor: Colors.red,
+                              ),
                               child: const Text('Remove'),
                             ),
                           if (!_hasPin)
@@ -234,14 +243,18 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
               const SizedBox(height: 24),
 
               // Keyword filtering
-              Text('Content Filter Keywords',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold)),
+              Text(
+                'Content Filter Keywords',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 4),
               Text(
                 'Categories or content matching these keywords will be hidden when parental controls are active.',
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 12),
 
@@ -254,9 +267,12 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                       decoration: InputDecoration(
                         hintText: 'e.g. adult, xxx, 18+',
                         border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10)),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 12),
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
                       ),
                       onSubmitted: (_) => _addKeyword(),
                     ),
@@ -279,7 +295,8 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                     leading: Icon(Icons.info_outline),
                     title: Text('No keywords added'),
                     subtitle: Text(
-                        'Add keywords above to filter adult content'),
+                      'Add keywords above to filter adult content',
+                    ),
                   ),
                 )
               else
@@ -288,12 +305,14 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
                   child: Column(
                     children: _keywords.map((kw) {
                       return ListTile(
-                        leading: const Icon(Icons.filter_alt_rounded,
-                            size: 20),
+                        leading: const Icon(Icons.filter_alt_rounded, size: 20),
                         title: Text(kw),
                         trailing: IconButton(
-                          icon: const Icon(Icons.delete_outline,
-                              color: Colors.red, size: 20),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.red,
+                            size: 20,
+                          ),
                           onPressed: () => _removeKeyword(kw),
                         ),
                       );
@@ -312,9 +331,7 @@ class _ParentalControlsScreenState extends State<ParentalControlsScreen> {
       decoration: BoxDecoration(
         color: theme.cardTheme.color ?? theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.dividerColor.withValues(alpha: 0.3),
-        ),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.3)),
       ),
       clipBehavior: Clip.antiAlias,
       child: child,

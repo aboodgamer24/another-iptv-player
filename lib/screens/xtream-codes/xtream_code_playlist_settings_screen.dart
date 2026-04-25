@@ -46,7 +46,9 @@ class _XtreamCodePlaylistSettingsScreenState
     final isWide = screenWidth >= 900;
     // On wide screens: add side padding so content has breathing room.
     // On narrow screens: original 12px padding.
-    final hPad = isWide ? ((screenWidth - 860).clamp(0.0, 200.0) / 2) + 12.0 : 12.0;
+    final hPad = isWide
+        ? ((screenWidth - 860).clamp(0.0, 200.0) / 2) + 12.0
+        : 12.0;
 
     final canPop = Navigator.of(context).canPop();
 

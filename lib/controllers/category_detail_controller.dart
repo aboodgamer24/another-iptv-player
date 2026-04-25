@@ -116,9 +116,8 @@ class CategoryDetailController extends ChangeNotifier {
     } else {
       _filteredItems = _contentItems
           .where(
-            (item) => item.name.toLowerCase().contains(
-              query.trim().toLowerCase(),
-            ),
+            (item) =>
+                item.name.toLowerCase().contains(query.trim().toLowerCase()),
           )
           .toList();
     }
@@ -138,9 +137,11 @@ class CategoryDetailController extends ChangeNotifier {
       case "release_date":
         list.sort((a, b) {
           if (a.contentType.name == "series") {
-            final dateA = DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ??
+            final dateA =
+                DateTime.tryParse(a.seriesStream?.releaseDate ?? '') ??
                 DateTime(1970);
-            final dateB = DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ??
+            final dateB =
+                DateTime.tryParse(b.seriesStream?.releaseDate ?? '') ??
                 DateTime(1970);
             return dateB.compareTo(dateA);
           } else {

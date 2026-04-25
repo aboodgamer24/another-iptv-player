@@ -54,7 +54,6 @@ class _VideoChannelSelectorWidgetState
   void initState() {
     super.initState();
 
-
     _globalToggleSubscription ??= EventBus()
         .on<bool>('toggle_channel_list')
         .listen((bool show) {
@@ -80,8 +79,6 @@ class _VideoChannelSelectorWidgetState
     if (widget.queue == null || widget.queue!.length <= 1) {
       return const SizedBox.shrink();
     }
-
-
 
     final currentContent = PlayerState.currentContent;
     String tooltip = context.loc.select_channel;
