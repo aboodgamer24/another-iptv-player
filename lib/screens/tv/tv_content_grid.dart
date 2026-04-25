@@ -32,18 +32,14 @@ class _TvContentGridState extends State<TvContentGrid> {
   @override
   void didUpdateWidget(TvContentGrid old) {
     super.didUpdateWidget(old);
-    // When items list changes (category switch), reset focus to 0
     if (old.sectionKey != widget.sectionKey) {
-      _focusedIndex = 0;
-      // Dispose stale nodes — they belong to the old item list
+      setState(() => _focusedIndex = 0);
       for (final n in _nodes.values) {
         n.dispose();
       }
       _nodes.clear();
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && _nodes.containsKey(0)) {
-          _nodes[0]!.requestFocus();
-        }
+        if (mounted) _node(0).requestFocus();
       });
     }
   }
@@ -59,73 +55,73 @@ class _TvContentGridState extends State<TvContentGrid> {
 
   @override
   Widget build(BuildContext context) {
-    // ExcludeFocus on the GridView itself so Flutter doesn't put the grid
-    // container in the focus chain — only individual item Focus nodes are focusable.
-    return GridView.builder(
-      controller: _scroll,
-      padding: const EdgeInsets.all(32),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: widget.crossAxisCount,
-        crossAxisSpacing: 16,
-        mainAxisSpacing: 16,
-        childAspectRatio: 2 / 3,
-      ),
-      itemCount: widget.items.length,
-      // addRepaintBoundaries: true is default — keeps each card's paint isolated
-      itemBuilder: (ctx, i) {
-        final item = widget.items[i];
-        final node = _node(i);
-        final col = i % widget.crossAxisCount;
+    return FocusTraversalGroup(
+      // ReadingOrderTraversalPolicy keeps traversal INSIDE the group
+      // and does NOT bubble out when hitting the edge — we handle edges manually
+      policy: ReadingOrderTraversalPolicy(),
+      child: GridView.builder(
+        controller: _scroll,
+        padding: const EdgeInsets.all(32),
+        primary: false,
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: widget.crossAxisCount,
+          crossAxisSpacing: 16,
+          mainAxisSpacing: 16,
+          childAspectRatio: 2 / 3,
+        ),
+        itemCount: widget.items.length,
+        itemBuilder: (ctx, i) {
+          final item = widget.items[i];
+          final node = _node(i);
+          final col  = i % widget.crossAxisCount;
 
-        return Focus(
-          focusNode: node,
-          onFocusChange: (has) {
-            if (has) {
-              if (_focusedIndex != i) setState(() => _focusedIndex = i);
-              // ensureVisible — only scroll if context is still mounted
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (node.context != null && mounted) {
-                  Scrollable.ensureVisible(
-                    node.context!,
-                    alignment: 0.35,
-                    duration: const Duration(milliseconds: 180),
-                    curve: Curves.easeOut,
-                  );
-                }
-              });
-            }
-          },
-          onKeyEvent: (node, event) {
-            if (event is! KeyDownEvent) return KeyEventResult.ignored;
+          return Focus(
+            focusNode: node,
+            onFocusChange: (has) {
+              if (has) {
+                if (_focusedIndex != i) setState(() => _focusedIndex = i);
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (node.context != null && mounted) {
+                    Scrollable.ensureVisible(node.context!,
+                      alignment: 0.35,
+                      duration: const Duration(milliseconds: 180),
+                      curve: Curves.easeOut);
+                  }
+                });
+              }
+            },
+            onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent) return KeyEventResult.ignored;
 
-            // OK / Enter / Select / A
-            if (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter ||
-                event.logicalKey == LogicalKeyboardKey.gameButtonA) {
-              widget.onSelect(item, i, widget.items);
-              return KeyEventResult.handled;
-            }
+              // OK / Enter / Select / A  →  open item
+              if (event.logicalKey == LogicalKeyboardKey.select  ||
+                  event.logicalKey == LogicalKeyboardKey.enter   ||
+                  event.logicalKey == LogicalKeyboardKey.gameButtonA) {
+                widget.onSelect(item, i, widget.items);
+                return KeyEventResult.handled;
+              }
 
-            // LEFT on leftmost column → hand off to category panel
-            if (event.logicalKey == LogicalKeyboardKey.arrowLeft && col == 0) {
-              widget.onEdgeLeft?.call();
-              return KeyEventResult.handled;
-            }
+              // LEFT on the leftmost column  →  exit to category panel
+              if (event.logicalKey == LogicalKeyboardKey.arrowLeft && col == 0) {
+                widget.onEdgeLeft?.call();
+                return KeyEventResult.handled; // ← CRITICAL: consume the event
+              }
 
-            // All other arrow keys: let Flutter's default traversal handle them
-            return KeyEventResult.ignored;
-          },
-          child: GestureDetector(
-            onTap: () => widget.onSelect(item, i, widget.items),
-            child: RepaintBoundary(
-              child: _TvContentCard(
-                item: item,
-                isFocused: _focusedIndex == i,
+              // All other directions: let Flutter traverse within the grid
+              return KeyEventResult.ignored;
+            },
+            child: GestureDetector(
+              onTap: () => widget.onSelect(item, i, widget.items),
+              child: RepaintBoundary(
+                child: _TvContentCard(
+                  item: item,
+                  isFocused: _focusedIndex == i,
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }

@@ -5,24 +5,59 @@ import '../../controllers/xtream_code_home_controller.dart';
 import '../../models/playlist_content_model.dart';
 import 'tv_player_screen.dart';
 
-class TvHomeScreen extends StatelessWidget {
+// Max items shown per home row — prevents building thousands of nodes
+const _kHomeRowMax = 30;
+
+class TvHomeScreen extends StatefulWidget {
   final String playlistId;
   const TvHomeScreen({super.key, required this.playlistId});
+  @override
+  State<TvHomeScreen> createState() => _TvHomeScreenState();
+}
+
+class _TvHomeScreenState extends State<TvHomeScreen> {
+  // Cache the lists so getLive/getMovies are not called on every rebuild
+  List<ContentItem>? _liveCache;
+  List<ContentItem>? _moviesCache;
+  String? _liveCatId;
+  String? _moviesCatId;
 
   @override
   Widget build(BuildContext context) {
-    final controller = Provider.of<XtreamCodeHomeController>(context);
-    if (controller.isLoading) {
-      return const Center(child: CircularProgressIndicator());
+    // Use .watch only for the loading flag — avoid rebuilding on every
+    // notifyListeners() by reading the controller once and caching results.
+    final ctrl = context.watch<XtreamCodeHomeController>();
+
+    if (ctrl.isLoading) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(color: Colors.white54),
+            SizedBox(height: 16),
+            Text('Loading…',
+              style: TextStyle(color: Colors.white54, fontSize: 14)),
+          ],
+        ),
+      );
     }
 
-    final featured = controller.liveCategories?.isNotEmpty == true
-        ? controller
-              .getLiveChannelsByCategory(
-                controller.liveCategories!.first.category.categoryId,
-              )
-              .firstOrNull
-        : null;
+    // Compute live row — only when category id changes
+    final liveCatId  = ctrl.liveCategories?.firstOrNull?.category.categoryId;
+    final movieCatId = ctrl.movieCategories.firstOrNull?.category.categoryId;
+
+    if (liveCatId != null && liveCatId != _liveCatId) {
+      _liveCatId   = liveCatId;
+      final all    = ctrl.getLiveChannelsByCategory(liveCatId);
+      _liveCache   = all.length > _kHomeRowMax ? all.sublist(0, _kHomeRowMax) : all;
+    }
+    if (movieCatId != null && movieCatId != _moviesCatId) {
+      _moviesCatId = movieCatId;
+      final all    = ctrl.getMoviesByCategory(movieCatId);
+      _moviesCache = all.length > _kHomeRowMax ? all.sublist(0, _kHomeRowMax) : all;
+    }
+
+    final featured = _liveCache?.firstOrNull;
 
     return SingleChildScrollView(
       child: Column(
@@ -30,193 +65,148 @@ class TvHomeScreen extends StatelessWidget {
         children: [
           if (featured != null) _TvHeroBanner(item: featured),
           const SizedBox(height: 24),
-          _TvHomeRow(
-            title: 'Live TV',
-            items: controller.liveCategories?.isNotEmpty == true
-                ? controller.getLiveChannelsByCategory(
-                    controller.liveCategories!.first.category.categoryId,
-                  )
-                : [],
-            onSelect: (item, idx, queue) => Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => TvPlayerScreen(
-                  contentItem: item,
-                  queue: queue,
-                  initialIndex: idx,
-                ),
-                transitionDuration: Duration.zero,
-                reverseTransitionDuration: Duration.zero,
-              ),
+          if (_liveCache != null && _liveCache!.isNotEmpty)
+            _TvHomeRow(
+              title: 'Live TV',
+              items: _liveCache!,
+              onSelect: _openPlayer,
             ),
-          ),
-          _TvHomeRow(
-            title: 'Movies',
-            items: controller.movieCategories.isNotEmpty
-                ? controller.getMoviesByCategory(
-                    controller.movieCategories.first.category.categoryId,
-                  )
-                : [],
-            onSelect: (item, idx, queue) => Navigator.push(
-              context,
-              PageRouteBuilder(
-                pageBuilder: (_, __, ___) => TvPlayerScreen(
-                  contentItem: item,
-                  queue: queue,
-                  initialIndex: idx,
-                ),
-                transitionDuration: Duration.zero,
-                reverseTransitionDuration: Duration.zero,
-              ),
+          if (_moviesCache != null && _moviesCache!.isNotEmpty)
+            _TvHomeRow(
+              title: 'Movies',
+              items: _moviesCache!,
+              onSelect: _openPlayer,
             ),
-          ),
           const SizedBox(height: 32),
         ],
       ),
     );
   }
-}
 
-class _TvHeroBanner extends StatefulWidget {
-  final ContentItem item;
-  const _TvHeroBanner({required this.item});
-
-  @override
-  State<_TvHeroBanner> createState() => _TvHeroBannerState();
-}
-
-class _TvHeroBannerState extends State<_TvHeroBanner> {
-  final FocusNode _focusNode = FocusNode();
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    super.dispose();
-  }
-
-  void _activate(BuildContext context) {
+  void _openPlayer(ContentItem item, int idx, List<ContentItem> queue) {
     Navigator.push(
       context,
       PageRouteBuilder(
-        pageBuilder: (_, __, ___) => TvPlayerScreen(
-          contentItem: widget.item,
-          queue: [widget.item],
-          initialIndex: 0,
-        ),
+        pageBuilder: (_, __, ___) =>
+            TvPlayerScreen(contentItem: item, queue: queue, initialIndex: idx),
         transitionDuration: Duration.zero,
         reverseTransitionDuration: Duration.zero,
       ),
     );
   }
+}
+
+// ── Hero banner ──────────────────────────────────────────────────────────────
+class _TvHeroBanner extends StatefulWidget {
+  final ContentItem item;
+  const _TvHeroBanner({required this.item});
+  @override
+  State<_TvHeroBanner> createState() => _TvHeroBannerState();
+}
+
+class _TvHeroBannerState extends State<_TvHeroBanner> {
+  final _focus = FocusNode();
+
+  @override
+  void dispose() {
+    _focus.dispose();
+    super.dispose();
+  }
+
+  void _open() => Navigator.push(
+    context,
+    PageRouteBuilder(
+      pageBuilder: (_, __, ___) => TvPlayerScreen(
+        contentItem: widget.item,
+        queue: [widget.item],
+        initialIndex: 0,
+      ),
+      transitionDuration: Duration.zero,
+      reverseTransitionDuration: Duration.zero,
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
     return Focus(
-      focusNode: _focusNode,
-      onKeyEvent: (node, event) {
-        if (event is KeyDownEvent &&
-            (event.logicalKey == LogicalKeyboardKey.select ||
-                event.logicalKey == LogicalKeyboardKey.enter ||
-                event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
-          _activate(context);
+      focusNode: _focus,
+      onKeyEvent: (_, ev) {
+        if (ev is KeyDownEvent &&
+            (ev.logicalKey == LogicalKeyboardKey.select  ||
+             ev.logicalKey == LogicalKeyboardKey.enter   ||
+             ev.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+          _open();
           return KeyEventResult.handled;
         }
         return KeyEventResult.ignored;
       },
       child: AnimatedBuilder(
-        animation: _focusNode,
-        builder: (context, _) {
-          final hasFocus = _focusNode.hasFocus;
+        animation: _focus,
+        builder: (ctx, _) {
+          final f = _focus.hasFocus;
           return GestureDetector(
-            onTap: () => _activate(context),
+            onTap: _open,
             child: AnimatedContainer(
-              duration: const Duration(milliseconds: 200),
-              height: 340,
+              duration: const Duration(milliseconds: 180),
+              height: 300,
               decoration: BoxDecoration(
-                border: hasFocus
+                border: f
                     ? Border.all(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 3,
-                      )
+                        color: Theme.of(ctx).colorScheme.primary, width: 3)
                     : null,
               ),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (widget.item.imagePath.isNotEmpty)
-                    Image.network(
-                      widget.item.imagePath,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
-                          Container(color: Colors.black45),
+              child: Stack(fit: StackFit.expand, children: [
+                if (widget.item.imagePath.isNotEmpty)
+                  Image.network(
+                    widget.item.imagePath,
+                    fit: BoxFit.cover,
+                    // Limit decode size — we don't need 4K hero image
+                    cacheWidth: 1280,
+                    errorBuilder: (_, __, ___) =>
+                        Container(color: Colors.black45)),
+                Container(
+                  decoration: const BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.centerRight,
+                      end: Alignment.centerLeft,
+                      colors: [Colors.transparent, Colors.black87],
                     ),
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.centerRight,
-                        end: Alignment.centerLeft,
-                        colors: [Colors.transparent, Colors.black87],
+                  ),
+                ),
+                Positioned(
+                  left: 48, bottom: 40,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(widget.item.name,
+                        style: const TextStyle(
+                          color: Colors.white, fontSize: 32,
+                          fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 14),
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 150),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22, vertical: 11),
+                        decoration: BoxDecoration(
+                          color: f
+                              ? Theme.of(ctx).colorScheme.primaryContainer
+                              : Theme.of(ctx).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(Icons.play_arrow, color: Colors.white),
+                            SizedBox(width: 8),
+                            Text('Watch Now',
+                              style: TextStyle(color: Colors.white, fontSize: 15)),
+                          ],
+                        ),
                       ),
-                    ),
+                    ],
                   ),
-                  Positioned(
-                    left: 48,
-                    bottom: 48,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          widget.item.name,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 36,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 150),
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                          decoration: BoxDecoration(
-                            color: hasFocus
-                                ? Theme.of(context).colorScheme.primaryContainer
-                                : Theme.of(context).colorScheme.primary,
-                            borderRadius: BorderRadius.circular(8),
-                            boxShadow: hasFocus
-                                ? [
-                                    BoxShadow(
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .primary
-                                          .withValues(alpha: 0.5),
-                                      blurRadius: 16,
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                          child: const Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(Icons.play_arrow, color: Colors.white),
-                              SizedBox(width: 8),
-                              Text(
-                                'Watch Now',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+              ]),
             ),
           );
         },
@@ -225,6 +215,7 @@ class _TvHeroBannerState extends State<_TvHeroBanner> {
   }
 }
 
+// ── Horizontal row ────────────────────────────────────────────────────────────
 class _TvHomeRow extends StatelessWidget {
   final String title;
   final List<ContentItem> items;
@@ -238,88 +229,81 @@ class _TvHomeRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (items.isEmpty) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
           padding: const EdgeInsets.fromLTRB(32, 0, 32, 12),
-          child: Text(
-            title,
+          child: Text(title,
             style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+              color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
         ),
         SizedBox(
-          height: 160,
+          height: 150,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 32),
+            // addRepaintBoundaries: true (default) isolates each card paint
             itemCount: items.length,
             itemBuilder: (ctx, i) {
               final item = items[i];
               return Focus(
-                onKeyEvent: (node, event) {
-                  if (event is KeyDownEvent &&
-                      (event.logicalKey == LogicalKeyboardKey.select ||
-                          event.logicalKey == LogicalKeyboardKey.enter ||
-                          event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+                onKeyEvent: (_, ev) {
+                  if (ev is KeyDownEvent &&
+                      (ev.logicalKey == LogicalKeyboardKey.select  ||
+                       ev.logicalKey == LogicalKeyboardKey.enter   ||
+                       ev.logicalKey == LogicalKeyboardKey.gameButtonA)) {
                     onSelect(item, i, items);
                     return KeyEventResult.handled;
                   }
                   return KeyEventResult.ignored;
                 },
-                child: Builder(
-                  builder: (ctx) {
-                    final hasFocus = Focus.of(ctx).hasFocus;
-                    return GestureDetector(
-                      onTap: () => onSelect(item, i, items),
+                child: Builder(builder: (ctx) {
+                  final f = Focus.of(ctx).hasFocus;
+                  return GestureDetector(
+                    onTap: () => onSelect(item, i, items),
+                    child: RepaintBoundary(
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 120),
+                        duration: const Duration(milliseconds: 130),
                         margin: const EdgeInsets.only(right: 12),
-                        width: 200,
+                        width: 190,
+                        // scale-up on focus instead of border for perf
+                        transform: f
+                            ? Matrix4.diagonal3Values(1.06, 1.06, 1.0)
+                            : Matrix4.identity(),
+                        transformAlignment: Alignment.center,
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(8),
-                          border: hasFocus
-                              ? Border.all(
-                                  color: Theme.of(context).colorScheme.primary,
-                                  width: 3,
-                                )
-                              : Border.all(color: Colors.white12, width: 3),
+                          border: Border.all(
+                            color: f
+                                ? Theme.of(ctx).colorScheme.primary
+                                : Colors.white12,
+                            width: 2),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
+                          borderRadius: BorderRadius.circular(6),
                           child: item.imagePath.isNotEmpty
                               ? Image.network(
                                   item.imagePath,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) => Container(
-                                    color: Colors.white10,
-                                    child: const Icon(
-                                      Icons.tv,
-                                      color: Colors.white24,
-                                    ),
-                                  ),
-                                )
-                              : Container(
-                                  color: Colors.white10,
-                                  child: const Icon(
-                                    Icons.tv,
-                                    color: Colors.white24,
-                                  ),
-                                ),
+                                  cacheWidth: 300, // decode at display size
+                                  errorBuilder: (_, __, ___) =>
+                                      Container(color: Colors.white10,
+                                        child: const Icon(Icons.tv,
+                                          color: Colors.white24)))
+                              : Container(color: Colors.white10,
+                                  child: const Icon(Icons.tv,
+                                    color: Colors.white24)),
                         ),
                       ),
-                    );
-                  },
-                ),
+                    ),
+                  );
+                }),
               );
             },
           ),
         ),
+        const SizedBox(height: 24),
       ],
     );
   }
