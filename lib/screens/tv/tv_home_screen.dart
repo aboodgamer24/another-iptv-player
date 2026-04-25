@@ -27,7 +27,11 @@ class _TvHomeScreenState extends State<TvHomeScreen> {
   Widget build(BuildContext context) {
     final ctrl = context.watch<XtreamCodeHomeController>();
 
-    if (ctrl.isLoading) {
+    final hasData = (_liveCache != null && _liveCache!.isNotEmpty) ||
+                    (_moviesCache != null && _moviesCache!.isNotEmpty) ||
+                    (_seriesCache != null && _seriesCache!.isNotEmpty);
+
+    if (ctrl.isLoading && !hasData) {
       return const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -40,22 +44,22 @@ class _TvHomeScreenState extends State<TvHomeScreen> {
       );
     }
 
-    // Refresh caches if categories changed
+    // Refresh caches if categories changed or if we had no data before
     final liveCatId  = ctrl.liveCategories?.firstOrNull?.category.categoryId;
     final movieCatId = ctrl.movieCategories.firstOrNull?.category.categoryId;
     final seriesCatId = ctrl.seriesCategories.firstOrNull?.category.categoryId;
 
-    if (liveCatId != null && liveCatId != _liveCatId) {
+    if (liveCatId != null && (liveCatId != _liveCatId || _liveCache == null || _liveCache!.isEmpty)) {
       _liveCatId = liveCatId;
       final all = ctrl.getLiveChannelsByCategory(liveCatId);
       _liveCache = all.take(_kHomeRowMax).toList();
     }
-    if (movieCatId != null && movieCatId != _moviesCatId) {
+    if (movieCatId != null && (movieCatId != _moviesCatId || _moviesCache == null || _moviesCache!.isEmpty)) {
       _moviesCatId = movieCatId;
       final all = ctrl.getMoviesByCategory(movieCatId);
       _moviesCache = all.take(_kHomeRowMax).toList();
     }
-    if (seriesCatId != null && seriesCatId != _seriesCatId) {
+    if (seriesCatId != null && (seriesCatId != _seriesCatId || _seriesCache == null || _seriesCache!.isEmpty)) {
       _seriesCatId = seriesCatId;
       final all = ctrl.getSeriesByCategory(seriesCatId);
       _seriesCache = all.take(_kHomeRowMax).toList();

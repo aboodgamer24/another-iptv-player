@@ -292,8 +292,8 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       return;
     }
 
-    // Live: UP/DOWN = channel change
-    if (_item.contentType == ContentType.liveStream) {
+    // Live: UP/DOWN = channel change (ONLY if panel is closed)
+    if (_item.contentType == ContentType.liveStream && !_ui.panelOpen) {
       if (k == LogicalKeyboardKey.arrowUp   || k == LogicalKeyboardKey.channelUp)   { _switchTo(_idx - 1); return; }
       if (k == LogicalKeyboardKey.arrowDown || k == LogicalKeyboardKey.channelDown) { _switchTo(_idx + 1); return; }
     }

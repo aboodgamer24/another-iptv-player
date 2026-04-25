@@ -137,25 +137,32 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
   Future<void> _loadCategories(bool all) async {
     try {
-      _isLoading = true;
-      notifyListeners();
+      // Only show full-screen loader if we have NO data at all
+      if (_liveCategories.isEmpty && _movieCategories.isEmpty && _seriesCategories.isEmpty) {
+        _isLoading = true;
+        notifyListeners();
+      }
 
       final db = AppState.database;
       final playlistId = AppState.currentPlaylist!.id;
 
       if (all) {
-        // Run categories+streams fetches in parallel per type
-        await Future.wait([
+        // Run categories+streams fetches in parallel per type but don't block fully if we have some data
+        unawaited(Future.wait([
           _repository
               .getLiveCategories(forceRefresh: true)
-              .then((_) => _repository.getLiveChannelsFromApi()),
+              .then((_) => _repository.getLiveChannelsFromApi())
+              .then((_) => _loadCategories(false)),
           _repository
               .getVodCategories(forceRefresh: true)
-              .then((_) => _repository.getMoviesFromApi()),
+              .then((_) => _repository.getMoviesFromApi())
+              .then((_) => _loadCategories(false)),
           _repository
               .getSeriesCategories(forceRefresh: true)
-              .then((_) => _repository.getSeriesFromApi()),
-        ]);
+              .then((_) => _repository.getSeriesFromApi())
+              .then((_) => _loadCategories(false)),
+        ]));
+        // If we were forced to refresh, we still want to show what we currently have in DB
       }
 
       // ── LOAD FROM DB — parallel bulk fetch ─────────────────────────
@@ -183,8 +190,10 @@ class XtreamCodeHomeController extends ChangeNotifier {
         debugPrint(
           '[XtreamController] DB is empty — triggering parallel content fetch',
         );
-        // Re-trigger with 'all: true' set
-        await _loadCategories(true);
+        // Don't await the full API sync if we want to remain responsive, 
+        // but we need at least categories to show something.
+        unawaited(_loadCategories(true));
+        // We will keep isLoading = true for now because we have NOTHING to show.
         return;
       }
 
@@ -285,7 +294,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
       notifyListeners();
     } catch (e, st) {
       debugPrint(st.toString());
-      debugPrint('Veri yüklenemedi: $e');
+      debugPrint('Error loading content: $e');
       _isLoading = false;
       notifyListeners();
     }
