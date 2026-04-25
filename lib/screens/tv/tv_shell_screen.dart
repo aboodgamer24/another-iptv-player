@@ -27,20 +27,27 @@ class _TvShellScreenState extends State<TvShellScreen>
     with SingleTickerProviderStateMixin {
   bool _railExpanded = false;
   late final FocusScopeNode _railScope;
+  late final FocusScopeNode _contentScope;
   final List<FocusNode> _itemFocusNodes = [];
 
   @override
   void initState() {
     super.initState();
     _railScope = FocusScopeNode();
+    _contentScope = FocusScopeNode();
     _itemFocusNodes.addAll(
       List.generate(widget.items.length, (_) => FocusNode()),
     );
+    // Auto-focus first nav item on load
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _itemFocusNodes.first.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _railScope.dispose();
+    _contentScope.dispose();
     for (final n in _itemFocusNodes) {
       n.dispose();
     }
@@ -52,8 +59,7 @@ class _TvShellScreenState extends State<TvShellScreen>
 
   @override
   Widget build(BuildContext context) {
-    final railWidth =
-        _railExpanded ? kTvRailExpanded : kTvRailCollapsed;
+    final railWidth = _railExpanded ? kTvRailExpanded : kTvRailCollapsed;
 
     return Scaffold(
       backgroundColor: Colors.black,
@@ -71,8 +77,7 @@ class _TvShellScreenState extends State<TvShellScreen>
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.arrowRight) {
                   _collapseRail();
-                  // Move focus to content area
-                  FocusScope.of(context).nextFocus();
+                  _contentScope.requestFocus();
                   return KeyEventResult.handled;
                 }
                 return KeyEventResult.ignored;
@@ -119,12 +124,10 @@ class _TvShellScreenState extends State<TvShellScreen>
                           onTap: () {
                             widget.onItemSelected(i);
                             _collapseRail();
-                            FocusScope.of(context).nextFocus();
+                            _contentScope.requestFocus();
                           },
                           onFocusChange: (hasFocus) {
-                            if (hasFocus && !_railExpanded) {
-                              _expandRail();
-                            }
+                            if (hasFocus && !_railExpanded) _expandRail();
                           },
                         );
                       },
@@ -136,15 +139,16 @@ class _TvShellScreenState extends State<TvShellScreen>
           ),
           // ── CONTENT ──
           Expanded(
-            child: KeyboardListener(
-              focusNode: FocusNode(),
-              onKeyEvent: (event) {
+            child: FocusScope(
+              node: _contentScope,
+              onKeyEvent: (node, event) {
                 if (event is KeyDownEvent &&
                     event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-                  // Move focus to rail when user presses LEFT at content edge
                   _railScope.requestFocus();
                   _expandRail();
+                  return KeyEventResult.handled;
                 }
+                return KeyEventResult.ignored;
               },
               child: widget.child,
             ),
@@ -179,6 +183,16 @@ class _TvNavTile extends StatelessWidget {
     return Focus(
       focusNode: focusNode,
       onFocusChange: onFocusChange,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter ||
+                event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+          onTap();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
       child: Builder(
         builder: (ctx) {
           final hasFocus = Focus.of(ctx).hasFocus;
@@ -187,10 +201,14 @@ class _TvNavTile extends StatelessWidget {
             child: AnimatedContainer(
               duration: const Duration(milliseconds: 150),
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
                 color: hasFocus || isSelected
-                    ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.25)
+                    ? Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.25)
                     : Colors.transparent,
                 borderRadius: BorderRadius.circular(12),
                 border: hasFocus
