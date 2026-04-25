@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../repositories/user_preferences.dart';
 import '../services/sync_service.dart';
 import 'playlist_screen.dart';
@@ -25,6 +26,16 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   final _passwordController = TextEditingController();
   final _displayNameController = TextEditingController();
 
+  // Focus nodes for D-pad/remote navigation
+  final _loginToggleFocus = FocusNode();
+  final _registerToggleFocus = FocusNode();
+  final _serverUrlFocus = FocusNode();
+  final _displayNameFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _passwordFocus = FocusNode();
+  final _submitFocus = FocusNode();
+  final _guestFocus = FocusNode();
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
@@ -49,6 +60,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     _emailController.dispose();
     _passwordController.dispose();
     _displayNameController.dispose();
+    _loginToggleFocus.dispose();
+    _registerToggleFocus.dispose();
+    _serverUrlFocus.dispose();
+    _displayNameFocus.dispose();
+    _emailFocus.dispose();
+    _passwordFocus.dispose();
+    _submitFocus.dispose();
+    _guestFocus.dispose();
     super.dispose();
   }
 
@@ -175,21 +194,42 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                       const SizedBox(height: 24),
 
                       // ── Guest button ──
-                      TextButton(
-                        onPressed: _isLoading ? null : _proceedAsGuest,
-                        style: TextButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 24,
-                            vertical: 12,
-                          ),
-                        ),
-                        child: Text(
-                          'Continue as Guest',
-                          style: TextStyle(
-                            color:
-                                colorScheme.onSurface.withValues(alpha: 0.5),
-                            fontSize: 15,
-                          ),
+                      Focus(
+                        focusNode: _guestFocus,
+                        child: Builder(
+                          builder: (context) {
+                            final isFocused = Focus.of(context).hasFocus;
+                            return AnimatedContainer(
+                              duration: const Duration(milliseconds: 150),
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(8),
+                                border: isFocused
+                                    ? Border.all(
+                                        color: colorScheme.primary,
+                                        width: 2,
+                                      )
+                                    : null,
+                              ),
+                              child: TextButton(
+                                focusNode: _guestFocus,
+                                onPressed: _isLoading ? null : _proceedAsGuest,
+                                style: TextButton.styleFrom(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                    vertical: 12,
+                                  ),
+                                ),
+                                child: Text(
+                                  'Continue as Guest',
+                                  style: TextStyle(
+                                    color: colorScheme.onSurface
+                                        .withValues(alpha: 0.5),
+                                    fontSize: 15,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
                         ),
                       ),
                       const SizedBox(height: 8),
@@ -276,10 +316,20 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               // ── Server URL ──
               _buildTextField(
                 controller: _serverUrlController,
+                focusNode: _serverUrlFocus,
+                autofocus: true,
                 label: 'Server URL',
                 hint: 'http://your-server:7000',
                 icon: Icons.dns_outlined,
                 keyboardType: TextInputType.url,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (_) {
+                  if (!_isLogin) {
+                    FocusScope.of(context).requestFocus(_displayNameFocus);
+                  } else {
+                    FocusScope.of(context).requestFocus(_emailFocus);
+                  }
+                },
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
                     return 'Server URL is required';
@@ -301,9 +351,13 @@ class _WelcomeScreenState extends State<WelcomeScreen>
                         padding: const EdgeInsets.only(top: 16),
                         child: _buildTextField(
                           controller: _displayNameController,
+                          focusNode: _displayNameFocus,
                           label: 'Display Name',
                           hint: 'Your name',
                           icon: Icons.person_outline,
+                          textInputAction: TextInputAction.next,
+                          onFieldSubmitted: (_) =>
+                              FocusScope.of(context).requestFocus(_emailFocus),
                           validator: (v) {
                             if (!_isLogin &&
                                 (v == null || v.trim().isEmpty)) {
@@ -319,10 +373,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               // ── Email ──
               _buildTextField(
                 controller: _emailController,
+                focusNode: _emailFocus,
                 label: 'Email',
                 hint: 'you@example.com',
                 icon: Icons.email_outlined,
                 keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_passwordFocus),
                 validator: (v) {
                   if (v == null || v.trim().isEmpty) {
                     return 'Email is required';
@@ -336,10 +394,14 @@ class _WelcomeScreenState extends State<WelcomeScreen>
               // ── Password ──
               _buildTextField(
                 controller: _passwordController,
+                focusNode: _passwordFocus,
                 label: 'Password',
                 hint: '••••••••',
                 icon: Icons.lock_outline,
                 obscure: _obscurePassword,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) =>
+                    FocusScope.of(context).requestFocus(_submitFocus),
                 suffixIcon: IconButton(
                   icon: Icon(
                     _obscurePassword
@@ -397,6 +459,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
               // ── Submit button ──
               FilledButton(
+                focusNode: _submitFocus,
                 onPressed: _isLoading ? null : _submit,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -440,6 +503,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           _buildToggleButton(
             label: 'Login',
             isSelected: _isLogin,
+            focusNode: _loginToggleFocus,
             colorScheme: colorScheme,
             onTap: () => setState(() {
               _isLogin = true;
@@ -449,6 +513,7 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           _buildToggleButton(
             label: 'Register',
             isSelected: !_isLogin,
+            focusNode: _registerToggleFocus,
             colorScheme: colorScheme,
             onTap: () => setState(() {
               _isLogin = false;
@@ -463,39 +528,65 @@ class _WelcomeScreenState extends State<WelcomeScreen>
   Widget _buildToggleButton({
     required String label,
     required bool isSelected,
+    required FocusNode focusNode,
     required ColorScheme colorScheme,
     required VoidCallback onTap,
   }) {
     return Expanded(
-      child: GestureDetector(
-        onTap: onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 10),
-          decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary : Colors.transparent,
-            borderRadius: BorderRadius.circular(9),
-            boxShadow: isSelected
-                ? [
-                    BoxShadow(
-                      color: colorScheme.primary.withValues(alpha: 0.25),
-                      blurRadius: 8,
-                      offset: const Offset(0, 2),
-                    ),
-                  ]
-                : null,
-          ),
-          child: Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isSelected
-                  ? colorScheme.onPrimary
-                  : colorScheme.onSurface.withValues(alpha: 0.6),
-              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              fontSize: 14,
-            ),
+      child: Focus(
+        focusNode: focusNode,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              (event.logicalKey == LogicalKeyboardKey.select ||
+                  event.logicalKey == LogicalKeyboardKey.enter ||
+                  event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+            onTap();
+            return KeyEventResult.handled;
+          }
+          return KeyEventResult.ignored;
+        },
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedBuilder(
+            animation: focusNode,
+            builder: (context, _) {
+              final isFocused = focusNode.hasFocus;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+                decoration: BoxDecoration(
+                  color: isSelected ? colorScheme.primary : Colors.transparent,
+                  borderRadius: BorderRadius.circular(9),
+                  border: isFocused && !isSelected
+                      ? Border.all(color: colorScheme.primary, width: 2)
+                      : null,
+                  boxShadow: isSelected
+                      ? [
+                          BoxShadow(
+                            color: colorScheme.primary.withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  label,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: isSelected
+                        ? colorScheme.onPrimary
+                        : isFocused
+                            ? colorScheme.primary
+                            : colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight:
+                        isSelected || isFocused ? FontWeight.w600 : FontWeight.w500,
+                    fontSize: 14,
+                  ),
+                ),
+              );
+            },
           ),
         ),
       ),
@@ -504,20 +595,28 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildTextField({
     required TextEditingController controller,
+    required FocusNode focusNode,
     required String label,
     String? hint,
     IconData? icon,
     bool obscure = false,
+    bool autofocus = false,
     Widget? suffixIcon,
     TextInputType? keyboardType,
+    TextInputAction? textInputAction,
+    ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
 
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
+      autofocus: autofocus,
       obscureText: obscure,
       keyboardType: keyboardType,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       validator: validator,
       style: TextStyle(
         color: colorScheme.onSurface,
@@ -534,7 +633,9 @@ class _WelcomeScreenState extends State<WelcomeScreen>
           color: colorScheme.onSurface.withValues(alpha: 0.6),
         ),
         prefixIcon: icon != null
-            ? Icon(icon, size: 20, color: colorScheme.primary.withValues(alpha: 0.7))
+            ? Icon(icon,
+                size: 20,
+                color: colorScheme.primary.withValues(alpha: 0.7))
             : null,
         suffixIcon: suffixIcon,
         filled: true,
