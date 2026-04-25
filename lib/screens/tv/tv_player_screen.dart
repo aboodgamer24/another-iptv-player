@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:media_kit/media_kit.dart' hide PlayerState;
-import 'package:media_kit_video/media_kit_video.dart';
+import 'package:video_player/video_player.dart'; // ExoPlayer on Android
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 import '../../models/watch_history.dart';
@@ -83,21 +82,12 @@ class TvPlayerScreen extends StatefulWidget {
 }
 
 class _TvPlayerScreenState extends State<TvPlayerScreen> {
-  // ── media_kit ─────────────────────────────────
-  late final Player          _player;
-  late final VideoController _vc;
+  // ── ExoPlayer (via video_player) ───────────────
+  VideoPlayerController? _controller;
 
   // ── state ────────────────────────────────────
   late int         _idx;
   late ContentItem _item;
-
-  // track lists — live in setState because they only change on media open
-  List<AudioTrack>    _audio    = [];
-  List<SubtitleTrack> _subtitle = [];
-  List<VideoTrack>    _video    = [];
-  AudioTrack?         _curAudio;
-  SubtitleTrack?      _curSub;
-  VideoTrack?         _curVideo;
 
   // ── OSD stream ───────────────────────────────
   final _uiCtrl = StreamController<_UiState>.broadcast();
@@ -115,9 +105,6 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   // ── focus ─────────────────────────────────────
   final _focus = FocusNode();
 
-  // ── subscriptions ─────────────────────────────
-  final _subs = <StreamSubscription>[];
-
   // ─────────────────────────────────────────────
   @override
   void initState() {
@@ -125,29 +112,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     _idx  = widget.initialIndex;
     _item = widget.contentItem;
 
-    // 1. Create player — DO NOT set vo/gpu-api; media_kit owns the surface
-    _player = Player(
-      configuration: PlayerConfiguration(
-        logLevel: MPVLogLevel.warn,
-        bufferSize: 32 * 1024 * 1024,
-      ),
-    );
-
-    // 2. Create VideoController synchronously before any async work
-    _vc = VideoController(
-      _player,
-      configuration: const VideoControllerConfiguration(
-        enableHardwareAcceleration: true,
-      ),
-    );
-
-    // 3. Wire up lightweight stream listeners (no setState — push to stream)
-    _wireLightweightListeners();
-
-    // 4. Wire up track listeners (need setState — happens only on media change)
-    _wireTrackListeners();
-
-    // 5. Show system UI is already hidden on TV; just request focus
+    // Show system UI is already hidden on TV; just request focus
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _focus.requestFocus();
@@ -155,139 +120,58 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       }
     });
 
-    // 6. Apply MPV properties and open media — fully async, errors caught
     _startPlayback();
   }
 
-  // ── Wire listeners that only push to the UI stream (never setState) ────────
-  void _wireLightweightListeners() {
-    bool lastBuffering = true;
-
-    _subs.add(_player.stream.buffering.listen((v) {
-      if (v != lastBuffering) {
-        lastBuffering = v;
-        _push(_ui.copyWith(isBuffering: v));
-      }
-    }));
-
-    Timer? posDebounce;
-    _subs.add(_player.stream.position.listen((pos) {
-      final dur = _player.state.duration;
-      // watch history — save every 5 s of play movement
-      if ((pos - _lastSaved).abs() > const Duration(seconds: 5)) {
-        _historyTimer?.cancel();
-        _historyTimer = Timer(const Duration(seconds: 5), () {
-          _lastSaved = pos;
-          _saveHistory(pos, dur);
-        });
-      }
-      if (_ui.osdVisible) {
-        posDebounce?.cancel();
-        posDebounce = Timer(const Duration(milliseconds: 250), () {
-          _push(_ui.copyWith(position: pos, duration: dur));
-        });
-      }
-    }));
-  }
-
-  // ── Wire track listeners (these need setState because track lists update) ──
-  void _wireTrackListeners() {
-    _subs.add(_player.stream.tracks.listen((t) {
-      if (!mounted) return;
-      setState(() {
-        _audio    = t.audio;
-        _subtitle = t.subtitle;
-        _video    = t.video;
-      });
-    }));
-    _subs.add(_player.stream.track.listen((t) {
-      if (!mounted) return;
-      setState(() {
-        _curAudio = t.audio;
-        _curSub   = t.subtitle;
-        _curVideo = t.video;
-      });
-    }));
-  }
-
-  // ── Apply safe MPV properties (no vo/gpu-api!) ────────────────────────────
-  Future<void> _applyMpv() async {
-    final p = _player.platform;
-    if (p is! NativePlayer) return;
-    try {
-      // hardware decode zero-copy
-      await p.setProperty('hwdec',       'mediacodec-copy');
-      await p.setProperty('hwdec-codecs','all');
-
-      // disable all CPU-side video filters
-      await p.setProperty('interpolation',       'no');
-      await p.setProperty('scale',               'bilinear');
-      await p.setProperty('cscale',              'bilinear');
-      await p.setProperty('dscale',              'bilinear');
-      await p.setProperty('scale-antiring',      '0.0');
-      await p.setProperty('sigmoid-upscaling',   'no');
-      await p.setProperty('linear-upscaling',    'no');
-      await p.setProperty('correct-downscaling', 'no');
-      await p.setProperty('deinterlace',         'no');
-      await p.setProperty('dither',              'no');
-      // no tone-mapping — TV panel handles HDR natively
-      await p.setProperty('tone-mapping',        'clip');
-      await p.setProperty('hdr-compute-peak',    'no');
-
-      if (_item.contentType == ContentType.liveStream) {
-        await p.setProperty('video-sync',              'audio');
-        await p.setProperty('framedrop',               'decoder+vo');
-        await p.setProperty('cache',                   'yes');
-        await p.setProperty('demuxer-max-bytes',       '8MiB');
-        await p.setProperty('demuxer-max-back-bytes',  '2MiB');
-        await p.setProperty('demuxer-readahead-secs',  '0.3');
-        await p.setProperty('cache-secs',              '1');
-        await p.setProperty('demuxer-cache-wait',      'no');
-        await p.setProperty('initial-audio-sync',      'no');
-        await p.setProperty('vd-lavc-skiploopfilter',  'nonref');
-      } else {
-        await p.setProperty('video-sync',              'audio');
-        await p.setProperty('framedrop',               'decoder');
-        await p.setProperty('cache',                   'yes');
-        await p.setProperty('demuxer-max-bytes',       '32MiB');
-        await p.setProperty('demuxer-max-back-bytes',  '8MiB');
-        await p.setProperty('demuxer-readahead-secs',  '0');
-        await p.setProperty('cache-secs',              '10');
-        await p.setProperty('demuxer-cache-wait',      'no');
-        await p.setProperty('initial-audio-sync',      'yes');
-        await p.setProperty('audio-buffer',            '0.2');
-        // after first frame, allow background readahead
-        Future.delayed(const Duration(seconds: 4), () async {
-          try { await p.setProperty('demuxer-readahead-secs', '5.0'); }
-          catch (_) {}
-        });
-      }
-    } catch (e) {
-      debugPrint('[TV] MPV error: $e');
-    }
-  }
-
   // ── Full async init (called from initState, errors caught) ────────────────
-  Future<void> _startPlayback() async {
-    try {
-      await _applyMpv();
+  Future<void> _startPlayback({Duration startPos = Duration.zero}) async {
+    // 1. Dispose old controller if any
+    final old = _controller;
+    if (old != null) {
+      old.removeListener(_vpcListener);
+      old.dispose();
+      _controller = null;
+    }
 
-      Duration startPos = Duration.zero;
-      if (_item.contentType != ContentType.liveStream) {
-        try {
-          final svc = WatchHistoryService();
-          final h = await svc.getWatchHistory(
-            AppState.currentPlaylist!.id,
-            isXtreamCode ? _item.id : (_item.m3uItem?.id ?? _item.id),
-          );
-          startPos = h?.watchDuration ?? Duration.zero;
-        } catch (_) {}
+    // 2. Fetch history if needed
+    Duration initialPos = startPos;
+    if (initialPos == Duration.zero && _item.contentType != ContentType.liveStream) {
+      try {
+        final svc = WatchHistoryService();
+        final h = await svc.getWatchHistory(
+          AppState.currentPlaylist!.id,
+          isXtreamCode ? _item.id : (_item.m3uItem?.id ?? _item.id),
+        );
+        initialPos = h?.watchDuration ?? Duration.zero;
+      } catch (_) {}
+    }
+
+    // 3. Create new controller
+    final next = VideoPlayerController.networkUrl(
+      Uri.parse(_item.url),
+      videoPlayerOptions: VideoPlayerOptions(mixWithOthers: false),
+    );
+
+    try {
+      _push(_ui.copyWith(isBuffering: true, title: _item.name, channelIndex: _idx));
+      
+      await next.initialize();
+      if (!mounted) {
+        next.dispose();
+        return;
       }
 
-      await _player.open(
-        Media(_item.url, start: startPos),
-        play: true,
-      );
+      setState(() {
+        _controller = next;
+      });
+
+      next.addListener(_vpcListener);
+      
+      if (initialPos > Duration.zero) {
+        await next.seekTo(initialPos);
+      }
+      
+      await next.play();
 
       _push(_ui.copyWith(
         title        : _item.name,
@@ -295,6 +179,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
         channelTotal : widget.queue.length,
         isLive       : _item.contentType == ContentType.liveStream,
         isBuffering  : false,
+        duration     : next.value.duration,
       ));
     } catch (e) {
       debugPrint('[TV] Playback start error: $e');
@@ -308,22 +193,41 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     }
   }
 
+  void _vpcListener() {
+    final vpc = _controller;
+    if (vpc == null || !mounted) return;
+
+    final val = vpc.value;
+    final pos = val.position;
+    final dur = val.duration;
+
+    // Buffering check
+    if (val.isBuffering != _ui.isBuffering) {
+      _push(_ui.copyWith(isBuffering: val.isBuffering));
+    }
+
+    // History save
+    if ((pos - _lastSaved).abs() > const Duration(seconds: 5)) {
+      _historyTimer?.cancel();
+      _historyTimer = Timer(const Duration(seconds: 5), () {
+        _lastSaved = pos;
+        _saveHistory(pos, dur);
+      });
+    }
+
+    // OSD Update (Position)
+    if (_ui.osdVisible) {
+      _push(_ui.copyWith(position: pos, duration: dur));
+    }
+  }
+
   // ── Channel switch ─────────────────────────────────────────────────────────
   Future<void> _switchTo(int targetIdx) async {
     final i = targetIdx.clamp(0, widget.queue.length - 1);
     if (i == _idx) return;
     _idx  = i;
     _item = widget.queue[i];
-    _push(_ui.copyWith(
-      title        : _item.name,
-      channelIndex : i,
-      isBuffering  : true,
-    ));
-    try {
-      await _player.open(Media(_item.url), play: true);
-    } catch (e) {
-      debugPrint('[TV] Channel switch error: $e');
-    }
+    _startPlayback();
   }
 
   // ── Watch history save ─────────────────────────────────────────────────────
@@ -394,14 +298,14 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     }
 
     // VOD: LEFT/RIGHT = seek ±10s
-    if (_item.contentType != ContentType.liveStream) {
+    if (_item.contentType != ContentType.liveStream && _controller != null) {
       if (k == LogicalKeyboardKey.arrowRight) {
-        _player.seek(_player.state.position + const Duration(seconds: 10));
+        _controller!.seekTo(_controller!.value.position + const Duration(seconds: 10));
         return;
       }
       if (k == LogicalKeyboardKey.arrowLeft) {
-        final t = _player.state.position - const Duration(seconds: 10);
-        _player.seek(t < Duration.zero ? Duration.zero : t);
+        final t = _controller!.value.position - const Duration(seconds: 10);
+        _controller!.seekTo(t < Duration.zero ? Duration.zero : t);
         return;
       }
     }
@@ -411,7 +315,13 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
         k == LogicalKeyboardKey.enter        ||
         k == LogicalKeyboardKey.gameButtonA  ||
         k == LogicalKeyboardKey.mediaPlayPause) {
-      _player.playOrPause();
+      if (_controller != null) {
+        if (_controller!.value.isPlaying) {
+          _controller!.pause();
+        } else {
+          _controller!.play();
+        }
+      }
     }
   }
 
@@ -428,12 +338,10 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   void dispose() {
     _osdTimer?.cancel();
     _historyTimer?.cancel();
-    for (final s in _subs) {
-      s.cancel();
-    }
     _uiCtrl.close();
     _focus.dispose();
-    _player.dispose();
+    _controller?.removeListener(_vpcListener);
+    _controller?.dispose();
     SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual, overlays: SystemUiOverlay.values);
     super.dispose();
@@ -465,10 +373,13 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
               fit: StackFit.expand,
               children: [
                 // ── VIDEO — never rebuilds after first frame ──
-                Video(
-                  controller: _vc,
-                  controls: NoVideoControls,
-                  fill: Colors.black,
+                Center(
+                  child: _controller != null && _controller!.value.isInitialized
+                      ? AspectRatio(
+                          aspectRatio: _controller!.value.aspectRatio,
+                          child: VideoPlayer(_controller!),
+                        )
+                      : const SizedBox.shrink(),
                 ),
 
                 // ── OVERLAY — only the StreamBuilder subtree rebuilds ──
@@ -482,25 +393,15 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
                       item    : _item,
                       queue   : widget.queue,
                       curIdx  : _idx,
-                      audio   : _audio,
-                      subtitle: _subtitle,
-                      video   : _video,
-                      curAudio: _curAudio,
-                      curSub  : _curSub,
-                      curVideo: _curVideo,
                       fmt     : _fmt,
                       onOsd   : _showOsd,
                       onPanelToggle : () => _push(_ui.copyWith(panelOpen: !_ui.panelOpen)),
                       onPanelClose  : () => _push(_ui.copyWith(panelOpen: false)),
                       onPanelTab    : (t) => _push(_ui.copyWith(panelTab: t)),
-                      onSubCycle    : _cycleSubtitle,
                       onChannelTap  : (i) {
                         _switchTo(i);
                         _push(_ui.copyWith(panelOpen: false));
                       },
-                      onTrackAudio  : (t) => _player.setAudioTrack(t),
-                      onTrackSub    : (t) => _player.setSubtitleTrack(t),
-                      onTrackVideo  : (t) => _player.setVideoTrack(t),
                     );
                   },
                 ),
@@ -511,62 +412,34 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       ),
     );
   }
-
-  void _cycleSubtitle() {
-    final tracks = <SubtitleTrack>[SubtitleTrack.no(),
-      ..._subtitle.where((t) => t.id != 'no')];
-    final ci = tracks.indexWhere((t) => t.id == (_curSub?.id ?? 'no'));
-    _player.setSubtitleTrack(tracks[(ci + 1) % tracks.length]);
-  }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // OVERLAY — pure StatelessWidget, receives all data via constructor.
-// This is separated so the Video widget is NEVER in the same build scope.
 // ─────────────────────────────────────────────────────────────────────────────
 class _Overlay extends StatelessWidget {
   final _UiState          ui;
   final ContentItem       item;
   final List<ContentItem> queue;
   final int               curIdx;
-  final List<AudioTrack>    audio;
-  final List<SubtitleTrack> subtitle;
-  final List<VideoTrack>    video;
-  final AudioTrack?         curAudio;
-  final SubtitleTrack?      curSub;
-  final VideoTrack?         curVideo;
   final String Function(Duration) fmt;
   final VoidCallback  onOsd;
   final VoidCallback  onPanelToggle;
   final VoidCallback  onPanelClose;
   final void Function(int)           onPanelTab;
-  final VoidCallback  onSubCycle;
   final void Function(int)           onChannelTap;
-  final void Function(AudioTrack)    onTrackAudio;
-  final void Function(SubtitleTrack) onTrackSub;
-  final void Function(VideoTrack)    onTrackVideo;
 
   const _Overlay({
     required this.ui,
     required this.item,
     required this.queue,
     required this.curIdx,
-    required this.audio,
-    required this.subtitle,
-    required this.video,
-    required this.curAudio,
-    required this.curSub,
-    required this.curVideo,
     required this.fmt,
     required this.onOsd,
     required this.onPanelToggle,
     required this.onPanelClose,
     required this.onPanelTab,
-    required this.onSubCycle,
     required this.onChannelTap,
-    required this.onTrackAudio,
-    required this.onTrackSub,
-    required this.onTrackVideo,
   });
 
   @override
@@ -632,19 +505,6 @@ class _Overlay extends StatelessWidget {
                   shadows: [Shadow(color: Colors.black54, blurRadius: 6)]),
                 maxLines: 1, overflow: TextOverflow.ellipsis),
             ),
-
-            // Subtitle toggle
-            IconButton(
-              icon: Icon(
-                (curSub != null && curSub!.id != 'no')
-                    ? Icons.subtitles_rounded
-                    : Icons.subtitles_off_outlined,
-                color: Colors.white70, size: 22),
-              onPressed: onSubCycle,
-              constraints: const BoxConstraints(minWidth: 36, minHeight: 36),
-              padding: EdgeInsets.zero,
-            ),
-            const SizedBox(width: 4),
 
             // Hamburger
             IconButton(
@@ -763,41 +623,20 @@ class _Overlay extends StatelessWidget {
   }
 
   Widget _tracksTab(BuildContext context) {
-    final primary = Theme.of(context).colorScheme.primary;
-    return ListView(
-      padding: const EdgeInsets.all(12),
-      children: [
-        if (audio.isNotEmpty) ...[
-          const _SLabel('Audio'),
-          ...audio.map((t) => _TTile(
-            label    : t.language ?? t.title ?? 'Track ${t.id}',
-            selected : curAudio?.id == t.id,
-            primary  : primary,
-            onTap    : () => onTrackAudio(t))),
-          const SizedBox(height: 12),
-        ],
-        if (subtitle.isNotEmpty) ...[
-          const _SLabel('Subtitles'),
-          _TTile(label: 'Off',
-            selected: curSub == null || curSub!.id == 'no',
-            primary: primary,
-            onTap: () => onTrackSub(SubtitleTrack.no())),
-          ...subtitle.where((t) => t.id != 'no').map((t) => _TTile(
-            label    : t.language ?? t.title ?? 'Track ${t.id}',
-            selected : curSub?.id == t.id,
-            primary  : primary,
-            onTap    : () => onTrackSub(t))),
-          const SizedBox(height: 12),
-        ],
-        if (video.length > 1) ...[
-          const _SLabel('Video'),
-          ...video.map((t) => _TTile(
-            label    : t.title ?? 'Track ${t.id}',
-            selected : curVideo?.id == t.id,
-            primary  : primary,
-            onTap    : () => onTrackVideo(t))),
-        ],
-      ],
+    return const Center(
+      child: Padding(
+        padding: EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.info_outline, color: Colors.white38, size: 48),
+            SizedBox(height: 16),
+            Text('Track selection is managed by ExoPlayer hardware decoder.',
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.white54, fontSize: 13)),
+          ],
+        ),
+      ),
     );
   }
 
@@ -912,38 +751,6 @@ class _Tab extends StatelessWidget {
       ),
     );
   }
-}
-
-class _SLabel extends StatelessWidget {
-  final String text;
-  const _SLabel(this.text);
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 6, top: 4),
-    child: Text(text.toUpperCase(),
-      style: const TextStyle(
-        color: Colors.white38, fontSize: 10,
-        letterSpacing: 1.2, fontWeight: FontWeight.bold)));
-}
-
-class _TTile extends StatelessWidget {
-  final String label;
-  final bool selected;
-  final Color primary;
-  final VoidCallback onTap;
-  const _TTile({required this.label, required this.selected,
-                required this.primary, required this.onTap});
-  @override
-  Widget build(BuildContext context) => ListTile(
-    dense: true,
-    onTap: onTap,
-    title: Text(label,
-      style: TextStyle(
-        color: selected ? Colors.white : Colors.white60, fontSize: 13)),
-    trailing: selected
-        ? Icon(Icons.check_circle_rounded, color: primary, size: 18)
-        : null,
-  );
 }
 
 class _IRow extends StatelessWidget {
