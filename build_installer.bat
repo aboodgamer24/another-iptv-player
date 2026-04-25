@@ -126,11 +126,11 @@ if %ERRORLEVEL% neq 0 (
     pause & exit /b 1
 )
 
-:: Verify all 3 phone APKs
+:: Verify all APKs
 set APK_ARM64=%OUT_DIR%\%APP_NAME%-android-%VERSION%-arm64.apk
 set APK_ARM32=%OUT_DIR%\%APP_NAME%-android-%VERSION%-arm32.apk
 set APK_X64=%OUT_DIR%\%APP_NAME%-android-%VERSION%-x86_64.apk
-set APK_TV=%OUT_DIR%\%APP_NAME%-android-%VERSION%-tv-arm64.apk
+set APK_TV=%OUT_DIR%\%APP_NAME%-android-%VERSION%-tv-universal.apk
 
 for %%F in ("%APK_ARM64%" "%APK_ARM32%" "%APK_X64%" "%APK_TV%") do (
     if not exist %%F (
