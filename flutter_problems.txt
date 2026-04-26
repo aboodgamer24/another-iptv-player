@@ -1,0 +1,22 @@
+Analyzing another-iptv-player...                                
+
+warning - The declaration '_rotateHero' isn't referenced - lib\controllers\xtream_code_home_controller.dart:310:8 - unused_element
+   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:583:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:585:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:594:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:599:7 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_home_screen.dart:188:23 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_home_screen.dart:429:31 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\tv\tv_welcome_screen.dart:92:32 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\tv\tv_welcome_screen.dart:93:33 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\tv\tv_welcome_screen.dart:94:36 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\screens\tv\tv_welcome_screen.dart:95:39 - curly_braces_in_flow_control_structures
+warning - A value for optional parameter 'onUpKey' isn't ever given - lib\screens\welcome_screen.dart:623:19 - unused_element_parameter
+warning - A value for optional parameter 'onDownKey' isn't ever given - lib\screens\welcome_screen.dart:624:19 - unused_element_parameter
+   info - Statements in an if should be enclosed in a block - lib\services\tmdb_service.dart:67:17 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\services\upscale_service.dart:22:5 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:602:39 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:1578:15 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:1580:15 - curly_braces_in_flow_control_structures
+
+18 issues found. (ran in 3.9s)

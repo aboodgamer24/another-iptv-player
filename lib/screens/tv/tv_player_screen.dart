@@ -98,6 +98,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   // ── state ────────────────────────────────────
   late int         _idx;
   late ContentItem _item;
+  bool _isClosing = false;
 
   // ── OSD stream ───────────────────────────────
   final _uiCtrl = StreamController<_UiState>.broadcast();
@@ -282,8 +283,16 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   // ── Key handler ───────────────────────────────────────────────────────────
   void _onKey(KeyEvent ev) {
     if (ev is! KeyDownEvent) return;
-    _showOsd();
     final k = ev.logicalKey;
+
+    // Let back keys fall through to PopScope — do not consume them here
+    if (k == LogicalKeyboardKey.escape   ||
+        k == LogicalKeyboardKey.goBack   ||
+        k == LogicalKeyboardKey.browserBack) {
+      return;
+    }
+
+    _showOsd();
 
     // MENU / hamburger → toggle panel
     if (k == LogicalKeyboardKey.contextMenu ||
@@ -291,23 +300,6 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
         ev.logicalKey.keyId == 0x00100000052) {
       _push(_ui.copyWith(panelOpen: !_ui.panelOpen, osdVisible: true));
       _osdTimer?.cancel();
-      return;
-    }
-
-    // BACK while panel open → close panel
-    if (_ui.panelOpen &&
-        (k == LogicalKeyboardKey.escape  ||
-         k == LogicalKeyboardKey.goBack  ||
-         k == LogicalKeyboardKey.browserBack)) {
-      _push(_ui.copyWith(panelOpen: false));
-      return;
-    }
-
-    // BACK → pop
-    if (k == LogicalKeyboardKey.escape  ||
-        k == LogicalKeyboardKey.goBack  ||
-        k == LogicalKeyboardKey.browserBack) {
-      _closeAndPop();
       return;
     }
 
@@ -386,14 +378,12 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   }
 
   Future<void> _closeAndPop() async {
-    if (!mounted) return;
-    
-    // Stop playback immediately to prevent ghost audio
-    final vpc = _controller;
-    if (vpc != null) {
-      await vpc.pause();
-    }
-    
+    if (_isClosing || !mounted) return;
+    _isClosing = true;
+
+    // Pause without awaiting — fire and forget so we don't block the UI
+    _controller?.pause().catchError((_) {});
+
     if (mounted) {
       Navigator.of(context).pop();
     }
@@ -425,12 +415,17 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   Widget build(BuildContext context) {
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return; // already handled, do nothing
+
+        // If panel is open, close it — do NOT pop the route
         if (_ui.panelOpen) {
           _push(_ui.copyWith(panelOpen: false));
           return;
         }
-        Navigator.of(context).maybePop();
+
+        // Otherwise exit the player cleanly
+        await _closeAndPop();
       },
       child: Scaffold(
         backgroundColor: Colors.black,
@@ -876,19 +871,6 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
 // ─────────────────────────────────────────────────────────────────────────────
 // Small helper widgets
 // ─────────────────────────────────────────────────────────────────────────────
-class _Hint extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  const _Hint({required this.icon, required this.label});
-  @override
-  Widget build(BuildContext context) => Row(mainAxisSize: MainAxisSize.min,
-    children: [
-      Icon(icon, color: Colors.white38, size: 13),
-      const SizedBox(width: 3),
-      Text(label, style: const TextStyle(color: Colors.white38, fontSize: 11)),
-    ]);
-}
-
 class _Tab extends StatelessWidget {
   final String label;
   final int i, cur;
