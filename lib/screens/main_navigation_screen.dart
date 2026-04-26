@@ -26,6 +26,7 @@ import 'mobile/mobile_global_search_screen.dart';
 
 // TV Imports
 import 'tv/tv_shell_screen.dart';
+import 'tv/tv_home_screen.dart';
 import 'tv/tv_placeholder_screen.dart';
 
 
@@ -167,7 +168,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           TvNavItem(icon: Icons.settings_rounded, label: 'Settings'),
         ],
         child: [
-          const TvPlaceholderScreen(title: 'Home'),
+          const TvHomeScreen(),
           const TvPlaceholderScreen(title: 'Live TV', accent: Colors.purple),
           const TvPlaceholderScreen(title: 'Movies', accent: Colors.orange),
           const TvPlaceholderScreen(title: 'Series', accent: Colors.green),
