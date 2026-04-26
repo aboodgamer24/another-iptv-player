@@ -285,11 +285,16 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     if (ev is! KeyDownEvent) return false;
     final k = ev.logicalKey;
 
-    // Never consume back keys — handled by PopScope
+    // Back key: close panel first, then exit player
     if (k == LogicalKeyboardKey.escape   ||
         k == LogicalKeyboardKey.goBack   ||
         k == LogicalKeyboardKey.browserBack) {
-      return false;
+      if (_ui.panelOpen) {
+        _push(_ui.copyWith(panelOpen: false));
+      } else {
+        _closeAndPop();
+      }
+      return true; // consumed — do NOT let it bubble to TvShellScreen's PopScope
     }
 
     _showOsd();
@@ -379,16 +384,19 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     return map;
   }
 
-  Future<void> _closeAndPop() async {
+  void _closeAndPop() {
     if (_isClosing || !mounted) return;
     _isClosing = true;
 
     // Pause without awaiting — fire and forget so we don't block the UI
     _controller?.pause().catchError((_) {});
 
-    if (mounted) {
-      Navigator.of(context).pop();
-    }
+    // Use addPostFrameCallback so we don't pop mid-key-event
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+    });
   }
 
   // ── Lifecycle ─────────────────────────────────────────────────────────────
@@ -415,38 +423,17 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   // ─────────────────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
-    return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (didPop) return; // already handled, do nothing
-
-        // If panel is open, close it — do NOT pop the route
-        if (_ui.panelOpen) {
-          _push(_ui.copyWith(panelOpen: false));
-          return;
-        }
-
-        // Otherwise exit the player cleanly
-        await _closeAndPop();
-      },
-      child: Scaffold(
-        backgroundColor: Colors.black,
-        body: Focus(
-          autofocus: true,
-          focusNode: _focus,
-          onKeyEvent: (node, event) {
-            final k = event.logicalKey;
-            // Never consume back keys
-            if (k == LogicalKeyboardKey.escape  ||
-                k == LogicalKeyboardKey.goBack  ||
-                k == LogicalKeyboardKey.browserBack) {
-              return KeyEventResult.ignored;
-            }
-            final handled = _onKey(event);
-            return handled ? KeyEventResult.handled : KeyEventResult.ignored;
-          },
-          // RepaintBoundary isolates video paint from overlay paint
-          child: RepaintBoundary(
+    return Scaffold(
+      backgroundColor: Colors.black,
+      body: Focus(
+        autofocus: true,
+        focusNode: _focus,
+        onKeyEvent: (node, event) {
+          final handled = _onKey(event);
+          return handled ? KeyEventResult.handled : KeyEventResult.ignored;
+        },
+        // RepaintBoundary isolates video paint from overlay paint
+        child: RepaintBoundary(
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -499,7 +486,6 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
                 ),
               ],
             ),
-          ),
         ),
       ),
     );

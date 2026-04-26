@@ -101,17 +101,23 @@ class _TvShellScreenState extends State<TvShellScreen>
       canPop: false, // intercept ALL back presses
       onPopInvokedWithResult: (didPop, result) {
         if (didPop) return;
+
+        // If there are routes above the shell, let them handle back instead
+        // (this guards against the shell intercepting player back presses)
+        final nav = Navigator.of(context);
+        if (nav.canPop()) {
+          nav.pop();
+          return;
+        }
+
         if (_railExpanded) {
-          // If rail is expanded, just collapse it
           _collapseRail();
           return;
         }
         if (widget.selectedIndex != 0) {
-          // If not on Home tab, go back to Home
           widget.onItemSelected(0);
           return;
         }
-        // On Home tab — show exit confirmation dialog
         _showExitDialog(context);
       },
       child: Scaffold(
