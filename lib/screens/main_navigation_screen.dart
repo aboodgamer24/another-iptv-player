@@ -27,6 +27,9 @@ import 'mobile/mobile_global_search_screen.dart';
 // TV Imports
 import 'tv/tv_shell_screen.dart';
 import 'tv/tv_home_screen.dart';
+import 'tv/tv_live_tv_screen.dart';
+import 'tv/tv_movies_screen.dart';
+import 'tv/tv_series_screen.dart';
 import 'tv/tv_placeholder_screen.dart';
 
 
@@ -73,14 +76,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
     if (isXtream) {
       final controller = Provider.of<XtreamCodeHomeController>(context);
-
-      if (PlatformUtils.isTV) {
-        if (!_loadedTabs.contains(_selectedIndex) || controller.isLoading) {
-          return const _TvLoadingSkeleton();
-        }
-
-        return Container(color: Colors.black);
-      }
 
       if (PlatformUtils.isMobile) {
         switch (_selectedIndex) {
@@ -153,12 +148,15 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final content = _buildContent();
-
     if (PlatformUtils.isTV) {
       return TvShellScreen(
         selectedIndex: _selectedIndex,
-        onItemSelected: (i) => setState(() => _selectedIndex = i),
+        onItemSelected: (i) {
+          setState(() {
+            _selectedIndex = i;
+            _loadedTabs.add(i);
+          });
+        },
         items: const [
           TvNavItem(icon: Icons.home_rounded, label: 'Home'),
           TvNavItem(icon: Icons.live_tv_rounded, label: 'Live TV'),
@@ -167,16 +165,21 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           TvNavItem(icon: Icons.search_rounded, label: 'Search'),
           TvNavItem(icon: Icons.settings_rounded, label: 'Settings'),
         ],
-        child: [
-          const TvHomeScreen(),
-          const TvPlaceholderScreen(title: 'Live TV', accent: Colors.purple),
-          const TvPlaceholderScreen(title: 'Movies', accent: Colors.orange),
-          const TvPlaceholderScreen(title: 'Series', accent: Colors.green),
-          const TvPlaceholderScreen(title: 'Search', accent: Colors.blue),
-          const TvPlaceholderScreen(title: 'Settings', accent: Colors.grey),
-        ][_selectedIndex],
+        child: IndexedStack(
+          index: _selectedIndex,
+          children: const [
+            TvHomeScreen(),
+            TvLiveTvScreen(),
+            TvMoviesScreen(),
+            TvSeriesScreen(),
+            TvPlaceholderScreen(title: 'Search', accent: Colors.blue),
+            TvPlaceholderScreen(title: 'Settings', accent: Colors.grey),
+          ],
+        ),
       );
     }
+
+    final content = _buildContent();
 
     if (PlatformUtils.isMobile) {
       return MobileShellScreen(

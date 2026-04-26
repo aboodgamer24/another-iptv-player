@@ -265,23 +265,31 @@ class _TvRailTile extends StatelessWidget {
             border: Border.all(
               color: s.isFocused || focusNode.hasFocus ? primary : Colors.transparent, width: 2),
           ),
-          child: Row(children: [
-            Icon(icon,
-                color: s.isFocused || focusNode.hasFocus || isSelected ? Colors.white : Colors.white54,
-                size: 24),
-            if (expanded) ...[
-              const SizedBox(width: 14),
-              Flexible(
-                child: Text(label,
-                    style: TextStyle(
-                      color: s.isFocused || focusNode.hasFocus || isSelected ? Colors.white : Colors.white60,
-                      fontSize: 15,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                    ),
-                    overflow: TextOverflow.ellipsis, maxLines: 1),
-              ),
-            ],
-          ]),
+          child: !expanded
+              ? Center(
+                  child: Icon(icon,
+                      color: s.isFocused || focusNode.hasFocus || isSelected ? Colors.white : Colors.white54,
+                      size: 24),
+                )
+              : FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Row(
+                    children: [
+                      Icon(icon,
+                          color: s.isFocused || focusNode.hasFocus || isSelected ? Colors.white : Colors.white54,
+                          size: 24),
+                      const SizedBox(width: 14),
+                      Text(label,
+                          style: TextStyle(
+                            color: s.isFocused || focusNode.hasFocus || isSelected ? Colors.white : Colors.white60,
+                            fontSize: 15,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                          overflow: TextOverflow.ellipsis, maxLines: 1),
+                    ],
+                  ),
+                ),
         ),
       ),
     );
