@@ -253,6 +253,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
           // Smooth A/V sync for VOD
           await native.setProperty('audio-buffer', '0.2');
         }
+
+        if (PlatformUtils.isTV) {
+          // FIX 2a — Cap max video resolution on TV to 1080p to prevent frame drops
+          // (TCL/Smart TV Pro hardware cannot handle 4K HEVC 50fps without starvation)
+          await native.setProperty('ytdl-format', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]');
+          // Also cap max bitrate to ~8Mbps to prevent network/bus saturation
+          await native.setProperty('video-bitrate', '8000000');
+        }
       } else {
         // --- Desktop: same split ---
         await native.setProperty('hwdec', 'auto');

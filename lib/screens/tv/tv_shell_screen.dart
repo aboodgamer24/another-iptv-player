@@ -296,35 +296,36 @@ class _TvNavTile extends StatelessWidget {
                         ),
                       ),
                     ),
-                  Row(
-                    children: [
-                      Icon(
-                        icon,
-                        color: hasFocus || isSelected
-                            ? Colors.white
-                            : Colors.white54,
-                        size: 24,
-                      ),
-                      if (expanded) ...[
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            label,
-                            style: TextStyle(
-                              color: hasFocus || isSelected
-                                  ? Colors.white
-                                  : Colors.white60,
-                              fontSize: 15,
-                              fontWeight: isSelected
-                                  ? FontWeight.bold
-                                  : FontWeight.normal,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+                    Row(
+                      children: [
+                        Icon(
+                          icon,
+                          color: hasFocus || isSelected
+                              ? Colors.white
+                              : Colors.white54,
+                          size: 24,
                         ),
+                        if (expanded) ...[
+                          const SizedBox(width: 14),
+                          Flexible(
+                            child: Text(
+                              label,
+                              style: TextStyle(
+                                color: hasFocus || isSelected
+                                    ? Colors.white
+                                    : Colors.white60,
+                                fontSize: 15,
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                              maxLines: 1,
+                            ),
+                          ),
+                        ],
                       ],
-                    ],
-                  ),
+                    ),
                 ],
               ),
             ),

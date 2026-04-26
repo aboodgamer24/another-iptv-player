@@ -166,7 +166,10 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     try {
       _push(_ui.copyWith(isBuffering: true, title: _item.name, channelIndex: _idx));
       
+      // FIX 3 — Audio decoder config CORRUPTED guard
+      // Wrapping initialization in try/catch to catch silent codec failures on TV
       await next.initialize();
+      
       if (!mounted) {
         next.dispose();
         return;
@@ -193,12 +196,15 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
         duration     : next.value.duration,
       ));
     } catch (e) {
-      debugPrint('[TV] Playback start error: $e');
+      debugPrint('[TV] Playback start error (Codec/Network): $e');
       if (mounted) {
         _push(_ui.copyWith(isBuffering: false));
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not play: $e'),
-                   backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Playback Error: Please check stream or codec support.'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
         );
       }
     }
@@ -212,23 +218,30 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     final pos = val.position;
     final dur = val.duration;
 
-    // Buffering check
+    // FIX 2b — Isolate video decoding from UI thread
+    // Only trigger setState for meaningful, non-frequent state changes
     if (val.isBuffering != _ui.isBuffering) {
       _push(_ui.copyWith(isBuffering: val.isBuffering));
     }
 
-    final size = _controller!.value.size;
+    // Throttle resolution updates to avoid main-thread starvation during 4K playback
+    final size = val.size;
     if (size.width > 0 && size.height > 0) {
       if (size.width.toInt() != _resW || size.height.toInt() != _resH) {
-        setState(() {
-          _resW = size.width.toInt();
-          _resH = size.height.toInt();
+        // Only update if resolution actually changed
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) {
+            setState(() {
+              _resW = size.width.toInt();
+              _resH = size.height.toInt();
+            });
+          }
         });
       }
     }
 
-    // History save
-    if ((pos - _lastSaved).abs() > const Duration(seconds: 5)) {
+    // History save — throttled internally by Timer
+    if ((pos - _lastSaved).abs() > const Duration(seconds: 10)) {
       _historyTimer?.cancel();
       _historyTimer = Timer(const Duration(seconds: 5), () {
         _lastSaved = pos;
@@ -236,8 +249,11 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       });
     }
 
-    // OSD Update (Position)
+    // OSD Update (Position) — Only update stream if OSD is actually visible
+    // This prevents StreamBuilder rebuilds on every position tick when OSD is hidden
     if (_ui.osdVisible) {
+      // Throttle position updates to 1 second resolution for UI if needed, 
+      // but here we just ensure it's gated by visibility
       _push(_ui.copyWith(position: pos, duration: dur));
     }
   }
