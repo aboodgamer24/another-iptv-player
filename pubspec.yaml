@@ -44,6 +44,7 @@ dependencies:
   wakelock_plus: ^1.2.5
   crypto: ^3.0.6
   window_manager: ^0.4.3
+  focusable_control_builder: ^1.0.0
 
 dev_dependencies:
   msix: ^3.16.8

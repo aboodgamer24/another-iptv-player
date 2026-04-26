@@ -72,43 +72,50 @@ class MyApp extends StatelessWidget {
     final localeProvider = Provider.of<LocaleProvider>(context);
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return MaterialApp(
-      locale: localeProvider.locale,
-      supportedLocales: supportedLanguages
-          .map((lang) => Locale(lang['code']))
-          .toList(),
-      localizationsDelegates: const [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      title: 'Another IPTV Player',
-      theme: themeProvider.currentThemeData,
-      darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
-      themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
-      debugShowCheckedModeBanner: false,
-      // Wire D-pad arrow keys → directional focus movement
-      shortcuts: {
-        ...WidgetsApp.defaultShortcuts,
-        const SingleActivator(LogicalKeyboardKey.arrowUp):
-            const DirectionalFocusIntent(TraversalDirection.up),
-        const SingleActivator(LogicalKeyboardKey.arrowDown):
-            const DirectionalFocusIntent(TraversalDirection.down),
-        const SingleActivator(LogicalKeyboardKey.arrowLeft):
-            const DirectionalFocusIntent(TraversalDirection.left),
-        const SingleActivator(LogicalKeyboardKey.arrowRight):
-            const DirectionalFocusIntent(TraversalDirection.right),
+    return Shortcuts(
+      shortcuts: <LogicalKeySet, Intent>{
+        LogicalKeySet(LogicalKeyboardKey.select): const ActivateIntent(),
+        LogicalKeySet(LogicalKeyboardKey.gameButtonA): const ActivateIntent(),
+        LogicalKeySet(LogicalKeyboardKey.enter): const ActivateIntent(),
       },
-      // CRITICAL: actions map must exist to actually handle the intents above
-      actions: {
-        ...WidgetsApp.defaultActions,
-      },
-      // Wrap the home inside a Builder so FocusTraversalGroup is
-      // inside MaterialApp's own FocusScope, not outside it
-      home: FocusTraversalGroup(
-        policy: WidgetOrderTraversalPolicy(),
-        child: const AppInitializerScreen(),
+      child: MaterialApp(
+        locale: localeProvider.locale,
+        supportedLocales: supportedLanguages
+            .map((lang) => Locale(lang['code']))
+            .toList(),
+        localizationsDelegates: const [
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        title: 'Another IPTV Player',
+        theme: themeProvider.currentThemeData,
+        darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
+        themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
+        debugShowCheckedModeBanner: false,
+        // Wire D-pad arrow keys → directional focus movement
+        shortcuts: {
+          ...WidgetsApp.defaultShortcuts,
+          const SingleActivator(LogicalKeyboardKey.arrowUp):
+              const DirectionalFocusIntent(TraversalDirection.up),
+          const SingleActivator(LogicalKeyboardKey.arrowDown):
+              const DirectionalFocusIntent(TraversalDirection.down),
+          const SingleActivator(LogicalKeyboardKey.arrowLeft):
+              const DirectionalFocusIntent(TraversalDirection.left),
+          const SingleActivator(LogicalKeyboardKey.arrowRight):
+              const DirectionalFocusIntent(TraversalDirection.right),
+        },
+        // CRITICAL: actions map must exist to actually handle the intents above
+        actions: {
+          ...WidgetsApp.defaultActions,
+        },
+        // Wrap the home inside a Builder so FocusTraversalGroup is
+        // inside MaterialApp's own FocusScope, not outside it
+        home: FocusTraversalGroup(
+          policy: WidgetOrderTraversalPolicy(),
+          child: const AppInitializerScreen(),
+        ),
       ),
     );
   }

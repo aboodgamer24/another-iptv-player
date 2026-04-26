@@ -25,7 +25,7 @@ import 'mobile/mobile_watch_later_screen.dart';
 import 'mobile/mobile_global_search_screen.dart';
 
 // TV Imports
-import 'tv/tv_placeholder.dart';
+
 
 class MainNavigationScreen extends StatefulWidget {
   final Playlist playlist;
@@ -76,7 +76,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           return const _TvLoadingSkeleton();
         }
 
-        return const TvPlaceholder();
+        return Container(color: Colors.black);
       }
 
       if (PlatformUtils.isMobile) {
@@ -153,7 +153,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final content = _buildContent();
 
     if (PlatformUtils.isTV) {
-      return const TvPlaceholder();
+      return Container(color: Colors.black);
     }
 
     if (PlatformUtils.isMobile) {
