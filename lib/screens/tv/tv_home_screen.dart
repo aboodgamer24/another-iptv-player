@@ -6,7 +6,6 @@ import '../../models/playlist_content_model.dart';
 import '../../utils/tv_utils.dart';
 import 'tv_player_screen.dart';
 
-const _kHomeRowMax = 30;
 
 class TvHomeScreen extends StatefulWidget {
   final String playlistId;
@@ -16,89 +15,110 @@ class TvHomeScreen extends StatefulWidget {
 }
 
 class _TvHomeScreenState extends State<TvHomeScreen> {
-  List<ContentItem>? _liveCache;
-  List<ContentItem>? _moviesCache;
-  List<ContentItem>? _seriesCache;
+  List<ContentItem> _liveCache    = [];
+  List<ContentItem> _moviesCache  = [];
+  List<ContentItem> _seriesCache  = [];
   String? _liveCatId;
   String? _moviesCatId;
   String? _seriesCatId;
+  bool _populated = false;
+
+  void _populate(XtreamCodeHomeController ctrl) {
+    if (ctrl.isLoading) return;
+
+    final liveCatId   = ctrl.liveCategories?.firstOrNull?.category.categoryId;
+    final movieCatId  = ctrl.movieCategories.firstOrNull?.category.categoryId;
+    final seriesCatId = ctrl.seriesCategories.firstOrNull?.category.categoryId;
+
+    bool changed = false;
+
+    if (liveCatId != null && liveCatId != _liveCatId) {
+      _liveCatId  = liveCatId;
+      _liveCache  = ctrl.getLiveChannelsByCategory(liveCatId).take(30).toList();
+      changed = true;
+    }
+    if (movieCatId != null && movieCatId != _moviesCatId) {
+      _moviesCatId  = movieCatId;
+      _moviesCache  = ctrl.getMoviesByCategory(movieCatId).take(30).toList();
+      changed = true;
+    }
+    if (seriesCatId != null && seriesCatId != _seriesCatId) {
+      _seriesCatId  = seriesCatId;
+      _seriesCache  = ctrl.getSeriesByCategory(seriesCatId).take(30).toList();
+      changed = true;
+    }
+
+    if (changed) {
+      _populated = true;
+      if (mounted) setState(() {});
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final ctrl = context.read<XtreamCodeHomeController>();
+    _populate(ctrl);
+  }
 
   @override
   Widget build(BuildContext context) {
     final ctrl = context.watch<XtreamCodeHomeController>();
 
-    final hasData = (_liveCache != null && _liveCache!.isNotEmpty) ||
-                    (_moviesCache != null && _moviesCache!.isNotEmpty) ||
-                    (_seriesCache != null && _seriesCache!.isNotEmpty);
+    // Try to populate whenever controller updates
+    if (!ctrl.isLoading && !_populated) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _populate(ctrl));
+    }
 
+    final hasData = _liveCache.isNotEmpty ||
+                    _moviesCache.isNotEmpty ||
+                    _seriesCache.isNotEmpty;
+
+    // ── Loading state ──────────────────────────────────────────
     if (ctrl.isLoading && !hasData) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(color: Colors.white54),
-            SizedBox(height: 16),
-            Text('Loading…', style: TextStyle(color: Colors.white54, fontSize: 14)),
-          ],
-        ),
-      );
+      return _TvHomeLoading();
     }
 
-    // Refresh caches if categories changed or if we had no data before
-    final liveCatId  = ctrl.liveCategories?.firstOrNull?.category.categoryId;
-    final movieCatId = ctrl.movieCategories.firstOrNull?.category.categoryId;
-    final seriesCatId = ctrl.seriesCategories.firstOrNull?.category.categoryId;
-
-    if (liveCatId != null && (liveCatId != _liveCatId || _liveCache == null || _liveCache!.isEmpty)) {
-      _liveCatId = liveCatId;
-      final all = ctrl.getLiveChannelsByCategory(liveCatId);
-      _liveCache = all.take(_kHomeRowMax).toList();
-    }
-    if (movieCatId != null && (movieCatId != _moviesCatId || _moviesCache == null || _moviesCache!.isEmpty)) {
-      _moviesCatId = movieCatId;
-      final all = ctrl.getMoviesByCategory(movieCatId);
-      _moviesCache = all.take(_kHomeRowMax).toList();
-    }
-    if (seriesCatId != null && (seriesCatId != _seriesCatId || _seriesCache == null || _seriesCache!.isEmpty)) {
-      _seriesCatId = seriesCatId;
-      final all = ctrl.getSeriesByCategory(seriesCatId);
-      _seriesCache = all.take(_kHomeRowMax).toList();
+    // ── Error state ────────────────────────────────────────────
+    if (!ctrl.isLoading && !hasData && _populated) {
+      return _TvHomeError(onRetry: () {
+        setState(() { _populated = false; });
+        ctrl.refresh();  // call whatever refresh method exists on the controller
+      });
     }
 
-    final featured = _liveCache?.firstOrNull ?? _moviesCache?.firstOrNull;
+    // ── Content ────────────────────────────────────────────────
+    final featured = _liveCache.firstOrNull ?? _moviesCache.firstOrNull;
 
     return CustomScrollView(
       slivers: [
         if (featured != null)
           SliverToBoxAdapter(child: _TvHeroBanner(item: featured)),
-        
-        if (_liveCache != null && _liveCache!.isNotEmpty)
+
+        if (_liveCache.isNotEmpty)
           SliverToBoxAdapter(
             child: _TvHomeRow(
               title: 'Live TV',
-              items: _liveCache!,
+              items: _liveCache,
               onSelect: _openPlayer,
             ),
           ),
 
-        if (_moviesCache != null && _moviesCache!.isNotEmpty)
+        if (_moviesCache.isNotEmpty)
           SliverToBoxAdapter(
             child: _TvHomeRow(
               title: 'Recent Movies',
-              items: _moviesCache!,
+              items: _moviesCache,
               onSelect: _openPlayer,
             ),
           ),
 
-        if (_seriesCache != null && _seriesCache!.isNotEmpty)
+        if (_seriesCache.isNotEmpty)
           SliverToBoxAdapter(
             child: _TvHomeRow(
               title: 'Recent Series',
-              items: _seriesCache!,
-              onSelect: (item, idx, queue) {
-                // Navigate to series detail screen if needed, or play first episode
-                _openPlayer(item, idx, queue);
-              },
+              items: _seriesCache,
+              onSelect: _openPlayer,
             ),
           ),
 
@@ -166,7 +186,16 @@ class _TvHeroBanner extends StatelessWidget {
                 child: Stack(
                   fit: StackFit.expand,
                   children: [
-                    Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 1280),
+                    Image.network(
+                      item.imageUrl,
+                      fit: BoxFit.cover,
+                      cacheWidth: 1280,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.white.withValues(alpha: 0.04),
+                        child: const Icon(Icons.tv_rounded,
+                            color: Colors.white12, size: 64),
+                      ),
+                    ),
                     Container(
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
@@ -349,9 +378,21 @@ class _TvHomeCard extends StatelessWidget {
                 fit: StackFit.expand,
                 children: [
                   if (item.imageUrl.isNotEmpty)
-                    Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 500)
+                    Image.network(
+                      item.imageUrl,
+                      fit: BoxFit.cover,
+                      cacheWidth: 500,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.white.withValues(alpha: 0.04),
+                        child: const Icon(Icons.tv_rounded,
+                            color: Colors.white12, size: 36),
+                      ),
+                    )
                   else
-                    Container(color: Colors.white.withValues(alpha: 0.05), child: const Icon(Icons.tv, color: Colors.white12, size: 40)),
+                    Container(
+                        color: Colors.white.withValues(alpha: 0.05),
+                        child: const Icon(Icons.tv,
+                            color: Colors.white12, size: 40)),
                   
                   Positioned(
                     bottom: 0, left: 0, right: 0,
@@ -378,6 +419,133 @@ class _TvHomeCard extends StatelessWidget {
           ),
         );
       }),
+    );
+  }
+}
+
+class _TvHomeLoading extends StatelessWidget {
+  const _TvHomeLoading();
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 56,
+            height: 56,
+            child: CircularProgressIndicator(
+              color: primary,
+              strokeWidth: 3,
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Loading your content…',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This may take a moment',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.35),
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TvHomeError extends StatelessWidget {
+  final VoidCallback onRetry;
+  const _TvHomeError({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.cloud_off_rounded,
+              color: Colors.white.withValues(alpha: 0.3), size: 64),
+          const SizedBox(height: 20),
+          const Text(
+            'Could not load content',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Check your connection and try again',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 32),
+          Focus(
+            autofocus: true,
+            onKeyEvent: (_, ev) {
+              if (ev is! KeyDownEvent) return KeyEventResult.ignored;
+              if (ev.logicalKey == LogicalKeyboardKey.select ||
+                  ev.logicalKey == LogicalKeyboardKey.enter ||
+                  ev.logicalKey == LogicalKeyboardKey.gameButtonA) {
+                onRetry();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Builder(builder: (ctx) {
+              final f = Focus.of(ctx).hasFocus;
+              return GestureDetector(
+                onTap: onRetry,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 150),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: f ? primary : Colors.white12,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: f ? primary : Colors.transparent,
+                      width: 2,
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.refresh_rounded,
+                          color: f ? Colors.white : Colors.white70, size: 20),
+                      const SizedBox(width: 10),
+                      Text(
+                        'Retry',
+                        style: TextStyle(
+                          color: f ? Colors.white : Colors.white70,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ],
+      ),
     );
   }
 }
