@@ -25,14 +25,7 @@ import 'mobile/mobile_watch_later_screen.dart';
 import 'mobile/mobile_global_search_screen.dart';
 
 // TV Imports
-import 'tv/tv_shell_screen.dart';
-import 'tv/tv_home_screen.dart';
-import 'tv/tv_live_tv_screen.dart';
-import 'tv/tv_movies_screen.dart';
-import 'tv/tv_series_screen.dart';
-import 'tv/tv_search_screen.dart';
-import 'tv/tv_favorites_screen.dart';
-import 'tv/tv_watch_later_screen.dart';
+import 'tv/tv_placeholder.dart';
 
 class MainNavigationScreen extends StatefulWidget {
   final Playlist playlist;
@@ -83,26 +76,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           return const _TvLoadingSkeleton();
         }
 
-        switch (_selectedIndex) {
-          case 0:
-            return TvHomeScreen(playlistId: widget.playlist.id);
-          case 1:
-            return const TvLiveTvScreen();
-          case 2:
-            return const TvMoviesScreen();
-          case 3:
-            return const TvSeriesScreen();
-          case 4:
-            return const TvSearchScreen();
-          case 5:
-            return XtreamCodePlaylistSettingsScreen(playlist: widget.playlist);
-          case 6:
-            return const TvFavoritesScreen();
-          case 7:
-            return const TvWatchLaterScreen();
-          default:
-            return const SizedBox.shrink();
-        }
+        return const TvPlaceholder();
       }
 
       if (PlatformUtils.isMobile) {
@@ -179,24 +153,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     final content = _buildContent();
 
     if (PlatformUtils.isTV) {
-      return TvShellScreen(
-        selectedIndex: _selectedIndex,
-        onItemSelected: (i) => setState(() {
-          _selectedIndex = i;
-          _loadedTabs.add(i);
-        }),
-        items: const [
-          TvNavItem(icon: Icons.home_rounded, label: 'Home'),
-          TvNavItem(icon: Icons.live_tv_rounded, label: 'Live TV'),
-          TvNavItem(icon: Icons.movie_rounded, label: 'Movies'),
-          TvNavItem(icon: Icons.tv_rounded, label: 'Series'),
-          TvNavItem(icon: Icons.search_rounded, label: 'Search'),
-          TvNavItem(icon: Icons.settings_rounded, label: 'Settings'),
-          TvNavItem(icon: Icons.favorite_rounded, label: 'Favorites'),
-          TvNavItem(icon: Icons.watch_later_rounded, label: 'Watch Later'),
-        ],
-        child: content,
-      );
+      return const TvPlaceholder();
     }
 
     if (PlatformUtils.isMobile) {
