@@ -281,15 +281,15 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   }
 
   // ── Key handler ───────────────────────────────────────────────────────────
-  void _onKey(KeyEvent ev) {
-    if (ev is! KeyDownEvent) return;
+  bool _onKey(KeyEvent ev) {
+    if (ev is! KeyDownEvent) return false;
     final k = ev.logicalKey;
 
-    // Let back keys fall through to PopScope — do not consume them here
+    // Never consume back keys — handled by PopScope
     if (k == LogicalKeyboardKey.escape   ||
         k == LogicalKeyboardKey.goBack   ||
         k == LogicalKeyboardKey.browserBack) {
-      return;
+      return false;
     }
 
     _showOsd();
@@ -300,28 +300,27 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
         ev.logicalKey.keyId == 0x00100000052) {
       _push(_ui.copyWith(panelOpen: !_ui.panelOpen, osdVisible: true));
       _osdTimer?.cancel();
-      return;
+      return true;
     }
 
     // Live: UP/DOWN = channel change (ONLY if panel is closed)
     if (_item.contentType == ContentType.liveStream && !_ui.panelOpen) {
-      if (k == LogicalKeyboardKey.arrowUp   || k == LogicalKeyboardKey.channelUp)   { _switchTo(_idx - 1); return; }
-      if (k == LogicalKeyboardKey.arrowDown || k == LogicalKeyboardKey.channelDown) { _switchTo(_idx + 1); return; }
+      if (k == LogicalKeyboardKey.arrowUp   || k == LogicalKeyboardKey.channelUp)   { _switchTo(_idx - 1); return true; }
+      if (k == LogicalKeyboardKey.arrowDown || k == LogicalKeyboardKey.channelDown) { _switchTo(_idx + 1); return true; }
     }
 
     // VOD: LEFT/RIGHT = seek ±10s
     if (_item.contentType != ContentType.liveStream && _controller != null) {
       if (k == LogicalKeyboardKey.arrowRight) {
         _controller!.seekTo(_controller!.value.position + const Duration(seconds: 10));
-        return;
+        return true;
       }
       if (k == LogicalKeyboardKey.arrowLeft) {
         final pos = _controller!.value.position;
         final targetMs = pos.inMilliseconds - (10 * 1000);
         final durMs = _controller!.value.duration.inMilliseconds;
-        final clampedMs = targetMs.clamp(0, durMs);
-        _controller!.seekTo(Duration(milliseconds: clampedMs));
-        return;
+        _controller!.seekTo(Duration(milliseconds: targetMs.clamp(0, durMs)));
+        return true;
       }
     }
 
@@ -337,7 +336,10 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
           _controller!.play();
         }
       }
+      return true;
     }
+
+    return false;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -429,10 +431,20 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
       },
       child: Scaffold(
         backgroundColor: Colors.black,
-        body: KeyboardListener(
+        body: Focus(
           autofocus: true,
           focusNode: _focus,
-          onKeyEvent: _onKey,
+          onKeyEvent: (node, event) {
+            final k = event.logicalKey;
+            // Never consume back keys
+            if (k == LogicalKeyboardKey.escape  ||
+                k == LogicalKeyboardKey.goBack  ||
+                k == LogicalKeyboardKey.browserBack) {
+              return KeyEventResult.ignored;
+            }
+            final handled = _onKey(event);
+            return handled ? KeyEventResult.handled : KeyEventResult.ignored;
+          },
           // RepaintBoundary isolates video paint from overlay paint
           child: RepaintBoundary(
             child: Stack(
@@ -740,7 +752,12 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const TvLiveTvScreen()),
-    );
+    ).then((_) {
+      // Re-request focus when we come back so key events work again
+      if (mounted) {
+        _focus.requestFocus();
+      }
+    });
   }
 
   Widget _episodesTab(BuildContext context) {
@@ -854,17 +871,23 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => const TvSeriesScreen()),
-    );
+    ).then((_) {
+      if (mounted) {
+        _focus.requestFocus();
+      }
+    });
   }
 
   void _switchToEpisode(ContentItem ep) {
-    // Implement episode switching logic
     _push(_ui.copyWith(panelOpen: false));
-    // Since TvPlayerScreen takes a contentItem, we might need to reload or update _item
-    // For now, let's just push a NEW screen for simplicity or update the current one
-    Navigator.pushReplacement(context, MaterialPageRoute(
-      builder: (_) => TvPlayerScreen(contentItem: ep, queue: _item.episodes ?? [], initialIndex: _item.episodes?.indexOf(ep) ?? 0),
-    ));
+    final episodes = _item.episodes ?? [];
+    final idx = episodes.indexOf(ep);
+    // Update in place instead of replacing the route
+    setState(() {
+      _item = ep;
+      _idx  = idx < 0 ? 0 : idx;
+    });
+    _startPlayback();
   }
 }
 
