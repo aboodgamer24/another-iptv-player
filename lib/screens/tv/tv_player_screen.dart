@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart'; 
+import '../tv/tv_live_tv_screen.dart';
+import '../tv/tv_series_screen.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 import '../../models/watch_history.dart';
@@ -85,6 +87,13 @@ class TvPlayerScreen extends StatefulWidget {
 class _TvPlayerScreenState extends State<TvPlayerScreen> {
   // ── ExoPlayer (via video_player) ───────────────
   VideoPlayerController? _controller;
+
+  int?    _resW;
+  int?    _resH;
+  double? _fps;
+  String? _codec;
+  int?    _bitrate;
+  Timer?  _statsTimer;
 
   // ── state ────────────────────────────────────
   late int         _idx;
@@ -205,6 +214,16 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     // Buffering check
     if (val.isBuffering != _ui.isBuffering) {
       _push(_ui.copyWith(isBuffering: val.isBuffering));
+    }
+
+    final size = _controller!.value.size;
+    if (size.width > 0 && size.height > 0) {
+      if (size.width.toInt() != _resW || size.height.toInt() != _resH) {
+        setState(() {
+          _resW = size.width.toInt();
+          _resH = size.height.toInt();
+        });
+      }
     }
 
     // History save
@@ -337,6 +356,35 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
     return h > 0 ? '$h:$m:$s' : '$m:$s';
   }
 
+  Map<String, String> _buildTechInfo() {
+    final map = <String, String>{};
+    final vpc = _controller;
+    if (vpc != null && vpc.value.isInitialized) {
+      final size = vpc.value.size;
+      if (size.width > 0 && size.height > 0) {
+        map['Resolution'] = '${size.width.toInt()} × ${size.height.toInt()}';
+        final ar = size.width / size.height;
+        map['Aspect ratio'] = ar.toStringAsFixed(2);
+      }
+      final dur = vpc.value.duration;
+      if (dur.inMilliseconds > 0) {
+        map['Duration'] = _fmt(dur);
+      }
+    }
+    if (_resW != null && _resH != null) {
+      // may already be in the map from size, but overwrite with freshest value
+      map['Resolution'] = '$_resW × $_resH';
+    }
+    if (_fps != null)     map['Frame rate']  = '${_fps!.toStringAsFixed(1)} fps';
+    if (_codec != null)   map['Video codec'] = _codec!;
+    if (_bitrate != null) map['Bitrate']     = '${(_bitrate! / 1000).toStringAsFixed(0)} kbps';
+    map['Type']      = _item.contentType.name;
+    map['Container'] = _item.containerExtension?.isNotEmpty == true
+                       ? _item.containerExtension!
+                       : 'Unknown';
+    return map;
+  }
+
   Future<void> _closeAndPop() async {
     if (!mounted) return;
     
@@ -356,6 +404,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   void dispose() {
     _osdTimer?.cancel();
     _historyTimer?.cancel();
+    _statsTimer?.cancel();
     _uiCtrl.close();
     _focus.dispose();
     final vpc = _controller;
@@ -514,6 +563,7 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
   }
 
   Widget _infoTab() {
+    final tech = _buildTechInfo();
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -523,26 +573,55 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.network(_item.imagePath,
+                child: Image.network(
+                  _item.imagePath,
                   width: 160, height: 120, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink()),
+                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                ),
               ),
             ),
           const SizedBox(height: 16),
-          Text(_item.name,
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+          Text(
+            _item.name,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
           if (_item.contentType == ContentType.liveStream) ...[
             const SizedBox(height: 8),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-              decoration: BoxDecoration(color: Colors.red, borderRadius: BorderRadius.circular(4)),
-              child: const Text('LIVE', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+              decoration: BoxDecoration(
+                color: Colors.red,
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Text(
+                'LIVE',
+                style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
           if (_item.m3uItem?.groupTitle?.isNotEmpty == true) ...[
             const SizedBox(height: 10),
             _IRow(label: 'Category', value: _item.m3uItem!.groupTitle!),
           ],
+          const SizedBox(height: 16),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 8),
+          const Text(
+            'Stream info',
+            style: TextStyle(
+              color: Colors.white54,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (final e in tech.entries)
+            _IRow(label: e.key, value: e.value),
         ],
       ),
     );
@@ -550,92 +629,236 @@ class _TvPlayerScreenState extends State<TvPlayerScreen> {
 
   Widget _channelsTab(BuildContext context) {
     final primary = Theme.of(context).colorScheme.primary;
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: widget.queue.length,
-      itemBuilder: (_, i) {
-        final ch = widget.queue[i];
-        final sel = i == _idx;
-        return Focus(
-          onKeyEvent: (node, event) {
-            if (event is! KeyDownEvent) return KeyEventResult.ignored;
-            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-              _switchTo(i);
-              _push(_ui.copyWith(panelOpen: false));
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: Builder(builder: (ctx) {
-            final f = Focus.of(ctx).hasFocus;
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: f ? Colors.white10 : (sel ? primary.withValues(alpha: 0.1) : Colors.transparent),
-                borderRadius: BorderRadius.circular(8),
-                border: f ? Border.all(color: primary, width: 2) : Border.all(color: Colors.transparent, width: 2),
-              ),
-              child: ListTile(
-                dense: true,
-                selected: sel,
-                leading: ch.imagePath.isNotEmpty
-                    ? Image.network(ch.imagePath, width: 32, height: 32, fit: BoxFit.contain,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.live_tv, size: 20, color: Colors.white38))
-                    : const Icon(Icons.live_tv, size: 20, color: Colors.white38),
-                title: Text(ch.name,
-                  style: TextStyle(color: f || sel ? Colors.white : Colors.white60, fontSize: 13, fontWeight: sel ? FontWeight.bold : FontWeight.normal),
-                  maxLines: 1, overflow: TextOverflow.ellipsis),
-                onTap: () {
-                  _switchTo(i);
-                  _push(_ui.copyWith(panelOpen: false));
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Browse categories button ──────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          child: Focus(
+            onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent) return KeyEventResult.ignored;
+              if (event.logicalKey == LogicalKeyboardKey.select ||
+                  event.logicalKey == LogicalKeyboardKey.enter  ||
+                  event.logicalKey == LogicalKeyboardKey.gameButtonA) {
+                _openLiveCategories();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Builder(builder: (ctx) {
+              final hasFocus = Focus.of(ctx).hasFocus;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: hasFocus ? Colors.white24 : Colors.white10,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: hasFocus ? Colors.white : Colors.white12,
+                    width: hasFocus ? 2 : 1,
+                  ),
+                ),
+                child: GestureDetector(
+                  onTap: _openLiveCategories,
+                  child: Row(
+                    children: const [
+                      Icon(Icons.list_rounded, size: 18, color: Colors.white70),
+                      SizedBox(width: 8),
+                      Text(
+                        'Browse categories',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 4),
+        // ── Channel list ──────────────────────────────────────
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: widget.queue.length,
+            itemBuilder: (_, i) {
+              final ch  = widget.queue[i];
+              final sel = i == _idx;
+              return Focus(
+                onKeyEvent: (node, event) {
+                  if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                  if (event.logicalKey == LogicalKeyboardKey.select ||
+                      event.logicalKey == LogicalKeyboardKey.enter) {
+                    _switchTo(i);
+                    _push(_ui.copyWith(panelOpen: false));
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
                 },
-              ),
-            );
-          }),
-        );
-      },
+                child: Builder(builder: (ctx) {
+                  final f = Focus.of(ctx).hasFocus;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: f ? Colors.white10 : (sel ? primary.withValues(alpha: 0.1) : Colors.transparent),
+                      borderRadius: BorderRadius.circular(8),
+                      border: f
+                          ? Border.all(color: primary, width: 2)
+                          : Border.all(color: Colors.transparent, width: 2),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      selected: sel,
+                      leading: ch.imagePath.isNotEmpty
+                          ? Image.network(ch.imagePath, width: 32, height: 32, fit: BoxFit.contain,
+                              errorBuilder: (_, __, ___) =>
+                                  const Icon(Icons.live_tv, size: 20, color: Colors.white38))
+                          : const Icon(Icons.live_tv, size: 20, color: Colors.white38),
+                      title: Text(
+                        ch.name,
+                        style: TextStyle(
+                          color: f || sel ? Colors.white : Colors.white60,
+                          fontSize: 13,
+                          fontWeight: sel ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        maxLines: 1, overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () {
+                        _switchTo(i);
+                        _push(_ui.copyWith(panelOpen: false));
+                      },
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openLiveCategories() {
+    _push(_ui.copyWith(panelOpen: false));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TvLiveTvScreen()),
     );
   }
 
   Widget _episodesTab(BuildContext context) {
     if (_item.episodes == null || _item.episodes!.isEmpty) {
-      return const Center(child: Text('No episodes found', style: TextStyle(color: Colors.white38)));
+      return const Center(
+        child: Text('No episodes found', style: TextStyle(color: Colors.white38)),
+      );
     }
     final primary = Theme.of(context).colorScheme.primary;
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: _item.episodes!.length,
-      itemBuilder: (_, i) {
-        final ep = _item.episodes![i];
-        return Focus(
-          onKeyEvent: (node, event) {
-            if (event is! KeyDownEvent) return KeyEventResult.ignored;
-            if (event.logicalKey == LogicalKeyboardKey.select || event.logicalKey == LogicalKeyboardKey.enter) {
-              _switchToEpisode(ep);
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: Builder(builder: (ctx) {
-            final f = Focus.of(ctx).hasFocus;
-            return Container(
-              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: f ? Colors.white10 : Colors.transparent,
-                borderRadius: BorderRadius.circular(8),
-                border: f ? Border.all(color: primary, width: 2) : Border.all(color: Colors.transparent, width: 2),
-              ),
-              child: ListTile(
-                dense: true,
-                title: Text(ep.name,
-                  style: TextStyle(color: f ? Colors.white : Colors.white60, fontSize: 13),
-                  maxLines: 2, overflow: TextOverflow.ellipsis),
-                onTap: () => _switchToEpisode(ep),
-              ),
-            );
-          }),
-        );
-      },
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Browse categories button ──────────────────────────
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+          child: Focus(
+            onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent) return KeyEventResult.ignored;
+              if (event.logicalKey == LogicalKeyboardKey.select ||
+                  event.logicalKey == LogicalKeyboardKey.enter  ||
+                  event.logicalKey == LogicalKeyboardKey.gameButtonA) {
+                _openSeriesCategories();
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Builder(builder: (ctx) {
+              final hasFocus = Focus.of(ctx).hasFocus;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: hasFocus ? Colors.white24 : Colors.white10,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: hasFocus ? Colors.white : Colors.white12,
+                    width: hasFocus ? 2 : 1,
+                  ),
+                ),
+                child: GestureDetector(
+                  onTap: _openSeriesCategories,
+                  child: Row(
+                    children: const [
+                      Icon(Icons.list_rounded, size: 18, color: Colors.white70),
+                      SizedBox(width: 8),
+                      Text(
+                        'Browse categories',
+                        style: TextStyle(color: Colors.white70, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            }),
+          ),
+        ),
+        const SizedBox(height: 4),
+        // ── Episode list ──────────────────────────────────────
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            itemCount: _item.episodes!.length,
+            itemBuilder: (_, i) {
+              final ep = _item.episodes![i];
+              return Focus(
+                onKeyEvent: (node, event) {
+                  if (event is! KeyDownEvent) return KeyEventResult.ignored;
+                  if (event.logicalKey == LogicalKeyboardKey.select ||
+                      event.logicalKey == LogicalKeyboardKey.enter) {
+                    _switchToEpisode(ep);
+                    return KeyEventResult.handled;
+                  }
+                  return KeyEventResult.ignored;
+                },
+                child: Builder(builder: (ctx) {
+                  final f = Focus.of(ctx).hasFocus;
+                  return Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: f ? Colors.white10 : Colors.transparent,
+                      borderRadius: BorderRadius.circular(8),
+                      border: f
+                          ? Border.all(color: primary, width: 2)
+                          : Border.all(color: Colors.transparent, width: 2),
+                    ),
+                    child: ListTile(
+                      dense: true,
+                      title: Text(
+                        ep.name,
+                        style: TextStyle(
+                          color: f ? Colors.white : Colors.white60,
+                          fontSize: 13,
+                        ),
+                        maxLines: 2, overflow: TextOverflow.ellipsis,
+                      ),
+                      onTap: () => _switchToEpisode(ep),
+                    ),
+                  );
+                }),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openSeriesCategories() {
+    _push(_ui.copyWith(panelOpen: false));
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const TvSeriesScreen()),
     );
   }
 

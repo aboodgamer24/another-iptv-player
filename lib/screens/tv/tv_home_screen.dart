@@ -126,6 +126,7 @@ class _TvHeroBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Focus(
       onKeyEvent: (_, ev) {
         if (ev is! KeyDownEvent) return KeyEventResult.ignored;
@@ -149,58 +150,113 @@ class _TvHeroBanner extends StatelessWidget {
               transitionDuration: Duration.zero,
             ),
           ),
-          child: AnimatedContainer(
+          child: AnimatedScale(
             duration: const Duration(milliseconds: 200),
-            height: 350,
-            margin: const EdgeInsets.fromLTRB(32, 24, 32, 24),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: f ? Border.all(color: Theme.of(ctx).colorScheme.primary, width: 4) : null,
-              boxShadow: f ? [BoxShadow(color: Theme.of(ctx).colorScheme.primary.withValues(alpha: 0.3), blurRadius: 20)] : null,
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(12),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 1280),
-                  Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.bottomCenter,
-                        end: Alignment.topCenter,
-                        colors: [Colors.black87, Colors.transparent],
+            scale: f ? 1.02 : 1.0,
+            child: Container(
+              height: 380,
+              margin: const EdgeInsets.fromLTRB(32, 24, 32, 24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: f ? primary : Colors.white10, width: 2),
+                boxShadow: f ? [BoxShadow(color: primary.withValues(alpha: 0.25), blurRadius: 25)] : null,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 1280),
+                    Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.9),
+                            Colors.black.withValues(alpha: 0.2),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.5, 1.0],
+                        ),
                       ),
                     ),
-                  ),
-                  Positioned(
-                    left: 32, bottom: 32,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(item.name, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold)),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: Theme.of(ctx).colorScheme.primary,
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: const Text('Watch Now', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Positioned(
+                      left: 40, bottom: 40, right: 40,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: primary,
+                              borderRadius: BorderRadius.circular(4),
                             ),
-                          ],
-                        ),
-                      ],
+                            child: const Text('FEATURED', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 1.2)),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(item.name, 
+                            style: const TextStyle(color: Colors.white, fontSize: 36, fontWeight: FontWeight.bold, letterSpacing: -0.5),
+                            maxLines: 2, overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 16),
+                          Row(
+                            children: [
+                              _TvHeroButton(
+                                label: 'Watch Now',
+                                icon: Icons.play_arrow_rounded,
+                                color: primary,
+                                isFocused: f,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
         );
       }),
+    );
+  }
+}
+
+class _TvHeroButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final bool isFocused;
+
+  const _TvHeroButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.isFocused,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      decoration: BoxDecoration(
+        color: isFocused ? Colors.white : Colors.white10,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: isFocused ? Colors.black : Colors.white, size: 24),
+          const SizedBox(width: 8),
+          Text(label, style: TextStyle(
+            color: isFocused ? Colors.black : Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          )),
+        ],
+      ),
     );
   }
 }
@@ -218,11 +274,16 @@ class _TvHomeRow extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(32, 16, 32, 12),
-          child: Text(title, style: const TextStyle(color: Colors.white70, fontSize: 18, fontWeight: FontWeight.bold)),
+          padding: const EdgeInsets.fromLTRB(32, 24, 32, 16),
+          child: Text(title, style: const TextStyle(
+            color: Colors.white, 
+            fontSize: 20, 
+            fontWeight: FontWeight.bold,
+            letterSpacing: -0.5,
+          )),
         ),
         SizedBox(
-          height: 160,
+          height: 180,
           child: ListView.builder(
             scrollDirection: Axis.horizontal,
             padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -250,6 +311,7 @@ class _TvHomeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Focus(
       onKeyEvent: (_, ev) {
         if (ev is! KeyDownEvent) return KeyEventResult.ignored;
@@ -257,7 +319,9 @@ class _TvHomeCard extends StatelessWidget {
           TvNavigation.requestRailFocus(context);
           return KeyEventResult.handled;
         }
-        if (ev.logicalKey == LogicalKeyboardKey.select || ev.logicalKey == LogicalKeyboardKey.enter) {
+        if (ev.logicalKey == LogicalKeyboardKey.select || 
+            ev.logicalKey == LogicalKeyboardKey.enter ||
+            ev.logicalKey == LogicalKeyboardKey.gameButtonA) {
           onTap();
           return KeyEventResult.handled;
         }
@@ -267,21 +331,49 @@ class _TvHomeCard extends StatelessWidget {
         final f = Focus.of(ctx).hasFocus;
         return GestureDetector(
           onTap: onTap,
-          child: AnimatedContainer(
+          child: AnimatedScale(
             duration: const Duration(milliseconds: 150),
-            width: 220,
-            margin: const EdgeInsets.only(right: 16),
-            transform: f ? Matrix4.diagonal3Values(1.05, 1.05, 1.0) : Matrix4.identity(),
-            transformAlignment: Alignment.center,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: f ? Theme.of(ctx).colorScheme.primary : Colors.white12, width: 2),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: item.imageUrl.isNotEmpty
-                  ? Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 400)
-                  : Container(color: Colors.white10, child: const Icon(Icons.tv, color: Colors.white24)),
+            scale: f ? 1.06 : 1.0,
+            curve: Curves.easeOut,
+            child: Container(
+              width: 240,
+              margin: const EdgeInsets.only(right: 20),
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: f ? primary : Colors.transparent, width: 2.5),
+                boxShadow: f ? [BoxShadow(color: primary.withValues(alpha: 0.3), blurRadius: 15)] : null,
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (item.imageUrl.isNotEmpty)
+                    Image.network(item.imageUrl, fit: BoxFit.cover, cacheWidth: 500)
+                  else
+                    Container(color: Colors.white.withValues(alpha: 0.05), child: const Icon(Icons.tv, color: Colors.white12, size: 40)),
+                  
+                  Positioned(
+                    bottom: 0, left: 0, right: 0,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(12, 24, 12, 12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.bottomCenter,
+                          end: Alignment.topCenter,
+                          colors: [Colors.black.withValues(alpha: 0.9), Colors.transparent],
+                        ),
+                      ),
+                      child: Text(
+                        item.name,
+                        style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -86,34 +86,22 @@ class _TvSearchScreenState extends State<TvSearchScreen> {
               cursorColor: Colors.white,
               decoration: InputDecoration(
                 hintText: 'Search channels, movies, series…',
-                hintStyle: const TextStyle(color: Colors.white38, fontSize: 18),
+                hintStyle: const TextStyle(color: Colors.white24, fontSize: 16),
                 prefixIcon: const Icon(Icons.search, color: Colors.white54),
-                suffixIcon: _queryCtrl.text.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear, color: Colors.white54),
-                        onPressed: () {
-                          _queryCtrl.clear();
-                          _searchFocus.requestFocus();
-                        },
-                      )
-                    : null,
                 filled: true,
-                fillColor: Colors.white10,
-                border: OutlineInputBorder(
+                fillColor: Colors.white.withValues(alpha: 0.05),
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
+                  borderSide: const BorderSide(color: Colors.white12),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide(
                     color: Theme.of(context).colorScheme.primary,
-                    width: 2,
+                    width: 3,
                   ),
                 ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
-                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               ),
             ),
           ),

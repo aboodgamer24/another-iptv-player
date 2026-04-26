@@ -163,12 +163,14 @@ class _TvContentGridItemState extends State<TvContentGridItem> {
 
   @override
   Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
     return Focus(
       focusNode: _node,
       onKeyEvent: (node, event) {
         if (event is KeyDownEvent &&
             (event.logicalKey == LogicalKeyboardKey.select ||
-             event.logicalKey == LogicalKeyboardKey.enter)) {
+             event.logicalKey == LogicalKeyboardKey.enter ||
+             event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
           widget.onSelect();
           return KeyEventResult.handled;
         }
@@ -178,30 +180,40 @@ class _TvContentGridItemState extends State<TvContentGridItem> {
         final hasFocus = Focus.of(ctx).hasFocus;
         return GestureDetector(
           onTap: widget.onSelect,
-          child: AnimatedContainer(
+          child: AnimatedScale(
             duration: const Duration(milliseconds: 150),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              border: hasFocus
-                  ? Border.all(color: Theme.of(context).colorScheme.primary, width: 3)
-                  : Border.all(color: Colors.transparent, width: 3),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(5),
+            scale: hasFocus ? 1.06 : 1.0,
+            curve: Curves.easeOut,
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFF1A1A2E),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: hasFocus ? primary : Colors.transparent,
+                  width: 2,
+                ),
+                boxShadow: hasFocus
+                    ? [BoxShadow(color: primary.withValues(alpha: 0.3), blurRadius: 12)]
+                    : null,
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   if (widget.item.imagePath.isNotEmpty)
-                    Image.network(widget.item.imagePath,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                            const Icon(Icons.movie, size: 48, color: Colors.white12))
+                    Image.network(
+                      widget.item.imagePath,
+                      fit: BoxFit.cover,
+                      cacheWidth: 300,
+                      errorBuilder: (_, __, ___) => const Icon(Icons.movie, size: 40, color: Colors.white12),
+                    )
                   else
-                    const Icon(Icons.movie, size: 48, color: Colors.white12),
+                    const Icon(Icons.movie, size: 40, color: Colors.white12),
+                  
                   Positioned(
                     bottom: 0, left: 0, right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
                       decoration: const BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.bottomCenter,
@@ -209,9 +221,12 @@ class _TvContentGridItemState extends State<TvContentGridItem> {
                           colors: [Colors.black87, Colors.transparent],
                         ),
                       ),
-                      child: Text(widget.item.name,
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
-                          maxLines: 2, overflow: TextOverflow.ellipsis),
+                      child: Text(
+                        widget.item.name,
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
                 ],

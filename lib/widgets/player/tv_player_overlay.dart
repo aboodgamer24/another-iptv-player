@@ -1,9 +1,7 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import '../../models/playlist_content_model.dart';
-import '../../models/content_type.dart';
 
 class TvPlayerOverlay extends StatefulWidget {
   final VideoPlayerController controller;

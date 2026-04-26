@@ -139,32 +139,24 @@ class _TvContentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 130),
+    final primary = Theme.of(context).colorScheme.primary;
+    return AnimatedScale(
+      duration: const Duration(milliseconds: 150),
+      scale: isFocused ? 1.06 : 1.0,
       curve: Curves.easeOut,
-      // Scale up on focus — gives TV card-selection feel without rebuilding parent
-      transform: isFocused
-          ? Matrix4.diagonal3Values(1.06, 1.06, 1.0)
-          : Matrix4.identity(),
-      transformAlignment: Alignment.center,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isFocused
-              ? Theme.of(context).colorScheme.primary
-              : Colors.transparent,
-          width: 3,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFF1A1A2E),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: isFocused ? primary : Colors.transparent,
+            width: 2,
+          ),
+          boxShadow: isFocused
+              ? [BoxShadow(color: primary.withValues(alpha: 0.3), blurRadius: 12)]
+              : null,
         ),
-        boxShadow: isFocused
-            ? [BoxShadow(
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
-                blurRadius: 16,
-                spreadRadius: 2,
-              )]
-            : null,
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(5),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -172,15 +164,18 @@ class _TvContentCard extends StatelessWidget {
                 ? Image.network(
                     item.imagePath,
                     fit: BoxFit.cover,
-                    // cacheWidth reduces GPU memory usage at 4K display resolutions
                     cacheWidth: 300,
                     errorBuilder: (_, __, ___) => _Placeholder(),
                   )
                 : _Placeholder(),
+            
+            // Selected/Playing indicator if applicable (could be passed as prop if needed)
+            // For now just layout
+            
             Positioned(
               bottom: 0, left: 0, right: 0,
               child: Container(
-                padding: const EdgeInsets.fromLTRB(8, 24, 8, 8),
+                padding: const EdgeInsets.fromLTRB(8, 16, 8, 8),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
@@ -191,9 +186,8 @@ class _TvContentCard extends StatelessWidget {
                 child: Text(
                   item.name,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: Colors.white70,
                     fontSize: 12,
-                    fontWeight: FontWeight.w600,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -211,6 +205,6 @@ class _Placeholder extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     color: Colors.white10,
-    child: const Icon(Icons.movie, color: Colors.white24, size: 40),
+    child: const Icon(Icons.movie, color: Colors.white12, size: 40),
   );
 }

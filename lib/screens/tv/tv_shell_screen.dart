@@ -64,26 +64,29 @@ class _TvShellScreenState extends State<TvShellScreen>
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: const Color(0xFF1A1A2E),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Colors.white12, width: 1),
+        ),
         title: const Text('Exit App?',
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
         content: const Text('Are you sure you want to exit?',
-            style: TextStyle(color: Colors.white70)),
+            style: TextStyle(color: Colors.white70, fontSize: 14)),
         actions: [
-          TextButton(
-            autofocus: true, // D-pad focuses this first
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel', style: TextStyle(color: Colors.white54)),
+          _TvDialogButton(
+            label: 'Cancel',
+            onTap: () => Navigator.of(ctx).pop(),
+            isDestructive: false,
+            autofocus: true,
           ),
-          TextButton(
-            onPressed: () {
+          _TvDialogButton(
+            label: 'Exit',
+            onTap: () {
               Navigator.of(ctx).pop();
-              SystemNavigator.pop(); // exit app
+              SystemNavigator.pop();
             },
-            child: Text('Exit',
-                style: TextStyle(
-                    color: Theme.of(context).colorScheme.error,
-                    fontWeight: FontWeight.bold)),
+            isDestructive: true,
           ),
         ],
       ),
@@ -120,7 +123,7 @@ class _TvShellScreenState extends State<TvShellScreen>
               duration: const Duration(milliseconds: 200),
               curve: Curves.easeInOut,
               width: railWidth,
-              color: const Color(0xFF1A1A2E),
+              color: const Color(0xFF0D0D1A),
               child: FocusScope(
                 node: _railScope,
                 onKeyEvent: (node, event) {
@@ -264,46 +267,58 @@ class _TvNavTile extends StatelessWidget {
               margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               decoration: BoxDecoration(
-                color: hasFocus || isSelected
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.primary.withValues(alpha: 0.25)
-                    : Colors.transparent,
+                color: hasFocus
+                    ? Colors.white.withValues(alpha: 0.12)
+                    : (isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15) : Colors.transparent),
                 borderRadius: BorderRadius.circular(12),
-                border: hasFocus
-                    ? Border.all(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 2,
-                      )
-                    : Border.all(color: Colors.transparent, width: 2),
+                border: Border.all(
+                  color: hasFocus ? Theme.of(context).colorScheme.primary : Colors.transparent,
+                  width: 2,
+                ),
               ),
-              child: Row(
+              child: Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Icon(
-                    icon,
-                    color: hasFocus || isSelected
-                        ? Theme.of(context).colorScheme.primary
-                        : Colors.white54,
-                    size: 24,
-                  ),
-                  if (expanded) ...[
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        label,
-                        style: TextStyle(
-                          color: hasFocus || isSelected
-                              ? Colors.white
-                              : Colors.white60,
-                          fontSize: 15,
-                          fontWeight: isSelected
-                              ? FontWeight.bold
-                              : FontWeight.normal,
+                  if (isSelected)
+                    Positioned(
+                      left: -12, top: 0, bottom: 0,
+                      child: Container(
+                        width: 3,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: const BorderRadius.horizontal(right: Radius.circular(2)),
                         ),
-                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                  ],
+                  Row(
+                    children: [
+                      Icon(
+                        icon,
+                        color: hasFocus || isSelected
+                            ? Colors.white
+                            : Colors.white54,
+                        size: 24,
+                      ),
+                      if (expanded) ...[
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            label,
+                            style: TextStyle(
+                              color: hasFocus || isSelected
+                                  ? Colors.white
+                                  : Colors.white60,
+                              fontSize: 15,
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -318,4 +333,60 @@ class TvNavItem {
   final IconData icon;
   final String label;
   const TvNavItem({required this.icon, required this.label});
+}
+
+class _TvDialogButton extends StatelessWidget {
+  final String label;
+  final VoidCallback onTap;
+  final bool isDestructive;
+  final bool autofocus;
+
+  const _TvDialogButton({
+    required this.label,
+    required this.onTap,
+    required this.isDestructive,
+    this.autofocus = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final primary = Theme.of(context).colorScheme.primary;
+    final error = Theme.of(context).colorScheme.error;
+    
+    return Focus(
+      autofocus: autofocus,
+      onKeyEvent: (node, event) {
+        if (event is KeyDownEvent &&
+            (event.logicalKey == LogicalKeyboardKey.select ||
+                event.logicalKey == LogicalKeyboardKey.enter ||
+                event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+          onTap();
+          return KeyEventResult.handled;
+        }
+        return KeyEventResult.ignored;
+      },
+      child: Builder(builder: (ctx) {
+        final f = Focus.of(ctx).hasFocus;
+        return GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            decoration: BoxDecoration(
+              color: f ? (isDestructive ? error : Colors.white12) : Colors.transparent,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: f ? (isDestructive ? error : primary) : Colors.transparent, width: 2),
+            ),
+            child: Text(
+              label,
+              style: TextStyle(
+                color: f ? Colors.white : (isDestructive ? error : Colors.white54),
+                fontWeight: f || isDestructive ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+        );
+      }),
+    );
+  }
 }

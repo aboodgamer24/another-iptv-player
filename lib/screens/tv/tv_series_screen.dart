@@ -96,6 +96,7 @@ class _TvSeriesScreenState extends State<TvSeriesScreen> {
   Widget build(BuildContext context) {
     final ctrl = context.watch<XtreamCodeHomeController>();
     final realCats = ctrl.seriesCategories;
+    final primary = Theme.of(context).colorScheme.primary;
 
     // Virtual categories prepended
     final virtualCats = [
@@ -111,121 +112,151 @@ class _TvSeriesScreenState extends State<TvSeriesScreen> {
 
     final totalCats = virtualCats.length + realCats.length;
 
-    return Row(
-      children: [
-        // ── CATEGORY LIST ──
-        FocusScope(
-          node: _catScope,
-          onKeyEvent: (node, event) {
-            if (event is! KeyDownEvent) return KeyEventResult.ignored;
-            if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
-              _gridScope.requestFocus();
-              return KeyEventResult.handled;
-            }
-            if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
-              TvNavigation.requestRailFocus(context);
-              return KeyEventResult.handled;
-            }
-            return KeyEventResult.ignored;
-          },
-          child: Container(
-            width: 200,
-            color: const Color(0xFF0F0F1E),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Padding(
-                  padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
-                  child: Text('Categories',
-                    style: TextStyle(
-                      color: Colors.white54, fontSize: 11,
-                      letterSpacing: 1.2, fontWeight: FontWeight.bold)),
-                ),
-                Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    itemCount: totalCats,
-                    itemBuilder: (ctx, i) {
-                      final isVirtual = i < virtualCats.length;
-                      final catId = isVirtual
-                          ? virtualCats[i].id
-                          : realCats[i - virtualCats.length].category.categoryId;
-                      final catName = isVirtual
-                          ? virtualCats[i].name
-                          : realCats[i - virtualCats.length].category.categoryName;
-                      final isSelected = catId == _selectedCatId;
-                      return Focus(
-                        focusNode: _catNode(i),
-                        onFocusChange: (has) {
-                          if (has) _selectCategory(catId, ctrl);
-                        },
-                        onKeyEvent: (node, event) {
-                          if (event is KeyDownEvent &&
-                              (event.logicalKey == LogicalKeyboardKey.select ||
-                               event.logicalKey == LogicalKeyboardKey.enter)) {
-                            _gridScope.requestFocus();
-                            return KeyEventResult.handled;
-                          }
-                          return KeyEventResult.ignored;
-                        },
-                        child: Builder(builder: (ctx) {
-                          final hasFocus = Focus.of(ctx).hasFocus;
-                          return Container(
-                            margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.15)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(8),
-                              border: hasFocus
-                                  ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
-                                  : Border.all(color: Colors.transparent, width: 2),
-                            ),
-                            child: Text(catName,
-                              style: TextStyle(
-                                color: hasFocus || isSelected ? Colors.white : Colors.white54,
-                                fontSize: 13,
-                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                              ),
-                              maxLines: 2, overflow: TextOverflow.ellipsis,
-                            ),
-                          );
-                        }),
-                      );
-                    },
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        Navigator.of(context).maybePop();
+      },
+      child: Row(
+        children: [
+          // ── CATEGORY LIST (220dp) ──
+          FocusScope(
+            node: _catScope,
+            onKeyEvent: (node, event) {
+              if (event is! KeyDownEvent) return KeyEventResult.ignored;
+              if (event.logicalKey == LogicalKeyboardKey.arrowRight) {
+                _gridScope.requestFocus();
+                return KeyEventResult.handled;
+              }
+              if (event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                TvNavigation.requestRailFocus(context);
+                return KeyEventResult.handled;
+              }
+              return KeyEventResult.ignored;
+            },
+            child: Container(
+              width: 220,
+              color: const Color(0xDD0D0D1A),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(16, 20, 16, 8),
+                    child: Text('CATEGORIES',
+                      style: TextStyle(
+                        color: Colors.white, fontSize: 14,
+                        letterSpacing: 0.5, fontWeight: FontWeight.bold)),
                   ),
-                ),
-              ],
+                  Expanded(
+                    child: ListView.builder(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      itemCount: totalCats,
+                      itemBuilder: (ctx, i) {
+                        final isVirtual = i < virtualCats.length;
+                        final catId = isVirtual
+                            ? virtualCats[i].id
+                            : realCats[i - virtualCats.length].category.categoryId;
+                        final catName = isVirtual
+                            ? virtualCats[i].name
+                            : realCats[i - virtualCats.length].category.categoryName;
+                        final isSelected = catId == _selectedCatId;
+                        return Focus(
+                          focusNode: _catNode(i),
+                          onFocusChange: (has) {
+                            if (has) {
+                              _selectCategory(catId, ctrl);
+                              Scrollable.ensureVisible(_catNode(i).context!,
+                                  alignment: 0.3, duration: const Duration(milliseconds: 150));
+                            }
+                          },
+                          onKeyEvent: (node, event) {
+                            if (event is KeyDownEvent &&
+                                (event.logicalKey == LogicalKeyboardKey.select ||
+                                 event.logicalKey == LogicalKeyboardKey.enter)) {
+                              _gridScope.requestFocus();
+                              return KeyEventResult.handled;
+                            }
+                            return KeyEventResult.ignored;
+                          },
+                          child: Builder(builder: (ctx) {
+                            final hasFocus = Focus.of(ctx).hasFocus;
+                            return Container(
+                              margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: hasFocus
+                                    ? Colors.white.withValues(alpha: 0.12)
+                                    : (isSelected ? primary.withValues(alpha: 0.15) : Colors.transparent),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(
+                                  color: hasFocus ? primary : Colors.transparent,
+                                  width: 2,
+                                ),
+                              ),
+                              child: Stack(
+                                children: [
+                                  if (isSelected)
+                                    Positioned(
+                                      left: 0, top: 12, bottom: 12,
+                                      child: Container(width: 3, decoration: BoxDecoration(color: primary, borderRadius: BorderRadius.circular(2))),
+                                    ),
+                                  Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 12, 12, 12),
+                                    child: Text(catName,
+                                      style: TextStyle(
+                                        color: hasFocus || isSelected ? Colors.white : Colors.white60,
+                                        fontSize: 13,
+                                      ),
+                                      maxLines: 2, overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-
-        const VerticalDivider(width: 1, color: Colors.white10),
-
-        // ── CONTENT GRID ──
-        Expanded(
-          child: FocusScope(
-            node: _gridScope,
-            child: _loadingVirtual
-                ? const Center(child: CircularProgressIndicator(color: Colors.white54))
-                : _currentItems.isEmpty
-                    ? const Center(
-                        child: Text('No items', style: TextStyle(color: Colors.white38, fontSize: 16)))
-                    : TvContentGrid(
-                        sectionKey: 'series_$_selectedCatId',
-                        items: _currentItems,
-                        crossAxisCount: 5,
-                        onSelect: (item, idx, queue) {
-                          Navigator.push(context, MaterialPageRoute(
-                            builder: (_) => TvSeriesDetailScreen(series: item),
-                          ));
-                        },
-                        onEdgeLeft: () => _catScope.requestFocus(),
-                      ),
+      
+          const VerticalDivider(width: 1, color: Colors.white10),
+      
+          // ── CONTENT GRID ──
+          Expanded(
+            child: FocusScope(
+              node: _gridScope,
+              child: _loadingVirtual
+                  ? const Center(child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 2))
+                  : _currentItems.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(Icons.search_off, size: 48, color: Colors.white24),
+                              const SizedBox(height: 16),
+                              const Text("Nothing here yet", style: TextStyle(color: Colors.white38, fontSize: 14)),
+                            ],
+                          ),
+                        )
+                      : TvContentGrid(
+                          sectionKey: 'series_$_selectedCatId',
+                          items: _currentItems,
+                          crossAxisCount: 5,
+                          onSelect: (item, idx, queue) {
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => TvSeriesDetailScreen(series: item),
+                            ));
+                          },
+                          onEdgeLeft: () => _catScope.requestFocus(),
+                        ),
+            ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 }
