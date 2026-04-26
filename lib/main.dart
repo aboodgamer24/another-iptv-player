@@ -112,9 +112,18 @@ class MyApp extends StatelessWidget {
         },
         // Wrap the home inside a Builder so FocusTraversalGroup is
         // inside MaterialApp's own FocusScope, not outside it
-        home: FocusTraversalGroup(
-          policy: WidgetOrderTraversalPolicy(),
-          child: const AppInitializerScreen(),
+        home: KeyboardListener(
+          focusNode: FocusNode(),
+          autofocus: true,
+          onKeyEvent: (e) {
+            if (e is KeyDownEvent) {
+              debugPrint('[GlobalKey] Key pressed: ${e.logicalKey.debugName}');
+            }
+          },
+          child: FocusTraversalGroup(
+            policy: WidgetOrderTraversalPolicy(),
+            child: const AppInitializerScreen(),
+          ),
         ),
       ),
     );

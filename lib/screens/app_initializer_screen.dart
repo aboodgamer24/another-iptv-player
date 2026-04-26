@@ -4,6 +4,7 @@ import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/screens/playlist_screen.dart';
 
 import 'package:another_iptv_player/screens/welcome_screen.dart';
+import 'package:another_iptv_player/screens/tv/tv_placeholder_screen.dart';
 
 import 'package:another_iptv_player/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,7 @@ import '../../services/sync_service.dart';
 import '../../services/sync_applier.dart';
 import 'package:another_iptv_player/screens/main_navigation_screen_provider.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
+import 'package:another_iptv_player/repositories/m3u_repository.dart';
 import 'package:another_iptv_player/utils/app_config.dart';
 
 class AppInitializerScreen extends StatefulWidget {
@@ -46,6 +48,7 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
     final hasSeenWelcome = await UserPreferences.getHasSeenWelcome();
     final isLoggedIn = SyncService.instance.isLoggedIn;
 
+    /*
     if (!hasSeenWelcome && !isLoggedIn) {
       setState(() {
         _showWelcome = true;
@@ -53,6 +56,7 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       });
       return;
     }
+    */
 
     // Auto-pull from server if logged in
     if (SyncService.instance.isLoggedIn) {
@@ -96,11 +100,13 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
   @override
   Widget build(BuildContext context) {
     if (_showWelcome) {
-      if (PlatformUtils.isTV) return Container(color: Colors.black);
+      debugPrint('[AppInitializer] Showing Welcome screen (TV: ${PlatformUtils.isTV})');
+      if (PlatformUtils.isTV) return const TvPlaceholderScreen(title: 'Welcome');
       return const WelcomeScreen();
     }
 
     if (_isLoading) {
+      debugPrint('[AppInitializer] Loading...');
       final colorScheme = Theme.of(context).colorScheme;
       return Scaffold(
         backgroundColor: colorScheme.surface,
@@ -165,10 +171,25 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       );
     }
 
-    if (_lastPlaylist == null) {
+    if (_lastPlaylist == null && !PlatformUtils.isTV) {
+      debugPrint('[AppInitializer] No playlist found -> PlaylistScreen');
       return const PlaylistScreen();
     } else {
-      return MainNavigationScreenProvider(playlist: _lastPlaylist!);
+      debugPrint('[AppInitializer] Navigating to MainNavigationScreen (TV: ${PlatformUtils.isTV})');
+      final playlist = _lastPlaylist ?? Playlist(
+        id: 'dummy',
+        name: 'Test Playlist',
+        type: PlaylistType.m3u,
+        createdAt: DateTime.now(),
+      );
+      
+      // Ensure AppState is synced for the dummy navigation
+      AppState.currentPlaylist = playlist;
+      if (playlist.type == PlaylistType.m3u) {
+        AppState.m3uRepository = M3uRepository();
+      }
+
+      return MainNavigationScreenProvider(playlist: playlist);
     }
   }
 }
