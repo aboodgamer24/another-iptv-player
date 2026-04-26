@@ -13,6 +13,8 @@ import '../../services/playlist_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/sync_applier.dart';
 import 'package:another_iptv_player/screens/main_navigation_screen_provider.dart';
+import 'package:another_iptv_player/services/service_locator.dart';
+import 'package:another_iptv_player/utils/app_config.dart';
 
 class AppInitializerScreen extends StatefulWidget {
   const AppInitializerScreen({super.key});
@@ -30,10 +32,16 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _loadLastPlaylist());
+    // Kick off immediately — no frame delay
+    _loadLastPlaylist();
   }
 
   Future<void> _loadLastPlaylist() async {
+    // Run heavy startup init here instead of blocking main()
+    await AppConfig.load();
+    await SyncService.instance.init();
+    await setupServiceLocator();
+
     // Check if first launch (never logged in AND never skipped as guest)
     final hasSeenWelcome = await UserPreferences.getHasSeenWelcome();
     final isLoggedIn = SyncService.instance.isLoggedIn;
@@ -95,10 +103,12 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
     if (_isLoading) {
       final colorScheme = Theme.of(context).colorScheme;
       return Scaffold(
+        backgroundColor: colorScheme.surface,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Logo
               Container(
                 width: 96,
                 height: 96,
@@ -118,21 +128,37 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
-              const Text(
+              const SizedBox(height: 20),
+              Text(
                 'C4-TV',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2,
+                  color: colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(height: 32),
-              const CircularProgressIndicator(),
-              if (_syncMessage.isNotEmpty) ...[
-                const SizedBox(height: 16),
-                Text(_syncMessage),
-              ],
+              const SizedBox(height: 40),
+              SizedBox(
+                width: 32,
+                height: 32,
+                child: CircularProgressIndicator(
+                  color: colorScheme.primary,
+                  strokeWidth: 2.5,
+                ),
+              ),
+              const SizedBox(height: 16),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 300),
+                child: Text(
+                  _syncMessage.isNotEmpty ? _syncMessage : 'Starting up…',
+                  key: ValueKey(_syncMessage),
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ),
             ],
           ),
         ),

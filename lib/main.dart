@@ -5,17 +5,14 @@ import 'package:another_iptv_player/controllers/home_rails_controller.dart';
 import 'package:another_iptv_player/screens/app_initializer_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'controllers/locale_provider.dart';
 import 'controllers/theme_provider.dart';
 import 'l10n/app_localizations.dart';
 import 'l10n/supported_languages.dart';
-import 'services/sync_service.dart';
 import 'services/app_lifecycle_sync.dart';
 
-import 'package:another_iptv_player/utils/app_config.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io';
 
@@ -23,10 +20,11 @@ import 'package:another_iptv_player/utils/platform_utils.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await PlatformUtils.detectTV();
-  await AppConfig.load();
-  await SyncService.instance.init();
 
+  // Only do truly synchronous/fast setup here
+  await PlatformUtils.detectTV();
+
+  // Desktop window setup (platform-gated, fast)
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
@@ -42,7 +40,7 @@ Future<void> main() async {
     });
   }
 
-  await setupServiceLocator();
+  // Run app immediately — splash shows while heavy init runs
   runApp(
     MultiProvider(
       providers: [
