@@ -201,8 +201,15 @@ class _TvShellScreenState extends State<TvShellScreen>
               child: FocusScope(
                 node: _contentScope,
                 onKeyEvent: (node, event) {
-                  // No longer catching global arrowLeft here to prevent accidental jumps.
-                  // Content screens now explicitly handle edge navigation.
+                  if (event is KeyDownEvent &&
+                      event.logicalKey == LogicalKeyboardKey.arrowLeft) {
+                    final didMove = node.focusInDirection(TraversalDirection.left);
+                    if (!didMove) {
+                      _railScope.requestFocus();
+                      _expandRail();
+                      return KeyEventResult.handled;
+                    }
+                  }
                   return KeyEventResult.ignored;
                 },
                 child: Actions(
