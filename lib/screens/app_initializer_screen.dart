@@ -34,8 +34,11 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
   @override
   void initState() {
     super.initState();
-    // Kick off immediately — no frame delay
-    _loadLastPlaylist();
+    // Defer heavy init to AFTER the first frame renders,
+    // so the splash screen is visible immediately.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadLastPlaylist();
+    });
   }
 
   Future<void> _loadLastPlaylist() async {

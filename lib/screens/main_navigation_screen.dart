@@ -31,6 +31,7 @@ import 'tv/tv_live_tv_screen.dart';
 import 'tv/tv_movies_screen.dart';
 import 'tv/tv_series_screen.dart';
 import 'tv/tv_placeholder_screen.dart';
+import 'tv/tv_settings_screen.dart';
 
 
 class MainNavigationScreen extends StatefulWidget {
@@ -173,7 +174,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             TvMoviesScreen(),
             TvSeriesScreen(),
             TvPlaceholderScreen(title: 'Search', accent: Colors.blue),
-            TvPlaceholderScreen(title: 'Settings', accent: Colors.grey),
+            TvSettingsScreen(),
           ],
         ),
       );
