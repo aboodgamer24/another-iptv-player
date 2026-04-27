@@ -27,6 +27,7 @@ class MainActivity : FlutterActivity() {
         super.configureFlutterEngine(flutterEngine)
         flutterEngine.plugins.add(VideoStatsPlugin())
         flutterEngine.plugins.add(LivePlaybackPlugin())
+        flutterEngine.plugins.add(TvPlayerChannel())
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL)
             .setMethodCallHandler { call, result ->
                 when (call.method) {

@@ -6,7 +6,6 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/utils/platform_utils.dart';
-import 'package:another_iptv_player/widgets/player/tv_player_overlay.dart';
 
 class VideoWidget extends StatefulWidget {
   final VideoController controller;
@@ -72,25 +71,15 @@ class _VideoWidgetState extends State<VideoWidget> {
           pauseUponEnteringBackgroundMode: !PlayerState.backgroundPlay,
           subtitleViewConfiguration: widget.subtitleViewConfiguration,
         ),
-        if (PlatformUtils.isTV)
-          TvPlayerOverlay(
-            player: widget.controller.player,
-            controller: widget.controller,
-            homeController: homeController,
-            onFullscreenOverride: widget.onFullscreenOverride,
-            isInline: widget.isInline,
-            contentType: widget.contentType,
-          )
-        else
-          C4PlayerOverlay(
-            key: widget.overlayKey,
-            player: widget.controller.player,
-            controller: widget.controller,
-            homeController: homeController,
-            onFullscreenOverride: widget.onFullscreenOverride,
-            isInline: widget.isInline,
-            contentType: widget.contentType,
-          ),
+        C4PlayerOverlay(
+          key: widget.overlayKey,
+          player: widget.controller.player,
+          controller: widget.controller,
+          homeController: homeController,
+          onFullscreenOverride: widget.onFullscreenOverride,
+          isInline: widget.isInline,
+          contentType: widget.contentType,
+        ),
       ],
     );
   }
