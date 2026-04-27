@@ -9,11 +9,12 @@ import androidx.tv.material3.darkColorScheme
 fun TvAppTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = darkColorScheme(
-            primary = Color(0xFF4F98A3),
-            background = Color(0xFF0D0D1A),
-            surface = Color(0xFF1C1B19),
-            onBackground = Color(0xFFCDCCCA),
-            onSurface = Color(0xFFCDCCCA),
+            primary = Color(0xFF00C8B4),
+            background = Color(0xFF0D0D0F),
+            surface = Color(0xFF16161A),
+            onBackground = Color(0xFFFFFFFF),
+            onSurface = Color(0xFFFFFFFF),
+            secondary = Color(0xFF1E1E24)
         ),
         content = content
     )
