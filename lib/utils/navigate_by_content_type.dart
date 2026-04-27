@@ -12,6 +12,7 @@ import '../screens/desktop/desktop_movie_detail_screen.dart';
 import '../screens/desktop/desktop_series_detail_screen.dart';
 import '../screens/mobile/mobile_movie_detail_screen.dart';
 import '../screens/mobile/mobile_series_detail_screen.dart';
+import '../screens/tv/tv_player_screen.dart';
 import 'package:provider/provider.dart';
 import '../controllers/xtream_code_home_controller.dart';
 
@@ -44,6 +45,19 @@ Future<void> navigateByContentType(
   if (isM3u &&
       content.m3uItem != null &&
       content.contentType != ContentType.series) {
+    if (PlatformUtils.isTV) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => TvPlayerScreen(
+            title: content.name,
+            streamUrl: null,
+          ),
+        ),
+      );
+      return;
+    }
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -66,6 +80,18 @@ Future<void> navigateByContentType(
 
   switch (content.contentType) {
     case ContentType.liveStream:
+      if (PlatformUtils.isTV) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TvPlayerScreen(
+              title: content.name,
+              streamUrl: null,
+            ),
+          ),
+        );
+        break;
+      }
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -74,6 +100,19 @@ Future<void> navigateByContentType(
         ),
       );
     case ContentType.vod:
+      if (PlatformUtils.isTV) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TvPlayerScreen(
+              title: content.name,
+              streamUrl: null,
+            ),
+          ),
+        );
+        break;
+      }
+
       if (isMobile && isXtreamCode) {
         await Navigator.push(
           context,
@@ -101,6 +140,19 @@ Future<void> navigateByContentType(
         );
       }
     case ContentType.series:
+      if (PlatformUtils.isTV) {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TvPlayerScreen(
+              title: content.name,
+              streamUrl: null,
+            ),
+          ),
+        );
+        break;
+      }
+
       if (isXtreamCode) {
         if (isMobile) {
           await Navigator.push(

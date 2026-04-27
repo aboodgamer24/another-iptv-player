@@ -174,9 +174,11 @@ class _TvShellScreenState extends State<TvShellScreen> {
                                 label: widget.items[i].label,
                                 isSelected: widget.selectedIndex == i,
                                 expanded: _railExpanded,
-                                onExpand: () => setState(() => _railExpanded = true),
-                                onTap: () {
+                                onFocused: () {
+                                  setState(() => _railExpanded = true);
                                   widget.onItemSelected(i);
+                                },
+                                onTap: () {
                                   _goToContent();
                                 },
                               ),
@@ -240,13 +242,13 @@ class _TvRailTile extends StatelessWidget {
   final String       label;
   final bool         isSelected;
   final bool         expanded;
-  final VoidCallback onExpand;
+  final VoidCallback onFocused;
   final VoidCallback onTap;
 
   const _TvRailTile({
     required this.focusNode, required this.icon, required this.label,
     required this.isSelected, required this.expanded,
-    required this.onExpand, required this.onTap,
+    required this.onFocused, required this.onTap,
   });
 
   @override
@@ -254,7 +256,7 @@ class _TvRailTile extends StatelessWidget {
     final primary = Theme.of(context).colorScheme.primary;
     return Focus(
       focusNode: focusNode,
-      onFocusChange: (focused) { if (focused) onExpand(); },
+      onFocusChange: (focused) { if (focused) onFocused(); },
       child: FocusableControlBuilder(
         onPressed: onTap,
         builder: (ctx, s) => AnimatedContainer(

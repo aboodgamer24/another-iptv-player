@@ -369,6 +369,30 @@ class _TvGeneralPanelState extends State<_TvGeneralPanel> {
             },
           ),
 
+        _TvSectionTitle(title: 'TMDB'),
+        _TvTile(
+          leading: const Icon(Icons.api_rounded),
+          title: 'TMDB API Key',
+          subtitle: AppConfig.tmdbApiKey.isNotEmpty 
+              ? '${AppConfig.tmdbApiKey.substring(0, 4)}••••••••' 
+              : 'Not set — tap to enter',
+          onTap: () => _showTmdbKeyDialog(context),
+        ),
+
+        _TvSectionTitle(title: 'Home Screen'),
+        _TvTile(
+          leading: const Icon(Icons.dashboard_customize_rounded),
+          title: 'Customize Home Layout',
+          subtitle: 'Show/hide and reorder home screen rows',
+          onTap: () {
+            final state = context.findAncestorStateOfType<_TvSettingsScreenState>();
+            if (state != null) {
+              state._onCategorySelected(4);
+              state._sidebarNodes[4].requestFocus();
+            }
+          },
+        ),
+
         _TvSectionTitle(title: 'About'),
         _TvTile(
           leading: const Icon(Icons.info_outline),
@@ -384,6 +408,110 @@ class _TvGeneralPanelState extends State<_TvGeneralPanel> {
           },
         ),
       ],
+    );
+  }
+
+  void _showTmdbKeyDialog(BuildContext context) {
+    final controller = TextEditingController(text: AppConfig.tmdbApiKey);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A2E),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: Colors.white12),
+        ),
+        title: const Text('TMDB API Key', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        content: SizedBox(
+          width: 400,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Enter your TMDB API key to enable movie/series artwork and metadata.',
+                style: TextStyle(color: Colors.white54, fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'e.g. abc123def456...',
+                  hintStyle: const TextStyle(color: Colors.white24),
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: const BorderSide(color: Colors.white24),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(10),
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                  ),
+                ),
+                onSubmitted: (val) async {
+                  await AppConfig.setTmdbApiKey(val.trim());
+                  if (ctx.mounted) Navigator.pop(ctx);
+                  if (mounted) setState(() {});
+                },
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          FocusableControlBuilder(
+            onPressed: () async {
+              await AppConfig.setTmdbApiKey('');
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) setState(() {});
+            },
+            builder: (c, s) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: s.isFocused ? Colors.red.withValues(alpha: 0.2) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: s.isFocused ? Colors.red : Colors.transparent, width: 2),
+              ),
+              child: const Text('Clear', style: TextStyle(color: Colors.red)),
+            ),
+          ),
+          FocusableControlBuilder(
+            onPressed: () async {
+              await AppConfig.setTmdbApiKey(controller.text.trim());
+              if (ctx.mounted) Navigator.pop(ctx);
+              if (mounted) setState(() {});
+            },
+            builder: (c, s) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: s.isFocused ? Theme.of(context).primaryColor.withValues(alpha: 0.2) : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: s.isFocused ? Theme.of(context).primaryColor : Colors.transparent, width: 2),
+              ),
+              child: Text('Save', style: TextStyle(color: s.isFocused ? Colors.white : Colors.white54)),
+            ),
+          ),
+          FocusableControlBuilder(
+            onPressed: () => Navigator.pop(ctx),
+            builder: (c, s) => Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: s.isFocused ? Colors.white12 : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: s.isFocused ? Colors.white24 : Colors.transparent, width: 2),
+              ),
+              child: Text('Cancel', style: TextStyle(color: s.isFocused ? Colors.white : Colors.white54)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 

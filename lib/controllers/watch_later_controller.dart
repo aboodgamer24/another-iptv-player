@@ -196,37 +196,20 @@ class WatchLaterController extends ChangeNotifier {
     final isM3u = playlistType == PlaylistType.m3u;
 
     if (isXtreamCode) {
-      // Fetch series info directly from repository to ensure latest data
-      final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
-        item.streamId,
-      );
-
-      if (seriesResponse == null) {
-        _setError('Series info not found');
-        return;
-      }
-
       final seriesStream = await _database.findSeriesById(
         item.streamId,
         AppState.currentPlaylist!.id,
       );
 
       if (!context.mounted) return;
-      Navigator.push(
+      navigateByContentType(
         context,
-        MaterialPageRoute(
-          builder: (context) => EpisodeScreen(
-            seriesInfo: seriesResponse.seriesInfo,
-            seasons: seriesResponse.seasons,
-            episodes: seriesResponse.episodes,
-            contentItem: ContentItem(
-              item.streamId,
-              item.title,
-              item.imagePath ?? "",
-              ContentType.series,
-              seriesStream: seriesStream,
-            ),
-          ),
+        ContentItem(
+          item.streamId,
+          item.title,
+          item.imagePath ?? "",
+          ContentType.series,
+          seriesStream: seriesStream,
         ),
       );
     } else if (isM3u) {
@@ -241,18 +224,14 @@ class WatchLaterController extends ChangeNotifier {
       }
 
       if (!context.mounted) return;
-      Navigator.push(
+      navigateByContentType(
         context,
-        MaterialPageRoute(
-          builder: (context) => M3uPlayerScreen(
-            contentItem: ContentItem(
-              m3uItem.id,
-              m3uItem.name ?? '',
-              m3uItem.tvgLogo ?? '',
-              m3uItem.contentType,
-              m3uItem: m3uItem,
-            ),
-          ),
+        ContentItem(
+          m3uItem.id,
+          m3uItem.name ?? '',
+          m3uItem.tvgLogo ?? '',
+          m3uItem.contentType,
+          m3uItem: m3uItem,
         ),
       );
     }

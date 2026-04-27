@@ -30,6 +30,8 @@ import 'tv/tv_home_screen.dart';
 import 'tv/tv_live_tv_screen.dart';
 import 'tv/tv_movies_screen.dart';
 import 'tv/tv_series_screen.dart';
+import 'tv/tv_favorites_screen.dart';
+import 'tv/tv_watch_later_screen.dart';
 import 'tv/tv_placeholder_screen.dart';
 import 'tv/tv_settings_screen.dart';
 
@@ -62,10 +64,12 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       case 5:
         return context.loc.rail_watch_later;
       case 6:
-        return context.loc.settings;
+        return 'Search';
       case 7:
-        return 'Favorites';
+        return context.loc.settings;
       case 8:
+        return 'Favorites';
+      case 9:
         return 'Watch Later';
       default:
         return 'Another IPTV Player';
@@ -163,6 +167,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           TvNavItem(icon: Icons.live_tv_rounded, label: 'Live TV'),
           TvNavItem(icon: Icons.movie_rounded, label: 'Movies'),
           TvNavItem(icon: Icons.video_library, label: 'Series'),
+          TvNavItem(icon: Icons.favorite_rounded, label: 'Favorites'),
+          TvNavItem(icon: Icons.schedule_rounded, label: 'Watch Later'),
           TvNavItem(icon: Icons.search_rounded, label: 'Search'),
           TvNavItem(icon: Icons.settings_rounded, label: 'Settings'),
         ],
@@ -173,6 +179,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             TvLiveTvScreen(),
             TvMoviesScreen(),
             TvSeriesScreen(),
+            TvFavoritesScreen(),
+            TvWatchLaterScreen(),
             TvPlaceholderScreen(title: 'Search', accent: Colors.blue),
             TvSettingsScreen(),
           ],
