@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:video_player/video_player.dart';
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
@@ -11,8 +14,17 @@ import '../../widgets/player/tv_exo_player_overlay.dart';
 
 class TvExoPlayerScreen extends StatefulWidget {
   final ContentItem contentItem;
+  final List<ContentItem> queue;
+  final int currentIndex;
+  final String? subtitleUrl;
 
-  const TvExoPlayerScreen({super.key, required this.contentItem});
+  const TvExoPlayerScreen({
+    super.key,
+    required this.contentItem,
+    this.queue = const [],
+    this.currentIndex = 0,
+    this.subtitleUrl,
+  });
 
   @override
   State<TvExoPlayerScreen> createState() => _TvExoPlayerScreenState();
@@ -26,28 +38,72 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
   String _errorMessage = '';
 
   Timer? _watchHistoryTimer;
+  late int _currentIndex;
+  bool _showSubtitles = true;
+  
+  static const _statsChannel = MethodChannel('com.aboodgamer24.iptv/video_stats');
+  Map<String, dynamic>? _videoStats;
+
+  Future<void> _loadVideoStats(String url) async {
+    try {
+      final stats = await _statsChannel.invokeMapMethod<String, dynamic>(
+        'getVideoStats', {'url': url},
+      );
+      if (mounted && stats != null) setState(() => _videoStats = stats);
+    } catch (_) {}
+  }
 
   @override
   void initState() {
     super.initState();
+    _currentIndex = widget.currentIndex;
     _watchHistoryService = WatchHistoryService();
-    _initPlayer();
+    _initPlayerWithItem(widget.queue.isNotEmpty ? widget.queue[_currentIndex] : widget.contentItem);
   }
 
-  Future<void> _initPlayer() async {
+  Future<void> _onIndexChanged(int index) async {
+    if (index < 0 || (widget.queue.isNotEmpty && index >= widget.queue.length)) return;
+    _watchHistoryTimer?.cancel();
+    await _saveWatchHistory();
+    _controller?.removeListener(_playerListener);
+    await _controller?.dispose();
+    setState(() {
+      _currentIndex = index;
+      _isLoading = true;
+      _hasError = false;
+      _videoStats = null;
+    });
+    await _initPlayerWithItem(widget.queue[index]);
+  }
+
+  Future<void> _initPlayerWithItem(ContentItem item) async {
     try {
-      final url = widget.contentItem.url;
+      final url = item.url;
       if (url.isEmpty) throw Exception('Stream URL is empty');
 
       _controller = VideoPlayerController.networkUrl(Uri.parse(url));
 
       await _controller!.initialize();
 
+      if (widget.subtitleUrl != null && widget.subtitleUrl!.isNotEmpty) {
+        final response = await http.get(Uri.parse(widget.subtitleUrl!));
+        final text = utf8.decode(response.bodyBytes);
+        await _controller!.setClosedCaptionFile(
+          Future.value(
+            widget.subtitleUrl!.endsWith('.vtt')
+                ? WebVTTCaptionFile(text)
+                : SubRipCaptionFile(text),
+          ),
+        );
+      }
+
+      _loadVideoStats(url);
+
       // Check Watch History to resume
-      if (widget.contentItem.contentType != ContentType.liveStream) {
+      if (item.contentType != ContentType.liveStream) {
         final history = await _watchHistoryService.getWatchHistory(
           AppState.currentPlaylist!.id,
-          isXtreamCode ? widget.contentItem.id : widget.contentItem.m3uItem?.id ?? widget.contentItem.id,
+          isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
         );
         if (history != null && history.watchDuration != null) {
           await _controller!.seekTo(history.watchDuration!);
@@ -89,18 +145,19 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
 
   Future<void> _saveWatchHistory() async {
     if (_controller == null || !mounted) return;
+    final item = widget.queue.isNotEmpty ? widget.queue[_currentIndex] : widget.contentItem;
     try {
       await _watchHistoryService.saveWatchHistory(
         WatchHistory(
           playlistId: AppState.currentPlaylist!.id,
-          contentType: widget.contentItem.contentType,
-          streamId: isXtreamCode ? widget.contentItem.id : widget.contentItem.m3uItem?.id ?? widget.contentItem.id,
+          contentType: item.contentType,
+          streamId: isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
           lastWatched: DateTime.now(),
-          title: widget.contentItem.name,
-          imagePath: widget.contentItem.imagePath,
+          title: item.name,
+          imagePath: item.imagePath,
           totalDuration: _controller!.value.duration,
           watchDuration: _controller!.value.position,
-          seriesId: widget.contentItem.seriesStream?.seriesId,
+          seriesId: item.seriesStream?.seriesId,
         ),
       );
     } catch (e) {
@@ -158,6 +215,8 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
       );
     }
 
+    final currentItem = widget.queue.isNotEmpty ? widget.queue[_currentIndex] : widget.contentItem;
+
     return Scaffold(
       backgroundColor: Colors.black,
       body: Stack(
@@ -168,11 +227,42 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
               child: VideoPlayer(_controller!),
             ),
           ),
+          if (_showSubtitles)
+            ValueListenableBuilder<VideoPlayerValue>(
+              valueListenable: _controller!,
+              builder: (_, value, __) {
+                final text = value.caption.text;
+                if (text.isEmpty) return const SizedBox.shrink();
+                return Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    margin: const EdgeInsets.only(bottom: 90),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    color: Colors.black.withOpacity(0.55),
+                    child: Text(
+                      text,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w500,
+                        shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           TvExoPlayerOverlay(
             controller: _controller!,
-            title: widget.contentItem.name,
-            contentType: widget.contentItem.contentType,
+            title: currentItem.name,
+            contentType: currentItem.contentType,
             onExit: () => Navigator.of(context).pop(),
+            queue: widget.queue,
+            currentIndex: _currentIndex,
+            onIndexChanged: _onIndexChanged,
+            onSubtitleToggle: (enabled) => setState(() => _showSubtitles = enabled),
+            videoStats: _videoStats,
           ),
         ],
       ),

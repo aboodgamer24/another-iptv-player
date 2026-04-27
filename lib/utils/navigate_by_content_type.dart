@@ -25,8 +25,10 @@ bool _isDesktop(BuildContext context) {
 
 Future<void> navigateByContentType(
   BuildContext context,
-  ContentItem content,
-) async {
+  ContentItem content, {
+  List<ContentItem>? queue,
+  int? currentIndex,
+}) async {
   XtreamCodeHomeController? xtreamHomeController;
   try {
     xtreamHomeController = context.read<XtreamCodeHomeController>();
@@ -73,7 +75,11 @@ Future<void> navigateByContentType(
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TvExoPlayerScreen(contentItem: content),
+            builder: (context) => TvExoPlayerScreen(
+              contentItem: content,
+              queue: queue ?? [],
+              currentIndex: currentIndex ?? 0,
+            ),
           ),
         );
         break;
@@ -99,7 +105,11 @@ Future<void> navigateByContentType(
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TvExoPlayerScreen(contentItem: content),
+            builder: (context) => TvExoPlayerScreen(
+              contentItem: content,
+              queue: queue ?? [],
+              currentIndex: currentIndex ?? 0,
+            ),
           ),
         );
         break;

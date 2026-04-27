@@ -96,8 +96,21 @@ class _TvMovieDetailScreenState extends State<TvMovieDetailScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFF0F1014),
-      body: Stack(
-        children: [
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.escape ||
+                event.logicalKey == LogicalKeyboardKey.goBack ||
+                event.logicalKey == LogicalKeyboardKey.backspace) {
+              Navigator.of(context).pop();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Stack(
+          children: [
           // Background Image with Gradient
           Positioned.fill(
             child: widget.contentItem.imagePath.isNotEmpty
@@ -211,6 +224,7 @@ class _TvMovieDetailScreenState extends State<TvMovieDetailScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }

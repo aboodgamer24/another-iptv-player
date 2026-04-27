@@ -5,6 +5,7 @@ import 'package:video_player/video_player.dart';
 import 'package:focusable_control_builder/focusable_control_builder.dart';
 import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
 import 'package:another_iptv_player/models/content_type.dart';
+import 'package:another_iptv_player/models/playlist_content_model.dart';
 
 class TvExoPlayerOverlay extends StatefulWidget {
   final VideoPlayerController controller;
@@ -12,6 +13,11 @@ class TvExoPlayerOverlay extends StatefulWidget {
   final ContentType? contentType;
   final String title;
   final VoidCallback onExit;
+  final List<ContentItem> queue;
+  final int currentIndex;
+  final ValueChanged<int> onIndexChanged;
+  final ValueChanged<bool>? onSubtitleToggle;
+  final Map<String, dynamic>? videoStats;
 
   const TvExoPlayerOverlay({
     super.key,
@@ -20,6 +26,11 @@ class TvExoPlayerOverlay extends StatefulWidget {
     this.contentType,
     required this.title,
     required this.onExit,
+    required this.queue,
+    required this.currentIndex,
+    required this.onIndexChanged,
+    this.onSubtitleToggle,
+    this.videoStats,
   });
 
   @override
@@ -35,6 +46,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   Duration _position = Duration.zero;
   Duration _duration = Duration.zero;
   bool _playing = false;
+  bool _subtitlesEnabled = true;
 
   final FocusNode _playPauseNode = FocusNode(debugLabel: 'exo-play-pause');
   final FocusNode _rewindNode = FocusNode(debugLabel: 'exo-rewind');
@@ -44,6 +56,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   
   final List<FocusNode> _tabNodes = List.generate(3, (i) => FocusNode(debugLabel: 'exo-tab-$i'));
   final FocusNode _browseButtonNode = FocusNode(debugLabel: 'exo-browse-btn');
+  final FocusNode _subtitleToggleNode = FocusNode(debugLabel: 'exo-subtitle-toggle');
   final FocusNode _subtitleNode = FocusNode(debugLabel: 'exo-subtitle');
   final FocusNode _infoCloseNode = FocusNode(debugLabel: 'exo-info-close');
   final FocusNode _rootNode = FocusNode(debugLabel: 'exo-root');
@@ -303,6 +316,14 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
                               onPressed: () => widget.controller.seekTo(_position + const Duration(seconds: 10)),
                             ),
                           _PlayerButton(
+                            icon: _subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
+                            focusNode: _subtitleToggleNode,
+                            onPressed: () {
+                              setState(() => _subtitlesEnabled = !_subtitlesEnabled);
+                              widget.onSubtitleToggle?.call(_subtitlesEnabled);
+                            },
+                          ),
+                          _PlayerButton(
                             icon: Icons.info_outline,
                             focusNode: _subtitleNode,
                             onPressed: _toggleSidePanel,
@@ -358,12 +379,9 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _TabButton(
-                    label: 'Info',
-                    isSelected: _activeTab == 0,
-                    focusNode: _tabNodes[0],
-                    onFocused: () => setState(() => _activeTab = 0),
-                  ),
+                  _TabButton(label: 'Info',     isSelected: _activeTab == 0, focusNode: _tabNodes[0], onFocused: () => setState(() => _activeTab = 0)),
+                  _TabButton(label: 'Channels', isSelected: _activeTab == 1, focusNode: _tabNodes[1], onFocused: () => setState(() => _activeTab = 1)),
+                  _TabButton(label: 'Episodes', isSelected: _activeTab == 2, focusNode: _tabNodes[2], onFocused: () => setState(() => _activeTab = 2)),
                 ],
               ),
             ),
@@ -376,6 +394,8 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
                   index: _activeTab,
                   children: [
                     _buildInfoTab(),
+                    _buildListTab('Channels', widget.queue),
+                    _buildListTab('Episodes', widget.queue),
                   ],
                 ),
               ),
@@ -398,12 +418,25 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
           Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _InfoRow(label: 'Type', value: isLiveStream ? 'Live Stream' : 'Video on Demand'),
-          const _InfoRow(label: 'Engine', value: 'ExoPlayer (Android)'),
-          const SizedBox(height: 24),
-          const Text(
-            'Powered by standard ExoPlayer for robust playback on Android TV.',
-            style: TextStyle(color: Colors.white54, fontSize: 14),
-          ),
+          if (widget.videoStats != null) ...[
+            _InfoRow(
+              label: 'Resolution',
+              value: '${widget.videoStats!['width']}×${widget.videoStats!['height']}',
+            ),
+            _InfoRow(
+              label: 'Codec',
+              value: (widget.videoStats!['codec'] as String)
+                  .replaceFirst('video/', '')
+                  .toUpperCase(),
+            ),
+            _InfoRow(
+              label: 'FPS',
+              value: (widget.videoStats!['frameRate'] as num) > 0
+                  ? (widget.videoStats!['frameRate'] as num).toStringAsFixed(1)
+                  : 'Unknown',
+            ),
+          ] else
+            const _InfoRow(label: 'Engine', value: 'ExoPlayer — detecting...'),
           const Spacer(),
           Focus(
             focusNode: _infoCloseNode,
@@ -440,6 +473,59 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildListTab(String type, List<ContentItem> items) {
+    if (items.isEmpty) {
+      return Center(
+        child: Text('No $type available', style: const TextStyle(color: Colors.white54)),
+      );
+    }
+    return ListView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      itemCount: items.length,
+      itemBuilder: (context, index) {
+        final item = items[index];
+        final isCurrent = index == widget.currentIndex;
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8.0),
+          child: FocusableControlBuilder(
+            onPressed: () => widget.onIndexChanged(index),
+            builder: (context, state) {
+              final isFocused = state.isFocused;
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isFocused ? Colors.white : (isCurrent ? Colors.white10 : Colors.transparent),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    if (isCurrent)
+                      Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: Icon(Icons.play_arrow, color: isFocused ? Colors.black : Theme.of(context).colorScheme.primary, size: 20),
+                      ),
+                    Expanded(
+                      child: Text(
+                        item.name,
+                        style: TextStyle(
+                          color: isFocused ? Colors.black : (isCurrent ? Colors.white : Colors.white70),
+                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

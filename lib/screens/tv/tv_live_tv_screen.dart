@@ -402,7 +402,12 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
                     onKeyEvent: (node, event) {
                       if (event is KeyDownEvent) {
                         if (event.logicalKey == LogicalKeyboardKey.select) {
-                          navigateByContentType(context, channel);
+                          navigateByContentType(
+                            context,
+                            channel,
+                            queue: channels,
+                            currentIndex: _selectedChannelIndex,
+                          );
                           return KeyEventResult.handled;
                         }
                         if (event.logicalKey == LogicalKeyboardKey.arrowLeft || event.logicalKey == LogicalKeyboardKey.goBack) {
@@ -414,7 +419,12 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
                     },
                     child: FocusableControlBuilder(
                       onPressed: () {
-                        navigateByContentType(context, channel);
+                        navigateByContentType(
+                          context,
+                          channel,
+                          queue: channels,
+                          currentIndex: _selectedChannelIndex,
+                        );
                       },
                       builder: (context, state) {
                         final isFocused = state.isFocused || _playButtonNode.hasFocus;

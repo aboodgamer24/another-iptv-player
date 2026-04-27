@@ -180,19 +180,25 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
       _lastOpenedEpisode = episode;
     });
     
+    final queue = _episodes.map((e) => ContentItem(
+      e.episodeId,
+      e.title,
+      e.movieImage ?? widget.contentItem.imagePath,
+      ContentType.series,
+      containerExtension: e.containerExtension,
+      season: e.season,
+      seriesStream: widget.contentItem.seriesStream,
+    )).toList();
+
+    final currentIndex = _episodes.indexWhere((e) => e.episodeId == episode.episodeId);
+
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => TvExoPlayerScreen(
-          contentItem: ContentItem(
-            episode.episodeId,
-            episode.title,
-            episode.movieImage ?? widget.contentItem.imagePath,
-            ContentType.series,
-            containerExtension: episode.containerExtension,
-            season: episode.season,
-            seriesStream: widget.contentItem.seriesStream,
-          ),
+          contentItem: queue[currentIndex],
+          queue: queue,
+          currentIndex: currentIndex,
         ),
       ),
     );
@@ -244,8 +250,21 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFF0F1014),
-      body: Stack(
-        children: [
+      body: Focus(
+        autofocus: true,
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.escape ||
+                event.logicalKey == LogicalKeyboardKey.goBack ||
+                event.logicalKey == LogicalKeyboardKey.backspace) {
+              Navigator.of(context).pop();
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: Stack(
+          children: [
           // Background Image with Gradient
           Positioned.fill(
             child: widget.contentItem.imagePath.isNotEmpty
@@ -528,6 +547,7 @@ class _TvSeriesDetailScreenState extends State<TvSeriesDetailScreen> {
             ),
           ),
         ],
+      ),
       ),
     );
   }
