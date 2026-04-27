@@ -29,6 +29,7 @@ class UserPreferences {
   static const String _keySpeedUpOnLongPress = 'speed_up_on_long_press';
   static const String _keySeekOnDoubleTap = 'seek_on_double_tap';
   static const String _homeRailsKey = 'home_rails_config';
+  static const String _keyCurrentPlaylistJson = 'current_playlist_json';
 
   // Live TV settings
   static const String _keyLiveTvListStyle = 'live_tv_list_style';
@@ -428,6 +429,17 @@ class UserPreferences {
   static Future<void> setHasSeenWelcome(bool value) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_keyHasSeenWelcome, value);
+  }
+
+  static Future<void> setCurrentPlaylistJson(String json) async {
+    final prefs = await SharedPreferences.getInstance();
+    // Use the 'flutter.' prefix as SharedPreferences plugin does
+    await prefs.setString('flutter.$_keyCurrentPlaylistJson', json);
+  }
+
+  static Future<String?> getCurrentPlaylistJson() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('flutter.$_keyCurrentPlaylistJson');
   }
 
   // ── Sync session keys ──────────────────────────────────────────────

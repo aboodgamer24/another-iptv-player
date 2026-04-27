@@ -4,9 +4,7 @@ import 'package:another_iptv_player/repositories/iptv_repository.dart';
 import 'package:another_iptv_player/screens/playlist_screen.dart';
 
 import 'package:another_iptv_player/screens/welcome_screen.dart';
-import 'package:another_iptv_player/screens/tv/tv_welcome_screen.dart';
 
-import 'package:another_iptv_player/utils/platform_utils.dart';
 import 'package:flutter/material.dart';
 import '../../repositories/user_preferences.dart';
 import '../../services/app_state.dart';
@@ -101,8 +99,6 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
   @override
   Widget build(BuildContext context) {
     if (_showWelcome) {
-      debugPrint('[AppInitializer] Showing Welcome screen (TV: ${PlatformUtils.isTV})');
-      if (PlatformUtils.isTV) return const TvWelcomeScreen();
       return const WelcomeScreen();
     }
 
@@ -176,7 +172,7 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       debugPrint('[AppInitializer] No playlist found -> PlaylistScreen');
       return const PlaylistScreen();
     } else {
-      debugPrint('[AppInitializer] Navigating to MainNavigationScreen (TV: ${PlatformUtils.isTV})');
+      debugPrint('[AppInitializer] Navigating to MainNavigationScreen');
       final playlist = _lastPlaylist ?? Playlist(
         id: 'dummy',
         name: 'Test Playlist',

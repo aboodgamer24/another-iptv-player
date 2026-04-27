@@ -24,16 +24,7 @@ import 'mobile/mobile_favorites_screen.dart';
 import 'mobile/mobile_watch_later_screen.dart';
 import 'mobile/mobile_global_search_screen.dart';
 
-// TV Imports
-import 'tv/tv_shell_screen.dart';
-import 'tv/tv_home_screen.dart';
-import 'tv/tv_live_tv_screen.dart';
-import 'tv/tv_movies_screen.dart';
-import 'tv/tv_series_screen.dart';
-import 'tv/tv_favorites_screen.dart';
-import 'tv/tv_watch_later_screen.dart';
-import 'tv/tv_placeholder_screen.dart';
-import 'tv/tv_settings_screen.dart';
+
 
 
 class MainNavigationScreen extends StatefulWidget {
@@ -153,40 +144,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (PlatformUtils.isTV) {
-      return TvShellScreen(
-        selectedIndex: _selectedIndex,
-        onItemSelected: (i) {
-          setState(() {
-            _selectedIndex = i;
-            _loadedTabs.add(i);
-          });
-        },
-        items: const [
-          TvNavItem(icon: Icons.home_rounded, label: 'Home'),
-          TvNavItem(icon: Icons.live_tv_rounded, label: 'Live TV'),
-          TvNavItem(icon: Icons.movie_rounded, label: 'Movies'),
-          TvNavItem(icon: Icons.video_library, label: 'Series'),
-          TvNavItem(icon: Icons.favorite_rounded, label: 'Favorites'),
-          TvNavItem(icon: Icons.schedule_rounded, label: 'Watch Later'),
-          TvNavItem(icon: Icons.search_rounded, label: 'Search'),
-          TvNavItem(icon: Icons.settings_rounded, label: 'Settings'),
-        ],
-        child: IndexedStack(
-          index: _selectedIndex,
-          children: const [
-            TvHomeScreen(),
-            TvLiveTvScreen(),
-            TvMoviesScreen(),
-            TvSeriesScreen(),
-            TvFavoritesScreen(),
-            TvWatchLaterScreen(),
-            TvPlaceholderScreen(title: 'Search', accent: Colors.blue),
-            TvSettingsScreen(),
-          ],
-        ),
-      );
-    }
 
     final content = _buildContent();
 

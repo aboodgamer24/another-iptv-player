@@ -13,8 +13,6 @@ import '../screens/desktop/desktop_series_detail_screen.dart';
 import '../screens/mobile/mobile_movie_detail_screen.dart';
 import '../screens/mobile/mobile_series_detail_screen.dart';
 import '../screens/tv/tv_exo_player_screen.dart';
-import '../screens/tv/tv_movie_detail_screen.dart';
-import '../screens/tv/tv_series_detail_screen.dart';
 import 'package:provider/provider.dart';
 import '../controllers/xtream_code_home_controller.dart';
 
@@ -71,19 +69,6 @@ Future<void> navigateByContentType(
 
   switch (content.contentType) {
     case ContentType.liveStream:
-      if (PlatformUtils.isTV) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TvExoPlayerScreen(
-              contentItem: content,
-              queue: queue ?? [],
-              currentIndex: currentIndex ?? 0,
-            ),
-          ),
-        );
-        break;
-      }
       await Navigator.push(
         context,
         MaterialPageRoute(
@@ -92,30 +77,7 @@ Future<void> navigateByContentType(
         ),
       );
     case ContentType.vod:
-      if (PlatformUtils.isTV && isXtreamCode) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TvMovieDetailScreen(contentItem: content),
-          ),
-        );
-        break;
-      } else if (PlatformUtils.isTV) {
-        // Fallback for M3U movies on TV
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TvExoPlayerScreen(
-              contentItem: content,
-              queue: queue ?? [],
-              currentIndex: currentIndex ?? 0,
-            ),
-          ),
-        );
-        break;
-      }
-      
-      if (isMobile && isXtreamCode && !PlatformUtils.isTV) {
+      if (isMobile && isXtreamCode) {
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -123,7 +85,7 @@ Future<void> navigateByContentType(
                 wrapWithProvider(MobileMovieDetailScreen(contentItem: content)),
           ),
         );
-      } else if (desktop && isXtreamCode && !PlatformUtils.isTV) {
+      } else if (desktop && isXtreamCode) {
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -142,18 +104,8 @@ Future<void> navigateByContentType(
         );
       }
     case ContentType.series:
-      if (PlatformUtils.isTV && isXtreamCode) {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => TvSeriesDetailScreen(contentItem: content),
-          ),
-        );
-        break;
-      }
-      
       if (isXtreamCode) {
-        if (isMobile && !PlatformUtils.isTV) {
+        if (isMobile) {
           await Navigator.push(
             context,
             MaterialPageRoute(
@@ -162,7 +114,7 @@ Future<void> navigateByContentType(
               ),
             ),
           );
-        } else if (desktop && !PlatformUtils.isTV) {
+        } else if (desktop) {
           await Navigator.push(
             context,
             MaterialPageRoute(
