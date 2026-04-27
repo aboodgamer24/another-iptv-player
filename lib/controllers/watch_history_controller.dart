@@ -172,22 +172,7 @@ class WatchHistoryController extends ChangeNotifier {
         liveStream: liveStream,
       );
       if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            backgroundColor: Colors.black,
-            body: SafeArea(
-              child: SizedBox.expand(
-                child: PlayerWidget(
-                  key: ValueKey(history.streamId),
-                  contentItem: contentItem,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+      navigateByContentType(context, contentItem);
     } else if (isM3u) {
       final liveStream = await _database.getM3uItemsByIdAndPlaylist(
         AppState.currentPlaylist!.id,
@@ -201,22 +186,7 @@ class WatchHistoryController extends ChangeNotifier {
         m3uItem: liveStream,
       );
       if (!context.mounted) return;
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => Scaffold(
-            backgroundColor: Colors.black,
-            body: SafeArea(
-              child: SizedBox.expand(
-                child: PlayerWidget(
-                  key: ValueKey(history.streamId),
-                  contentItem: contentItem,
-                ),
-              ),
-            ),
-          ),
-        ),
-      );
+      navigateByContentType(context, contentItem);
     }
   }
 
@@ -266,28 +236,16 @@ class WatchHistoryController extends ChangeNotifier {
         AppState.currentPlaylist!.id,
       );
 
-      final seriesResponse = await AppState.xtreamCodeRepository!.getSeriesInfo(
-        episode!.seriesId,
-      );
-
       if (!context.mounted) return;
-      Navigator.push(
+      navigateByContentType(
         context,
-        MaterialPageRoute(
-          builder: (context) => EpisodeScreen(
-            seriesInfo: seriesResponse!.seriesInfo,
-            seasons: seriesResponse.seasons,
-            episodes: seriesResponse.episodes,
-            contentItem: ContentItem(
-              episode.episodeId.toString(),
-              history.title,
-              history.imagePath ?? "",
-              ContentType.series,
-              containerExtension: episode.containerExtension,
-              season: episode.season,
-            ),
-            watchHistory: history,
-          ),
+        ContentItem(
+          episode!.episodeId.toString(),
+          history.title,
+          history.imagePath ?? "",
+          ContentType.series,
+          containerExtension: episode.containerExtension,
+          season: episode.season,
         ),
       );
     } else if (isM3u) {
@@ -297,18 +255,14 @@ class WatchHistoryController extends ChangeNotifier {
       );
 
       if (!context.mounted) return;
-      Navigator.push(
+      navigateByContentType(
         context,
-        MaterialPageRoute(
-          builder: (context) => M3uPlayerScreen(
-            contentItem: ContentItem(
-              m3uItem!.id,
-              m3uItem.name ?? '',
-              m3uItem.tvgLogo ?? '',
-              m3uItem.contentType,
-              m3uItem: m3uItem,
-            ),
-          ),
+        ContentItem(
+          m3uItem!.id,
+          m3uItem.name ?? '',
+          m3uItem.tvgLogo ?? '',
+          m3uItem.contentType,
+          m3uItem: m3uItem,
         ),
       );
     }
