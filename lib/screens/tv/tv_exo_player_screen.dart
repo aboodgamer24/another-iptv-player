@@ -40,8 +40,10 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
   Timer? _watchHistoryTimer;
   late int _currentIndex;
   bool _showSubtitles = true;
+  SubtitleStyle _subtitleStyle = SubtitleStyle();
   
   static const _statsChannel = MethodChannel('com.aboodgamer24.iptv/video_stats');
+  static const _liveChannel = MethodChannel('com.aboodgamer24.iptv/live_playback');
   Map<String, dynamic>? _videoStats;
 
   Future<void> _loadVideoStats(String url) async {
@@ -50,6 +52,12 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
         'getVideoStats', {'url': url},
       );
       if (mounted && stats != null) setState(() => _videoStats = stats);
+    } catch (_) {}
+  }
+
+  Future<void> _applyLivePlaybackConfig() async {
+    try {
+      await _liveChannel.invokeMethod<Map>('getLiveLoadControlParams');
     } catch (_) {}
   }
 
@@ -108,6 +116,11 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
         if (history != null && history.watchDuration != null) {
           await _controller!.seekTo(history.watchDuration!);
         }
+      }
+
+      if (item.contentType == ContentType.liveStream) {
+        await _applyLivePlaybackConfig();
+        await _controller!.setPlaybackSpeed(1.0);
       }
 
       _controller!.addListener(_playerListener);
@@ -236,17 +249,19 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
                 return Align(
                   alignment: Alignment.bottomCenter,
                   child: Container(
-                    margin: const EdgeInsets.only(bottom: 90),
+                    margin: EdgeInsets.only(bottom: _subtitleStyle.bottomOffset),
                     padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-                    color: Colors.black.withOpacity(0.55),
+                    color: _subtitleStyle.backgroundColor.withValues(alpha: _subtitleStyle.backgroundOpacity),
                     child: Text(
                       text,
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w500,
-                        shadows: [Shadow(blurRadius: 4, color: Colors.black)],
+                      style: TextStyle(
+                        color: _subtitleStyle.textColor,
+                        fontSize: _subtitleStyle.fontSize,
+                        fontWeight: _subtitleStyle.bold ? FontWeight.bold : FontWeight.w500,
+                        shadows: _subtitleStyle.shadowBlur > 0
+                          ? [Shadow(blurRadius: _subtitleStyle.shadowBlur, color: Colors.black)]
+                          : null,
                       ),
                     ),
                   ),
@@ -262,6 +277,7 @@ class _TvExoPlayerScreenState extends State<TvExoPlayerScreen> {
             currentIndex: _currentIndex,
             onIndexChanged: _onIndexChanged,
             onSubtitleToggle: (enabled) => setState(() => _showSubtitles = enabled),
+            onSubtitleStyleChanged: (style) => setState(() => _subtitleStyle = style),
             videoStats: _videoStats,
           ),
         ],

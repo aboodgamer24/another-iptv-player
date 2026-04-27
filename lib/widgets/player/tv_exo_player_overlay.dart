@@ -7,6 +7,26 @@ import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart
 import 'package:another_iptv_player/models/content_type.dart';
 import 'package:another_iptv_player/models/playlist_content_model.dart';
 
+class SubtitleStyle {
+  double fontSize;
+  Color textColor;
+  Color backgroundColor;
+  double backgroundOpacity;
+  double bottomOffset;
+  bool bold;
+  double shadowBlur;
+
+  SubtitleStyle({
+    this.fontSize = 20.0,
+    this.textColor = Colors.white,
+    this.backgroundColor = Colors.black,
+    this.backgroundOpacity = 0.55,
+    this.bottomOffset = 90.0,
+    this.bold = false,
+    this.shadowBlur = 4.0,
+  });
+}
+
 class TvExoPlayerOverlay extends StatefulWidget {
   final VideoPlayerController controller;
   final XtreamCodeHomeController? homeController;
@@ -17,6 +37,7 @@ class TvExoPlayerOverlay extends StatefulWidget {
   final int currentIndex;
   final ValueChanged<int> onIndexChanged;
   final ValueChanged<bool>? onSubtitleToggle;
+  final ValueChanged<SubtitleStyle>? onSubtitleStyleChanged;
   final Map<String, dynamic>? videoStats;
 
   const TvExoPlayerOverlay({
@@ -30,6 +51,7 @@ class TvExoPlayerOverlay extends StatefulWidget {
     required this.currentIndex,
     required this.onIndexChanged,
     this.onSubtitleToggle,
+    this.onSubtitleStyleChanged,
     this.videoStats,
   });
 
@@ -47,6 +69,13 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   Duration _duration = Duration.zero;
   bool _playing = false;
   bool _subtitlesEnabled = true;
+  final SubtitleStyle _subtitleStyle = SubtitleStyle();
+  int _selectedSubtitleTrack = -1;
+
+  final List<Map<String, dynamic>> _subtitleTracks = [
+    {'id': -1, 'label': 'Default (External)', 'language': ''},
+    {'id': 0, 'label': 'Disable', 'language': ''},
+  ];
 
   final FocusNode _playPauseNode = FocusNode(debugLabel: 'exo-play-pause');
   final FocusNode _rewindNode = FocusNode(debugLabel: 'exo-rewind');
@@ -54,7 +83,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   final FocusNode _skipNextNode = FocusNode(debugLabel: 'exo-next');
   final FocusNode _skipPrevNode = FocusNode(debugLabel: 'exo-prev');
   
-  final List<FocusNode> _tabNodes = List.generate(3, (i) => FocusNode(debugLabel: 'exo-tab-$i'));
+  final List<FocusNode> _tabNodes = List.generate(4, (i) => FocusNode(debugLabel: 'exo-tab-$i'));
   final FocusNode _browseButtonNode = FocusNode(debugLabel: 'exo-browse-btn');
   final FocusNode _subtitleToggleNode = FocusNode(debugLabel: 'exo-subtitle-toggle');
   final FocusNode _subtitleNode = FocusNode(debugLabel: 'exo-subtitle');
@@ -64,23 +93,29 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   @override
   void initState() {
     super.initState();
-    
     widget.controller.addListener(_videoListener);
     
-    _resetHideTimer();
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _rootNode.requestFocus();
+      if (mounted) {
+        _rootNode.requestFocus();
+        setState(() => _showControls = true);
+        _resetHideTimer();
+      }
     });
   }
   
   void _videoListener() {
     if (!mounted) return;
+    final wasPlaying = _playing;
     setState(() {
       _position = widget.controller.value.position;
       _duration = widget.controller.value.duration;
       _playing = widget.controller.value.isPlaying;
     });
+    if (!wasPlaying && _playing && !_playPauseNode.hasFocus && !_showSidePanel) {
+      _playPauseNode.requestFocus();
+      _resetHideTimer();
+    }
   }
 
   @override
@@ -97,6 +132,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
       n.dispose();
     }
     _browseButtonNode.dispose();
+    _subtitleToggleNode.dispose();
     _subtitleNode.dispose();
     _infoCloseNode.dispose();
     _rootNode.dispose();
@@ -143,7 +179,9 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
       setState(() => _showControls = false);
       _rootNode.requestFocus();
     } else {
-      widget.onExit();
+      setState(() => _showControls = true);
+      _playPauseNode.requestFocus();
+      _resetHideTimer();
     }
   }
   
@@ -160,10 +198,9 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: !_showSidePanel && !_showControls,
+      canPop: false,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) return;
-        _handleBack();
+        if (!didPop) _handleBack();
       },
       child: Focus(
         focusNode: _rootNode,
@@ -184,7 +221,8 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
               return KeyEventResult.handled;
             }
             
-            if (event.logicalKey == LogicalKeyboardKey.arrowUp && !_showControls) {
+            if ((event.logicalKey == LogicalKeyboardKey.arrowUp ||
+                 event.logicalKey == LogicalKeyboardKey.arrowDown) && !_showControls) {
               setState(() => _showControls = true);
               _playPauseNode.requestFocus();
               return KeyEventResult.handled;
@@ -319,8 +357,13 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
                             icon: _subtitlesEnabled ? Icons.subtitles : Icons.subtitles_off,
                             focusNode: _subtitleToggleNode,
                             onPressed: () {
-                              setState(() => _subtitlesEnabled = !_subtitlesEnabled);
-                              widget.onSubtitleToggle?.call(_subtitlesEnabled);
+                              setState(() {
+                                _showSidePanel = true;
+                                _showControls = true;
+                                _activeTab = 3; // Subtitle tab
+                                _hideTimer?.cancel();
+                              });
+                              _tabNodes[3].requestFocus();
                             },
                           ),
                           _PlayerButton(
@@ -379,9 +422,10 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
-                  _TabButton(label: 'Info',     isSelected: _activeTab == 0, focusNode: _tabNodes[0], onFocused: () => setState(() => _activeTab = 0)),
-                  _TabButton(label: 'Channels', isSelected: _activeTab == 1, focusNode: _tabNodes[1], onFocused: () => setState(() => _activeTab = 1)),
-                  _TabButton(label: 'Episodes', isSelected: _activeTab == 2, focusNode: _tabNodes[2], onFocused: () => setState(() => _activeTab = 2)),
+                  _TabButton(label: 'Info',      isSelected: _activeTab == 0, focusNode: _tabNodes[0], onFocused: () => setState(() => _activeTab = 0)),
+                  _TabButton(label: 'Channels',  isSelected: _activeTab == 1, focusNode: _tabNodes[1], onFocused: () => setState(() => _activeTab = 1)),
+                  _TabButton(label: 'Episodes',  isSelected: _activeTab == 2, focusNode: _tabNodes[2], onFocused: () => setState(() => _activeTab = 2)),
+                  _TabButton(label: 'Subtitles', isSelected: _activeTab == 3, focusNode: _tabNodes[3], onFocused: () => setState(() => _activeTab = 3)),
                 ],
               ),
             ),
@@ -396,6 +440,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
                     _buildInfoTab(),
                     _buildListTab('Channels', widget.queue),
                     _buildListTab('Episodes', widget.queue),
+                    _buildSubtitleTab(),
                   ],
                 ),
               ),
@@ -417,7 +462,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
         children: [
           Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
-          _InfoRow(label: 'Type', value: isLiveStream ? 'Live Stream' : 'Video on Demand'),
+          _InfoRow(label: 'Type', value: isLiveStream ? 'Live Stream — Low Latency Mode' : 'Video on Demand'),
           if (widget.videoStats != null) ...[
             _InfoRow(
               label: 'Resolution',
@@ -528,6 +573,167 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
       },
     );
   }
+
+  Widget _buildSubtitleTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('TRACK', style: TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 1.2)),
+          const SizedBox(height: 8),
+          // Track list
+          ..._subtitleTracks.map((track) {
+            final isSelected = _selectedSubtitleTrack == track['id'];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 4),
+              child: FocusableControlBuilder(
+                onPressed: () {
+                  setState(() {
+                    _selectedSubtitleTrack = track['id'] as int;
+                    _subtitlesEnabled = track['id'] != 0;
+                  });
+                  widget.onSubtitleToggle?.call(_subtitlesEnabled);
+                },
+                builder: (context, state) {
+                  final isFocused = state.isFocused;
+                  return AnimatedContainer(
+                    duration: const Duration(milliseconds: 120),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: isFocused ? Colors.white : (isSelected ? Colors.white10 : Colors.transparent),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      children: [
+                        if (isSelected)
+                          Padding(
+                            padding: const EdgeInsets.only(right: 8),
+                            child: Icon(Icons.check, size: 16,
+                              color: isFocused ? Colors.black : Theme.of(context).colorScheme.primary),
+                          ),
+                        Expanded(
+                          child: Text(
+                            track['label'] as String,
+                            style: TextStyle(
+                              color: isFocused ? Colors.black : (isSelected ? Colors.white : Colors.white70),
+                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            );
+          }),
+
+          const SizedBox(height: 20),
+          const Divider(color: Colors.white12),
+          const SizedBox(height: 12),
+
+          const Text('STYLE', style: TextStyle(color: Colors.white38, fontSize: 12, letterSpacing: 1.2)),
+          const SizedBox(height: 8),
+
+          // Font size slider
+          _StyleSlider(
+            label: 'Font Size',
+            value: _subtitleStyle.fontSize,
+            min: 12,
+            max: 40,
+            divisions: 14,
+            displayValue: '${_subtitleStyle.fontSize.toInt()}px',
+            onChanged: (v) {
+              setState(() => _subtitleStyle.fontSize = v);
+              widget.onSubtitleStyleChanged?.call(_subtitleStyle);
+            },
+          ),
+
+          // Bottom offset slider
+          _StyleSlider(
+            label: 'Position',
+            value: _subtitleStyle.bottomOffset,
+            min: 20,
+            max: 200,
+            divisions: 18,
+            displayValue: '${_subtitleStyle.bottomOffset.toInt()}px',
+            onChanged: (v) {
+              setState(() => _subtitleStyle.bottomOffset = v);
+              widget.onSubtitleStyleChanged?.call(_subtitleStyle);
+            },
+          ),
+
+          // Background opacity slider
+          _StyleSlider(
+            label: 'BG Opacity',
+            value: _subtitleStyle.backgroundOpacity,
+            min: 0.0,
+            max: 1.0,
+            divisions: 10,
+            displayValue: '${(_subtitleStyle.backgroundOpacity * 100).toInt()}%',
+            onChanged: (v) {
+              setState(() => _subtitleStyle.backgroundOpacity = v);
+              widget.onSubtitleStyleChanged?.call(_subtitleStyle);
+            },
+          ),
+
+          // Shadow blur slider
+          _StyleSlider(
+            label: 'Shadow',
+            value: _subtitleStyle.shadowBlur,
+            min: 0,
+            max: 16,
+            divisions: 8,
+            displayValue: _subtitleStyle.shadowBlur == 0 ? 'Off' : '${_subtitleStyle.shadowBlur.toInt()}',
+            onChanged: (v) {
+              setState(() => _subtitleStyle.shadowBlur = v);
+              widget.onSubtitleStyleChanged?.call(_subtitleStyle);
+            },
+          ),
+
+          // Bold toggle
+          _StyleToggleRow(
+            label: 'Bold',
+            value: _subtitleStyle.bold,
+            onChanged: (v) {
+              setState(() => _subtitleStyle.bold = v);
+              widget.onSubtitleStyleChanged?.call(_subtitleStyle);
+            },
+          ),
+
+          const SizedBox(height: 12),
+          // Live preview
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.black,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Center(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                color: _subtitleStyle.backgroundColor.withValues(alpha: _subtitleStyle.backgroundOpacity),
+                child: Text(
+                  'Sample subtitle text',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: _subtitleStyle.textColor,
+                    fontSize: _subtitleStyle.fontSize.clamp(12, 28), // cap in preview
+                    fontWeight: _subtitleStyle.bold ? FontWeight.bold : FontWeight.normal,
+                    shadows: _subtitleStyle.shadowBlur > 0
+                      ? [Shadow(blurRadius: _subtitleStyle.shadowBlur, color: Colors.black)]
+                      : null,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _PlayerButton extends StatelessWidget {
@@ -551,25 +757,43 @@ class _PlayerButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       child: Focus(
         focusNode: focusNode,
-        onKeyEvent: onKeyEvent,
-        onFocusChange: (focused) {
-          // ignore: invalid_use_of_protected_member
-          (context as Element).markNeedsBuild();
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent &&
+              (event.logicalKey == LogicalKeyboardKey.select ||
+               event.logicalKey == LogicalKeyboardKey.enter ||
+               event.logicalKey == LogicalKeyboardKey.gameButtonA)) {
+            onPressed();
+            return KeyEventResult.handled;
+          }
+          if (onKeyEvent != null) {
+            final result = onKeyEvent!(node, event);
+            if (result != KeyEventResult.ignored) return result;
+          }
+          return KeyEventResult.ignored;
         },
-        child: FocusableControlBuilder(
-          onPressed: onPressed,
-          builder: (context, state) {
-            final isFocused = state.isFocused || focusNode.hasFocus;
-            return AnimatedContainer(
-              duration: const Duration(milliseconds: 150),
-              width: isLarge ? 64 : 48,
-              height: isLarge ? 64 : 48,
-              decoration: BoxDecoration(
-                color: isFocused ? Colors.white : Colors.white10,
-                shape: BoxShape.circle,
-                boxShadow: isFocused ? [const BoxShadow(color: Colors.white24, blurRadius: 10)] : null,
+        child: ListenableBuilder(
+          listenable: focusNode,
+          builder: (_, __) {
+            final isFocused = focusNode.hasFocus;
+            return GestureDetector(
+              onTap: onPressed,
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                width: isLarge ? 64 : 48,
+                height: isLarge ? 64 : 48,
+                decoration: BoxDecoration(
+                  color: isFocused ? Colors.white : Colors.white10,
+                  shape: BoxShape.circle,
+                  boxShadow: isFocused
+                    ? [const BoxShadow(color: Colors.white24, blurRadius: 10)]
+                    : null,
+                ),
+                child: Icon(
+                  icon,
+                  color: isFocused ? Colors.black : Colors.white,
+                  size: isLarge ? 32 : 24,
+                ),
               ),
-              child: Icon(icon, color: isFocused ? Colors.black : Colors.white, size: isLarge ? 32 : 24),
             );
           },
         ),
@@ -642,6 +866,106 @@ class _InfoRow extends StatelessWidget {
         children: [
           Text(label, style: const TextStyle(color: Colors.white38, fontSize: 14)),
           Text(value, style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500)),
+        ],
+      ),
+    );
+  }
+}
+
+class _StyleSlider extends StatelessWidget {
+  final String label;
+  final double value;
+  final double min, max;
+  final int divisions;
+  final String displayValue;
+  final ValueChanged<double> onChanged;
+
+  const _StyleSlider({
+    required this.label,
+    required this.value,
+    required this.min,
+    required this.max,
+    required this.divisions,
+    required this.displayValue,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+              Text(displayValue, style: const TextStyle(color: Colors.white70, fontSize: 13, fontWeight: FontWeight.w500)),
+            ],
+          ),
+          SliderTheme(
+            data: SliderTheme.of(context).copyWith(
+              activeTrackColor: Theme.of(context).colorScheme.primary,
+              inactiveTrackColor: Colors.white12,
+              thumbColor: Colors.white,
+              overlayColor: Colors.white12,
+              trackHeight: 3,
+            ),
+            child: Slider(
+              value: value.clamp(min, max),
+              min: min,
+              max: max,
+              divisions: divisions,
+              onChanged: onChanged,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _StyleToggleRow extends StatelessWidget {
+  final String label;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _StyleToggleRow({
+    required this.label,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.white54, fontSize: 13)),
+          FocusableControlBuilder(
+            onPressed: () => onChanged(!value),
+            builder: (ctx, state) => AnimatedContainer(
+              duration: const Duration(milliseconds: 120),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: value
+                    ? Theme.of(context).colorScheme.primary
+                    : (state.isFocused ? Colors.white : Colors.white10),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                value ? 'On' : 'Off',
+                style: TextStyle(
+                  color: value || state.isFocused ? Colors.white : Colors.white54,
+                  fontWeight: FontWeight.w500,
+                  fontSize: 13,
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
