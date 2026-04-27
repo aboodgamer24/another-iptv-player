@@ -1,37 +1,32 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:media_kit/media_kit.dart' hide PlayerState;
-import 'package:media_kit_video/media_kit_video.dart';
+import 'package:video_player/video_player.dart';
 import 'package:focusable_control_builder/focusable_control_builder.dart';
 import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
 import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/services/player_state.dart' as AppPlayerState;
-import 'package:another_iptv_player/services/event_bus.dart';
 
-class TvPlayerOverlay extends StatefulWidget {
-  final Player player;
-  final VideoController controller;
+class TvExoPlayerOverlay extends StatefulWidget {
+  final VideoPlayerController controller;
   final XtreamCodeHomeController? homeController;
-  final VoidCallback? onFullscreenOverride;
-  final bool isInline;
   final ContentType? contentType;
+  final String title;
+  final VoidCallback onExit;
 
-  const TvPlayerOverlay({
+  const TvExoPlayerOverlay({
     super.key,
-    required this.player,
     required this.controller,
     this.homeController,
-    this.onFullscreenOverride,
-    this.isInline = false,
     this.contentType,
+    required this.title,
+    required this.onExit,
   });
 
   @override
-  State<TvPlayerOverlay> createState() => _TvPlayerOverlayState();
+  State<TvExoPlayerOverlay> createState() => _TvExoPlayerOverlayState();
 }
 
-class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
+class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
   bool _showControls = true;
   bool _showSidePanel = false;
   int _activeTab = 0; // 0: Info, 1: Channels, 2: Episodes
@@ -41,53 +36,44 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
   Duration _duration = Duration.zero;
   bool _playing = false;
 
-  late StreamSubscription _positionSub;
-  late StreamSubscription _durationSub;
-  late StreamSubscription _playingSub;
-
-  final FocusNode _playPauseNode = FocusNode(debugLabel: 'player-play-pause');
-  final FocusNode _rewindNode = FocusNode(debugLabel: 'player-rewind');
-  final FocusNode _fastForwardNode = FocusNode(debugLabel: 'player-ff');
-  final FocusNode _skipNextNode = FocusNode(debugLabel: 'player-next');
-  final FocusNode _skipPrevNode = FocusNode(debugLabel: 'player-prev');
+  final FocusNode _playPauseNode = FocusNode(debugLabel: 'exo-play-pause');
+  final FocusNode _rewindNode = FocusNode(debugLabel: 'exo-rewind');
+  final FocusNode _fastForwardNode = FocusNode(debugLabel: 'exo-ff');
+  final FocusNode _skipNextNode = FocusNode(debugLabel: 'exo-next');
+  final FocusNode _skipPrevNode = FocusNode(debugLabel: 'exo-prev');
   
-  final List<FocusNode> _tabNodes = List.generate(3, (i) => FocusNode(debugLabel: 'player-tab-$i'));
-  final FocusNode _browseButtonNode = FocusNode(debugLabel: 'player-browse-btn');
-  final FocusNode _subtitleNode = FocusNode(debugLabel: 'player-subtitle');
-  final FocusNode _infoCloseNode = FocusNode(debugLabel: 'player-info-close');
-  final FocusNode _rootNode = FocusNode(debugLabel: 'player-root');
+  final List<FocusNode> _tabNodes = List.generate(3, (i) => FocusNode(debugLabel: 'exo-tab-$i'));
+  final FocusNode _browseButtonNode = FocusNode(debugLabel: 'exo-browse-btn');
+  final FocusNode _subtitleNode = FocusNode(debugLabel: 'exo-subtitle');
+  final FocusNode _infoCloseNode = FocusNode(debugLabel: 'exo-info-close');
+  final FocusNode _rootNode = FocusNode(debugLabel: 'exo-root');
 
   @override
   void initState() {
     super.initState();
     
-    _position = widget.player.state.position;
-    _duration = widget.player.state.duration;
-    _playing = widget.player.state.playing;
-
-    _positionSub = widget.player.stream.position.listen((pos) {
-      if (mounted) setState(() => _position = pos);
-    });
-    _durationSub = widget.player.stream.duration.listen((dur) {
-      if (mounted) setState(() => _duration = dur);
-    });
-    _playingSub = widget.player.stream.playing.listen((isPlaying) {
-      if (mounted) setState(() => _playing = isPlaying);
-    });
-
+    widget.controller.addListener(_videoListener);
+    
     _resetHideTimer();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _rootNode.requestFocus();
     });
   }
+  
+  void _videoListener() {
+    if (!mounted) return;
+    setState(() {
+      _position = widget.controller.value.position;
+      _duration = widget.controller.value.duration;
+      _playing = widget.controller.value.isPlaying;
+    });
+  }
 
   @override
   void dispose() {
     _hideTimer?.cancel();
-    _positionSub.cancel();
-    _durationSub.cancel();
-    _playingSub.cancel();
+    widget.controller.removeListener(_videoListener);
 
     _playPauseNode.dispose();
     _rewindNode.dispose();
@@ -144,7 +130,7 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
       setState(() => _showControls = false);
       _rootNode.requestFocus();
     } else {
-      Navigator.of(context, rootNavigator: true).pop();
+      widget.onExit();
     }
   }
   
@@ -169,7 +155,7 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
       child: Focus(
         focusNode: _rootNode,
         autofocus: true,
-        debugLabel: 'player-overlay-root-focus',
+        debugLabel: 'exo-overlay-root-focus',
         onKeyEvent: (node, event) {
           if (event is KeyDownEvent) {
             final isExitKey = event.logicalKey == LogicalKeyboardKey.backspace || 
@@ -192,7 +178,7 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
             }
 
             if (event.logicalKey == LogicalKeyboardKey.select && !_showControls && !_showSidePanel) {
-              widget.player.playOrPause();
+              _playing ? widget.controller.pause() : widget.controller.play();
               _onActivity();
               return KeyEventResult.handled;
             }
@@ -218,7 +204,7 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
   }
 
   Widget _buildControlsOverlay() {
-    final title = AppPlayerState.PlayerState.title ?? 'Unknown';
+    final title = widget.title;
     final isLiveStream = widget.contentType == ContentType.liveStream;
 
     return AnimatedPositioned(
@@ -298,36 +284,26 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
                         children: [
                           if (!isLiveStream)
                             _PlayerButton(
-                              icon: Icons.skip_previous,
-                              focusNode: _skipPrevNode,
-                              onPressed: () => EventBus().emit('player_content_item_index_changed', AppPlayerState.PlayerState.currentIndex - 1),
-                            ),
-                          if (!isLiveStream)
-                            _PlayerButton(
                               icon: Icons.replay_10,
                               focusNode: _rewindNode,
-                              onPressed: () => widget.player.seek(_position - const Duration(seconds: 10)),
+                              onPressed: () => widget.controller.seekTo(_position - const Duration(seconds: 10)),
                             ),
                           _PlayerButton(
                             icon: _playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
                             focusNode: _playPauseNode,
                             isLarge: true,
-                            onPressed: widget.player.playOrPause,
+                            onPressed: () {
+                              _playing ? widget.controller.pause() : widget.controller.play();
+                            },
                           ),
                           if (!isLiveStream)
                             _PlayerButton(
                               icon: Icons.forward_10,
                               focusNode: _fastForwardNode,
-                              onPressed: () => widget.player.seek(_position + const Duration(seconds: 10)),
-                            ),
-                          if (!isLiveStream)
-                            _PlayerButton(
-                              icon: Icons.skip_next,
-                              focusNode: _skipNextNode,
-                              onPressed: () => EventBus().emit('player_content_item_index_changed', AppPlayerState.PlayerState.currentIndex + 1),
+                              onPressed: () => widget.controller.seekTo(_position + const Duration(seconds: 10)),
                             ),
                           _PlayerButton(
-                            icon: Icons.subtitles,
+                            icon: Icons.info_outline,
                             focusNode: _subtitleNode,
                             onPressed: _toggleSidePanel,
                             onKeyEvent: (node, event) {
@@ -388,18 +364,6 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
                     focusNode: _tabNodes[0],
                     onFocused: () => setState(() => _activeTab = 0),
                   ),
-                  _TabButton(
-                    label: 'Channels',
-                    isSelected: _activeTab == 1,
-                    focusNode: _tabNodes[1],
-                    onFocused: () => setState(() => _activeTab = 1),
-                  ),
-                  _TabButton(
-                    label: 'Episodes',
-                    isSelected: _activeTab == 2,
-                    focusNode: _tabNodes[2],
-                    onFocused: () => setState(() => _activeTab = 2),
-                  ),
                 ],
               ),
             ),
@@ -412,8 +376,6 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
                   index: _activeTab,
                   children: [
                     _buildInfoTab(),
-                    _buildListTab('Channels', AppPlayerState.PlayerState.queue),
-                    _buildListTab('Episodes', AppPlayerState.PlayerState.queue),
                   ],
                 ),
               ),
@@ -425,7 +387,7 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
   }
 
   Widget _buildInfoTab() {
-    final title = AppPlayerState.PlayerState.title ?? 'Unknown';
+    final title = widget.title;
     final isLiveStream = widget.contentType == ContentType.liveStream;
     
     return Padding(
@@ -436,10 +398,10 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
           Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 16),
           _InfoRow(label: 'Type', value: isLiveStream ? 'Live Stream' : 'Video on Demand'),
-          const _InfoRow(label: 'Codec', value: 'Auto'),
+          const _InfoRow(label: 'Engine', value: 'ExoPlayer (Android)'),
           const SizedBox(height: 24),
           const Text(
-            'Enjoy your content powered by media_kit.',
+            'Powered by standard ExoPlayer for robust playback on Android TV.',
             style: TextStyle(color: Colors.white54, fontSize: 14),
           ),
           const Spacer(),
@@ -478,67 +440,6 @@ class _TvPlayerOverlayState extends State<TvPlayerOverlay> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildListTab(String type, List<dynamic>? items) {
-    if (items == null || items.isEmpty) {
-      return Center(
-        child: Text('No $type available', style: const TextStyle(color: Colors.white54)),
-      );
-    }
-    
-    return ListView.builder(
-      itemCount: items.length,
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-      itemBuilder: (context, index) {
-        final item = items[index];
-        final name = item.name ?? 'Item ${index + 1}';
-        final isSelected = index == AppPlayerState.PlayerState.currentIndex;
-        
-        return Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4),
-          child: FocusableControlBuilder(
-            onPressed: () {
-              EventBus().emit('player_content_item_index_changed', index);
-            },
-            builder: (context, state) {
-              final isFocused = state.isFocused;
-              return AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: isFocused ? Colors.white : (isSelected ? Theme.of(context).colorScheme.primary.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.05)),
-                  borderRadius: BorderRadius.circular(8),
-                  border: isFocused ? Border.all(color: Colors.white, width: 2) : (isSelected ? Border.all(color: Theme.of(context).colorScheme.primary, width: 1) : null),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      isSelected ? Icons.play_arrow_rounded : Icons.play_circle_outline,
-                      color: isFocused ? Colors.black : (isSelected ? Theme.of(context).colorScheme.primary : Colors.white24),
-                      size: 24,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        name,
-                        style: TextStyle(
-                          color: isFocused ? Colors.black : Colors.white,
-                          fontWeight: isFocused ? FontWeight.bold : (isSelected ? FontWeight.bold : FontWeight.normal),
-                          fontSize: 14,
-                        ),
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        );
-      },
     );
   }
 }

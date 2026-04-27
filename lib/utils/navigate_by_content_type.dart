@@ -12,7 +12,9 @@ import '../screens/desktop/desktop_movie_detail_screen.dart';
 import '../screens/desktop/desktop_series_detail_screen.dart';
 import '../screens/mobile/mobile_movie_detail_screen.dart';
 import '../screens/mobile/mobile_series_detail_screen.dart';
-import '../screens/tv/tv_player_screen.dart';
+import '../screens/tv/tv_exo_player_screen.dart';
+import '../screens/tv/tv_movie_detail_screen.dart';
+import '../screens/tv/tv_series_detail_screen.dart';
 import 'package:provider/provider.dart';
 import '../controllers/xtream_code_home_controller.dart';
 
@@ -45,19 +47,6 @@ Future<void> navigateByContentType(
   if (isM3u &&
       content.m3uItem != null &&
       content.contentType != ContentType.series) {
-    if (PlatformUtils.isTV) {
-      await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => TvPlayerScreen(
-            title: content.name,
-            streamUrl: null,
-          ),
-        ),
-      );
-      return;
-    }
-
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -84,10 +73,7 @@ Future<void> navigateByContentType(
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TvPlayerScreen(
-              title: content.name,
-              streamUrl: null,
-            ),
+            builder: (context) => TvExoPlayerScreen(contentItem: content),
           ),
         );
         break;
@@ -100,20 +86,26 @@ Future<void> navigateByContentType(
         ),
       );
     case ContentType.vod:
-      if (PlatformUtils.isTV) {
+      if (PlatformUtils.isTV && isXtreamCode) {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TvPlayerScreen(
-              title: content.name,
-              streamUrl: null,
-            ),
+            builder: (context) => TvMovieDetailScreen(contentItem: content),
+          ),
+        );
+        break;
+      } else if (PlatformUtils.isTV) {
+        // Fallback for M3U movies on TV
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => TvExoPlayerScreen(contentItem: content),
           ),
         );
         break;
       }
-
-      if (isMobile && isXtreamCode) {
+      
+      if (isMobile && isXtreamCode && !PlatformUtils.isTV) {
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -121,7 +113,7 @@ Future<void> navigateByContentType(
                 wrapWithProvider(MobileMovieDetailScreen(contentItem: content)),
           ),
         );
-      } else if (desktop && isXtreamCode) {
+      } else if (desktop && isXtreamCode && !PlatformUtils.isTV) {
         await Navigator.push(
           context,
           MaterialPageRoute(
@@ -140,21 +132,18 @@ Future<void> navigateByContentType(
         );
       }
     case ContentType.series:
-      if (PlatformUtils.isTV) {
+      if (PlatformUtils.isTV && isXtreamCode) {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => TvPlayerScreen(
-              title: content.name,
-              streamUrl: null,
-            ),
+            builder: (context) => TvSeriesDetailScreen(contentItem: content),
           ),
         );
         break;
       }
-
+      
       if (isXtreamCode) {
-        if (isMobile) {
+        if (isMobile && !PlatformUtils.isTV) {
           await Navigator.push(
             context,
             MaterialPageRoute(
@@ -163,7 +152,7 @@ Future<void> navigateByContentType(
               ),
             ),
           );
-        } else if (desktop) {
+        } else if (desktop && !PlatformUtils.isTV) {
           await Navigator.push(
             context,
             MaterialPageRoute(
@@ -185,8 +174,7 @@ Future<void> navigateByContentType(
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) =>
-                wrapWithProvider(M3uSeriesScreen(contentItem: content)),
+            builder: (context) => M3uSeriesScreen(contentItem: content),
           ),
         );
       }

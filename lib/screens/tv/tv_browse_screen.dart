@@ -282,6 +282,10 @@ class _TvBrowseScreenState extends State<TvBrowseScreen> {
                 focusNode: _itemNodes[index],
                 onKeyEvent: (node, event) {
                   if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.select) {
+                      widget.onPlayItem(context, item);
+                      return KeyEventResult.handled;
+                    }
                     if (event.logicalKey == LogicalKeyboardKey.arrowLeft && index % 5 == 0) {
                       _goToCategories();
                       return KeyEventResult.handled;

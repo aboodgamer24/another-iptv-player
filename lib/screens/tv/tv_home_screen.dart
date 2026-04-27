@@ -81,10 +81,19 @@ class _TvHomeScreenState extends State<TvHomeScreen> {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+      body: Focus(
+        onKeyEvent: (node, event) {
+          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            if (recommendations.isEmpty) {
+              return KeyEventResult.handled;
+            }
+          }
+          return KeyEventResult.ignored;
+        },
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // ── HERO BANNER ──────────────────────────────────────────────
             _HeroBanner(
@@ -122,14 +131,15 @@ class _TvHomeScreenState extends State<TvHomeScreen> {
                         onPlay: () => navigateByContentType(context, item),
                       );
                     },
-                  ),
-                ),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+                  ), // ListView.builder
+                ), // FocusTraversalGroup
+              ), // SizedBox
+            ], // if
+          ], // children
+        ), // Column
+      ), // SingleChildScrollView
+      ), // Focus
+    ); // Scaffold
   }
 }
 
@@ -225,6 +235,13 @@ class _HeroBanner extends StatelessWidget {
                       const SizedBox(height: 24),
                       Focus(
                         focusNode: focusNode,
+                        onKeyEvent: (node, event) {
+                          if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.select) {
+                            onPlay();
+                            return KeyEventResult.handled;
+                          }
+                          return KeyEventResult.ignored;
+                        },
                         child: FocusableControlBuilder(
                           autoFocus: true,
                           onPressed: onPlay,
@@ -304,11 +321,15 @@ class _HomeCard extends StatelessWidget {
       child: Focus(
         focusNode: focusNode,
         onKeyEvent: (node, event) {
-          if (event is KeyDownEvent &&
-              event.logicalKey == LogicalKeyboardKey.arrowLeft &&
-              index == 0) {
-            Actions.maybeInvoke(context, const MoveToRailIntent());
-            return KeyEventResult.handled;
+          if (event is KeyDownEvent) {
+            if (event.logicalKey == LogicalKeyboardKey.select) {
+              onPlay();
+              return KeyEventResult.handled;
+            }
+            if (event.logicalKey == LogicalKeyboardKey.arrowLeft && index == 0) {
+              Actions.maybeInvoke(context, const MoveToRailIntent());
+              return KeyEventResult.handled;
+            }
           }
           return KeyEventResult.ignored;
         },

@@ -401,6 +401,10 @@ class _TvLiveTvScreenState extends State<TvLiveTvScreen> {
                     },
                     onKeyEvent: (node, event) {
                       if (event is KeyDownEvent) {
+                        if (event.logicalKey == LogicalKeyboardKey.select) {
+                          navigateByContentType(context, channel);
+                          return KeyEventResult.handled;
+                        }
                         if (event.logicalKey == LogicalKeyboardKey.arrowLeft || event.logicalKey == LogicalKeyboardKey.goBack) {
                           _goToChannels();
                           return KeyEventResult.handled;
