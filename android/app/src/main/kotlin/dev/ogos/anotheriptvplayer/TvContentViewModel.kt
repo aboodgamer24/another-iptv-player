@@ -29,10 +29,10 @@ class TvContentViewModel : ViewModel() {
                         seriesCategories = seriesCats.map { TvCategory(it.category_id, it.category_name) }
                     )
                     
-                    // Load initial data for first categories
-                    if (liveCats.isNotEmpty()) loadLiveChannels(liveCats[0].category_id)
-                    if (vodCats.isNotEmpty()) loadVodMovies(vodCats[0].category_id)
-                    if (seriesCats.isNotEmpty()) loadSeries(seriesCats[0].category_id)
+                    // Load initial data for first 5 categories in parallel
+                    liveCats.take(5).forEach { loadLiveChannels(it.category_id) }
+                    vodCats.take(5).forEach { loadVodMovies(it.category_id) }
+                    seriesCats.take(5).forEach { loadSeries(it.category_id) }
                     
                 } catch (e: Exception) {
                     _state.value = _state.value.copy(isLoading = false)

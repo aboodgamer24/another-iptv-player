@@ -37,7 +37,18 @@ fun TvLiveTvScreen() {
     // Set initial category
     LaunchedEffect(state.liveCategories) {
         if (selectedCategoryId == null && state.liveCategories.isNotEmpty()) {
-            selectedCategoryId = state.liveCategories[0].id
+            val firstId = state.liveCategories[0].id
+            selectedCategoryId = firstId
+            contentVm.loadLiveChannels(firstId)
+        }
+    }
+
+    // Load channels when category changes
+    LaunchedEffect(selectedCategoryId) {
+        selectedCategoryId?.let { id ->
+            if (state.liveChannels[id].isNullOrEmpty()) {
+                contentVm.loadLiveChannels(id)
+            }
         }
     }
 
