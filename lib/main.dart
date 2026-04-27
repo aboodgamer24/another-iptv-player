@@ -113,7 +113,7 @@ class MyApp extends StatelessWidget {
         // Wrap the home inside a Builder so FocusTraversalGroup is
         // inside MaterialApp's own FocusScope, not outside it
         home: KeyboardListener(
-          focusNode: FocusNode(),
+          focusNode: FocusNode(skipTraversal: true),
           autofocus: true,
           onKeyEvent: (e) {
             if (e is KeyDownEvent) {

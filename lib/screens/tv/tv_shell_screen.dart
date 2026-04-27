@@ -97,6 +97,10 @@ class _TvShellScreenState extends State<TvShellScreen> {
         if (Navigator.of(context).canPop()) { 
           debugPrint('[TvShell] Navigator popping');
           Navigator.of(context).pop(); 
+          // After popping, ensure focus returns to something visible in the shell
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) _goToRail();
+          });
           return; 
         }
         if (_railExpanded) { 

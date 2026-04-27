@@ -91,6 +91,11 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
   }
 
   void _selectFlow(TvFlow flow) {
+    if (flow == TvFlow.guest) {
+      _continueAsGuest();
+      return;
+    }
+
     setState(() {
       _currentFlow = flow;
       _currentStep = 0;
@@ -104,16 +109,18 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
   }
 
   void _focusFirstFieldOfFlow(TvFlow flow) {
+    if (flow == TvFlow.guest) return;
     Timer(const Duration(milliseconds: 350), () {
-      if (flow == TvFlow.guest) {
-        FocusScope.of(context).requestFocus(_fieldNodes['submit']);
-      } else {
-        FocusScope.of(context).requestFocus(_fieldNodes['serverUrl']);
-      }
+      FocusScope.of(context).requestFocus(_fieldNodes['serverUrl']);
     });
   }
 
   void _goBack() {
+    if (_currentFlow == TvFlow.none) {
+      _showExitConfirmation();
+      return;
+    }
+
     if (_currentStep > 0) {
       _clearStepsFrom(_currentStep);
       setState(() {
@@ -130,6 +137,43 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
       _buttonsController.forward();
       FocusScope.of(context).requestFocus(_loginBtnNode);
     }
+  }
+
+  void _showExitConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: const Color(0xFF1A1A1A),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Exit Application?', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+        content: const Text(
+          'Are you sure you want to close the app?',
+          style: TextStyle(color: Colors.white70, fontSize: 18),
+        ),
+        actionsPadding: const EdgeInsets.all(20),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel', style: TextStyle(color: Colors.white54, fontSize: 18)),
+          ),
+          const SizedBox(width: 12),
+          ElevatedButton(
+            onPressed: () => SystemNavigator.pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+            child: const Text('Exit', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    ).then((_) {
+      // Restore focus to the main menu when dialog is closed
+      if (mounted && _currentFlow == TvFlow.none) {
+        FocusScope.of(context).requestFocus(_loginBtnNode);
+      }
+    });
   }
 
   void _clearStepsFrom(int stepIndex) {
@@ -156,7 +200,11 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
     final flowSteps = _getStepsForFlow(_currentFlow);
     if (step < flowSteps.length) {
       final fieldKey = flowSteps[step].key;
-      FocusScope.of(context).requestFocus(_fieldNodes[fieldKey]);
+      Future.delayed(const Duration(milliseconds: 100), () {
+        if (mounted) {
+          FocusScope.of(context).requestFocus(_fieldNodes[fieldKey]);
+        }
+      });
     }
   }
 
@@ -286,24 +334,30 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
   }
 
   Future<void> _continueAsGuest() async {
-    await UserPreferences.setHasSeenWelcome(true);
     if (!mounted) return;
-    Navigator.pushReplacement(context, fadeRoute(builder: (c) => const PlaylistScreen()));
+    Navigator.push(context, fadeRoute(builder: (c) => const PlaylistScreen()));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFF0F0F0F),
-      body: Shortcuts(
-        shortcuts: <LogicalKeySet, Intent>{
-          LogicalKeySet(LogicalKeyboardKey.escape): const _BackIntent(),
-          LogicalKeySet(LogicalKeyboardKey.backspace): const _BackIntent(),
-        },
-        child: Actions(
-          actions: <Type, Action<Intent>>{
-            _BackIntent: CallbackAction<_BackIntent>(onInvoke: (_) => _goBack()),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (didPop) return;
+        _goBack();
+      },
+      child: Scaffold(
+        backgroundColor: const Color(0xFF0F0F0F),
+        body: Shortcuts(
+          shortcuts: <LogicalKeySet, Intent>{
+            LogicalKeySet(LogicalKeyboardKey.escape): const _BackIntent(),
+            LogicalKeySet(LogicalKeyboardKey.backspace): const _BackIntent(),
+            LogicalKeySet(LogicalKeyboardKey.goBack): const _BackIntent(),
           },
+          child: Actions(
+            actions: <Type, Action<Intent>>{
+              _BackIntent: CallbackAction<_BackIntent>(onInvoke: (_) => _goBack()),
+            },
           child: Stack(
             children: [
               // Logo Block
@@ -316,7 +370,10 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
                     right: (MediaQuery.of(context).size.width / 2) * slideValue,
                     top: 0,
                     bottom: 0,
-                    child: Center(child: child),
+                    child: Align(
+                      alignment: const Alignment(0, -0.4), // Move up more
+                      child: child,
+                    ),
                   );
                 },
                 child: _LogoBlock(),
@@ -361,8 +418,9 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildChoiceButtons() {
     return Row(
@@ -418,72 +476,10 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
             ),
           ),
           const SizedBox(height: 32),
-
           Expanded(
-            child: _currentFlow == TvFlow.guest ? _buildGuestFlow() : _buildStepFlow(),
+            child: _buildStepFlow(),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildGuestFlow() {
-    return Center(
-      child: Card(
-        color: Colors.white.withValues(alpha: 0.05),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(Icons.person_outline_rounded, size: 80, color: Theme.of(context).primaryColor),
-              const SizedBox(height: 24),
-              const Text(
-                'Continue as Guest',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                'You can sign in anytime from Settings → Account',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 16, color: Colors.white70),
-              ),
-              const SizedBox(height: 24),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.info_outline, size: 18, color: Colors.amber),
-                    SizedBox(width: 8),
-                    Text(
-                      'Your data won\'t be backed up',
-                      style: TextStyle(color: Colors.amber, fontSize: 14, fontWeight: FontWeight.w500),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 40),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton(
-                  focusNode: _fieldNodes['submit'],
-                  onPressed: _continueAsGuest,
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 20),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-                  ),
-                  child: const Text('Continue →', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -492,37 +488,39 @@ class _TvWelcomeScreenState extends State<TvWelcomeScreen> with TickerProviderSt
     final steps = _getStepsForFlow(_currentFlow);
     if (steps.isEmpty) return const SizedBox.shrink();
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          for (int i = 0; i < steps.length; i++) ...[
-            if (i <= _currentStep)
-              _TvFieldStep(
-                step: steps[i],
-                isActive: i == _currentStep,
-                isLocked: i < _currentStep,
-                controller: _controllers[steps[i].key]!,
-                focusNode: _fieldNodes[steps[i].key]!,
-                btnFocusNode: i == steps.length - 1 ? _fieldNodes['submit'] : _fieldNodes['next'],
-                isSubmitting: _isLoading,
-                errorMessage: i == _currentStep ? _errorMessage : null,
-                shakeAnimation: _shakeController,
-                isPasswordVisible: _isPasswordVisible,
-                onTogglePassword: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
-                onNext: _advanceOrSubmit,
-                onEdit: () {
-                  _clearStepsFrom(i + 1);
-                  setState(() {
-                    _currentStep = i;
-                    _errorMessage = null;
-                  });
-                  _focusFieldForStep(i);
-                },
-              ),
-            if (i < _currentStep) const SizedBox(height: 16),
+    return FocusTraversalGroup(
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (int i = 0; i < steps.length; i++) ...[
+              if (i <= _currentStep)
+                _TvFieldStep(
+                  step: steps[i],
+                  isActive: i == _currentStep,
+                  isLocked: i < _currentStep,
+                  controller: _controllers[steps[i].key]!,
+                  focusNode: _fieldNodes[steps[i].key]!,
+                  btnFocusNode: i == steps.length - 1 ? _fieldNodes['submit'] : _fieldNodes['next'],
+                  isSubmitting: _isLoading,
+                  errorMessage: i == _currentStep ? _errorMessage : null,
+                  shakeAnimation: _shakeController,
+                  isPasswordVisible: _isPasswordVisible,
+                  onTogglePassword: () => setState(() => _isPasswordVisible = !_isPasswordVisible),
+                  onNext: _advanceOrSubmit,
+                  onEdit: () {
+                    _clearStepsFrom(i + 1);
+                    setState(() {
+                      _currentStep = i;
+                      _errorMessage = null;
+                    });
+                    _focusFieldForStep(i);
+                  },
+                ),
+              if (i < _currentStep) const SizedBox(height: 16),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -735,31 +733,56 @@ class _TvFieldStep extends StatelessWidget {
               ]).animate(shakeAnimation).value;
               return Transform.translate(offset: Offset(shake, 0), child: child);
             },
-            child: TextField(
-              controller: controller,
-              focusNode: focusNode,
-              obscureText: step.isPassword && !isPasswordVisible,
-              keyboardType: step.keyboardType,
-              style: const TextStyle(fontSize: 18, color: Colors.white),
-              decoration: InputDecoration(
-                hintText: step.hint,
-                prefixIcon: Icon(step.icon, color: Colors.white54),
-                suffixIcon: step.isPassword
-                    ? IconButton(
-                        icon: Icon(isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: Colors.white54),
-                        onPressed: onTogglePassword,
-                      )
-                    : null,
-                filled: true,
-                fillColor: Colors.white.withValues(alpha: 0.05),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent) {
+                  if (event.logicalKey == LogicalKeyboardKey.select) {
+                    FocusScope.of(context).requestFocus(focusNode);
+                    return KeyEventResult.handled;
+                  }
+                  if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+                    if (btnFocusNode != null) {
+                      FocusScope.of(context).requestFocus(btnFocusNode);
+                      return KeyEventResult.handled;
+                    }
+                  }
+                  if (event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                    // Try to move to the previous step/chip
+                    FocusScope.of(context).focusInDirection(TraversalDirection.up);
+                    return KeyEventResult.handled;
+                  }
+                }
+                return KeyEventResult.ignored;
+              },
+              child: TextField(
+                controller: controller,
+                focusNode: focusNode,
+                onTap: () {
+                  FocusScope.of(context).requestFocus(focusNode);
+                },
+                obscureText: step.isPassword && !isPasswordVisible,
+                keyboardType: step.keyboardType,
+                style: const TextStyle(fontSize: 18, color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: step.hint,
+                  prefixIcon: Icon(step.icon, color: Colors.white54),
+                  suffixIcon: step.isPassword
+                      ? IconButton(
+                          icon: Icon(isPasswordVisible ? Icons.visibility_off : Icons.visibility, color: Colors.white54),
+                          onPressed: onTogglePassword,
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: Colors.white.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(14), borderSide: BorderSide.none),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                onSubmitted: (_) => onNext(),
               ),
-              onSubmitted: (_) => onNext(),
             ),
           ),
           if (errorMessage != null) ...[
@@ -784,19 +807,28 @@ class _TvFieldStep extends StatelessWidget {
           const SizedBox(height: 24),
           SizedBox(
             width: double.infinity,
-            child: FilledButton(
-              focusNode: btnFocusNode,
-              onPressed: isSubmitting ? null : onNext,
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+            child: Focus(
+              onKeyEvent: (node, event) {
+                if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.arrowUp) {
+                  FocusScope.of(context).requestFocus(focusNode);
+                  return KeyEventResult.handled;
+                }
+                return KeyEventResult.ignored;
+              },
+              child: FilledButton(
+                focusNode: btnFocusNode,
+                onPressed: isSubmitting ? null : onNext,
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                ),
+                child: isSubmitting
+                    ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3))
+                    : Text(
+                        step.submitLabel ?? 'Next →',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
               ),
-              child: isSubmitting
-                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(strokeWidth: 3))
-                  : Text(
-                      step.submitLabel ?? 'Next →',
-                      style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
             ),
           ),
         ],
@@ -806,10 +838,17 @@ class _TvFieldStep extends StatelessWidget {
 
   Widget _buildLockedChip(BuildContext context) {
     return Focus(
+      focusNode: focusNode,
       onKeyEvent: (node, event) {
-        if (event is KeyDownEvent && event.logicalKey == LogicalKeyboardKey.select) {
-          onEdit();
-          return KeyEventResult.handled;
+        if (event is KeyDownEvent) {
+          if (event.logicalKey == LogicalKeyboardKey.select) {
+            onEdit();
+            return KeyEventResult.handled;
+          }
+          if (event.logicalKey == LogicalKeyboardKey.arrowDown) {
+            FocusScope.of(context).focusInDirection(TraversalDirection.down);
+            return KeyEventResult.handled;
+          }
         }
         return KeyEventResult.ignored;
       },
@@ -831,19 +870,19 @@ class _TvFieldStep extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(step.icon, size: 18, color: Colors.white54),
+                  Icon(step.icon, size: 18, color: isFocused ? Theme.of(context).primaryColor : Colors.white54),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       step.isPassword ? '••••••••' : controller.text,
-                      style: const TextStyle(color: Colors.white70, fontSize: 16),
+                      style: TextStyle(color: isFocused ? Colors.white : Colors.white70, fontSize: 16),
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text('Edit', style: TextStyle(color: Colors.white38, fontSize: 13)),
+                  Text('Edit', style: TextStyle(color: isFocused ? Colors.white70 : Colors.white38, fontSize: 13)),
                   const SizedBox(width: 4),
-                  const Icon(Icons.edit_rounded, size: 14, color: Colors.white38),
+                  Icon(Icons.edit_rounded, size: 14, color: isFocused ? Colors.white70 : Colors.white38),
                 ],
               ),
             ),
