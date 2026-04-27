@@ -27,7 +27,7 @@ import androidx.compose.foundation.layout.Spacer
 
 
 @Composable
-fun TvAppShell() {
+fun TvAppShell(initialTab: Int = 0) {
     val context = LocalContext.current
     val shellVm: TvShellViewModel = viewModel()
     val contentVm: TvContentViewModel = viewModel()
@@ -36,6 +36,7 @@ fun TvAppShell() {
     val railExpanded by shellVm.railExpanded.collectAsState()
 
     LaunchedEffect(Unit) {
+        shellVm.setSelectedIndex(initialTab)
         TvRepository.loadPlaylist(context)
         contentVm.loadContent()
     }
