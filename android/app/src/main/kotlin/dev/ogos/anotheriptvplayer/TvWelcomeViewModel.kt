@@ -19,6 +19,7 @@ sealed class WelcomeStep {
     object LoginForm : WelcomeStep()
     object RegisterForm : WelcomeStep()
     object Syncing : WelcomeStep()
+    object NeedsPlaylist : WelcomeStep()
     object Done : WelcomeStep()
     data class Error(val message: String) : WelcomeStep()
 }
@@ -34,6 +35,7 @@ class TvWelcomeViewModel : ViewModel() {
     val errorMessage = _errorMessage.asStateFlow()
 
     var isGuestMode = false
+    var pendingNavigationTab: Int? = null
 
     private val client = OkHttpClient()
 
@@ -59,7 +61,7 @@ class TvWelcomeViewModel : ViewModel() {
                 }
                 val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
                 val request = Request.Builder()
-                    .url("$formattedUrl/api/auth/login")
+                    .url("$formattedUrl/auth/login")
                     .post(body)
                     .build()
 
@@ -71,22 +73,26 @@ class TvWelcomeViewModel : ViewModel() {
                     val responseBody = response.body?.string()
                     val responseObj = JSONObject(responseBody ?: "")
                     val token = responseObj.optString("token")
-                    val data = responseObj.optJSONObject("data")
-                    val playlists = data?.optJSONArray("playlists")
 
-                    if (token.isNotEmpty() && playlists != null && playlists.length() > 0) {
-                        val firstPlaylist = playlists.getJSONObject(0)
-
+                    if (token.isNotEmpty()) {
                         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
                         prefs.edit()
-                            .putString("flutter.current_playlist_json", firstPlaylist.toString())
                             .putString("flutter.sync_token", token)
+                            .putString("flutter.sync_server_url", formattedUrl)
                             .apply()
 
-                        TvRepository.loadPlaylist(context)
-                        setStep(WelcomeStep.Done)
+                        val hasPlaylist = prefs.contains("flutter.current_playlist_json") &&
+                            !prefs.getString("flutter.current_playlist_json", "").isNullOrEmpty()
+
+                        if (hasPlaylist) {
+                            TvRepository.loadPlaylist(context)
+                            setStep(WelcomeStep.Done)
+                        } else {
+                            // Logged in but no playlist stored yet — go to Settings so user can add one
+                            setStep(WelcomeStep.NeedsPlaylist)
+                        }
                     } else {
-                        setStep(WelcomeStep.Error("No playlist found in account"))
+                        setStep(WelcomeStep.Error("Invalid response from server"))
                     }
                 } else {
                     setStep(WelcomeStep.Error("Login failed: ${response.code}"))
@@ -113,7 +119,7 @@ class TvWelcomeViewModel : ViewModel() {
                 }
                 val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
                 val request = Request.Builder()
-                    .url("$formattedUrl/api/auth/register")
+                    .url("$formattedUrl/auth/register")
                     .post(body)
                     .build()
 

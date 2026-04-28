@@ -22,6 +22,7 @@ class TvMainActivity : ComponentActivity() {
 
             var hasPlaylist by remember { mutableStateOf(!playlistJson.isNullOrEmpty()) }
             var isGuestMode by remember { mutableStateOf(false) }
+            var forcedTab by remember { mutableStateOf<Int?>(null) }
 
             TvAppTheme {
                 if (!hasPlaylist && !isGuestMode) {
@@ -29,11 +30,12 @@ class TvMainActivity : ComponentActivity() {
                     TvWelcomeScreen(
                         onDone = {
                             isGuestMode = vm.isGuestMode
+                            forcedTab = vm.pendingNavigationTab
                             hasPlaylist = true
                         }
                     )
                 } else {
-                    val initialTab = if (isGuestMode) 7 else 0
+                    val initialTab = forcedTab ?: (if (isGuestMode) 7 else 0)
                     TvAppShell(initialTab = initialTab)
                 }
             }

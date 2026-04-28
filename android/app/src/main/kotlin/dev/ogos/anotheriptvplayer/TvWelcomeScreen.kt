@@ -1,33 +1,55 @@
 package dev.ogos.anotheriptvplayer
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ErrorOutline
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.RepeatMode
 
+// --- Theme Tokens ---
+private val DeepSpaceDark = Color(0xFF080810)
+private val ElectricBlue = Color(0xFF4F8EF7)
+private val SoftPurple = Color(0xFF7B61FF)
+private val TextSecondary = Color(0xFF9A9AA8)
+private val TextMuted = Color(0xFF555568)
+private val BorderDark = Color(0xFF2A2A3E)
+private val SurfaceDark = Color(0xFF12121E)
+private val SurfaceFocused = Color(0xFF1A1A2E)
+
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TvWelcomeScreen(onDone: () -> Unit) {
     val vm: TvWelcomeViewModel = viewModel()
@@ -38,13 +60,26 @@ fun TvWelcomeScreen(onDone: () -> Unit) {
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0A0A0F))
+            .background(DeepSpaceDark)
+            .drawBehind {
+                drawRect(
+                    Brush.radialGradient(
+                        colors = listOf(
+                            ElectricBlue.copy(alpha = 0.08f),
+                            Color.Transparent
+                        ),
+                        center = center,
+                        radius = size.maxDimension / 1.5f
+                    )
+                )
+            }
     ) {
         when (step) {
             is WelcomeStep.Welcome -> WelcomeStepScreen(vm)
             is WelcomeStep.LoginForm -> LoginFormScreen(vm, context)
             is WelcomeStep.RegisterForm -> RegisterFormScreen(vm, context)
             is WelcomeStep.Syncing -> SyncingScreen()
+            is WelcomeStep.NeedsPlaylist -> NeedsPlaylistScreen(vm, onDone)
             is WelcomeStep.Error -> ErrorScreen(vm, errorMessage)
             is WelcomeStep.Done -> {
                 LaunchedEffect(Unit) {
@@ -55,131 +90,125 @@ fun TvWelcomeScreen(onDone: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun WelcomeStepScreen(vm: TvWelcomeViewModel) {
     val loginFocus = remember { FocusRequester() }
-    var visible by remember { mutableStateOf(false) }
-
+    
     LaunchedEffect(Unit) {
-        visible = true
         loginFocus.requestFocus()
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        // Left Half
+        // Left Panel
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .padding(64.dp),
+                .padding(horizontal = 80.dp),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.Start
         ) {
-            Text(
-                text = "C4-TV",
-                style = MaterialTheme.typography.displayLarge,
-                color = Color.White,
-                fontWeight = FontWeight.Bold
-            )
+            StaggeredItem(index = 0) {
+                Icon(
+                    imageVector = Icons.Default.PlayCircle,
+                    contentDescription = null,
+                    modifier = Modifier.size(56.dp),
+                    tint = ElectricBlue
+                )
+            }
             Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Your entertainment. Anywhere.",
-                style = MaterialTheme.typography.headlineSmall,
-                color = Color(0xFF9A9AA8)
-            )
+            StaggeredItem(index = 1) {
+                Text(
+                    text = "C4-TV",
+                    style = MaterialTheme.typography.displayLarge.copy(
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = (-2).sp
+                    ),
+                    color = Color.White
+                )
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            StaggeredItem(index = 2) {
+                Text(
+                    text = "Your entertainment. Anywhere.",
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Light
+                    ),
+                    color = TextSecondary
+                )
+            }
             Spacer(modifier = Modifier.weight(1f))
-            Text(
-                text = "Version 1.0",
-                style = MaterialTheme.typography.bodySmall,
-                color = Color(0xFF9A9AA8)
-            )
+            StaggeredItem(index = 3) {
+                Text(
+                    text = "Version 1.0",
+                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
+                    color = Color(0xFF33334A)
+                )
+            }
+            Spacer(modifier = Modifier.height(48.dp))
         }
 
-        // Right Half
+        // Vertical Divider
+        Box(
+            modifier = Modifier
+                .width(1.dp)
+                .fillMaxHeight()
+                .background(Color(0xFF1E1E30))
+        )
+
+        // Right Panel
         Column(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight()
-                .padding(64.dp),
+                .fillMaxHeight(),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(animationSpec = tween(500)) + slideInVertically(animationSpec = tween(500), initialOffsetY = { 50 })
-            ) {
-                Button(
+            StaggeredItem(index = 0) {
+                Text(
+                    text = "GET STARTED",
+                    color = TextMuted,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.5.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            StaggeredItem(index = 1) {
+                PrimaryButton(
+                    text = "Login",
                     onClick = { vm.setStep(WelcomeStep.LoginForm) },
-                    modifier = Modifier
-                        .width(300.dp)
-                        .height(56.dp)
-                        .focusRequester(loginFocus),
-                    colors = ButtonDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.primary,
-                        focusedContainerColor = Color.White,
-                        contentColor = Color.White,
-                        focusedContentColor = MaterialTheme.colorScheme.primary
-                    )
-                ) {
-                    Text("Login")
-                }
+                    modifier = Modifier.focusRequester(loginFocus)
+                )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(animationSpec = tween(500, delayMillis = 100)) + slideInVertically(animationSpec = tween(500, delayMillis = 100), initialOffsetY = { 50 })
-            ) {
-                OutlinedButton(
-                    onClick = { vm.setStep(WelcomeStep.RegisterForm) },
-                    modifier = Modifier
-                        .width(300.dp)
-                        .height(56.dp),
-                    colors = ButtonDefaults.colors(
-                        containerColor = Color.Transparent,
-                        focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                        contentColor = MaterialTheme.colorScheme.primary,
-                        focusedContentColor = Color.White
-                    ),
-                    border = OutlinedButtonDefaults.border(
-                        border = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)),
-                        focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(2.dp, Color.White))
-                    )
-                ) {
-                    Text("Register")
-                }
+            Spacer(modifier = Modifier.height(14.dp))
+            
+            StaggeredItem(index = 2) {
+                OutlinedSecondaryButton(
+                    text = "Register",
+                    onClick = { vm.setStep(WelcomeStep.RegisterForm) }
+                )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            AnimatedVisibility(
-                visible = visible,
-                enter = fadeIn(animationSpec = tween(500, delayMillis = 200)) + slideInVertically(animationSpec = tween(500, delayMillis = 200), initialOffsetY = { 50 })
-            ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Surface(
-                        onClick = {
-                            vm.isGuestMode = true
-                            vm.setStep(WelcomeStep.Done)
-                        },
-                        modifier = Modifier
-                            .width(300.dp)
-                            .height(56.dp),
-                        colors = ClickableSurfaceDefaults.colors(
-                            containerColor = Color.Transparent,
-                            focusedContainerColor = MaterialTheme.colorScheme.surface
-                        )
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("Continue as Guest", color = Color(0xFF9A9AA8))
-                        }
+            Spacer(modifier = Modifier.height(14.dp))
+            
+            StaggeredItem(index = 3) {
+                GhostButton(
+                    text = "Continue as Guest",
+                    subtitle = "Add a playlist manually",
+                    onClick = {
+                        vm.isGuestMode = true
+                        vm.setStep(WelcomeStep.Done)
                     }
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("Add a playlist manually", style = MaterialTheme.typography.bodySmall, color = Color(0xFF9A9AA8).copy(alpha = 0.7f))
-                }
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun LoginFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
     var serverUrl by remember { mutableStateOf("") }
@@ -191,110 +220,92 @@ fun LoginFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
         focusRequester.requestFocus()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(modifier = Modifier.width(360.dp)) {
-            Text("Sign In", style = MaterialTheme.typography.headlineMedium, color = Color.White)
-            Spacer(modifier = Modifier.height(8.dp))
-            Text("Use your sync account to restore everything", style = MaterialTheme.typography.bodyMedium, color = Color(0xFF9A9AA8))
-            Spacer(modifier = Modifier.height(24.dp))
-
-            androidx.compose.material3.OutlinedTextField(
-                value = serverUrl,
-                onValueChange = { serverUrl = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .focusRequester(focusRequester),
-                placeholder = { androidx.compose.material3.Text("https://sync.example.com", color = Color.Gray) },
-                label = { androidx.compose.material3.Text("Server URL", color = Color.Gray) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(modifier = Modifier.width(400.dp)) {
+            // Header
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { vm.setStep(WelcomeStep.Welcome) },
+                    tint = TextSecondary
                 )
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.OutlinedTextField(
-                value = email,
-                onValueChange = { email = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                label = { androidx.compose.material3.Text("Email", color = Color.Gray) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Sign In",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White
                 )
+            }
+            Text(
+                text = "Restore your playlists and settings",
+                color = TextMuted,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 32.dp)
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                label = { androidx.compose.material3.Text("Password", color = Color.Gray) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
-            )
+            
             Spacer(modifier = Modifier.height(32.dp))
 
-            Button(
-                onClick = { vm.signIn(context, serverUrl, email, password) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    focusedContainerColor = Color.White,
-                    contentColor = Color.White,
-                    focusedContentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Sign In")
-            }
+            CustomTextField(
+                value = serverUrl,
+                onValueChange = { serverUrl = it },
+                label = "Server URL",
+                placeholder = "https://sync.example.com",
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                modifier = Modifier.focusRequester(focusRequester)
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            Surface(
+            CustomTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = "Email",
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            CustomTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Password",
+                isPassword = true,
+                imeAction = ImeAction.Done
+            )
+            
+            Spacer(modifier = Modifier.height(28.dp))
+
+            PrimaryButton(
+                text = "Sign In",
+                onClick = { vm.signIn(context, serverUrl, email, password) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedSecondaryButton(
+                text = "Back",
                 onClick = { vm.setStep(WelcomeStep.Welcome) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.Transparent,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("← Back", color = Color(0xFF9A9AA8))
-                }
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
 
             val error = vm.errorMessage.collectAsState().value
             if (error != null) {
-                Spacer(modifier = Modifier.height(16.dp))
-                Text(error, color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = error,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth(),
+                    maxLines = 2
+                )
             }
         }
     }
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun RegisterFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
     var serverUrl by remember { mutableStateOf("") }
@@ -309,109 +320,92 @@ fun RegisterFormScreen(vm: TvWelcomeViewModel, context: android.content.Context)
         focusRequester.requestFocus()
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Column(modifier = Modifier.width(360.dp)) {
-            Text("Create Account", style = MaterialTheme.typography.headlineMedium, color = Color.White)
-            Spacer(modifier = Modifier.height(24.dp))
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(modifier = Modifier.width(400.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    Icons.Default.ArrowBack,
+                    contentDescription = "Back",
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clickable { vm.setStep(WelcomeStep.Welcome) },
+                    tint = TextSecondary
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "Create Account",
+                    style = MaterialTheme.typography.headlineMedium.copy(
+                        fontSize = 28.sp,
+                        fontWeight = FontWeight.Bold
+                    ),
+                    color = Color.White
+                )
+            }
+            Text(
+                text = "Free sync across all your devices",
+                color = TextMuted,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(start = 32.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
 
-            androidx.compose.material3.OutlinedTextField(
+            CustomTextField(
                 value = serverUrl,
                 onValueChange = { serverUrl = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp)
-                    .focusRequester(focusRequester),
-                placeholder = { androidx.compose.material3.Text("https://sync.example.com", color = Color.Gray) },
-                label = { androidx.compose.material3.Text("Server URL", color = Color.Gray) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Uri, imeAction = ImeAction.Next),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
+                label = "Server URL",
+                placeholder = "https://sync.example.com",
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                modifier = Modifier.focusRequester(focusRequester)
             )
             Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.OutlinedTextField(
+            CustomTextField(
                 value = name,
                 onValueChange = { name = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                label = { androidx.compose.material3.Text("Full Name", color = Color.Gray) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Text, imeAction = ImeAction.Next),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
+                label = "Full Name",
+                imeAction = ImeAction.Next
             )
             Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.OutlinedTextField(
+            CustomTextField(
                 value = email,
                 onValueChange = { email = it },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                label = { androidx.compose.material3.Text("Email", color = Color.Gray) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email, imeAction = ImeAction.Next),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
+                label = "Email",
+                keyboardType = KeyboardType.Email,
+                imeAction = ImeAction.Next
             )
             Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.OutlinedTextField(
+            CustomTextField(
                 value = password,
                 onValueChange = { password = it; localError = null },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                label = { androidx.compose.material3.Text("Password", color = Color.Gray) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Next),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
+                label = "Password",
+                isPassword = true,
+                imeAction = ImeAction.Next
             )
             Spacer(modifier = Modifier.height(16.dp))
-            androidx.compose.material3.OutlinedTextField(
+            CustomTextField(
                 value = confirmPassword,
                 onValueChange = { confirmPassword = it; localError = null },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(64.dp),
-                label = { androidx.compose.material3.Text("Confirm Password", color = Color.Gray) },
-                visualTransformation = PasswordVisualTransformation(),
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password, imeAction = ImeAction.Done),
-                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = Color.Gray,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
-                )
+                label = "Confirm Password",
+                isPassword = true,
+                imeAction = ImeAction.Done
             )
             
             val error = localError ?: vm.errorMessage.collectAsState().value
             if (error != null) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(error, color = MaterialTheme.colorScheme.error)
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = error,
+                    color = androidx.compose.material3.MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(28.dp))
 
-            Button(
+            PrimaryButton(
+                text = "Create Account",
                 onClick = { 
                     if (password != confirmPassword) {
                         localError = "Passwords do not match"
@@ -419,61 +413,76 @@ fun RegisterFormScreen(vm: TvWelcomeViewModel, context: android.content.Context)
                         vm.register(context, serverUrl, name, email, password)
                     }
                 },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ButtonDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    focusedContainerColor = Color.White,
-                    contentColor = Color.White,
-                    focusedContentColor = MaterialTheme.colorScheme.primary
-                )
-            ) {
-                Text("Create Account")
-            }
-            Spacer(modifier = Modifier.height(16.dp))
-            Surface(
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedSecondaryButton(
+                text = "Back",
                 onClick = { vm.setStep(WelcomeStep.Welcome) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                colors = ClickableSurfaceDefaults.colors(
-                    containerColor = Color.Transparent,
-                    focusedContainerColor = MaterialTheme.colorScheme.surface
-                )
-            ) {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("← Back", color = Color(0xFF9A9AA8))
-                }
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
 fun SyncingScreen() {
+    val vm: TvWelcomeViewModel = viewModel()
+    val alphaPulse = rememberInfiniteTransition()
+    val alpha by alphaPulse.animateFloat(
+        initialValue = 0.6f,
+        targetValue = 1.0f,
+        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
+        label = "alpha"
+    )
+    
+    val ringPulse = rememberInfiniteTransition()
+    val outerRadius by ringPulse.animateFloat(
+        initialValue = 78f,
+        targetValue = 88f,
+        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
+        label = "radius"
+    )
+
+    val rotation = rememberInfiniteTransition()
+    val rotateAngle by rotation.animateFloat(
+        initialValue = 0f,
+        targetValue = 360f,
+        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
+        label = "rotation"
+    )
+
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        val infiniteTransition = rememberInfiniteTransition()
-        val alpha by infiniteTransition.animateFloat(
-            initialValue = 0.6f,
-            targetValue = 1.0f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(1000),
-                repeatMode = RepeatMode.Reverse
-            ), label = "alpha"
-        )
-        androidx.compose.material3.CircularProgressIndicator(
-            modifier = Modifier.size(64.dp),
-            color = MaterialTheme.colorScheme.primary
-        )
-        Spacer(modifier = Modifier.height(24.dp))
+        Box(contentAlignment = Alignment.Center) {
+            Canvas(modifier = Modifier.size(200.dp)) {
+                drawCircle(
+                    color = ElectricBlue.copy(alpha = 0.15f),
+                    radius = outerRadius.dp.toPx(),
+                    style = Stroke(width = 2.dp.toPx())
+                )
+                drawCircle(
+                    color = ElectricBlue.copy(alpha = 0.35f),
+                    radius = 56.dp.toPx(),
+                    style = Stroke(width = 2.dp.toPx())
+                )
+            }
+            Icon(
+                Icons.Default.Sync,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(36.dp)
+                    .graphicsLayer { rotationZ = rotateAngle },
+                tint = ElectricBlue
+            )
+        }
+        Spacer(modifier = Modifier.height(32.dp))
         Text(
             text = "Connecting to your account…",
-            style = MaterialTheme.typography.headlineSmall,
+            fontSize = 18.sp,
             color = Color.White.copy(alpha = alpha)
         )
     }
@@ -482,7 +491,6 @@ fun SyncingScreen() {
 @Composable
 fun ErrorScreen(vm: TvWelcomeViewModel, errorMessage: String?) {
     val focusRequester = remember { FocusRequester() }
-
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
@@ -495,55 +503,270 @@ fun ErrorScreen(vm: TvWelcomeViewModel, errorMessage: String?) {
         Icon(
             Icons.Default.ErrorOutline,
             contentDescription = null,
-            modifier = Modifier.size(64.dp),
-            tint = MaterialTheme.colorScheme.error
+            modifier = Modifier.size(72.dp),
+            tint = Color(0xFFFF4F6A)
         )
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+        Text(
+            text = "Something went wrong",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = Color.White
+        )
+        Spacer(modifier = Modifier.height(8.dp))
         Text(
             text = errorMessage ?: "An unknown error occurred",
-            style = MaterialTheme.typography.bodyLarge,
-            color = Color.White,
-            maxLines = 2,
-            modifier = Modifier.widthIn(max = 400.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            fontSize = 15.sp,
+            color = TextSecondary,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.widthIn(max = 420.dp),
+            maxLines = 3
         )
-        Spacer(modifier = Modifier.height(32.dp))
-        Button(
+        Spacer(modifier = Modifier.height(36.dp))
+        PrimaryButton(
+            text = "Try Again",
             onClick = { vm.setStep(WelcomeStep.Welcome) },
-            modifier = Modifier
-                .width(300.dp)
-                .height(56.dp)
-                .focusRequester(focusRequester),
-            colors = ButtonDefaults.colors(
-                containerColor = MaterialTheme.colorScheme.primary,
-                focusedContainerColor = Color.White,
-                contentColor = Color.White,
-                focusedContentColor = MaterialTheme.colorScheme.primary
-            )
-        ) {
-            Text("Try Again")
-        }
-        Spacer(modifier = Modifier.height(16.dp))
-        OutlinedButton(
-            onClick = { 
+            modifier = Modifier.focusRequester(focusRequester)
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+        GhostButton(
+            text = "Continue as Guest",
+            onClick = {
                 vm.isGuestMode = true
-                vm.setStep(WelcomeStep.Done) 
-            },
-            modifier = Modifier
-                .width(300.dp)
-                .height(56.dp),
-            colors = ButtonDefaults.colors(
-                containerColor = Color.Transparent,
-                focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
-                contentColor = MaterialTheme.colorScheme.primary,
-                focusedContentColor = Color.White
-            ),
-            border = OutlinedButtonDefaults.border(
-                border = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary)),
-                focusedBorder = androidx.tv.material3.Border(androidx.compose.foundation.BorderStroke(2.dp, Color.White))
-            )
+                vm.setStep(WelcomeStep.Done)
+            }
+        )
+    }
+}
+
+@Composable
+fun NeedsPlaylistScreen(vm: TvWelcomeViewModel, onDone: () -> Unit) {
+    val focusRequester = remember { FocusRequester() }
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(
+            modifier = Modifier.width(400.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text("Continue as Guest")
+            Icon(
+                Icons.Default.PlaylistAdd,
+                contentDescription = null,
+                modifier = Modifier.size(64.dp),
+                tint = ElectricBlue
+            )
+            Spacer(modifier = Modifier.height(20.dp))
+            Text(
+                text = "You're in!",
+                fontSize = 26.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "Add a playlist to start watching",
+                fontSize = 16.sp,
+                color = TextSecondary
+            )
+            Spacer(modifier = Modifier.height(36.dp))
+            PrimaryButton(
+                text = "Go to Settings",
+                onClick = {
+                    vm.pendingNavigationTab = 7
+                    onDone()
+                },
+                modifier = Modifier.focusRequester(focusRequester).fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            GhostButton(
+                text = "Skip for now",
+                onClick = { onDone() },
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
+}
+
+// --- Helper UI Components ---
+
+@Composable
+private fun StaggeredItem(index: Int, content: @Composable () -> Unit) {
+    val visible = remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(index * 80L)
+        visible.value = true
+    }
+    AnimatedVisibility(
+        visible = visible.value,
+        enter = fadeIn(tween(380, easing = FastOutSlowInEasing)) + 
+                slideInVertically(tween(380, easing = FastOutSlowInEasing), initialOffsetY = { 40 })
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun FocusScaleButton(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable BoxScope.(Boolean) -> Unit
+) {
+    var focused by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (focused) 1.04f else 1f,
+        animationSpec = tween(180),
+        label = "scale"
+    )
+    Box(
+        modifier = modifier
+            .graphicsLayer { 
+                scaleX = scale
+                scaleY = scale
+            }
+            .onFocusChanged { focused = it.isFocused }
+            .clickable { onClick() },
+        contentAlignment = Alignment.Center
+    ) {
+        content(focused)
+    }
+}
+
+@Composable
+private fun PrimaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FocusScaleButton(
+        onClick = onClick,
+        modifier = modifier
+            .width(320.dp)
+            .height(60.dp)
+            .clip(RoundedCornerShape(14.dp))
+    ) { isFocused ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    if (isFocused) Brush.horizontalGradient(listOf(Color.White, Color.White))
+                    else Brush.horizontalGradient(listOf(ElectricBlue, SoftPurple))
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = if (isFocused) ElectricBlue else Color.White,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun OutlinedSecondaryButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    FocusScaleButton(
+        onClick = onClick,
+        modifier = modifier
+            .width(320.dp)
+            .height(60.dp)
+            .clip(RoundedCornerShape(14.dp))
+            .border(
+                width = 1.dp,
+                color = ElectricBlue.copy(alpha = 0.5f),
+                shape = RoundedCornerShape(14.dp)
+            )
+    ) { isFocused ->
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(if (isFocused) ElectricBlue.copy(alpha = 0.12f) else Color.Transparent)
+                .drawBehind {
+                    if (isFocused) {
+                        drawRoundRect(
+                            color = ElectricBlue,
+                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx()),
+                            style = Stroke(width = 2.dp.toPx())
+                        )
+                    }
+                },
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = text,
+                color = if (isFocused) Color.White else TextSecondary,
+                fontSize = 17.sp,
+                fontWeight = FontWeight.SemiBold
+            )
+        }
+    }
+}
+
+@Composable
+private fun GhostButton(
+    text: String,
+    subtitle: String? = null,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var focused by remember { mutableStateOf(false) }
+    Column(
+        modifier = modifier
+            .onFocusChanged { focused = it.isFocused }
+            .clickable { onClick() },
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = text,
+            color = if (focused) Color.White else Color(0xFF666680),
+            fontSize = 17.sp,
+            textDecoration = if (focused) TextDecoration.Underline else null
+        )
+        if (subtitle != null) {
+            Text(
+                text = subtitle,
+                color = Color(0xFF44445A),
+                fontSize = 12.sp
+            )
+        }
+    }
+}
+
+@Composable
+private fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    placeholder: String = "",
+    isPassword: Boolean = false,
+    keyboardType: KeyboardType = KeyboardType.Text,
+    imeAction: ImeAction = ImeAction.Default,
+    modifier: Modifier = Modifier
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        modifier = modifier
+            .fillMaxWidth()
+            .height(64.dp),
+        label = { Text(label, color = TextMuted) },
+        placeholder = { Text(placeholder, color = TextMuted) },
+        visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
+        shape = RoundedCornerShape(12.dp),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = ElectricBlue,
+            unfocusedBorderColor = BorderDark,
+            focusedContainerColor = SurfaceFocused,
+            unfocusedContainerColor = SurfaceDark,
+            focusedTextColor = Color.White,
+            unfocusedTextColor = Color.White
+        )
+    )
 }
