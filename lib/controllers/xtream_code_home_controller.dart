@@ -182,10 +182,12 @@ class XtreamCodeHomeController extends ChangeNotifier {
         db.getRandomSeriesStreams(playlistId, 15),
       ]);
 
-      final liveEntries = await Future.wait(
+      // Fetch all live category streams in parallel — cast categoryId to String
+      // to avoid MapEntry<dynamic, ...> type mismatch compile error
+      final liveEntries = await Future.wait<MapEntry<String, List<LiveStream>>>(
         allLiveCats.map((cat) => db
-            .getLiveStreamsByCategoryId(playlistId, cat.categoryId)
-            .then((streams) => MapEntry(cat.categoryId, streams))),
+            .getLiveStreamsByCategoryId(playlistId, cat.categoryId as String)
+            .then((streams) => MapEntry<String, List<LiveStream>>(cat.categoryId as String, streams))),
       );
       final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
 
@@ -212,7 +214,7 @@ class XtreamCodeHomeController extends ChangeNotifier {
       _seriesCategories.clear();
 
       for (final cat in allLiveCats) {
-        final streams = liveMap[cat.categoryId] ?? [];
+        final streams = liveMap[cat.categoryId as String] ?? [];
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
         _liveCategories.add(CategoryViewModel(category: cat, contentItems: _convertToItems(streams, ContentType.liveStream)));
       }
