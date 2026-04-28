@@ -180,12 +180,14 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final samples = await Future.wait([
         db.getRandomVodStreams(playlistId, 15),
         db.getRandomSeriesStreams(playlistId, 15),
-        Future.wait(
-          allLiveCats.map((cat) => db
-              .getLiveStreamsByCategoryId(playlistId, cat.categoryId)
-              .then((streams) => MapEntry(cat.categoryId, streams))),
-        ),
       ]);
+
+      final liveEntries = await Future.wait(
+        allLiveCats.map((cat) => db
+            .getLiveStreamsByCategoryId(playlistId, cat.categoryId)
+            .then((streams) => MapEntry(cat.categoryId, streams))),
+      );
+      final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
 
       // ── AUTO-FETCH if DB is empty ──────────────────────────────────
       if (!all &&
@@ -201,8 +203,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
       final randomVods = samples[0] as List<VodStream>;
       final randomSeries = samples[1] as List<SeriesStream>;
-      final liveEntries = samples[2] as List<MapEntry<String, List<LiveStream>>>;
-      final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
 
       // Load hidden categories once
       final hiddenSet = (await UserPreferences.getHiddenCategories()).toSet();
