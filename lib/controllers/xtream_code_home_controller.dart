@@ -180,18 +180,12 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final samples = await Future.wait([
         db.getRandomVodStreams(playlistId, 15),
         db.getRandomSeriesStreams(playlistId, 15),
-        // Also get first category streams for each type to show immediately on home rows
-        if (allLiveCats.isNotEmpty)
-          db.getLiveStreamsByCategoryId(playlistId, allLiveCats.first.categoryId, top: 20)
-        else
-          Future.value(<LiveStream>[]),
-        if (allVodCats.isNotEmpty)
-          db.getVodStreamsByPlaylistId(playlistId) // For now, still load VODs if small, but let's optimize
-        else
-          Future.value(<VodStream>[]),
+        Future.wait(
+          allLiveCats.map((cat) => db
+              .getLiveStreamsByCategoryId(playlistId, cat.categoryId)
+              .then((streams) => MapEntry(cat.categoryId, streams))),
+        ),
       ]);
-      // Wait, if VODs are many, getVodStreamsByPlaylistId is still slow. 
-      // Let's just get the first category for VOD too.
 
       // ── AUTO-FETCH if DB is empty ──────────────────────────────────
       if (!all &&
@@ -207,12 +201,8 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
       final randomVods = samples[0] as List<VodStream>;
       final randomSeries = samples[1] as List<SeriesStream>;
-      final homeLiveStreams = samples[2] as List<LiveStream>;
-
-      // Map streams for the categories we have samples for
-      final liveMap = { if (allLiveCats.isNotEmpty) allLiveCats.first.categoryId: homeLiveStreams };
-      
-      // We will load other categories' streams lazily or when requested
+      final liveEntries = samples[2] as List<MapEntry<String, List<LiveStream>>>;
+      final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
 
       // Load hidden categories once
       final hiddenSet = (await UserPreferences.getHiddenCategories()).toSet();
