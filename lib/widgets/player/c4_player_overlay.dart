@@ -220,7 +220,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
           return;
         }
         // Wait for MPV to decode first frames and populate video-params
-        await Future.delayed(const Duration(milliseconds: 2000));
+        await Future.delayed(const Duration(milliseconds: 1500));
         if (!mounted) return;
         final hdrType = await HdrService.detectHdrType(widget.player);
         if (mounted) _hdrTypeNotifier.value = hdrType;

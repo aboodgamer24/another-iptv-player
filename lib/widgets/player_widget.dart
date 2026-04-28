@@ -212,6 +212,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final native = _player.platform;
     if (native is! NativePlayer) return;
     try {
+      // --- Global properties (Fix HEVC stutter & EAC3 detection) ---
+      // Increase probe size so EAC3 audio sample rate is detected correctly
+      await native.setProperty('demuxer-lavf-probesize', '10000000');
+      await native.setProperty('demuxer-lavf-analyzeduration', '5000000');
+      // Silence harmless HEVC POC reference error spam in debug logs
+      await native.setProperty('msg-level', 'hevc=no');
+
       if (Platform.isAndroid) {
         // --- Properties common to ALL content types ---
         await native.setProperty('interpolation', 'no');
@@ -282,9 +289,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType == ContentType.liveStream) {
           await native.setProperty('video-sync', 'audio');
           await native.setProperty('framedrop', 'no');
-          await native.setProperty('demuxer-max-bytes', '50MiB');
-          await native.setProperty('demuxer-max-back-bytes', '10MiB');
-          await native.setProperty('cache-secs', '5');
+          // Increase demuxer buffer for live HEVC streams
+          await native.setProperty('demuxer-readahead-secs', '10');
+          await native.setProperty('demuxer-max-bytes', '150MiB');
+          await native.setProperty('demuxer-max-back-bytes', '50MiB');
+          await native.setProperty('cache', 'yes');
+          await native.setProperty('cache-secs', '10');
         } else {
           // VOD/series on desktop
           await native.setProperty('video-sync', 'display-resample');

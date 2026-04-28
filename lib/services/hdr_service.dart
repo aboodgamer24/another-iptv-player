@@ -23,23 +23,39 @@ class HdrService {
   static Future<HdrType> detectHdrType(Player player) async {
     if (player.platform is! NativePlayer) return HdrType.none;
     final native = player.platform as NativePlayer;
-    try {
-      final primaries = await native.getProperty('video-params/primaries');
-      // Only BT.2020 primaries indicate HDR content
-      if (primaries.isEmpty || !primaries.contains('bt.2020')) {
-        return HdrType.none;
+
+    // Try up to 5 times with 500ms intervals (total 2.5s window)
+    for (int attempt = 0; attempt < 5; attempt++) {
+      try {
+        final primaries = await native.getProperty('video-params/primaries');
+        final gamma = await native.getProperty('video-params/gamma');
+
+        debugPrint(
+          '[HdrService] attempt=$attempt primaries=$primaries gamma=$gamma',
+        );
+
+        if (primaries.isEmpty) {
+          await Future.delayed(const Duration(milliseconds: 500));
+          continue;
+        }
+
+        // BT.2020 primaries = HDR color space
+        if (!primaries.contains('bt.2020')) return HdrType.none;
+
+        return switch (gamma.toLowerCase().trim()) {
+          'pq' => HdrType.hdr10,
+          'hlg' => HdrType.hlg,
+          'dolbyvision' => HdrType.dolbyVision,
+          'dolby-vision' => HdrType.dolbyVision,
+          _ => HdrType.none,
+        };
+      } catch (e) {
+        debugPrint('[HdrService] attempt=$attempt error: $e');
+        await Future.delayed(const Duration(milliseconds: 500));
       }
-      final gamma = await native.getProperty('video-params/gamma');
-      return switch (gamma.toLowerCase().trim()) {
-        'pq'           => HdrType.hdr10,   // ST.2084 PQ curve = HDR10 or HDR10+
-        'hlg'          => HdrType.hlg,
-        'dolbyvision'  => HdrType.dolbyVision,
-        'dolby-vision' => HdrType.dolbyVision,
-        _              => HdrType.none,
-      };
-    } catch (e) {
-      debugPrint('[HdrService] detectHdrType error: $e');
-      return HdrType.none;
     }
+
+    debugPrint('[HdrService] Could not detect HDR after 5 attempts');
+    return HdrType.none;
   }
 }
