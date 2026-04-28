@@ -25,9 +25,6 @@ import androidx.compose.material.icons.filled.Search
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material.icons.filled.Clear
@@ -38,7 +35,6 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TabRow
 import androidx.tv.material3.Tab
 import androidx.tv.material3.Border
 import coil.compose.AsyncImage

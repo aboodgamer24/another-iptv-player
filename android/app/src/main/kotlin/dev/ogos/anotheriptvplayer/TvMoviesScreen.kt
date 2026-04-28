@@ -19,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
 import androidx.compose.material3.Text
+import androidx.compose.material3.Button
+import androidx.activity.compose.BackHandler
 import coil.compose.AsyncImage
 
 @Composable
@@ -290,10 +292,7 @@ fun TvSeriesDetailSheet(
     }
     
     // Handle Back key
-    androidx.compose.ui.input.key.onKeyEvent {
-        if (it.nativeKeyEvent.keyCode == android.view.KeyEvent.KEYCODE_BACK) {
-            onDismiss()
-            true
-        } else false
+    BackHandler {
+        onDismiss()
     }
 }

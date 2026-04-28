@@ -11,6 +11,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.runtime.*
@@ -225,7 +226,7 @@ fun LoginFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
             // Header
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    Icons.Default.ArrowBack,
+                    Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     modifier = Modifier
                         .size(20.dp)
@@ -324,7 +325,7 @@ fun RegisterFormScreen(vm: TvWelcomeViewModel, context: android.content.Context)
         Column(modifier = Modifier.width(400.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(
-                    Icons.Default.ArrowBack,
+                    Icons.AutoMirrored.Filled.ArrowBack,
                     contentDescription = "Back",
                     modifier = Modifier
                         .size(20.dp)
@@ -557,7 +558,7 @@ fun NeedsPlaylistScreen(vm: TvWelcomeViewModel, onDone: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                Icons.Default.PlaylistAdd,
+                Icons.AutoMirrored.Filled.PlaylistAdd,
                 contentDescription = null,
                 modifier = Modifier.size(56.dp),
                 tint = ElectricBlue
