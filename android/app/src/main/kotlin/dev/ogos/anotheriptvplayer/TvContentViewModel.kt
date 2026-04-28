@@ -241,10 +241,57 @@ class TvContentViewModel : ViewModel() {
     fun loadFavorites(context: Context) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isFavoritesLoading = true)
-            val items = withContext(Dispatchers.IO) {
+
+            // 1. Load local SQLite first (fast, immediate)
+            val localItems = withContext(Dispatchers.IO) {
                 TvRepository.getFavorites(context)
             }
-            _state.value = _state.value.copy(favorites = items, isFavoritesLoading = false)
+            _state.value = _state.value.copy(favorites = localItems)
+
+            // 2. Pull from server in background (may override/extend local)
+            val serverItems = SyncRepository.pullFavoritesFromServer(context)
+            if (serverItems.isNotEmpty()) {
+                // Merge: server is source of truth, write back to local SQLite
+                withContext(Dispatchers.IO) {
+                    serverItems.forEach { TvRepository.saveFavorite(context, it) }
+                }
+                _state.value = _state.value.copy(
+                    favorites = serverItems,
+                    favoriteIds = serverItems.map { it.id }.toSet()
+                )
+            } else {
+                _state.value = _state.value.copy(
+                    favoriteIds = localItems.map { it.id }.toSet()
+                )
+            }
+
+            _state.value = _state.value.copy(isFavoritesLoading = false)
+        }
+    }
+
+    fun toggleFavorite(context: Context, item: TvContentItem) {
+        viewModelScope.launch {
+            val isFav = _state.value.favoriteIds.contains(item.id)
+            withContext(Dispatchers.IO) {
+                if (isFav) {
+                    TvRepository.removeFavorite(context, item.id)
+                    SyncRepository.pushFavoriteToServer(context, item, remove = true)
+                } else {
+                    TvRepository.saveFavorite(context, item)
+                    SyncRepository.pushFavoriteToServer(context, item, remove = false)
+                }
+            }
+            _state.value = if (isFav) {
+                _state.value.copy(
+                    favoriteIds = _state.value.favoriteIds - item.id,
+                    favorites = _state.value.favorites.filter { it.id != item.id }
+                )
+            } else {
+                _state.value.copy(
+                    favoriteIds = _state.value.favoriteIds + item.id,
+                    favorites = listOf(item) + _state.value.favorites
+                )
+            }
         }
     }
 
@@ -279,6 +326,7 @@ data class TvContentState(
     val isSearching: Boolean = false,
     val searchQuery: String = "",
     val favorites: List<TvContentItem> = emptyList(),
+    val favoriteIds: Set<String> = emptySet(),
     val watchHistory: List<TvContentItem> = emptyList(),
     val isFavoritesLoading: Boolean = false,
     val isHistoryLoading: Boolean = false

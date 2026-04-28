@@ -541,7 +541,12 @@ fun ErrorScreen(vm: TvWelcomeViewModel, errorMessage: String?) {
 
 @Composable
 fun NeedsPlaylistScreen(vm: TvWelcomeViewModel, onDone: () -> Unit) {
+    var url by remember { mutableStateOf("") }
+    var username by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
+    
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
     }
@@ -554,35 +559,57 @@ fun NeedsPlaylistScreen(vm: TvWelcomeViewModel, onDone: () -> Unit) {
             Icon(
                 Icons.Default.PlaylistAdd,
                 contentDescription = null,
-                modifier = Modifier.size(64.dp),
+                modifier = Modifier.size(56.dp),
                 tint = ElectricBlue
             )
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(16.dp))
             Text(
-                text = "You're in!",
-                fontSize = 26.sp,
-                fontWeight = FontWeight.Bold,
+                text = "Almost there!",
+                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
                 color = Color.White
             )
-            Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Add a playlist to start watching",
-                fontSize = 16.sp,
-                color = TextSecondary
+                text = "Enter your Xtream credentials manually",
+                color = TextSecondary,
+                fontSize = 14.sp
             )
-            Spacer(modifier = Modifier.height(36.dp))
-            PrimaryButton(
-                text = "Go to Settings",
-                onClick = {
-                    vm.pendingNavigationTab = 7
-                    onDone()
-                },
-                modifier = Modifier.focusRequester(focusRequester).fillMaxWidth()
+            Spacer(modifier = Modifier.height(32.dp))
+
+            CustomTextField(
+                value = url,
+                onValueChange = { url = it },
+                label = "Xtream URL",
+                placeholder = "http://your-server:8080",
+                keyboardType = KeyboardType.Uri,
+                imeAction = ImeAction.Next,
+                modifier = Modifier.focusRequester(focusRequester)
             )
             Spacer(modifier = Modifier.height(12.dp))
-            GhostButton(
-                text = "Skip for now",
-                onClick = { onDone() },
+            CustomTextField(
+                value = username,
+                onValueChange = { username = it },
+                label = "Username",
+                imeAction = ImeAction.Next
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            CustomTextField(
+                value = password,
+                onValueChange = { password = it },
+                label = "Password",
+                isPassword = true,
+                imeAction = ImeAction.Done
+            )
+
+            Spacer(modifier = Modifier.height(28.dp))
+
+            PrimaryButton(
+                text = "Save & Continue",
+                onClick = { 
+                    if (url.isNotBlank() && username.isNotBlank()) {
+                        TvRepository.savePlaylist(context, url, username, password)
+                        vm.setStep(WelcomeStep.Done)
+                    }
+                },
                 modifier = Modifier.fillMaxWidth()
             )
         }

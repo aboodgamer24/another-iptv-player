@@ -30,6 +30,7 @@ fun TvPlayerScreen(
     viewModel: PlayerViewModel,
     contentType: String,
     onBack: () -> Unit,
+    onToggleFavorite: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var controlsVisible by remember { mutableStateOf(true) }
@@ -124,6 +125,7 @@ fun TvPlayerScreen(
                 onSeekBack = viewModel::seekBack,
                 onToggleSubtitles = { viewModel.toggleSubtitles(!state.subtitlesEnabled) },
                 onToggleSidePanel = { sidePanelVisible = !sidePanelVisible },
+                onToggleFavorite = onToggleFavorite,
                 onBack = onBack,
             )
         }
@@ -158,6 +160,7 @@ private fun TvPlayerControls(
     onSeekBack: () -> Unit,
     onToggleSubtitles: () -> Unit,
     onToggleSidePanel: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onBack: () -> Unit,
 ) {
     Box(
@@ -198,6 +201,11 @@ private fun TvPlayerControls(
                 .padding(24.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            ControlButton(
+                icon = if (state.isFavorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder,
+                contentDesc = if (state.isFavorite) "Remove from favorites" else "Add to favorites",
+                onClick = onToggleFavorite
+            )
             ControlButton(
                 icon = if (state.subtitlesEnabled) Icons.Default.Subtitles else Icons.Default.SubtitlesOff,
                 contentDesc = "Subtitles",

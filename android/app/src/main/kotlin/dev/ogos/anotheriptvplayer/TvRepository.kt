@@ -79,9 +79,73 @@ object TvRepository {
         return !json.isNullOrBlank()
     }
 
+    fun savePlaylist(context: Context, url: String, username: String, password: String) {
+        val json = org.json.JSONObject().apply {
+            put("url", url)
+            put("username", username)
+            put("password", password)
+            put("type", "xtream")
+            put("name", url) // display name fallback
+        }.toString()
+
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit().putString(KEY_PLAYLIST, json).apply()
+
+        // Also update in-memory
+        currentPlaylist = org.json.JSONObject(json)
+        _credentials = null
+        setupApi()
+    }
+
     fun getPlaylistType(): String {
         val type = currentPlaylist?.optString("type") ?: ""
         return if (type.contains("xtream")) "xtream" else "m3u"
+    }
+
+    fun saveFavorite(context: Context, item: TvContentItem) {
+        writeToSqlite(context, "favorites", item)
+    }
+
+    fun saveWatchHistory(context: Context, item: TvContentItem, position: Long) {
+        writeToSqlite(context, "watch_history", item, position)
+    }
+
+    private fun writeToSqlite(context: Context, table: String, item: TvContentItem, position: Long = 0L) {
+        val dbFile = context.getDatabasePath("another-iptv-player.sqlite")
+        if (!dbFile.exists()) return  // Flutter hasn't created the DB yet — skip silently
+
+        try {
+            val db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                dbFile.absolutePath, null,
+                android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
+            )
+            db.use {
+                val values = android.content.ContentValues().apply {
+                    put("stream_id",    item.id)
+                    put("name",         item.name)
+                    put("stream_url",   item.url)
+                    put("stream_icon",  item.imageUrl)
+                    put("content_type", item.contentType)
+                    put("category_id",  item.categoryId)
+                    if (position > 0) put("position", position)
+                }
+                // INSERT OR REPLACE so re-adding a favorite is idempotent
+                it.insertWithOnConflict(table, null, values,
+                    android.database.sqlite.SQLiteDatabase.CONFLICT_REPLACE)
+            }
+        } catch (_: Exception) {}
+    }
+
+    fun removeFavorite(context: Context, itemId: String) {
+        val dbFile = context.getDatabasePath("another-iptv-player.sqlite")
+        if (!dbFile.exists()) return
+        try {
+            val db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                dbFile.absolutePath, null,
+                android.database.sqlite.SQLiteDatabase.OPEN_READWRITE
+            )
+            db.use { it.delete("favorites", "stream_id = ?", arrayOf(itemId)) }
+        } catch (_: Exception) {}
     }
 
     fun getFavorites(context: Context): List<TvContentItem> {

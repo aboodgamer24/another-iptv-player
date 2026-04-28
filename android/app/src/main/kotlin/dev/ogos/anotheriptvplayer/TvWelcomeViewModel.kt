@@ -73,6 +73,12 @@ class TvWelcomeViewModel : ViewModel() {
                     val responseBody = response.body?.string()
                     val responseObj = JSONObject(responseBody ?: "")
                     val token = responseObj.optString("token")
+                    val xtreamUrl      = responseObj.optString("playlist_url")
+                        .ifBlank { responseObj.optJSONObject("playlist")?.optString("url") ?: "" }
+                    val xtreamUsername = responseObj.optString("playlist_username")
+                        .ifBlank { responseObj.optJSONObject("playlist")?.optString("username") ?: "" }
+                    val xtreamPassword = responseObj.optString("playlist_password")
+                        .ifBlank { responseObj.optJSONObject("playlist")?.optString("password") ?: "" }
 
                     if (token.isNotEmpty()) {
                         val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
@@ -81,14 +87,19 @@ class TvWelcomeViewModel : ViewModel() {
                             .putString("flutter.sync_server_url", formattedUrl)
                             .apply()
 
-                        val hasPlaylist = prefs.contains("flutter.current_playlist_json") &&
-                            !prefs.getString("flutter.current_playlist_json", "").isNullOrEmpty()
+                        // Persist Xtream playlist if the server returned it
+                        if (xtreamUrl.isNotBlank()) {
+                            TvRepository.savePlaylist(context, xtreamUrl, xtreamUsername, xtreamPassword)
+                        } else {
+                            // Server did not return a playlist — load whatever is already saved
+                            TvRepository.loadPlaylist(context)
+                        }
+
+                        val hasPlaylist = TvRepository.getApiService() != null
 
                         if (hasPlaylist) {
-                            TvRepository.loadPlaylist(context)
                             setStep(WelcomeStep.Done)
                         } else {
-                            // Logged in but no playlist stored yet — go to Settings so user can add one
                             setStep(WelcomeStep.NeedsPlaylist)
                         }
                     } else {

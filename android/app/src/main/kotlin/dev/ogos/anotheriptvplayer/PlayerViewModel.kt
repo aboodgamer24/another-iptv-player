@@ -26,6 +26,7 @@ data class PlayerUiState(
     val videoHeight: Int = 0,
     val codec: String = "",
     val frameRate: Float = 0f,
+    val isFavorite: Boolean = false,
 )
 
 class PlayerViewModel(app: Application) : AndroidViewModel(app) {
@@ -63,6 +64,13 @@ class PlayerViewModel(app: Application) : AndroidViewModel(app) {
             }
         })
     }
+
+    fun setFavorite(isFav: Boolean) {
+        _state.value = _state.value.copy(isFavorite = isFav)
+    }
+
+    fun getCurrentPositionForHistory(): Long = player.currentPosition
+    fun getCurrentTitleForHistory(): String = _state.value.title
 
     fun loadMedia(url: String, title: String, subtitleUrl: String, startPosition: Long) {
         val mediaItem = buildMediaItem(url, subtitleUrl)
