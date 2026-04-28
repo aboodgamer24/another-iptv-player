@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../../controllers/xtream_code_home_controller.dart';
 import '../../models/category_view_model.dart';
 import '../../models/playlist_content_model.dart';
 import '../../models/content_type.dart';
@@ -29,6 +31,7 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
 
   List<ContentItem> _allItems = [];
+  bool _isLoadingItems = false;
 
   @override
   void initState() {
@@ -48,14 +51,30 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
     }
   }
 
-  void _loadAllItems() {
+  Future<void> _loadAllItems() async {
+    setState(() => _isLoadingItems = true);
+
+    // Lazily load content items for VOD/Series categories (they start empty)
+    if (widget.contentType == ContentType.vod ||
+        widget.contentType == ContentType.series) {
+      final controller = context.read<XtreamCodeHomeController>();
+      await Future.wait(
+        widget.categories.map(
+          (cat) => controller.loadItemsForCategory(cat, widget.contentType),
+        ),
+      );
+    }
+
     List<ContentItem> items = [];
     for (final cat in widget.categories) {
       items.addAll(cat.contentItems);
     }
-    setState(() {
-      _allItems = items;
-    });
+    if (mounted) {
+      setState(() {
+        _allItems = items;
+        _isLoadingItems = false;
+      });
+    }
   }
 
   List<ContentItem> get _displayItems {
@@ -87,7 +106,9 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
         children: [
           _buildSearchBar(),
           Expanded(
-            child: _displayItems.isEmpty
+            child: _isLoadingItems
+                ? const Center(child: CircularProgressIndicator())
+                : _displayItems.isEmpty
                 ? _buildEmptyState()
                 : GridView.builder(
                     cacheExtent: 500,
