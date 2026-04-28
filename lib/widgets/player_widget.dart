@@ -341,6 +341,19 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
+  /// Wrapper for player.open() to ensure properties are set BEFORE the open call.
+  /// Properties set after open() are often ignored for the current stream on Windows.
+  Future<void> _openStream(Media media, {bool play = true}) async {
+    final native = _player.platform;
+    if (native is NativePlayer) {
+      // Force keyframe-aligned start for every new stream to fix HEVC POC errors
+      await native.setProperty('hr-seek-framedrop', 'yes');
+      // Ensure demuxer readahead is sufficient for 4K/HEVC chain
+      await native.setProperty('demuxer-readahead-secs', '15');
+    }
+    await _player.open(media, play: play);
+  }
+
   Future<void> _saveWatchHistory() async {
     if (_pendingWatchDuration == null || !mounted) return;
 
@@ -373,6 +386,8 @@ class _PlayerWidgetState extends State<PlayerWidget>
     if (!mounted) return;
 
     try {
+      // Apply global MPV configuration BEFORE any media is opened
+      await PlayerState.configureMpvForStreaming(_player);
       PlayerState.subtitleConfiguration = await getSubtitleConfiguration();
 
       PlayerState.backgroundPlay = await UserPreferences.getBackgroundPlay();
@@ -413,7 +428,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType != ContentType.liveStream) {
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           _resolution4KState = null;
-          await _player.open(
+          await _openStream(
             Media(
               contentItem.url,
               start: watchHistory?.watchDuration ?? Duration.zero,
@@ -428,7 +443,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         } else {
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           _resolution4KState = null;
-          await _player.open(Media(contentItem.url));
+          await _openStream(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
             await _applyLowLatencyProperties();
@@ -438,7 +453,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       } else {
         _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
         _resolution4KState = null;
-        await _player.open(
+        await _openStream(
           Media(
             contentItem.url,
             start: watchHistory?.watchDuration ?? Duration(),
@@ -494,7 +509,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 newUrl: contentItem.url,
               );
               _resolution4KState = null;
-              await _player.open(Media(contentItem.url));
+              await _openStream(Media(contentItem.url));
               await _applyUserPreferenceProperties();
               if (await UserPreferences.getLowLatencyMode()) {
                 await _applyLowLatencyProperties();
@@ -710,7 +725,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                   newUrl: contentItem.url,
                 );
                 _resolution4KState = null;
-                await _player.open(Media(contentItem.url));
+                await _openStream(Media(contentItem.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
                   await _applyLowLatencyProperties();
@@ -771,7 +786,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           if (!mounted) return;
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
           _resolution4KState = null;
-          await _player.open(Media(contentItem.url));
+          await _openStream(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
             await _applyLowLatencyProperties();
@@ -806,7 +821,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
                 _overlayKey.currentState?.resetContentState(newUrl: item.url);
                 _resolution4KState = null;
-                await _player.open(Media(item.url));
+                await _openStream(Media(item.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
                   await _applyLowLatencyProperties();
@@ -839,7 +854,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
                 _overlayKey.currentState?.resetContentState(newUrl: item.url);
                 _resolution4KState = null;
-                await _player.open(
+                await _openStream(
                   Media(item.url, start: Duration(milliseconds: startMs)),
                   play: true,
                 );

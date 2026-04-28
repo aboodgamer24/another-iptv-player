@@ -24,22 +24,16 @@ class HdrService {
     if (player.platform is! NativePlayer) return HdrType.none;
     final native = player.platform as NativePlayer;
 
-    // Try up to 5 times with 500ms intervals (total 2.5s window)
-    for (int attempt = 0; attempt < 5; attempt++) {
+    // Poll until video-params are populated (max 5s, 500ms intervals)
+    for (int i = 0; i < 10; i++) {
+      await Future.delayed(const Duration(milliseconds: 500));
       try {
         final primaries = await native.getProperty('video-params/primaries');
         final gamma = await native.getProperty('video-params/gamma');
 
-        debugPrint(
-          '[HdrService] attempt=$attempt primaries=$primaries gamma=$gamma',
-        );
+        debugPrint('[HdrService] poll=$i primaries="$primaries" gamma="$gamma"');
 
-        if (primaries.isEmpty) {
-          await Future.delayed(const Duration(milliseconds: 500));
-          continue;
-        }
-
-        // BT.2020 primaries = HDR color space
+        if (primaries.isEmpty) continue;
         if (!primaries.contains('bt.2020')) return HdrType.none;
 
         return switch (gamma.toLowerCase().trim()) {
@@ -50,12 +44,9 @@ class HdrService {
           _ => HdrType.none,
         };
       } catch (e) {
-        debugPrint('[HdrService] attempt=$attempt error: $e');
-        await Future.delayed(const Duration(milliseconds: 500));
+        debugPrint('[HdrService] poll=$i error: $e');
       }
     }
-
-    debugPrint('[HdrService] Could not detect HDR after 5 attempts');
     return HdrType.none;
   }
 }

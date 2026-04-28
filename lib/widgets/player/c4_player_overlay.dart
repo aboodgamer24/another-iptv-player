@@ -213,18 +213,18 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
         // _confirmedNonLive is only cleared when the content itself changes
         // (handled by the ContentType/queue change path below).
       }),
-      // HDR detection — read-only, triggers after playback starts
-      widget.player.stream.playing.listen((playing) async {
-        if (!playing) {
-          _hdrTypeNotifier.value = HdrType.none;
-          return;
-        }
-        // Wait for MPV to decode first frames and populate video-params
-        await Future.delayed(const Duration(milliseconds: 1500));
-        if (!mounted) return;
-        final hdrType = await HdrService.detectHdrType(widget.player);
-        if (mounted) _hdrTypeNotifier.value = hdrType;
-      }),
+      // HDR detection — read-only, triggers after video width becomes available.
+      // Width is only non-null after the first frame is decoded, which is when
+      // video-params (primaries/gamma) are guaranteed to be populated by MPV.
+      widget.player.stream.width
+          .where((w) => w != null && w! > 0)
+          .first
+          .asStream()
+          .listen((_) async {
+            if (!mounted) return;
+            final hdrType = await HdrService.detectHdrType(widget.player);
+            if (mounted) _hdrTypeNotifier.value = hdrType;
+          }),
     ];
 
     // Periodic poll for live stats (tracks metadata may update over time)
