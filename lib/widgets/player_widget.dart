@@ -80,9 +80,14 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Duration _lastSavedPosition = Duration.zero;
   DateTime _lastSeekTime = DateTime.fromMillisecondsSinceEpoch(0);
   Duration _lastPosition = Duration.zero;
+
   /// null = not yet determined, true = 4K mode active, false = sub-4K mode active.
-  /// Used by the videoParams listener to avoid redundant scaler switches.
   bool? _resolution4KState;
+
+  /// Cancellable timer for the videoParams scaler-switch delay.
+  /// Cancelled on every new open() so stale callbacks from a previous
+  /// channel can never corrupt the scaler state of the new channel.
+  Timer? _videoParamsTimer;
 
   @override
   void initState() {
@@ -90,11 +95,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
     contentItem = widget.contentItem;
     _queue = widget.queue;
 
-    // --- INSERTION 1: INITIAL CONTENT SET ---
     PlayerState.currentContent = widget.contentItem;
     PlayerState.queue = _queue;
     PlayerState.currentIndex = 0;
-    // ----------------------------------------
 
     PlayerState.title = widget.contentItem.name;
     _player = Player(
@@ -108,12 +111,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
     super.initState();
 
-    // Android: auto-enter fullscreen as soon as player mounts
     if (Platform.isAndroid) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _enterAndroidFullscreen();
       });
     }
+
     videoTrackSubscription = EventBus()
         .on<VideoTrack>('video_track_changed')
         .listen((VideoTrack data) async {
@@ -156,13 +159,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   @override
   void dispose() {
-    // Cancel timer and save watch history one last time before disposing
+    // Cancel the videoParams timer first so it cannot fire on a disposed widget
+    _videoParamsTimer?.cancel();
+    _videoParamsTimer = null;
+
     _watchHistoryTimer?.cancel();
     if (_pendingWatchDuration != null) {
-      // Use unawaited to save without blocking dispose
-      _saveWatchHistory().catchError((e) {
-        // Ignore errors during dispose
-      });
+      _saveWatchHistory().catchError((e) {});
     }
 
     PlayerState.activePlayer = null;
@@ -175,7 +178,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     _lowLatencySubscription.cancel();
     _errorHandler.reset();
 
-    // Android: restore portrait + system UI when player closes
     if (Platform.isAndroid && !PlatformUtils.isTV) {
       fullscreenNotifier.value = false;
       SystemChrome.setPreferredOrientations([
@@ -193,10 +195,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   void _enterAndroidFullscreen() {
     if (!mounted) return;
-    // Set the global fullscreen notifier so the shell hides AppBar + BottomNav
     fullscreenNotifier.value = true;
-    // Force landscape + hide system UI for true immersive fullscreen
-    // On Android TV the system is always landscape — don't force rotate
     if (!PlatformUtils.isTV) {
       SystemChrome.setPreferredOrientations([
         DeviceOrientation.landscapeLeft,
@@ -206,21 +205,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  /// Apply critical MPV properties that must be set BEFORE media opens.
-  /// Call this once after creating the Player, before any player.open() call.
   Future<void> _applyPreOpenMpvProperties() async {
     final native = _player.platform;
     if (native is! NativePlayer) return;
     try {
-      // --- Global properties (Fix HEVC stutter & EAC3 detection) ---
-      // Increase probe size so EAC3 audio sample rate is detected correctly
       await native.setProperty('demuxer-lavf-probesize', '10000000');
       await native.setProperty('demuxer-lavf-analyzeduration', '5000000');
-      // Silence harmless HEVC POC reference error spam in debug logs
       await native.setProperty('msg-level', 'hevc=no');
 
       if (Platform.isAndroid) {
-        // --- Properties common to ALL content types ---
         await native.setProperty('interpolation', 'no');
         await native.setProperty('scale', 'bilinear');
         await native.setProperty('cscale', 'bilinear');
@@ -232,7 +225,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         await native.setProperty('deinterlace', 'no');
 
         if (contentItem.contentType == ContentType.liveStream) {
-          // --- LIVE STREAM: low-latency, small cache, aggressive framedrop ---
           await native.setProperty('video-sync', 'audio');
           await native.setProperty('framedrop', 'decoder+vo');
           await native.setProperty('cache', 'yes');
@@ -243,41 +235,26 @@ class _PlayerWidgetState extends State<PlayerWidget>
           await native.setProperty('demuxer-cache-wait', 'no');
           await native.setProperty('initial-audio-sync', 'no');
         } else {
-          // --- VOD / SERIES: seekable, larger cache, no framedrop ---
-          // video-sync=display-resample works better for fixed-fps VOD files
           await native.setProperty('video-sync', 'display-resample');
-          // Never drop frames on VOD — buffer more instead
           await native.setProperty('framedrop', 'no');
-          // Large demuxer cache so MPV can build a full seek index
           await native.setProperty('cache', 'yes');
           await native.setProperty('demuxer-max-bytes', '64MiB');
           await native.setProperty('demuxer-max-back-bytes', '32MiB');
           await native.setProperty('demuxer-readahead-secs', '5.0');
           await native.setProperty('cache-secs', '30');
-          // 'yes' stalls HLS VOD indefinitely. Use 'no' and let MPV seek
-          // on-demand — the large cache (64MiB) handles it gracefully.
           await native.setProperty('demuxer-cache-wait', 'no');
           await native.setProperty('initial-audio-sync', 'yes');
-          // Smooth A/V sync for VOD
           await native.setProperty('audio-buffer', '0.2');
         }
 
         if (PlatformUtils.isTV) {
-          // FIX 2a — Cap max video resolution on TV to 1080p to prevent frame drops
-          // (TCL/Smart TV Pro hardware cannot handle 4K HEVC 50fps without starvation)
           await native.setProperty('ytdl-format', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]');
-          // Also cap max bitrate to ~8Mbps to prevent network/bus saturation
           await native.setProperty('video-bitrate', '8000000');
         }
       } else {
-        // --- Desktop: same split ---
         await native.setProperty('interpolation', 'no');
         await native.setProperty('tscale', 'oversample');
         await native.setProperty('deinterlace', 'no');
-
-        // Safe starting point: use bilinear and no deband for all streams initially.
-        // This prevents the 4K texture pipeline from crashing on start.
-        // The videoParams listener will upgrade sub-4K streams later.
         await native.setProperty('scale', 'bilinear');
         await native.setProperty('cscale', 'bilinear');
         await native.setProperty('dscale', 'bilinear');
@@ -289,14 +266,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType == ContentType.liveStream) {
           await native.setProperty('video-sync', 'audio');
           await native.setProperty('framedrop', 'no');
-          // Increase demuxer buffer for live HEVC streams
           await native.setProperty('demuxer-readahead-secs', '10');
           await native.setProperty('demuxer-max-bytes', '150MiB');
           await native.setProperty('demuxer-max-back-bytes', '50MiB');
           await native.setProperty('cache', 'yes');
           await native.setProperty('cache-secs', '10');
         } else {
-          // VOD/series on desktop
           await native.setProperty('video-sync', 'display-resample');
           await native.setProperty('framedrop', 'no');
           await native.setProperty('demuxer-max-bytes', '150MiB');
@@ -310,13 +285,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  /// Apply user-preference-based properties AFTER media is open.
-  ///
-  /// NOTE: On desktop, the upscaler is NOT applied here. It is managed
-  /// exclusively by the videoParams listener which selects the scaler
-  /// based on detected resolution (bilinear for 4K+, user preset for
-  /// sub-4K). Applying it here before the resolution is known causes
-  /// ANGLE/D3D11 to choke on 4K frames with heavy shaders.
   Future<void> _applyUserPreferenceProperties() async {
     if (Platform.isAndroid) {
       final enhancementEnabled = await UserPreferences.getStreamEnhancement();
@@ -325,7 +293,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Future<void> _applyLowLatencyProperties() async {
-    // Low latency is meaningless and harmful for VOD/series — skip
     if (contentItem.contentType != ContentType.liveStream) return;
 
     final native = _player.platform;
@@ -341,16 +308,38 @@ class _PlayerWidgetState extends State<PlayerWidget>
     }
   }
 
-  /// Wrapper for player.open() to ensure properties are set BEFORE the open call.
-  /// Properties set after open() are often ignored for the current stream on Windows.
+  /// Open a stream safely.
+  ///
+  /// Differences from the old _openStream:
+  ///  - Does NOT force demuxer-readahead-secs=15 before every open().
+  ///    The per-content-type readahead is already set correctly in
+  ///    _applyPreOpenMpvProperties(); overriding it here was the cause of
+  ///    live-stream freezes because it pushed 15 s of buffer before playback.
+  ///  - Cancels any pending _videoParamsTimer so stale delayed callbacks from
+  ///    the previous channel cannot corrupt the new channel's scaler state.
+  ///  - Guards against a disposed widget / dead NativePlayer before touching
+  ///    native properties, preventing crashes on rapid channel switches.
   Future<void> _openStream(Media media, {bool play = true}) async {
+    // Cancel any pending videoParams scaler callback for the OLD channel
+    // before we open the new one.  Without this, the 2-second delayed
+    // callback for the previous channel fires AFTER the new channel starts
+    // and overwrites its scaler settings, causing SDR/HDR pipeline freeze.
+    _videoParamsTimer?.cancel();
+    _videoParamsTimer = null;
+
+    if (!mounted) return;
+
     final native = _player.platform;
     if (native is NativePlayer) {
-      // Force keyframe-aligned start for every new stream to fix HEVC POC errors
-      await native.setProperty('hr-seek-framedrop', 'yes');
-      // Ensure demuxer readahead is sufficient for 4K/HEVC chain
-      await native.setProperty('demuxer-readahead-secs', '15');
+      try {
+        // Only the keyframe-seek flag is truly required before open().
+        // readahead is already set correctly by _applyPreOpenMpvProperties().
+        await native.setProperty('hr-seek-framedrop', 'yes');
+      } catch (e) {
+        debugPrint('[Player] Pre-open flag failed: $e');
+      }
     }
+
     await _player.open(media, play: play);
   }
 
@@ -376,8 +365,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
       _pendingWatchDuration = null;
       _pendingTotalDuration = null;
     } catch (e) {
-      // Silently handle database errors to prevent crashes
-      // The next save attempt will retry
       debugPrint('Error saving watch history: $e');
     }
   }
@@ -386,7 +373,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     if (!mounted) return;
 
     try {
-      // Apply global MPV configuration BEFORE any media is opened
       await PlayerState.configureMpvForStreaming(_player);
       PlayerState.subtitleConfiguration = await getSubtitleConfiguration();
 
@@ -572,7 +558,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         PlayerState.selectedAudio = _player.state.track.audio;
         PlayerState.selectedSubtitle = _player.state.track.subtitle;
 
-        // Track değişikliğini bildir
         EventBus().emit('player_track_changed', null);
 
         var volume = await UserPreferences.getVolume();
@@ -597,29 +582,23 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 PlayerState.pendingTrackRestorePosition!.inSeconds > 2) {
               final restorePos = PlayerState.pendingTrackRestorePosition!;
               _player.seek(restorePos);
-              // We intentionally do NOT null out the guard yet in case MPV drops it again during the seek
             } else if (position > const Duration(seconds: 1)) {
-              // If it successfully passed 1s (or successfully restored), we can clear the guard
               if (timeSinceGuard.inMilliseconds > 500) {
                 PlayerState.pendingTrackRestorePosition = null;
                 PlayerState.pendingTrackRestoreTime = null;
               }
             }
           } else {
-            // Expire guard after 5 seconds
             PlayerState.pendingTrackRestorePosition = null;
             PlayerState.pendingTrackRestoreTime = null;
           }
         }
 
-        // Detect manual seek jumps (> 5 seconds)
         if ((position - _lastPosition).abs() > const Duration(seconds: 5)) {
           _lastSeekTime = DateTime.now();
         }
         _lastPosition = position;
 
-        // Only reschedule a save if position moved more than 5 seconds
-        // since the last save trigger — avoids timer churn during pause/seek.
         if ((position - _lastSavedPosition).abs() >
             const Duration(seconds: 5)) {
           _watchHistoryTimer?.cancel();
@@ -632,8 +611,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       _player.stream.buffering.listen((buffering) {
         if (!mounted) return;
-        // For live streams, never hide the video widget on buffer events.
-        // Doing so causes the video to go black while audio continues playing.
         if (contentItem.contentType == ContentType.liveStream) return;
         if (buffering != isLoading) {
           setState(() => isLoading = buffering);
@@ -642,15 +619,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       _player.stream.playing.listen((playing) async {
         if (!mounted) return;
-        // Properties are applied pre-open; no re-application needed on play events.
       });
 
-      // Resolution-aware upscaler: sole owner of scaler selection on desktop.
-      // Heavy shaders (ewa_lanczossharp, ewa_lanczos, spline36) crash the
-      // ANGLE/D3D11 texture pipeline at 4K. We NEVER apply them pre-open;
-      // instead we wait for videoParams to confirm resolution, then decide:
-      //   • >= 3840  → bilinear (safe for 4K)
-      //   • < 3840   → user's chosen upscaler preset
+      // Resolution-aware upscaler — desktop only.
+      //
+      // Uses a cancellable _videoParamsTimer instead of a bare Future.delayed
+      // so that when the user switches channels rapidly the old channel's
+      // delayed callback is always cancelled before the new channel opens.
+      // Without this, the old callback fires after the new stream starts and
+      // overwrites its scaler, freezing SDR/HDR playback.
       _player.stream.videoParams.listen((vp) async {
         if (!mounted || Platform.isAndroid) return;
         if (vp.w == null || vp.w! <= 0) return;
@@ -661,49 +638,54 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (_resolution4KState == is4K) return;
         _resolution4KState = is4K;
 
-        final native = _player.platform;
-        if (native is! NativePlayer) return;
+        // Cancel any previously scheduled scaler switch for this or the
+        // previous channel before scheduling a new one.
+        _videoParamsTimer?.cancel();
 
-        try {
-          // Wait for MPV to decode first frames and populate video-params
-          await Future.delayed(const Duration(milliseconds: 2000));
+        _videoParamsTimer = Timer(const Duration(milliseconds: 2000), () async {
+          // Re-check mounted and that the resolution state hasn't been reset
+          // (reset happens on every new open(), meaning a channel switch
+          // already occurred — abort to avoid corrupting the new channel).
           if (!mounted) return;
+          if (_resolution4KState != is4K) return;
 
-          if (is4K) {
-            // ── 4K+ : lightweight pipeline ──
-            debugPrint(
-              '[Player] 4K detected (${vp.w}x${vp.h}) — using bilinear',
-            );
-            await native.setProperty('scale', 'bilinear');
-            await native.setProperty('cscale', 'bilinear');
-            await native.setProperty('dscale', 'bilinear');
-            await native.setProperty('sigmoid-upscaling', 'no');
-            await native.setProperty('linear-upscaling', 'no');
-            await native.setProperty('correct-downscaling', 'no');
-            await native.setProperty('deband', 'no');
-            // Aggressive buffering for 4K
-            await native.setProperty('demuxer-max-bytes', '200MiB');
-            if (contentItem.contentType == ContentType.liveStream) {
-              await native.setProperty('framedrop', 'decoder+vo');
+          final native = _player.platform;
+          if (native is! NativePlayer) return;
+
+          try {
+            if (is4K) {
+              debugPrint(
+                '[Player] 4K detected (${vp.w}x${vp.h}) — using bilinear',
+              );
+              await native.setProperty('scale', 'bilinear');
+              await native.setProperty('cscale', 'bilinear');
+              await native.setProperty('dscale', 'bilinear');
+              await native.setProperty('sigmoid-upscaling', 'no');
+              await native.setProperty('linear-upscaling', 'no');
+              await native.setProperty('correct-downscaling', 'no');
+              await native.setProperty('deband', 'no');
+              await native.setProperty('demuxer-max-bytes', '200MiB');
+              if (contentItem.contentType == ContentType.liveStream) {
+                await native.setProperty('framedrop', 'decoder+vo');
+              }
+            } else {
+              debugPrint(
+                '[Player] Sub-4K detected (${vp.w}x${vp.h}) — '
+                'applying user upscaler preset',
+              );
+              final preset = await UserPreferences.getUpscalePreset();
+              await applyUpscalePreset(_player, preset);
+              final enhancementEnabled =
+                  await UserPreferences.getStreamEnhancement();
+              await applyStreamEnhancement(_player, enhancementEnabled);
+              if (contentItem.contentType == ContentType.liveStream) {
+                await native.setProperty('framedrop', 'no');
+              }
             }
-          } else {
-            // ── Sub-4K : apply user's upscaler preset ──
-            debugPrint(
-              '[Player] Sub-4K detected (${vp.w}x${vp.h}) — '
-              'applying user upscaler preset',
-            );
-            final preset = await UserPreferences.getUpscalePreset();
-            await applyUpscalePreset(_player, preset);
-            final enhancementEnabled =
-                await UserPreferences.getStreamEnhancement();
-            await applyStreamEnhancement(_player, enhancementEnabled);
-            if (contentItem.contentType == ContentType.liveStream) {
-              await native.setProperty('framedrop', 'no');
-            }
+          } catch (e) {
+            debugPrint('[Player] Resolution-based scaler switch failed: $e');
           }
-        } catch (e) {
-          debugPrint('[Player] Resolution-based scaler switch failed: $e');
-        }
+        });
       });
 
       _player.stream.error.listen((error) async {
@@ -713,7 +695,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
             () async {
               if (_isSwitchingChannel) return;
 
-              // Guard against transient errors during/immediately after a seek
               final timeSinceSeek = DateTime.now().difference(_lastSeekTime);
               if (timeSinceSeek.inSeconds < 3) {
                 debugPrint('Ignoring player error due to recent seek: $error');
@@ -748,21 +729,13 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
       _player.stream.playlist.listen((playlist) {
         if (!mounted) return;
-
-        // While we are manually switching episodes/channels via
-        // player_content_item_index_changed, the internal playlist index is
-        // still 0 (media_kit hasn't moved yet). Trusting it here would
-        // overwrite the contentItem we just set, causing the player to restart
-        // from episode 0. Skip the update entirely while a switch is in flight.
         if (_isSwitchingChannel) return;
 
         _currentItemIndex = playlist.index;
         contentItem = _queue?[playlist.index] ?? widget.contentItem;
 
-        // --- INSERTION 2: QUEUE CHANGE SETTER ---
         PlayerState.currentContent = contentItem;
         PlayerState.currentIndex = _currentItemIndex;
-        // ----------------------------------------
 
         PlayerState.title = contentItem.name;
         EventBus().emit('player_content_item', contentItem);
@@ -770,18 +743,15 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
 
       _player.stream.completed.listen((completed) async {
-        if (!completed) return; // false = stopped, not finished — ignore
+        if (!completed) return;
         if (_isSwitchingChannel) return;
 
-        // Guard against transient completion events during/immediately after a seek
         final timeSinceSeek = DateTime.now().difference(_lastSeekTime);
         if (timeSinceSeek.inSeconds < 3) {
           debugPrint('Ignoring player completion due to recent seek');
           return;
         }
 
-        // Only auto-restart live streams on true completion.
-        // VOD/Series completion is handled by the Playlist — do nothing.
         if (contentItem.contentType == ContentType.liveStream) {
           if (!mounted) return;
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
@@ -799,8 +769,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
           .on<int>('player_content_item_index_changed')
           .listen((int index) async {
             if (contentItem.contentType == ContentType.liveStream) {
-              // Guard against concurrent open() calls — rapid taps can
-              // overlap and crash the native D3D/ANGLE video pipeline.
               if (_isSwitchingChannel) return;
               _isSwitchingChannel = true;
 
@@ -846,7 +814,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 PlayerState.currentContent = item;
                 PlayerState.currentIndex = index;
                 PlayerState.title = item.name;
-                // Look up resume position from watch history and open directly.
                 final itemHistory = await watchHistoryService.getWatchHistory(
                   AppState.currentPlaylist!.id,
                   isXtreamCode ? item.id : item.m3uItem?.id ?? item.id,
@@ -879,10 +846,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (!mounted) return;
         _queue = newQueue;
         PlayerState.queue = newQueue;
-        _currentItemIndex = 0; // will be corrected by index-changed event
+        _currentItemIndex = 0;
       });
 
-      // Kanal listesi göster/gizle event'i
       EventBus().on<bool>('toggle_channel_list').listen((bool show) {
         if (mounted) {
           setState(() {
@@ -892,7 +858,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
       });
 
-      // Video bilgisi göster/gizle event'i
       EventBus().on<bool>('toggle_video_info').listen((bool show) {
         if (mounted) {
           setState(() {
@@ -901,7 +866,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
       });
 
-      // Video ayarları göster/gizle event'i
       EventBus().on<bool>('toggle_video_settings').listen((bool show) {
         if (mounted) {
           setState(() {
@@ -911,9 +875,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
       });
 
       if (mounted) {
-        setState(() {
-          // isLoading is now handled inside each open() call
-        });
+        setState(() {});
       }
     } catch (e, st) {
       debugPrint('_initializePlayer error: $e\n$st');
@@ -948,7 +910,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   Widget _buildChannelListOverlay(BuildContext context) {
-    // For series, use the dedicated episode panel
     if (contentItem.contentType == ContentType.series) {
       return _buildSeriesEpisodePanel(context);
     }
@@ -959,7 +920,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ? (screenWidth * 0.55).clamp(200.0, 240.0)
         : (screenWidth / 3).clamp(200.0, 400.0);
 
-    // Mevcut index'i bul
     final int selectedIndex = _currentItemIndex;
 
     String overlayTitle = 'Kanal Seç';
@@ -981,7 +941,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           child: Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
-              onTap: () {}, // Panel içine tıklanınca kapanmasın
+              onTap: () {},
               child: Container(
                 width: panelWidth,
                 height: double.infinity,
@@ -997,7 +957,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 ),
                 child: Column(
                   children: [
-                    // Header
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -1046,7 +1005,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                         ],
                       ),
                     ),
-                    // Channel list
                     Expanded(
                       child: ListView.builder(
                         cacheExtent: 500,
@@ -1084,7 +1042,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     return InkWell(
       onTap: () {
         EventBus().emit('player_content_item_index_changed', index);
-        // Panel kapanmasın, sadece kanal değişsin
       },
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
@@ -1105,7 +1062,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ),
         child: Row(
           children: [
-            // Thumbnail
             if (item.imagePath.isNotEmpty)
               ClipRRect(
                 borderRadius: BorderRadius.circular(4),
@@ -1143,7 +1099,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 ),
               ),
             const SizedBox(width: 10),
-            // Title and info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1198,14 +1153,12 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
   Widget _buildSeriesEpisodePanel(BuildContext context) {
     final items = _queue ?? [];
-    // Group by season
     final Map<int, List<ContentItem>> bySeason = {};
     for (final ep in items) {
       final s = ep.season ?? 1;
       bySeason.putIfAbsent(s, () => []).add(ep);
     }
     final seasons = bySeason.keys.toList()..sort();
-    // Find current episode's season for initial tab
     final currentSeason = contentItem.season ?? seasons.first;
     int initialTab = seasons
         .indexOf(currentSeason)
@@ -1223,7 +1176,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           child: Align(
             alignment: Alignment.centerRight,
             child: GestureDetector(
-              onTap: () {}, // prevent dismiss on panel tap
+              onTap: () {},
               child: SizedBox(
                 width: panelWidth,
                 height: double.infinity,
@@ -1234,7 +1187,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                     color: Colors.black.withValues(alpha: 0.95),
                     child: Column(
                       children: [
-                        // Header
                         Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 16,
@@ -1278,7 +1230,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                             ],
                           ),
                         ),
-                        // Season tabs
                         if (seasons.length > 1)
                           Container(
                             color: Colors.grey,
@@ -1294,7 +1245,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                   .toList(),
                             ),
                           ),
-                        // Episode list per season tab
                         Expanded(
                           child: TabBarView(
                             children: seasons.map((season) {
@@ -1305,7 +1255,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
                                 itemCount: eps.length,
                                 itemBuilder: (context, idx) {
                                   final ep = eps[idx];
-                                  // Find the TRUE index in the full queue
                                   final queueIndex = items.indexWhere(
                                     (q) => q.id == ep.id,
                                   );
@@ -1457,7 +1406,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     final isTablet = screenSize.shortestSide >= 600;
     final isLandscape = screenSize.width > screenSize.height;
 
-    // Series ve LiveStream için tam ekran modu
     final isSeries = widget.contentItem.contentType == ContentType.series;
     final isLiveStream =
         widget.contentItem.contentType == ContentType.liveStream;
@@ -1487,7 +1435,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     Widget playerWidget;
 
     if (isFullScreen) {
-      // Series ve LiveStream için tam ekran
       playerWidget = SizedBox(
         width: double.infinity,
         height: double.infinity,
@@ -1505,7 +1452,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
         ),
       );
     } else {
-      // Diğer içerikler için aspect ratio kullan
       playerWidget = AspectRatio(
         aspectRatio: calculateAspectRatio(),
         child: Stack(
