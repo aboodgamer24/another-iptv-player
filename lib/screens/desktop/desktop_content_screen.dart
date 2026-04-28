@@ -6,6 +6,8 @@ import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
 import 'package:another_iptv_player/utils/responsive_helper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/content_type.dart';
+import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
+import 'package:provider/provider.dart';
 
 /// Desktop 2-panel layout used for Live TV, Movies, and Series tabs.
 /// Left panel: category sidebar. Right panel: content grid with search.
@@ -13,12 +15,14 @@ class DesktopContentScreen extends StatefulWidget {
   final List<CategoryViewModel> categories;
   final ContentType contentType;
   final String title;
+  final XtreamCodeHomeController? xtreamController;
 
   const DesktopContentScreen({
     super.key,
     required this.categories,
     required this.contentType,
     required this.title,
+    this.xtreamController,
   });
 
   @override
@@ -55,11 +59,21 @@ class _DesktopContentScreenState extends State<DesktopContentScreen> {
   Future<void> _loadAllItems() async {
     setState(() => _isLoadingItems = true);
 
-    List<ContentItem> items = [];
+    // If an xtream controller is provided, use lazy loading for VOD/Series
+    if (widget.xtreamController != null &&
+        (widget.contentType == ContentType.vod ||
+            widget.contentType == ContentType.series)) {
+      final controller = widget.xtreamController!;
+      await Future.wait(
+        widget.categories.map(
+          (cat) => controller.loadItemsForCategory(cat, widget.contentType),
+        ),
+      );
+    }
+
+    final List<ContentItem> items = [];
     for (final cat in widget.categories) {
-      for (final item in cat.contentItems) {
-        items.add(item);
-      }
+      items.addAll(cat.contentItems);
     }
 
     setState(() {

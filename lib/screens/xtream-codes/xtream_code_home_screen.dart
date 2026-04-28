@@ -244,12 +244,14 @@ class _XtreamCodeHomeScreenState extends State<XtreamCodeHomeScreen> {
         categories: controller.movieCategories,
         contentType: ContentType.vod,
         title: context.loc.movies,
+        xtreamController: controller,
       ),
       // 3 - Series
       DesktopContentScreen(
         categories: controller.seriesCategories,
         contentType: ContentType.series,
         title: context.loc.series_plural,
+        xtreamController: controller,
       ),
       // 4 - Search
       const DesktopGlobalSearchScreen(),
