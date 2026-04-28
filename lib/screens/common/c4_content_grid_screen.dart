@@ -22,10 +22,43 @@ class C4ContentGridScreen extends StatefulWidget {
 class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
   int _selectedCategoryIndex = 0;
   ContentItem? _focusedItem;
+  bool _isLoadingItems = false;
 
   double _sidebarWidth = 200;
   static const double _minSidebarWidth = 120;
   static const double _maxSidebarWidth = 400;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadCategoryItems(0);
+    });
+  }
+
+  Future<void> _loadCategoryItems(int index) async {
+    final controller = context.read<XtreamCodeHomeController>();
+    final categories = widget.contentType == ContentType.vod
+        ? controller.movieCategories
+        : controller.seriesCategories;
+
+    if (index >= categories.length) return;
+    final cat = categories[index];
+
+    if (cat.contentItems.isNotEmpty) {
+      setState(() => _selectedCategoryIndex = index);
+      return;
+    }
+
+    setState(() {
+      _selectedCategoryIndex = index;
+      _isLoadingItems = true;
+    });
+
+    await controller.loadItemsForCategory(cat, widget.contentType);
+
+    if (mounted) setState(() => _isLoadingItems = false);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -78,8 +111,7 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                     return _CategoryTile(
                       title: categories[index].category.categoryName,
                       isSelected: isSelected,
-                      onTap: () =>
-                          setState(() => _selectedCategoryIndex = index),
+                      onTap: () => _loadCategoryItems(index),
                     );
                   },
                 ),
@@ -130,49 +162,58 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                 ),
                 const SizedBox(height: 20),
                 Expanded(
-                  child: GridView.builder(
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: _getCrossAxisCount(context),
-                      childAspectRatio: 2 / 3, // Poster aspect ratio
-                      crossAxisSpacing: 16,
-                      mainAxisSpacing: 16,
-                    ),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) {
-                      final item = items[index];
-                      final favoritesController = context
-                          .watch<FavoritesController>();
-                      final watchLaterController = context
-                          .watch<WatchLaterController>();
+                  child: _isLoadingItems
+                      ? const Center(child: CircularProgressIndicator())
+                      : items.isEmpty
+                          ? Center(
+                              child: Text(
+                                context.loc.not_found_in_category,
+                                style: TextStyle(color: Theme.of(context).hintColor),
+                              ),
+                            )
+                          : GridView.builder(
+                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: _getCrossAxisCount(context),
+                                childAspectRatio: 2 / 3, // Poster aspect ratio
+                                crossAxisSpacing: 16,
+                                mainAxisSpacing: 16,
+                              ),
+                              itemCount: items.length,
+                              itemBuilder: (context, index) {
+                                final item = items[index];
+                                final favoritesController = context
+                                    .watch<FavoritesController>();
+                                final watchLaterController = context
+                                    .watch<WatchLaterController>();
 
-                      return C4Card(
-                        title: item.name,
-                        imageUrl: item.imageUrl,
-                        contentType: item.contentType,
-                        isFavorite: favoritesController.favorites.any(
-                          (f) =>
-                              f.streamId == item.id &&
-                              f.contentType == item.contentType,
-                        ),
-                        onToggleFavorite: () =>
-                            favoritesController.toggleFavorite(item),
-                        isInWatchLater: watchLaterController.watchLaterItems
-                            .any(
-                              (w) =>
-                                  w.streamId == item.id &&
-                                  w.contentType == item.contentType,
+                                return C4Card(
+                                  title: item.name,
+                                  imageUrl: item.imageUrl,
+                                  contentType: item.contentType,
+                                  isFavorite: favoritesController.favorites.any(
+                                    (f) =>
+                                        f.streamId == item.id &&
+                                        f.contentType == item.contentType,
+                                  ),
+                                  onToggleFavorite: () =>
+                                      favoritesController.toggleFavorite(item),
+                                  isInWatchLater: watchLaterController.watchLaterItems
+                                      .any(
+                                        (w) =>
+                                            w.streamId == item.id &&
+                                            w.contentType == item.contentType,
+                                      ),
+                                  onToggleWatchLater: () =>
+                                      watchLaterController.toggleWatchLater(item),
+                                  onFocusChanged: (focused) {
+                                    if (focused) setState(() => _focusedItem = item);
+                                  },
+                                  onTap: () {
+                                    navigateByContentType(context, item);
+                                  },
+                                );
+                              },
                             ),
-                        onToggleWatchLater: () =>
-                            watchLaterController.toggleWatchLater(item),
-                        onFocusChanged: (focused) {
-                          if (focused) setState(() => _focusedItem = item);
-                        },
-                        onTap: () {
-                          navigateByContentType(context, item);
-                        },
-                      );
-                    },
-                  ),
                 ),
               ],
             ),
