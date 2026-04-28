@@ -11,13 +11,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import androidx.compose.material3.CircularProgressIndicator
-import android.content.Context
 
 class TvMainActivity : ComponentActivity() {
 
@@ -26,32 +23,32 @@ class TvMainActivity : ComponentActivity() {
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         setContent {
-            TvAppTheme {
-                // Start with a loading state — read SharedPreferences off the UI thread
+            TvTheme {
                 var isReady     by remember { mutableStateOf(false) }
                 var hasPlaylist by remember { mutableStateOf(false) }
                 var isGuestMode by remember { mutableStateOf(false) }
                 var forcedTab   by remember { mutableStateOf<Int?>(null) }
 
                 LaunchedEffect(Unit) {
-                    val (playlist) = withContext(Dispatchers.IO) {
-                        val has = TvRepository.hasPlaylist(this@TvMainActivity)
-                        Pair(has, null)
+                    withContext(Dispatchers.IO) {
+                        // Initialize sync service and pull data
+                        TvSyncService.init(this@TvMainActivity)
+                        if (TvSyncService.isLoggedIn) {
+                            TvSyncApplier.pullAndApply(this@TvMainActivity)
+                        }
+                        
+                        hasPlaylist = TvRepository.hasPlaylist(this@TvMainActivity)
                     }
-                    hasPlaylist = playlist
                     isReady = true
                 }
 
                 when {
                     !isReady -> {
-                        // Splash / loading — dark background with no visible content
                         Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(Color(0xFF0D0D0F)),
+                            modifier = Modifier.fillMaxSize().background(TvColors.Background),
                             contentAlignment = Alignment.Center
                         ) {
-                            CircularProgressIndicator(color = Color(0xFF00C8B4))
+                            CircularProgressIndicator(color = TvColors.Primary)
                         }
                     }
 
@@ -67,7 +64,7 @@ class TvMainActivity : ComponentActivity() {
                     }
 
                     else -> {
-                        val initialTab = forcedTab ?: (if (isGuestMode) 7 else 0)
+                        val initialTab = forcedTab ?: 0
                         TvAppShell(initialTab = initialTab)
                     }
                 }

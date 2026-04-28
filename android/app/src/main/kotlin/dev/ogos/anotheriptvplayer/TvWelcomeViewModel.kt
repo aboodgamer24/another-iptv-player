@@ -3,16 +3,9 @@ package dev.ogos.anotheriptvplayer
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.RequestBody.Companion.toRequestBody
-import org.json.JSONObject
 
 sealed class WelcomeStep {
     object Welcome : WelcomeStep()
@@ -37,8 +30,6 @@ class TvWelcomeViewModel : ViewModel() {
     var isGuestMode = false
     var pendingNavigationTab: Int? = null
 
-    private val client = OkHttpClient()
-
     fun setStep(step: WelcomeStep) {
         _currentStep.value = step
         if (step is WelcomeStep.Error) {
@@ -53,66 +44,23 @@ class TvWelcomeViewModel : ViewModel() {
         _isLoading.value = true
 
         viewModelScope.launch {
-            try {
-                val formattedUrl = if (serverUrl.endsWith("/")) serverUrl.removeSuffix("/") else serverUrl
-                val json = JSONObject().apply {
-                    put("email", email)
-                    put("password", password)
-                }
-                val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-                val request = Request.Builder()
-                    .url("$formattedUrl/auth/login")
-                    .post(body)
-                    .build()
-
-                val response = withContext(Dispatchers.IO) {
-                    client.newCall(request).execute()
-                }
-
-                if (response.isSuccessful) {
-                    val responseBody = response.body?.string()
-                    val responseObj = JSONObject(responseBody ?: "")
-                    val token = responseObj.optString("token")
-                    val xtreamUrl      = responseObj.optString("playlist_url")
-                        .ifBlank { responseObj.optJSONObject("playlist")?.optString("url") ?: "" }
-                    val xtreamUsername = responseObj.optString("playlist_username")
-                        .ifBlank { responseObj.optJSONObject("playlist")?.optString("username") ?: "" }
-                    val xtreamPassword = responseObj.optString("playlist_password")
-                        .ifBlank { responseObj.optJSONObject("playlist")?.optString("password") ?: "" }
-
-                    if (token.isNotEmpty()) {
-                        val prefs = context.getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                        prefs.edit()
-                            .putString("flutter.sync_token", token)
-                            .putString("flutter.sync_server_url", formattedUrl)
-                            .apply()
-
-                        // Persist Xtream playlist if the server returned it
-                        if (xtreamUrl.isNotBlank()) {
-                            TvRepository.savePlaylist(context, xtreamUrl, xtreamUsername, xtreamPassword)
-                        } else {
-                            // Server did not return a playlist — load whatever is already saved
-                            TvRepository.loadPlaylist(context)
-                        }
-
-                        val hasPlaylist = TvRepository.getApiService() != null
-
-                        if (hasPlaylist) {
-                            setStep(WelcomeStep.Done)
-                        } else {
-                            setStep(WelcomeStep.NeedsPlaylist)
-                        }
+            val result = TvSyncService.login(context, serverUrl, email, password)
+            if (result.isSuccess) {
+                val ok = TvSyncApplier.pullAndApply(context)
+                if (ok) {
+                    // Check if we have any playlist in the DB now
+                    if (TvRepository.hasPlaylist(context)) {
+                        setStep(WelcomeStep.Done)
                     } else {
-                        setStep(WelcomeStep.Error("Invalid response from server"))
+                        setStep(WelcomeStep.NeedsPlaylist)
                     }
                 } else {
-                    setStep(WelcomeStep.Error("Login failed: ${response.code}"))
+                    setStep(WelcomeStep.Error("Sync failed after login"))
                 }
-            } catch (e: Exception) {
-                setStep(WelcomeStep.Error("Connection error: ${e.message}"))
-            } finally {
-                _isLoading.value = false
+            } else {
+                setStep(WelcomeStep.Error("Login failed: ${result.exceptionOrNull()?.message}"))
             }
+            _isLoading.value = false
         }
     }
 
@@ -121,33 +69,23 @@ class TvWelcomeViewModel : ViewModel() {
         _isLoading.value = true
 
         viewModelScope.launch {
-            try {
-                val formattedUrl = if (serverUrl.endsWith("/")) serverUrl.removeSuffix("/") else serverUrl
-                val json = JSONObject().apply {
-                    put("name", name)
-                    put("email", email)
-                    put("password", password)
-                }
-                val body = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())
-                val request = Request.Builder()
-                    .url("$formattedUrl/auth/register")
-                    .post(body)
-                    .build()
-
-                val response = withContext(Dispatchers.IO) {
-                    client.newCall(request).execute()
-                }
-
-                if (response.isSuccessful) {
-                    signIn(context, serverUrl, email, password)
+            val result = TvSyncService.register(context, serverUrl, email, password, name)
+            if (result.isSuccess) {
+                // Registration usually logs in automatically, so pull sync
+                val ok = TvSyncApplier.pullAndApply(context)
+                if (ok) {
+                    if (TvRepository.hasPlaylist(context)) {
+                        setStep(WelcomeStep.Done)
+                    } else {
+                        setStep(WelcomeStep.NeedsPlaylist)
+                    }
                 } else {
-                    setStep(WelcomeStep.Error("Registration failed: ${response.code}"))
-                    _isLoading.value = false
+                    setStep(WelcomeStep.Done) // Still done, but maybe no playlists
                 }
-            } catch (e: Exception) {
-                setStep(WelcomeStep.Error("Connection error: ${e.message}"))
-                _isLoading.value = false
+            } else {
+                setStep(WelcomeStep.Error("Registration failed: ${result.exceptionOrNull()?.message}"))
             }
+            _isLoading.value = false
         }
     }
 }

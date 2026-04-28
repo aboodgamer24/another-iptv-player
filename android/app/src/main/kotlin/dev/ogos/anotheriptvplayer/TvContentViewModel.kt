@@ -17,8 +17,6 @@ class TvContentViewModel : ViewModel() {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
 
-            // Ensure playlist is loaded — this is fast (SharedPreferences read)
-            // but must complete before we call getApiService()
             withContext(Dispatchers.IO) {
                 TvRepository.loadPlaylist(context)
             }
@@ -27,7 +25,6 @@ class TvContentViewModel : ViewModel() {
             val (u, p, _) = TvRepository.getPlaylistCredentials()
 
             if (api == null) {
-                // No playlist configured yet — not an error, just nothing to load
                 _state.value = _state.value.copy(isLoading = false, noPlaylist = true)
                 return@launch
             }
@@ -119,7 +116,7 @@ class TvContentViewModel : ViewModel() {
                         TvContentItem(
                             id = it.series_id,
                             name = it.name,
-                            url = "", // Series need info fetch for episode URLs
+                            url = "",
                             imageUrl = it.cover ?: "",
                             contentType = "series",
                             categoryId = it.category_id
@@ -176,11 +173,7 @@ class TvContentViewModel : ViewModel() {
 
     fun search(query: String) {
         if (query.isBlank()) {
-            _state.value = _state.value.copy(
-                searchResults = emptyList(),
-                isSearching = false,
-                searchQuery = ""
-            )
+            _state.value = _state.value.copy(searchResults = emptyList(), isSearching = false, searchQuery = "")
             return
         }
         viewModelScope.launch {
@@ -194,54 +187,9 @@ class TvContentViewModel : ViewModel() {
             }
 
             val results = mutableListOf<TvContentItem>()
-
-            // Search live channels: filter already-loaded channels by name
-            _state.value.liveChannels.values.flatten().filter {
-                it.name.contains(query, ignoreCase = true)
-            }.let { results.addAll(it) }
-
-            // Search VOD: filter already-loaded movies by name
-            _state.value.vodItems.values.flatten().filter {
-                it.name.contains(query, ignoreCase = true)
-            }.let { results.addAll(it) }
-
-            // Search Series: filter already-loaded series by name
-            _state.value.seriesItems.values.flatten().filter {
-                it.name.contains(query, ignoreCase = true)
-            }.let { results.addAll(it) }
-
-            // If results are sparse (< 5), also fetch from API directly without category_id filter
-            if (results.size < 5) {
-                try {
-                    val liveCategories = _state.value.liveCategories
-                    if (liveCategories.isNotEmpty()) {
-                        val all = api.getLiveStreams(u, p, liveCategories[0].id)
-                        all.filter { it.name.contains(query, ignoreCase = true) }
-                            .map {
-                                TvContentItem(
-                                    id = it.stream_id, name = it.name,
-                                    url = TvRepository.buildStreamUrl(it.stream_id, "live"),
-                                    imageUrl = it.stream_icon ?: "", contentType = "live"
-                                )
-                            }.let { results.addAll(it) }
-                    }
-                } catch (_: Exception) {}
-
-                try {
-                    val vodCategories = _state.value.vodCategories
-                    if (vodCategories.isNotEmpty()) {
-                        val all = api.getVodStreams(u, p, vodCategories[0].id)
-                        all.filter { it.name.contains(query, ignoreCase = true) }
-                            .map {
-                                TvContentItem(
-                                    id = it.stream_id, name = it.name,
-                                    url = TvRepository.buildStreamUrl(it.stream_id, "movie", it.container_extension ?: "mp4"),
-                                    imageUrl = it.stream_icon ?: "", contentType = "movie"
-                                )
-                            }.let { results.addAll(it) }
-                    }
-                } catch (_: Exception) {}
-            }
+            _state.value.liveChannels.values.flatten().filter { it.name.contains(query, ignoreCase = true) }.let { results.addAll(it) }
+            _state.value.vodItems.values.flatten().filter { it.name.contains(query, ignoreCase = true) }.let { results.addAll(it) }
+            _state.value.seriesItems.values.flatten().filter { it.name.contains(query, ignoreCase = true) }.let { results.addAll(it) }
 
             _state.value = _state.value.copy(
                 isSearching = false,
@@ -253,30 +201,26 @@ class TvContentViewModel : ViewModel() {
     fun loadFavorites(context: Context) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isFavoritesLoading = true)
-
-            // 1. Load local SQLite first (fast, immediate)
             val localItems = withContext(Dispatchers.IO) {
                 TvRepository.getFavorites(context)
             }
-            _state.value = _state.value.copy(favorites = localItems)
+            _state.value = _state.value.copy(
+                favorites = localItems,
+                favoriteIds = localItems.map { it.id }.toSet()
+            )
 
-            // 2. Pull from server in background (may override/extend local)
-            val serverItems = SyncRepository.pullFavoritesFromServer(context)
-            if (serverItems.isNotEmpty()) {
-                // Merge: server is source of truth, write back to local SQLite
-                withContext(Dispatchers.IO) {
-                    serverItems.forEach { TvRepository.saveFavorite(context, it) }
+            if (TvSyncService.isLoggedIn) {
+                val ok = TvSyncApplier.pullAndApply(context)
+                if (ok) {
+                    val syncedItems = withContext(Dispatchers.IO) {
+                        TvRepository.getFavorites(context)
+                    }
+                    _state.value = _state.value.copy(
+                        favorites = syncedItems,
+                        favoriteIds = syncedItems.map { it.id }.toSet()
+                    )
                 }
-                _state.value = _state.value.copy(
-                    favorites = serverItems,
-                    favoriteIds = serverItems.map { it.id }.toSet()
-                )
-            } else {
-                _state.value = _state.value.copy(
-                    favoriteIds = localItems.map { it.id }.toSet()
-                )
             }
-
             _state.value = _state.value.copy(isFavoritesLoading = false)
         }
     }
@@ -287,10 +231,11 @@ class TvContentViewModel : ViewModel() {
             withContext(Dispatchers.IO) {
                 if (isFav) {
                     TvRepository.removeFavorite(context, item.id)
-                    SyncRepository.pushFavoriteToServer(context, item, remove = true)
                 } else {
                     TvRepository.saveFavorite(context, item)
-                    SyncRepository.pushFavoriteToServer(context, item, remove = false)
+                }
+                if (TvSyncService.isLoggedIn) {
+                    TvSyncService.pushField("favorites", TvRepository.getFavorites(context))
                 }
             }
             _state.value = if (isFav) {
@@ -321,7 +266,7 @@ class TvContentViewModel : ViewModel() {
 data class SeriesDetailState(
     val item: TvContentItem,
     val isLoading: Boolean = true,
-    val seasons: Map<String, List<TvContentItem>> = emptyMap(), // season number → episodes
+    val seasons: Map<String, List<TvContentItem>> = emptyMap(),
     val error: String = ""
 )
 

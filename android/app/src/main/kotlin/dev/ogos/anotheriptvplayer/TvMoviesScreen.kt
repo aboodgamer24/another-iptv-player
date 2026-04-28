@@ -1,6 +1,5 @@
 package dev.ogos.anotheriptvplayer
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,18 +10,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
-import androidx.compose.material3.Text
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.activity.compose.BackHandler
-import coil.compose.AsyncImage
 
 @Composable
 fun TvMoviesScreen() {
@@ -34,6 +28,7 @@ fun TvSeriesScreen() {
     TvContentGridScreen(contentType = "series")
 }
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TvContentGridScreen(contentType: String) {
     val contentVm: TvContentViewModel = viewModel()
@@ -48,129 +43,71 @@ fun TvContentGridScreen(contentType: String) {
     LaunchedEffect(categories) {
         if (selectedCategoryId == null && categories.isNotEmpty()) {
             selectedCategoryId = categories[0].id
-            if (contentType == "movie") contentVm.loadVodMovies(categories[0].id)
-            else contentVm.loadSeries(categories[0].id)
         }
     }
 
-    if (state.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+    LaunchedEffect(selectedCategoryId) {
+        selectedCategoryId?.let { id ->
+            if (contentMap[id].isNullOrEmpty()) {
+                if (contentType == "movie") contentVm.loadVodMovies(id)
+                else contentVm.loadSeries(id)
+            }
         }
-        return
-    }
-
-    if (state.noPlaylist || categories.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No content available", color = Color.White.copy(alpha = 0.5f))
-        }
-        return
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Row(modifier = Modifier.fillMaxSize()) {
-            // CATEGORY LIST
+            // Sidebar
             LazyColumn(
                 modifier = Modifier
                     .width(260.dp)
                     .fillMaxHeight()
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-                    .padding(vertical = 16.dp),
+                    .background(TvColors.Surface)
+                    .padding(vertical = 16.dp, horizontal = 12.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
+                item {
+                    Text(
+                        if (contentType == "movie") "Movies" else "Series",
+                        style = MaterialTheme.typography.headlineMedium,
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
+                    )
+                }
                 items(categories) { category ->
-                    val isSelected = selectedCategoryId == category.id
-                    Surface(
-                        selected = isSelected,
-                        onClick = { 
-                            selectedCategoryId = category.id
-                            if (contentType == "movie") contentVm.loadVodMovies(category.id)
-                            else contentVm.loadSeries(category.id)
-                        },
-                        modifier = Modifier.fillMaxWidth().height(48.dp),
-                        colors = SelectableSurfaceDefaults.colors(
-                            containerColor = if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                            focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        ),
-                        shape = SelectableSurfaceDefaults.shape(shape = MaterialTheme.shapes.extraSmall)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                            Row(
-                                modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                if (isSelected) {
-                                    Box(modifier = Modifier.width(3.dp).height(20.dp).background(MaterialTheme.colorScheme.primary))
-                                    Spacer(modifier = Modifier.width(12.dp))
-                                }
-                                Text(
-                                    text = category.name,
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = if (isSelected) Color.White else Color(0xFF9A9AA8),
-                                    maxLines = 1
-                                )
-                            }
-                        }
-                    }
+                    TvCategoryItem(
+                        category = category,
+                        isSelected = selectedCategoryId == category.id,
+                        onClick = { selectedCategoryId = category.id }
+                    )
                 }
             }
 
-            // CONTENT GRID
+            // Grid
             val items = contentMap[selectedCategoryId] ?: emptyList()
-            
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(5),
-                modifier = Modifier.fillMaxSize(),
-                contentPadding = PaddingValues(24.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp),
-                horizontalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                items(items) { item ->
-                    Surface(
-                        onClick = {
-                            if (contentType == "movie") {
-                                val categoryItems = contentMap[selectedCategoryId] ?: emptyList()
-                                val index = categoryItems.indexOf(item).coerceAtLeast(0)
-                                TvPlayerLauncher.playQueue(
-                                    context = context,
-                                    queue = categoryItems,
-                                    currentIndex = index,
-                                    contentType = "movie"
-                                )
-                            } else {
-                                contentVm.loadSeriesDetail(item)
-                            }
-                        },
-                        modifier = Modifier
-                            .aspectRatio(2/3f),
-                        scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
-                        border = ClickableSurfaceDefaults.border(
-                            focusedBorder = Border(BorderStroke(2.5.dp, MaterialTheme.colorScheme.primary))
-                        ),
-                        shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium)
-                    ) {
-                        Box(modifier = Modifier.fillMaxSize()) {
-                            AsyncImage(
-                                model = item.imageUrl,
-                                contentDescription = null,
-                                modifier = Modifier.fillMaxSize(),
-                                contentScale = ContentScale.Crop
-                            )
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                                        listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
-                                    ))
-                            )
-                            Text(
-                                text = item.name,
-                                modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
-                                style = MaterialTheme.typography.labelMedium,
-                                color = Color.White,
-                                maxLines = 2
-                            )
-                        }
+            if (state.isLoading && items.isEmpty()) {
+                Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                    androidx.compose.material3.CircularProgressIndicator(color = TvColors.Primary)
+                }
+            } else {
+                LazyVerticalGrid(
+                    columns = GridCells.Adaptive(150.dp),
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(32.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp),
+                    horizontalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(items) { item ->
+                        TvCard(
+                            item = item,
+                            onClick = {
+                                if (contentType == "movie") {
+                                    TvPlayerLauncher.play(context, item)
+                                } else {
+                                    contentVm.loadSeriesDetail(item)
+                                }
+                            },
+                            aspectRatio = 2/3f
+                        )
                     }
                 }
             }
@@ -187,6 +124,7 @@ fun TvContentGridScreen(contentType: String) {
     }
 }
 
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TvSeriesDetailSheet(
     detail: SeriesDetailState,
@@ -200,104 +138,55 @@ fun TvSeriesDetailSheet(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.95f))
-            .padding(32.dp)
+            .background(TvColors.Background.copy(alpha = 0.98f))
+            .padding(48.dp)
     ) {
         if (detail.isLoading) {
             androidx.compose.material3.CircularProgressIndicator(
                 modifier = Modifier.align(Alignment.Center),
-                color = MaterialTheme.colorScheme.primary
-            )
-        } else if (detail.error.isNotBlank()) {
-            Text(
-                text = "Error: ${detail.error}",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.Center)
+                color = TvColors.Primary
             )
         } else {
             Row(modifier = Modifier.fillMaxSize()) {
-                // LEFT COLUMN: Info
-                Column(modifier = Modifier.width(320.dp).fillMaxHeight()) {
-                    AsyncImage(
-                        model = detail.item.imageUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(2/3f)
-                            .background(MaterialTheme.colorScheme.surface, MaterialTheme.shapes.medium),
-                        contentScale = ContentScale.Crop
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        text = detail.item.name,
-                        style = MaterialTheme.typography.headlineSmall,
-                        color = Color.White
-                    )
+                // Info
+                Column(modifier = Modifier.width(360.dp)) {
+                    TvCard(item = detail.item, onClick = {}, aspectRatio = 2/3f, modifier = Modifier.width(360.dp))
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Text(detail.item.name, style = MaterialTheme.typography.headlineMedium)
                     Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = detail.item.plot,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Color.White.copy(alpha = 0.7f),
-                        maxLines = 6
-                    )
+                    Text(detail.item.plot, style = MaterialTheme.typography.bodyMedium, color = TvColors.TextSecondary)
                     Spacer(modifier = Modifier.weight(1f))
-                    Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth()) {
-                        Text("Back")
-                    }
+                    TvSecondaryButton("Close", onDismiss, modifier = Modifier.fillMaxWidth())
                 }
 
-                Spacer(modifier = Modifier.width(48.dp))
+                Spacer(modifier = Modifier.width(64.dp))
 
-                // RIGHT COLUMN: Seasons & Episodes
-                Column(modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    // Season Tabs
-                    TabRow(selectedTabIndex = selectedSeasonIndex) {
-                        seasonKeys.forEachIndexed { index, season ->
-                            Tab(
-                                selected = selectedSeasonIndex == index,
-                                onFocus = { selectedSeasonIndex = index }
-                            ) {
-                                Text(
-                                    text = "Season $season",
-                                    modifier = Modifier.padding(16.dp),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    if (episodes.isEmpty()) {
-                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Text("No episodes available", color = Color.White.copy(alpha = 0.5f))
-                        }
-                    } else {
-                        LazyColumn(modifier = Modifier.fillMaxSize()) {
-                            items(episodes) { episode ->
-                                val index = episodes.indexOf(episode)
+                // Seasons & Episodes
+                Column(modifier = Modifier.weight(1f)) {
+                    if (seasonKeys.size > 1) {
+                        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            items(seasonKeys.size) { index ->
+                                var isFocused by remember { mutableStateOf(false) }
                                 Surface(
-                                    onClick = {
-                                        TvPlayerLauncher.playQueue(
-                                            context = context,
-                                            queue = episodes,
-                                            currentIndex = index,
-                                            contentType = "series"
-                                        )
-                                    },
-                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp).height(56.dp),
-                                    colors = ClickableSurfaceDefaults.colors(
+                                    selected = selectedSeasonIndex == index,
+                                    onClick = { selectedSeasonIndex = index },
+                                    modifier = Modifier.onFocusChanged { isFocused = it.isFocused },
+                                    colors = SelectableSurfaceDefaults.colors(
                                         containerColor = Color.Transparent,
-                                        focusedContainerColor = MaterialTheme.colorScheme.surface
+                                        selectedContainerColor = TvColors.Primary
                                     )
                                 ) {
-                                    Row(
-                                        modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Text(episode.name, color = Color.White, modifier = Modifier.weight(1f))
-                                    }
+                                    Text("Season ${seasonKeys[index]}", modifier = Modifier.padding(12.dp))
                                 }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    }
+
+                    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(episodes) { episode ->
+                            TvEpisodeItem(episode) {
+                                TvPlayerLauncher.play(context, episode)
                             }
                         }
                     }
@@ -305,9 +194,28 @@ fun TvSeriesDetailSheet(
             }
         }
     }
-    
-    // Handle Back key
-    BackHandler {
-        onDismiss()
+    BackHandler(onBack = onDismiss)
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun TvEpisodeItem(episode: TvContentItem, onClick: () -> Unit) {
+    var isFocused by remember { mutableStateOf(false) }
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().onFocusChanged { isFocused = it.isFocused },
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = TvColors.Surface,
+            focusedContainerColor = Color.White.copy(alpha = 0.1f)
+        ),
+        shape = ClickableSurfaceDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+    ) {
+        Row(modifier = Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+            Text(episode.name, style = MaterialTheme.typography.bodyMedium, color = Color.White)
+            Spacer(modifier = Modifier.weight(1f))
+            if (isFocused) {
+                Icon(Icons.Default.PlayArrow, contentDescription = null, tint = TvColors.Primary)
+            }
+        }
     }
 }

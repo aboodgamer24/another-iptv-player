@@ -1,5 +1,6 @@
 package dev.ogos.anotheriptvplayer
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -7,27 +8,16 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.tv.material3.Surface
-import androidx.tv.material3.ClickableSurfaceDefaults
-import androidx.tv.material3.SelectableSurfaceDefaults
-import androidx.compose.foundation.background
-import androidx.compose.foundation.BorderStroke
-import androidx.tv.material3.Border
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
-import androidx.compose.material3.CircularProgressIndicator
 
-import coil.compose.AsyncImage
-
+@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TvLiveTvScreen() {
     val contentVm: TvContentViewModel = viewModel()
@@ -35,30 +25,12 @@ fun TvLiveTvScreen() {
     val context = LocalContext.current
     var selectedCategoryId by remember { mutableStateOf<String?>(null) }
 
-    // Set initial category
     LaunchedEffect(state.liveCategories) {
         if (selectedCategoryId == null && state.liveCategories.isNotEmpty()) {
-            val firstId = state.liveCategories[0].id
-            selectedCategoryId = firstId
-            contentVm.loadLiveChannels(firstId)
+            selectedCategoryId = state.liveCategories[0].id
         }
     }
 
-    if (state.isLoading) {
-        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-        }
-        return
-    }
-
-    if (state.noPlaylist || state.liveCategories.isEmpty()) {
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("No content available", color = Color.White.copy(alpha = 0.5f))
-        }
-        return
-    }
-
-    // Load channels when category changes
     LaunchedEffect(selectedCategoryId) {
         selectedCategoryId?.let { id ->
             if (state.liveChannels[id].isNullOrEmpty()) {
@@ -68,99 +40,89 @@ fun TvLiveTvScreen() {
     }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        // CATEGORY LIST (w=260)
+        // Categories Sidebar
         LazyColumn(
             modifier = Modifier
                 .width(260.dp)
                 .fillMaxHeight()
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f))
-                .padding(vertical = 16.dp),
+                .background(TvColors.Surface)
+                .padding(vertical = 16.dp, horizontal = 12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
+            item {
+                Text(
+                    "Live TV",
+                    style = MaterialTheme.typography.headlineMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
+                )
+            }
             items(state.liveCategories) { category ->
                 val isSelected = selectedCategoryId == category.id
-                Surface(
-                    selected = isSelected,
-                    onClick = { 
-                        selectedCategoryId = category.id
-                        contentVm.loadLiveChannels(category.id)
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(48.dp),
-                    colors = SelectableSurfaceDefaults.colors(
-                        containerColor = if (isSelected) MaterialTheme.colorScheme.secondary else Color.Transparent,
-                        focusedContainerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                    ),
-                    shape = SelectableSurfaceDefaults.shape(shape = MaterialTheme.shapes.extraSmall)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.CenterStart) {
-                        Row(
-                            modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            if (isSelected) {
-                                Box(modifier = Modifier.width(3.dp).height(20.dp).background(MaterialTheme.colorScheme.primary))
-                                Spacer(modifier = Modifier.width(12.dp))
-                            }
-                            Text(
-                                text = category.name,
-                                style = MaterialTheme.typography.bodyLarge,
-                                color = if (isSelected) Color.White else Color(0xFF9A9AA8),
-                                maxLines = 1
-                            )
-                        }
-                    }
-                }
+                TvCategoryItem(
+                    category = category,
+                    isSelected = isSelected,
+                    onClick = { selectedCategoryId = category.id }
+                )
             }
         }
 
-        // CHANNEL GRID
+        // Channels Grid
         val channels = state.liveChannels[selectedCategoryId] ?: emptyList()
-        
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(4),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(24.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
-            horizontalArrangement = Arrangement.spacedBy(24.dp)
-        ) {
-            items(channels) { channel ->
-                var isFocused by remember { mutableStateOf(false) }
-                Surface(
-                    onClick = { TvPlayerLauncher.play(context, channel) },
-                    modifier = Modifier
-                        .aspectRatio(16/9f)
-                        .onFocusChanged { isFocused = it.isFocused },
-                    scale = ClickableSurfaceDefaults.scale(focusedScale = 1.05f),
-                    border = ClickableSurfaceDefaults.border(
-                        focusedBorder = Border(BorderStroke(2.5.dp, MaterialTheme.colorScheme.primary))
-                    ),
-                    shape = ClickableSurfaceDefaults.shape(shape = MaterialTheme.shapes.medium)
-                ) {
-                    Box(modifier = Modifier.fillMaxSize()) {
-                        AsyncImage(
-                            model = channel.imageUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            contentScale = androidx.compose.ui.layout.ContentScale.Crop
-                        )
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(androidx.compose.ui.graphics.Brush.verticalGradient(
-                                    listOf(Color.Transparent, Color.Black.copy(alpha = 0.8f))
-                                ))
-                        )
-                        Text(
-                            text = channel.name,
-                            modifier = Modifier.align(Alignment.BottomStart).padding(8.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color.White
-                        )
-                    }
+        if (state.isLoading && channels.isEmpty()) {
+            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                androidx.compose.material3.CircularProgressIndicator(color = TvColors.Primary)
+            }
+        } else {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(180.dp),
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = PaddingValues(32.dp),
+                verticalArrangement = Arrangement.spacedBy(24.dp),
+                horizontalArrangement = Arrangement.spacedBy(24.dp)
+            ) {
+                items(channels) { channel ->
+                    TvCard(
+                        item = channel,
+                        onClick = { TvPlayerLauncher.play(context, channel) },
+                        aspectRatio = 16/9f
+                    )
                 }
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalTvMaterial3Api::class)
+@Composable
+fun TvCategoryItem(
+    category: TvCategory,
+    isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    var isFocused by remember { mutableStateOf(false) }
+    Surface(
+        selected = isSelected,
+        onClick = onClick,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp)
+            .onFocusChanged { isFocused = it.isFocused },
+        colors = SelectableSurfaceDefaults.colors(
+            containerColor = Color.Transparent,
+            focusedContainerColor = Color.White.copy(alpha = 0.1f),
+            selectedContainerColor = TvColors.Primary.copy(alpha = 0.1f),
+            focusedSelectedContainerColor = TvColors.Primary
+        ),
+        shape = SelectableSurfaceDefaults.shape(androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+    ) {
+        Box(modifier = Modifier.fillMaxSize().padding(horizontal = 16.dp), contentAlignment = Alignment.CenterStart) {
+            Text(
+                text = category.name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (isFocused || isSelected) Color.White else TvColors.TextSecondary,
+                fontWeight = if (isFocused || isSelected) FontWeight.Bold else FontWeight.Normal,
+                maxLines = 1
+            )
         }
     }
 }

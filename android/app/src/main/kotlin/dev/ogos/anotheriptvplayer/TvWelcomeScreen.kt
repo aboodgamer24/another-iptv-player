@@ -2,275 +2,166 @@ package dev.ogos.anotheriptvplayer
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.automirrored.filled.*
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathEffect
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
-
-// --- Theme Tokens ---
-private val DeepSpaceDark = Color(0xFF080810)
-private val ElectricBlue = Color(0xFF4F8EF7)
-private val SoftPurple = Color(0xFF7B61FF)
-private val TextSecondary = Color(0xFF9A9AA8)
-private val TextMuted = Color(0xFF555568)
-private val BorderDark = Color(0xFF2A2A3E)
-private val SurfaceDark = Color(0xFF12121E)
-private val SurfaceFocused = Color(0xFF1A1A2E)
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
 fun TvWelcomeScreen(onDone: () -> Unit) {
     val vm: TvWelcomeViewModel = viewModel()
     val step by vm.currentStep.collectAsState()
-    val errorMessage by vm.errorMessage.collectAsState()
     val context = LocalContext.current
 
-    Box(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(DeepSpaceDark)
-            .drawBehind {
-                drawRect(
-                    Brush.radialGradient(
-                        colors = listOf(
-                            ElectricBlue.copy(alpha = 0.08f),
-                            Color.Transparent
-                        ),
-                        center = center,
-                        radius = size.maxDimension / 1.5f
-                    )
-                )
-            }
-    ) {
-        when (step) {
-            is WelcomeStep.Welcome -> WelcomeStepScreen(vm)
-            is WelcomeStep.LoginForm -> LoginFormScreen(vm, context)
-            is WelcomeStep.RegisterForm -> RegisterFormScreen(vm, context)
-            is WelcomeStep.Syncing -> SyncingScreen()
-            is WelcomeStep.NeedsPlaylist -> NeedsPlaylistScreen(vm, onDone)
-            is WelcomeStep.Error -> ErrorScreen(vm, errorMessage)
-            is WelcomeStep.Done -> {
-                LaunchedEffect(Unit) {
-                    onDone()
+    TvTheme {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(TvColors.Background)
+        ) {
+            AnimatedContent(
+                targetState = step,
+                transitionSpec = {
+                    fadeIn(tween(400)) togetherWith fadeOut(tween(400))
+                },
+                label = "step"
+            ) { targetStep ->
+                when (targetStep) {
+                    is WelcomeStep.Welcome -> WelcomeStepContent(vm)
+                    is WelcomeStep.LoginForm -> LoginFormContent(vm)
+                    is WelcomeStep.RegisterForm -> RegisterFormContent(vm)
+                    is WelcomeStep.Syncing -> SyncingContent()
+                    is WelcomeStep.NeedsPlaylist -> NeedsPlaylistContent(vm, onDone)
+                    is WelcomeStep.Error -> ErrorContent(vm, (targetStep as WelcomeStep.Error).message)
+                    is WelcomeStep.Done -> {
+                        LaunchedEffect(Unit) { onDone() }
+                        Box(Modifier.fillMaxSize())
+                    }
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
-fun WelcomeStepScreen(vm: TvWelcomeViewModel) {
+fun WelcomeStepContent(vm: TvWelcomeViewModel) {
     val loginFocus = remember { FocusRequester() }
-    
-    LaunchedEffect(Unit) {
-        loginFocus.requestFocus()
-    }
+    LaunchedEffect(Unit) { loginFocus.requestFocus() }
 
     Row(modifier = Modifier.fillMaxSize()) {
-        // Left Panel
+        // Left: Branding
         Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .padding(horizontal = 80.dp),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.Start
+                .padding(80.dp),
+            verticalArrangement = Arrangement.Center
         ) {
-            StaggeredItem(index = 0) {
-                Icon(
-                    imageVector = Icons.Default.PlayCircle,
-                    contentDescription = null,
-                    modifier = Modifier.size(56.dp),
-                    tint = ElectricBlue
-                )
-            }
+            Text(
+                text = "ANOTHER",
+                style = MaterialTheme.typography.labelSmall,
+                color = TvColors.Primary
+            )
+            Text(
+                text = "IPTV PLAYER",
+                style = MaterialTheme.typography.displayLarge
+            )
             Spacer(modifier = Modifier.height(16.dp))
-            StaggeredItem(index = 1) {
-                Text(
-                    text = "C4-TV",
-                    style = MaterialTheme.typography.displayLarge.copy(
-                        fontSize = 72.sp,
-                        fontWeight = FontWeight.ExtraBold,
-                        letterSpacing = (-2).sp
-                    ),
-                    color = Color.White
-                )
-            }
-            Spacer(modifier = Modifier.height(8.dp))
-            StaggeredItem(index = 2) {
-                Text(
-                    text = "Your entertainment. Anywhere.",
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontSize = 18.sp,
-                        fontWeight = FontWeight.Light
-                    ),
-                    color = TextSecondary
-                )
-            }
-            Spacer(modifier = Modifier.weight(1f))
-            StaggeredItem(index = 3) {
-                Text(
-                    text = "Version 1.0",
-                    style = MaterialTheme.typography.bodySmall.copy(fontSize = 12.sp),
-                    color = Color(0xFF33334A)
-                )
-            }
-            Spacer(modifier = Modifier.height(48.dp))
+            Text(
+                text = "Sync your playlists, favorites, and watch history across all your devices seamlessly.",
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.width(400.dp)
+            )
         }
 
-        // Vertical Divider
-        Box(
-            modifier = Modifier
-                .width(1.dp)
-                .fillMaxHeight()
-                .background(Color(0xFF1E1E30))
-        )
-
-        // Right Panel
+        // Right: Actions
         Column(
             modifier = Modifier
                 .weight(1f)
-                .fillMaxHeight(),
+                .fillMaxHeight()
+                .background(
+                    Brush.horizontalGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.3f))
+                    )
+                ),
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            StaggeredItem(index = 0) {
-                Text(
-                    text = "GET STARTED",
-                    color = TextMuted,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium,
-                    letterSpacing = 1.5.sp
-                )
-            }
+            TvPrimaryButton(
+                text = "Sign In",
+                onClick = { vm.setStep(WelcomeStep.LoginForm) },
+                modifier = Modifier.focusRequester(loginFocus).width(300.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            TvSecondaryButton(
+                text = "Create Account",
+                onClick = { vm.setStep(WelcomeStep.RegisterForm) },
+                modifier = Modifier.width(300.dp)
+            )
             Spacer(modifier = Modifier.height(32.dp))
-            
-            StaggeredItem(index = 1) {
-                PrimaryButton(
-                    text = "Login",
-                    onClick = { vm.setStep(WelcomeStep.LoginForm) },
-                    modifier = Modifier.focusRequester(loginFocus)
-                )
-            }
-            Spacer(modifier = Modifier.height(14.dp))
-            
-            StaggeredItem(index = 2) {
-                OutlinedSecondaryButton(
-                    text = "Register",
-                    onClick = { vm.setStep(WelcomeStep.RegisterForm) }
-                )
-            }
-            Spacer(modifier = Modifier.height(14.dp))
-            
-            StaggeredItem(index = 3) {
-                GhostButton(
-                    text = "Continue as Guest",
-                    subtitle = "Add a playlist manually",
-                    onClick = {
-                        vm.isGuestMode = true
-                        vm.setStep(WelcomeStep.Done)
-                    }
-                )
-            }
+            ClickableText(
+                text = "Continue as Guest",
+                onClick = {
+                    vm.isGuestMode = true
+                    vm.setStep(WelcomeStep.Done)
+                },
+                color = TvColors.TextMuted
+            )
         }
     }
 }
 
 @Composable
-fun LoginFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
+fun LoginFormContent(vm: TvWelcomeViewModel) {
     var serverUrl by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(modifier = Modifier.width(400.dp)) {
-            // Header
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clickable { vm.setStep(WelcomeStep.Welcome) },
-                    tint = TextSecondary
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Sign In",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color.White
-                )
-            }
-            Text(
-                text = "Restore your playlists and settings",
-                color = TextMuted,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(start = 32.dp)
-            )
-            
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(Modifier.width(400.dp)) {
+            Text("Sign In", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(32.dp))
 
-            CustomTextField(
+            TvTextField(
                 value = serverUrl,
                 onValueChange = { serverUrl = it },
-                label = "Server URL",
-                placeholder = "https://sync.example.com",
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next,
-                modifier = Modifier.focusRequester(focusRequester)
+                label = "Sync Server URL",
+                modifier = Modifier.focusRequester(focusRequester),
+                keyboardType = KeyboardType.Uri
             )
             Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
+            TvTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = "Email",
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+                label = "Email Address",
+                keyboardType = KeyboardType.Email
             )
             Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
+            TvTextField(
                 value = password,
                 onValueChange = { password = it },
                 label = "Password",
@@ -278,146 +169,75 @@ fun LoginFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
                 imeAction = ImeAction.Done
             )
             
-            Spacer(modifier = Modifier.height(28.dp))
-
-            PrimaryButton(
-                text = "Sign In",
+            Spacer(modifier = Modifier.height(32.dp))
+            TvPrimaryButton(
+                text = "Login & Sync",
                 onClick = { vm.signIn(context, serverUrl, email, password) },
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedSecondaryButton(
-                text = "Back",
+            Spacer(modifier = Modifier.height(16.dp))
+            TvSecondaryButton(
+                text = "Cancel",
                 onClick = { vm.setStep(WelcomeStep.Welcome) },
                 modifier = Modifier.fillMaxWidth()
             )
-
-            val error = vm.errorMessage.collectAsState().value
-            if (error != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = error,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth(),
-                    maxLines = 2
-                )
-            }
         }
     }
 }
 
 @Composable
-fun RegisterFormScreen(vm: TvWelcomeViewModel, context: android.content.Context) {
+fun RegisterFormContent(vm: TvWelcomeViewModel) {
     var serverUrl by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var localError by remember { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
     val focusRequester = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(modifier = Modifier.width(400.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ArrowBack,
-                    contentDescription = "Back",
-                    modifier = Modifier
-                        .size(20.dp)
-                        .clickable { vm.setStep(WelcomeStep.Welcome) },
-                    tint = TextSecondary
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Text(
-                    text = "Create Account",
-                    style = MaterialTheme.typography.headlineMedium.copy(
-                        fontSize = 28.sp,
-                        fontWeight = FontWeight.Bold
-                    ),
-                    color = Color.White
-                )
-            }
-            Text(
-                text = "Free sync across all your devices",
-                color = TextMuted,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(start = 32.dp)
-            )
-            
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(Modifier.width(400.dp)) {
+            Text("Create Account", style = MaterialTheme.typography.headlineMedium)
             Spacer(modifier = Modifier.height(32.dp))
 
-            CustomTextField(
+            TvTextField(
                 value = serverUrl,
                 onValueChange = { serverUrl = it },
-                label = "Server URL",
-                placeholder = "https://sync.example.com",
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next,
-                modifier = Modifier.focusRequester(focusRequester)
+                label = "Sync Server URL",
+                modifier = Modifier.focusRequester(focusRequester),
+                keyboardType = KeyboardType.Uri
             )
             Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
+            TvTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = "Full Name",
-                imeAction = ImeAction.Next
+                label = "Display Name"
             )
             Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
+            TvTextField(
                 value = email,
                 onValueChange = { email = it },
-                label = "Email",
-                keyboardType = KeyboardType.Email,
-                imeAction = ImeAction.Next
+                label = "Email Address",
+                keyboardType = KeyboardType.Email
             )
             Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
+            TvTextField(
                 value = password,
-                onValueChange = { password = it; localError = null },
+                onValueChange = { password = it },
                 label = "Password",
-                isPassword = true,
-                imeAction = ImeAction.Next
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            CustomTextField(
-                value = confirmPassword,
-                onValueChange = { confirmPassword = it; localError = null },
-                label = "Confirm Password",
                 isPassword = true,
                 imeAction = ImeAction.Done
             )
             
-            val error = localError ?: vm.errorMessage.collectAsState().value
-            if (error != null) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Text(
-                    text = error,
-                    color = androidx.compose.material3.MaterialTheme.colorScheme.error,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-
-            Spacer(modifier = Modifier.height(28.dp))
-
-            PrimaryButton(
-                text = "Create Account",
-                onClick = { 
-                    if (password != confirmPassword) {
-                        localError = "Passwords do not match"
-                    } else {
-                        vm.register(context, serverUrl, name, email, password)
-                    }
-                },
+            Spacer(modifier = Modifier.height(32.dp))
+            TvPrimaryButton(
+                text = "Register",
+                onClick = { vm.register(context, serverUrl, name, email, password) },
                 modifier = Modifier.fillMaxWidth()
             )
-            Spacer(modifier = Modifier.height(12.dp))
-            OutlinedSecondaryButton(
+            Spacer(modifier = Modifier.height(16.dp))
+            TvSecondaryButton(
                 text = "Back",
                 onClick = { vm.setStep(WelcomeStep.Welcome) },
                 modifier = Modifier.fillMaxWidth()
@@ -427,374 +247,89 @@ fun RegisterFormScreen(vm: TvWelcomeViewModel, context: android.content.Context)
 }
 
 @Composable
-fun SyncingScreen() {
-    val vm: TvWelcomeViewModel = viewModel()
-    val alphaPulse = rememberInfiniteTransition()
-    val alpha by alphaPulse.animateFloat(
-        initialValue = 0.6f,
-        targetValue = 1.0f,
-        animationSpec = infiniteRepeatable(tween(1000), RepeatMode.Reverse),
-        label = "alpha"
-    )
-    
-    val ringPulse = rememberInfiniteTransition()
-    val outerRadius by ringPulse.animateFloat(
-        initialValue = 78f,
-        targetValue = 88f,
-        animationSpec = infiniteRepeatable(tween(1200), RepeatMode.Reverse),
-        label = "radius"
-    )
-
-    val rotation = rememberInfiniteTransition()
-    val rotateAngle by rotation.animateFloat(
+fun SyncingContent() {
+    val rotation = rememberInfiniteTransition().animateFloat(
         initialValue = 0f,
         targetValue = 360f,
-        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing)),
-        label = "rotation"
+        animationSpec = infiniteRepeatable(tween(2000, easing = LinearEasing))
     )
 
     Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Box(contentAlignment = Alignment.Center) {
-            Canvas(modifier = Modifier.size(200.dp)) {
-                drawCircle(
-                    color = ElectricBlue.copy(alpha = 0.15f),
-                    radius = outerRadius.dp.toPx(),
-                    style = Stroke(width = 2.dp.toPx())
-                )
-                drawCircle(
-                    color = ElectricBlue.copy(alpha = 0.35f),
-                    radius = 56.dp.toPx(),
-                    style = Stroke(width = 2.dp.toPx())
-                )
-            }
-            Icon(
-                Icons.Default.Sync,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(36.dp)
-                    .graphicsLayer { rotationZ = rotateAngle },
-                tint = ElectricBlue
-            )
-        }
-        Spacer(modifier = Modifier.height(32.dp))
-        Text(
-            text = "Connecting to your account…",
-            fontSize = 18.sp,
-            color = Color.White.copy(alpha = alpha)
-        )
-    }
-}
-
-@Composable
-fun ErrorScreen(vm: TvWelcomeViewModel, errorMessage: String?) {
-    val focusRequester = remember { FocusRequester() }
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    Column(
-        modifier = Modifier.fillMaxSize(),
+        Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Icon(
-            Icons.Default.ErrorOutline,
+            Icons.Default.Sync,
             contentDescription = null,
-            modifier = Modifier.size(72.dp),
-            tint = Color(0xFFFF4F6A)
+            modifier = Modifier.size(64.dp).graphicsLayer { rotationZ = rotation.value },
+            tint = TvColors.Primary
         )
-        Spacer(modifier = Modifier.height(20.dp))
-        Text(
-            text = "Something went wrong",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color.White
-        )
-        Spacer(modifier = Modifier.height(8.dp))
-        Text(
-            text = errorMessage ?: "An unknown error occurred",
-            fontSize = 15.sp,
-            color = TextSecondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = 420.dp),
-            maxLines = 3
-        )
-        Spacer(modifier = Modifier.height(36.dp))
-        PrimaryButton(
-            text = "Try Again",
-            onClick = { vm.setStep(WelcomeStep.Welcome) },
-            modifier = Modifier.focusRequester(focusRequester)
-        )
-        Spacer(modifier = Modifier.height(12.dp))
-        GhostButton(
-            text = "Continue as Guest",
-            onClick = {
-                vm.isGuestMode = true
-                vm.setStep(WelcomeStep.Done)
-            }
-        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Text("Synchronizing data...", style = MaterialTheme.typography.titleLarge)
     }
 }
 
 @Composable
-fun NeedsPlaylistScreen(vm: TvWelcomeViewModel, onDone: () -> Unit) {
+fun NeedsPlaylistContent(vm: TvWelcomeViewModel, onDone: () -> Unit) {
     var url by remember { mutableStateOf("") }
-    var username by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    var user by remember { mutableStateOf("") }
+    var pass by remember { mutableStateOf("") }
     val context = LocalContext.current
-    val focusRequester = remember { FocusRequester() }
-    
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    val focus = remember { FocusRequester() }
 
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(
-            modifier = Modifier.width(400.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Icon(
-                Icons.AutoMirrored.Filled.PlaylistAdd,
-                contentDescription = null,
-                modifier = Modifier.size(56.dp),
-                tint = ElectricBlue
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Almost there!",
-                style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.Bold),
-                color = Color.White
-            )
-            Text(
-                text = "Enter your Xtream credentials manually",
-                color = TextSecondary,
-                fontSize = 14.sp
-            )
+    LaunchedEffect(Unit) { focus.requestFocus() }
+
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(Modifier.width(450.dp)) {
+            Text("Add Xtream Playlist", style = MaterialTheme.typography.headlineMedium)
+            Text("No playlists found. Please add one to continue.", color = TvColors.TextSecondary)
             Spacer(modifier = Modifier.height(32.dp))
 
-            CustomTextField(
-                value = url,
-                onValueChange = { url = it },
-                label = "Xtream URL",
-                placeholder = "http://your-server:8080",
-                keyboardType = KeyboardType.Uri,
-                imeAction = ImeAction.Next,
-                modifier = Modifier.focusRequester(focusRequester)
-            )
+            TvTextField(url, { url = it }, "Server URL (http://...)", Modifier.focusRequester(focus))
             Spacer(modifier = Modifier.height(12.dp))
-            CustomTextField(
-                value = username,
-                onValueChange = { username = it },
-                label = "Username",
-                imeAction = ImeAction.Next
-            )
+            TvTextField(user, { user = it }, "Username")
             Spacer(modifier = Modifier.height(12.dp))
-            CustomTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = "Password",
-                isPassword = true,
-                imeAction = ImeAction.Done
-            )
+            TvTextField(pass, { pass = it }, "Password", isPassword = true, imeAction = ImeAction.Done)
 
-            Spacer(modifier = Modifier.height(28.dp))
-
-            PrimaryButton(
-                text = "Save & Continue",
-                onClick = { 
-                    if (url.isNotBlank() && username.isNotBlank()) {
-                        TvRepository.savePlaylist(context, url, username, password)
-                        vm.setStep(WelcomeStep.Done)
-                    }
-                },
-                modifier = Modifier.fillMaxWidth()
-            )
-        }
-    }
-}
-
-// --- Helper UI Components ---
-
-@Composable
-private fun StaggeredItem(index: Int, content: @Composable () -> Unit) {
-    val visible = remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(index * 80L)
-        visible.value = true
-    }
-    AnimatedVisibility(
-        visible = visible.value,
-        enter = fadeIn(tween(380, easing = FastOutSlowInEasing)) + 
-                slideInVertically(tween(380, easing = FastOutSlowInEasing), initialOffsetY = { 40 })
-    ) {
-        content()
-    }
-}
-
-@Composable
-private fun FocusScaleButton(
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier,
-    content: @Composable BoxScope.(Boolean) -> Unit
-) {
-    var focused by remember { mutableStateOf(false) }
-    val scale by animateFloatAsState(
-        targetValue = if (focused) 1.04f else 1f,
-        animationSpec = tween(180),
-        label = "scale"
-    )
-    Box(
-        modifier = modifier
-            .graphicsLayer { 
-                scaleX = scale
-                scaleY = scale
-            }
-            .onFocusChanged { focused = it.isFocused }
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        content(focused)
-    }
-}
-
-@Composable
-private fun PrimaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    FocusScaleButton(
-        onClick = onClick,
-        modifier = modifier
-            .width(320.dp)
-            .height(60.dp)
-            .clip(RoundedCornerShape(14.dp))
-    ) { isFocused ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(
-                    if (isFocused) Brush.horizontalGradient(listOf(Color.White, Color.White))
-                    else Brush.horizontalGradient(listOf(ElectricBlue, SoftPurple))
-                ),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                color = if (isFocused) ElectricBlue else Color.White,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Spacer(modifier = Modifier.height(32.dp))
+            TvPrimaryButton("Save Playlist", {
+                if (url.isNotBlank() && user.isNotBlank()) {
+                    TvRepository.savePlaylist(context, url, user, pass)
+                    onDone()
+                }
+            }, Modifier.fillMaxWidth())
         }
     }
 }
 
 @Composable
-private fun OutlinedSecondaryButton(
-    text: String,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    FocusScaleButton(
-        onClick = onClick,
-        modifier = modifier
-            .width(320.dp)
-            .height(60.dp)
-            .clip(RoundedCornerShape(14.dp))
-            .border(
-                width = 1.dp,
-                color = ElectricBlue.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(14.dp)
-            )
-    ) { isFocused ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(if (isFocused) ElectricBlue.copy(alpha = 0.12f) else Color.Transparent)
-                .drawBehind {
-                    if (isFocused) {
-                        drawRoundRect(
-                            color = ElectricBlue,
-                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(14.dp.toPx()),
-                            style = Stroke(width = 2.dp.toPx())
-                        )
-                    }
-                },
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = text,
-                color = if (isFocused) Color.White else TextSecondary,
-                fontSize = 17.sp,
-                fontWeight = FontWeight.SemiBold
-            )
-        }
-    }
-}
-
-@Composable
-private fun GhostButton(
-    text: String,
-    subtitle: String? = null,
-    onClick: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var focused by remember { mutableStateOf(false) }
+fun ErrorContent(vm: TvWelcomeViewModel, message: String) {
     Column(
-        modifier = modifier
-            .onFocusChanged { focused = it.isFocused }
-            .clickable { onClick() },
+        Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = text,
-            color = if (focused) Color.White else Color(0xFF666680),
-            fontSize = 17.sp,
-            textDecoration = if (focused) TextDecoration.Underline else null
-        )
-        if (subtitle != null) {
-            Text(
-                text = subtitle,
-                color = Color(0xFF44445A),
-                fontSize = 12.sp
-            )
-        }
+        Text("Error", style = MaterialTheme.typography.headlineMedium, color = TvColors.Error)
+        Spacer(modifier = Modifier.height(16.dp))
+        Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+        Spacer(modifier = Modifier.height(32.dp))
+        TvPrimaryButton("Try Again", { vm.setStep(WelcomeStep.Welcome) })
     }
 }
 
 @Composable
-private fun CustomTextField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    label: String,
-    placeholder: String = "",
-    isPassword: Boolean = false,
-    keyboardType: KeyboardType = KeyboardType.Text,
-    imeAction: ImeAction = ImeAction.Default,
-    modifier: Modifier = Modifier
-) {
-    OutlinedTextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = modifier
-            .fillMaxWidth()
-            .height(64.dp),
-        label = { Text(label, color = TextMuted) },
-        placeholder = { Text(placeholder, color = TextMuted) },
-        visualTransformation = if (isPassword) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = imeAction),
-        shape = RoundedCornerShape(12.dp),
-        colors = OutlinedTextFieldDefaults.colors(
-            focusedBorderColor = ElectricBlue,
-            unfocusedBorderColor = BorderDark,
-            focusedContainerColor = SurfaceFocused,
-            unfocusedContainerColor = SurfaceDark,
-            focusedTextColor = Color.White,
-            unfocusedTextColor = Color.White
-        )
+fun ClickableText(text: String, onClick: () -> Unit, color: Color) {
+    var isFocused by remember { mutableStateOf(false) }
+    Text(
+        text = text,
+        modifier = Modifier
+            .onFocusChanged { isFocused = it.isFocused }
+            .clickable(onClick = onClick)
+            .padding(8.dp),
+        color = if (isFocused) Color.White else color,
+        style = MaterialTheme.typography.bodyMedium,
+        fontWeight = if (isFocused) FontWeight.Bold else FontWeight.Normal,
+        textDecoration = if (isFocused) androidx.compose.ui.text.style.TextDecoration.Underline else null
     )
 }
