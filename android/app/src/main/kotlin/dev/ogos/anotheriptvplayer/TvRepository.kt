@@ -10,6 +10,10 @@ import org.json.JSONObject
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.*
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
 
 object TvRepository {
     private const val TAG = "TvRepository"
@@ -211,7 +215,7 @@ object TvRepository {
         setupApi()
 
         // Push to server if logged in
-        kotlinx.coroutines.GlobalScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+        CoroutineScope(Dispatchers.IO).launch {
             TvSyncService.init(context)
             if (TvSyncService.isLoggedIn) {
                 val playlists = JSONArray().put(json)
@@ -219,6 +223,17 @@ object TvRepository {
             }
         }
     }
+
+    fun clearPlaylist(context: Context) {
+        val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+        prefs.edit()
+            .remove("flutter.last_playlist_id")
+            .remove("flutter.current_playlist_json")
+            .apply()
+        // Reset the cached API service so next launch re-reads from DB
+        _apiService = null
+    }
+
 
     fun getFavorites(context: Context): List<TvContentItem> {
         return readItemsFromSqlite(context, "favorites")
@@ -330,16 +345,3 @@ object TvRepository {
 
 data class TvNavItem(val icon: androidx.compose.ui.graphics.vector.ImageVector, val label: String)
 
-data class TvContentItem(
-    val id: String,
-    val name: String,
-    val url: String,
-    val imageUrl: String,
-    val contentType: String,
-    val categoryId: String = "",
-    val plot: String = "",
-    val rating: String = "",
-    val year: String = "",
-    val duration: String = "",
-    val subtitleUrl: String = ""
-)

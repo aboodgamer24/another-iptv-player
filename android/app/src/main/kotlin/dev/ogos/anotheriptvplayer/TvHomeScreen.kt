@@ -18,6 +18,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
 import coil.compose.AsyncImage
+import kotlinx.coroutines.launch
+import androidx.compose.runtime.rememberCoroutineScope
 
 @OptIn(ExperimentalTvMaterial3Api::class)
 @Composable
@@ -150,7 +152,7 @@ fun ContentShelf(title: String, items: List<TvContentItem>) {
                 TvCard(
                     item = item,
                     onClick = {
-                        TvPlayerLauncher.launch(context, item)
+                        TvPlayerLauncher.play(context, item)
                     }
                 )
             }

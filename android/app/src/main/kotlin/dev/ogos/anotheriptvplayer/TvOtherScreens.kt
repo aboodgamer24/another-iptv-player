@@ -12,9 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @Composable
 fun TvFavoritesScreen() {
@@ -139,6 +141,7 @@ fun TvSearchScreen() {
 fun TvSettingsScreen(onSwitchPlaylist: () -> Unit = {}) {
     val context = LocalContext.current
     val (username, _, serverUrl) = remember { TvRepository.getPlaylistCredentials() }
+    val scope = rememberCoroutineScope()
 
     LazyColumn(modifier = Modifier.fillMaxSize().padding(48.dp)) {
         item {
@@ -160,7 +163,7 @@ fun TvSettingsScreen(onSwitchPlaylist: () -> Unit = {}) {
             SettingsItem("Logged In", if (TvSyncService.isLoggedIn) "Yes" else "No")
             if (TvSyncService.isLoggedIn) {
                 TvPrimaryButton("Sync Now", { 
-                    kotlinx.coroutines.GlobalScope.launch {
+                    scope.launch {
                         TvSyncApplier.pullAndApply(context)
                     }
                 }, modifier = Modifier.width(300.dp))

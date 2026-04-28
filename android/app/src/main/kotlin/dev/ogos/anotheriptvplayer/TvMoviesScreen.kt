@@ -3,13 +3,15 @@ package dev.ogos.anotheriptvplayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.items as lazyGridItems
+import androidx.compose.foundation.lazy.items as lazyListItems
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -17,6 +19,8 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
 import androidx.activity.compose.BackHandler
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 
 @Composable
 fun TvMoviesScreen() {
@@ -73,7 +77,7 @@ fun TvContentGridScreen(contentType: String) {
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 16.dp)
                     )
                 }
-                items(categories) { category ->
+                lazyListItems(categories) { category ->
                     TvCategoryItem(
                         category = category,
                         isSelected = selectedCategoryId == category.id,
@@ -96,7 +100,7 @@ fun TvContentGridScreen(contentType: String) {
                     verticalArrangement = Arrangement.spacedBy(24.dp),
                     horizontalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
-                    items(items) { item ->
+                    lazyGridItems(items) { item ->
                         TvCard(
                             item = item,
                             onClick = {
@@ -184,7 +188,7 @@ fun TvSeriesDetailSheet(
                     }
 
                     LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        items(episodes) { episode ->
+                        lazyListItems(episodes) { episode ->
                             TvEpisodeItem(episode) {
                                 TvPlayerLauncher.play(context, episode)
                             }

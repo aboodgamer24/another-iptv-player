@@ -78,12 +78,13 @@ class TvPlayerActivity : ComponentActivity() {
     override fun onStop() {
         super.onStop()
         val pos = viewModel.getCurrentPositionForHistory()
+        val dur = viewModel.player.duration
         if (pos > 5_000) { // only save if watched more than 5 seconds
             val item = TvContentItem(
                 id = url, name = title, url = url,
                 imageUrl = "", contentType = contentType
             )
-            TvRepository.saveWatchHistory(this, item, pos)
+            TvRepository.saveWatchHistory(this, item, pos, dur)
         }
     }
 
