@@ -63,8 +63,9 @@ class TmdbService {
         // Stale — refresh in background without blocking UI
         fetchFn()
             .then((fresh) {
-              if (fresh.isNotEmpty)
+              if (fresh.isNotEmpty) {
                 _writeCache(prefs, cacheKey, cacheTimeKey, fresh);
+              }
             })
             .catchError((_) {});
       }

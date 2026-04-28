@@ -598,8 +598,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                                     // (that area belongs to the controls bar)
                                     final zoneHeight = constraints.maxHeight;
                                     if (details.localPosition.dy >
-                                        zoneHeight * 0.65)
+                                        zoneHeight * 0.65) {
                                       return;
+                                    }
                                     final width = MediaQuery.sizeOf(
                                       context,
                                     ).width;
@@ -1574,10 +1575,12 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
         ? <CategoryViewModel>[]
         : (() {
             final type = _currentContentType();
-            if (type == ContentType.vod)
+            if (type == ContentType.vod) {
               return homeController.visibleMovieCategories;
-            if (type == ContentType.series)
+            }
+            if (type == ContentType.series) {
               return homeController.visibleSeriesCategories;
+            }
             return homeController.liveCategories ?? [];
           })();
 

@@ -7,8 +7,6 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/service_locator.dart';
 import 'package:another_iptv_player/utils/get_playlist_type.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
-import 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart';
-import 'package:another_iptv_player/screens/series/episode_screen.dart';
 import 'package:another_iptv_player/services/sync_service.dart';
 import 'package:flutter/material.dart';
 

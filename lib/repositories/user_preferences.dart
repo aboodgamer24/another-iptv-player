@@ -591,10 +591,12 @@ class UserPreferences {
   // Apply synced settings snapshot back to SharedPreferences
   static Future<void> applySyncedSettings(Map<String, dynamic> settings) async {
     final prefs = await SharedPreferences.getInstance();
-    if (settings['upscalePreset'] != null)
+    if (settings['upscalePreset'] != null) {
       await prefs.setString('upscale_preset', settings['upscalePreset']);
-    if (settings['streamEnhancement'] != null)
+    }
+    if (settings['streamEnhancement'] != null) {
       await prefs.setBool('stream_enhancement', settings['streamEnhancement']);
+    }
     // Restore TMDB API key (handle both key variants)
     final tmdbKey = settings['tmdbApiKey'] ?? settings['tmdb_api_key'];
     if (tmdbKey != null && (tmdbKey as String).isNotEmpty) {
@@ -602,13 +604,15 @@ class UserPreferences {
       debugPrint('[UserPreferences] Restored TMDB API key from sync');
     }
 
-    if (settings['subtitleSize'] != null)
+    if (settings['subtitleSize'] != null) {
       await prefs.setDouble(
         'subtitle_size',
         (settings['subtitleSize'] as num).toDouble(),
       );
-    if (settings['subtitleColor'] != null)
+    }
+    if (settings['subtitleColor'] != null) {
       await prefs.setInt('subtitle_color', settings['subtitleColor']);
+    }
     // Restore last used playlist
     if (settings['last_playlist_id'] != null &&
         (settings['last_playlist_id'] as String).isNotEmpty) {

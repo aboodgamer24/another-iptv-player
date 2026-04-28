@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:provider/provider.dart';
 import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/utils/platform_utils.dart';
 
 class VideoWidget extends StatefulWidget {
   final VideoController controller;

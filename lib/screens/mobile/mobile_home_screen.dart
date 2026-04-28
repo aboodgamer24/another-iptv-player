@@ -184,8 +184,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
               .map((rail) {
                 switch (rail.id) {
                   case 'continue_watching':
-                    if (continueWatchingFiltered.isEmpty)
+                    if (continueWatchingFiltered.isEmpty) {
                       return const SizedBox.shrink();
+                    }
                     return _buildSection(
                       context.loc.continue_watching,
                       continueWatchingFiltered
@@ -425,8 +426,9 @@ class _MobileHomeScreenState extends State<MobileHomeScreen> {
                             final localItem = isMovie
                                 ? _matchTmdbToLocal(name, _localMoviesByTitle)
                                 : _matchTmdbToLocal(name, _localSeriesByTitle);
-                            if (localItem == null)
+                            if (localItem == null) {
                               return const SizedBox.shrink();
+                            }
                             return Positioned(
                               top: 4,
                               right: 4,

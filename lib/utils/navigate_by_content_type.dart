@@ -12,7 +12,6 @@ import '../screens/desktop/desktop_movie_detail_screen.dart';
 import '../screens/desktop/desktop_series_detail_screen.dart';
 import '../screens/mobile/mobile_movie_detail_screen.dart';
 import '../screens/mobile/mobile_series_detail_screen.dart';
-import '../screens/tv/tv_exo_player_screen.dart';
 import 'package:provider/provider.dart';
 import '../controllers/xtream_code_home_controller.dart';
 

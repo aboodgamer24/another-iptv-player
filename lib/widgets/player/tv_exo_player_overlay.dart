@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../../models/content_type.dart';
 import '../../models/playlist_content_model.dart';
 
@@ -288,7 +287,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
       child: Container(
         width: 340,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.92),
+          color: Colors.black.withValues(alpha: 0.92),
           boxShadow: const [
             BoxShadow(color: Colors.black54, blurRadius: 24),
           ],
@@ -329,7 +328,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 12),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.07),
+                color: Colors.white.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
@@ -624,14 +623,14 @@ class _ChannelListTileState extends State<_ChannelListTile> {
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
           decoration: BoxDecoration(
             color: widget.isActive
-                ? accent.withOpacity(0.18)
+                ? accent.withValues(alpha: 0.18)
                 : _focused
-                    ? Colors.white.withOpacity(0.08)
+                    ? Colors.white.withValues(alpha: 0.08)
                     : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: widget.isActive
-                  ? accent.withOpacity(0.5)
+                  ? accent.withValues(alpha: 0.5)
                   : Colors.transparent,
             ),
           ),

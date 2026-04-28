@@ -8,10 +8,7 @@ import 'package:another_iptv_player/services/app_state.dart';
 import 'package:another_iptv_player/services/watch_history_service.dart';
 import 'package:another_iptv_player/services/sync_service.dart';
 import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
-import '../screens/m3u/m3u_player_screen.dart';
 import '../services/service_locator.dart';
-import '../screens/series/episode_screen.dart';
-import 'package:another_iptv_player/widgets/player_widget.dart';
 
 class WatchHistoryController extends ChangeNotifier {
   late WatchHistoryService _historyService;

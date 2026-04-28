@@ -18,8 +18,9 @@ bool get isHighQualitySupported =>
 /// Returns empty list on unsupported platforms (iOS, web).
 List<String> get availableUpscalePresets {
   if (!isMpvSupported) return [];
-  if (isHighQualitySupported)
+  if (isHighQualitySupported) {
     return ['standard', 'enhanced', 'high_quality', 'ewa_lanczossharp'];
+  }
   // Android: only standard + enhanced (ewa_lanczos is too GPU-heavy)
   return ['standard', 'enhanced'];
 }
