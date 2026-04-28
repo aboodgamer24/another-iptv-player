@@ -96,7 +96,7 @@ class _AccountScreenState extends State<AccountScreen> {
       await db
           .deleteAllWatchHistories(); // wipe all continue watching (all playlists)
       await UserPreferences.removeLastPlaylist();
-      await AppConfig.setTmdbApiKey('');
+      await AppConfig.setTmdbApiKeyLocally('');
       await UserPreferences.clearSyncedSettings();
       await UserPreferences.setHasSeenWelcome(false);
 
