@@ -36,7 +36,7 @@ class TvMainActivity : ComponentActivity() {
                 LaunchedEffect(Unit) {
                     val (playlist, _) = withContext(Dispatchers.IO) {
                         val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                        val playlistJson = prefs.getString("flutter.current_playlist_json", null)
+                        val playlistJson = prefs.getString("flutter.flutter.current_playlist_json", null)
                         Pair(!playlistJson.isNullOrEmpty(), playlistJson)
                     }
                     hasPlaylist = playlist

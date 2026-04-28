@@ -7,7 +7,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 
 object TvRepository {
     private const val PREFS_NAME = "FlutterSharedPreferences"
-    private const val KEY_PLAYLIST = "flutter.current_playlist_json"
+    private const val KEY_PLAYLIST = "flutter.flutter.current_playlist_json"
 
     private var _apiService: XtreamApiService? = null
     private var currentPlaylist: JSONObject? = null
@@ -15,12 +15,33 @@ object TvRepository {
 
     fun loadPlaylist(context: Context): JSONObject? {
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val json = prefs.getString(KEY_PLAYLIST, null)
-        if (json != null) {
-            currentPlaylist = JSONObject(json)
+        val json = prefs.getString(KEY_PLAYLIST, null) ?: return null
+
+        return try {
+            val obj = JSONObject(json)
+
+            // Normalize to a canonical internal format that setupApi() can read
+            val url      = obj.optString("url").ifBlank      { obj.optString("url") }
+            val username = obj.optString("username").ifBlank  { obj.optString("username") }
+            val password = obj.optString("password").ifBlank  { obj.optString("password") }
+
+            if (url.isBlank()) return null
+
+            val normalized = JSONObject().apply {
+                put("url",      url)
+                put("username", username)
+                put("password", password)
+                put("type",     obj.optString("type", "xtream"))
+                put("name",     obj.optString("name", url))
+            }
+            currentPlaylist = normalized
+            _credentials   = null
             setupApi()
-        }
-        return currentPlaylist
+            
+            android.util.Log.d("TvRepository", "loadPlaylist → url=${currentPlaylist?.optString("url")} apiService=${_apiService != null}")
+            
+            currentPlaylist
+        } catch (_: Exception) { null }
     }
 
     private fun setupApi() {
