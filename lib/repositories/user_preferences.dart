@@ -597,10 +597,9 @@ class UserPreferences {
     if (settings['streamEnhancement'] != null) {
       await prefs.setBool('stream_enhancement', settings['streamEnhancement']);
     }
-    // Restore TMDB API key (handle both key variants)
     final tmdbKey = settings['tmdbApiKey'] ?? settings['tmdb_api_key'];
     if (tmdbKey != null && (tmdbKey as String).isNotEmpty) {
-      await AppConfig.setTmdbApiKey(tmdbKey);
+      await AppConfig.setTmdbApiKeyLocally(tmdbKey);
       debugPrint('[UserPreferences] Restored TMDB API key from sync');
     }
 

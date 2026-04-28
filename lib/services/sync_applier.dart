@@ -9,6 +9,7 @@ import 'database_service.dart';
 import 'playlist_service.dart';
 import 'service_locator.dart';
 import 'sync_service.dart';
+import '../utils/app_config.dart';
 
 class SyncApplier {
   /// Pull from server and apply all data locally.
@@ -49,6 +50,8 @@ class SyncApplier {
       // 6. Restore continue watching
       await _applyContinueWatching(data['continue_watching']);
 
+      // Reload in-memory config so callers (e.g. TMDB service) see the pulled values immediately
+      await AppConfig.load();
       debugPrint('[SyncApplier] ✅ Sync applied successfully');
       return true;
     } catch (e, stack) {
