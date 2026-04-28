@@ -24,6 +24,7 @@ import androidx.tv.material3.Border
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 
 import coil.compose.AsyncImage
 
@@ -41,6 +42,20 @@ fun TvLiveTvScreen() {
             selectedCategoryId = firstId
             contentVm.loadLiveChannels(firstId)
         }
+    }
+
+    if (state.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+        return
+    }
+
+    if (state.noPlaylist || state.liveCategories.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No content available", color = Color.White.copy(alpha = 0.5f))
+        }
+        return
     }
 
     // Load channels when category changes

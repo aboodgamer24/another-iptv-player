@@ -37,8 +37,7 @@ fun TvAppShell(initialTab: Int = 0) {
 
     LaunchedEffect(Unit) {
         shellVm.setSelectedIndex(initialTab)
-        TvRepository.loadPlaylist(context)
-        contentVm.loadContent()
+        contentVm.loadContent(context)
     }
 
     val items = listOf(

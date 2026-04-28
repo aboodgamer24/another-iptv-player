@@ -20,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.*
 import androidx.compose.material3.Text
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.activity.compose.BackHandler
 import coil.compose.AsyncImage
 
@@ -50,6 +51,20 @@ fun TvContentGridScreen(contentType: String) {
             if (contentType == "movie") contentVm.loadVodMovies(categories[0].id)
             else contentVm.loadSeries(categories[0].id)
         }
+    }
+
+    if (state.isLoading) {
+        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
+        }
+        return
+    }
+
+    if (state.noPlaylist || categories.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No content available", color = Color.White.copy(alpha = 0.5f))
+        }
+        return
     }
 
     Box(modifier = Modifier.fillMaxSize()) {

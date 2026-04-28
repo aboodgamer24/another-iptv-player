@@ -13,35 +13,47 @@ class TvContentViewModel : ViewModel() {
     private val _state = MutableStateFlow(TvContentState())
     val state = _state.asStateFlow()
 
-    fun loadContent() {
+    fun loadContent(context: Context) {
         viewModelScope.launch {
             _state.value = _state.value.copy(isLoading = true)
+
+            // Ensure playlist is loaded — this is fast (SharedPreferences read)
+            // but must complete before we call getApiService()
+            withContext(Dispatchers.IO) {
+                TvRepository.loadPlaylist(context)
+            }
+
             val api = TvRepository.getApiService()
             val (u, p, _) = TvRepository.getPlaylistCredentials()
-            
-            if (api != null) {
-                try {
-                    val liveCats = api.getLiveCategories(u, p)
-                    val vodCats = api.getVodCategories(u, p)
-                    val seriesCats = api.getSeriesCategories(u, p)
-                    
-                    _state.value = _state.value.copy(
-                        isLoading = false,
-                        liveCategories = liveCats.map { TvCategory(it.category_id, it.category_name) },
-                        vodCategories = vodCats.map { TvCategory(it.category_id, it.category_name) },
-                        seriesCategories = seriesCats.map { TvCategory(it.category_id, it.category_name) }
-                    )
-                    
-                    // Load initial data for first 5 categories in parallel
-                    liveCats.take(5).forEach { loadLiveChannels(it.category_id) }
-                    vodCats.take(5).forEach { loadVodMovies(it.category_id) }
-                    seriesCats.take(5).forEach { loadSeries(it.category_id) }
-                    
-                } catch (e: Exception) {
-                    _state.value = _state.value.copy(isLoading = false)
-                }
-            } else {
-                _state.value = _state.value.copy(isLoading = false)
+
+            if (api == null) {
+                // No playlist configured yet — not an error, just nothing to load
+                _state.value = _state.value.copy(isLoading = false, noPlaylist = true)
+                return@launch
+            }
+
+            try {
+                val liveCats  = api.getLiveCategories(u, p)
+                val vodCats   = api.getVodCategories(u, p)
+                val seriesCats = api.getSeriesCategories(u, p)
+
+                _state.value = _state.value.copy(
+                    isLoading       = false,
+                    noPlaylist      = false,
+                    liveCategories  = liveCats.map  { TvCategory(it.category_id, it.category_name) },
+                    vodCategories   = vodCats.map   { TvCategory(it.category_id, it.category_name) },
+                    seriesCategories = seriesCats.map { TvCategory(it.category_id, it.category_name) }
+                )
+
+                liveCats.take(5).forEach   { loadLiveChannels(it.category_id) }
+                vodCats.take(5).forEach    { loadVodMovies(it.category_id)    }
+                seriesCats.take(5).forEach { loadSeries(it.category_id)       }
+
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    isLoading = false,
+                    loadError = e.message ?: "Failed to load content"
+                )
             }
         }
     }
@@ -315,6 +327,8 @@ data class SeriesDetailState(
 
 data class TvContentState(
     val isLoading: Boolean = false,
+    val noPlaylist: Boolean = false,
+    val loadError: String = "",
     val liveCategories: List<TvCategory> = emptyList(),
     val liveChannels: Map<String, List<TvContentItem>> = emptyMap(),
     val vodCategories: List<TvCategory> = emptyList(),
