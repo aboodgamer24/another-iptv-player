@@ -80,6 +80,9 @@ class _PlayerWidgetState extends State<PlayerWidget>
   Duration _lastSavedPosition = Duration.zero;
   DateTime _lastSeekTime = DateTime.fromMillisecondsSinceEpoch(0);
   Duration _lastPosition = Duration.zero;
+  /// null = not yet determined, true = 4K mode active, false = sub-4K mode active.
+  /// Used by the videoParams listener to avoid redundant scaler switches.
+  bool? _resolution4KState;
 
   @override
   void initState() {
@@ -211,8 +214,6 @@ class _PlayerWidgetState extends State<PlayerWidget>
     try {
       if (Platform.isAndroid) {
         // --- Properties common to ALL content types ---
-        await native.setProperty('hwdec', 'mediacodec-copy');
-        await native.setProperty('hwdec-codecs', 'all');
         await native.setProperty('interpolation', 'no');
         await native.setProperty('scale', 'bilinear');
         await native.setProperty('cscale', 'bilinear');
@@ -263,11 +264,20 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
       } else {
         // --- Desktop: same split ---
-        await native.setProperty('hwdec', 'auto');
-        await native.setProperty('hwdec-codecs', 'all');
         await native.setProperty('interpolation', 'no');
         await native.setProperty('tscale', 'oversample');
         await native.setProperty('deinterlace', 'no');
+
+        // Safe starting point: use bilinear and no deband for all streams initially.
+        // This prevents the 4K texture pipeline from crashing on start.
+        // The videoParams listener will upgrade sub-4K streams later.
+        await native.setProperty('scale', 'bilinear');
+        await native.setProperty('cscale', 'bilinear');
+        await native.setProperty('dscale', 'bilinear');
+        await native.setProperty('sigmoid-upscaling', 'no');
+        await native.setProperty('linear-upscaling', 'no');
+        await native.setProperty('correct-downscaling', 'no');
+        await native.setProperty('deband', 'no');
 
         if (contentItem.contentType == ContentType.liveStream) {
           await native.setProperty('video-sync', 'audio');
@@ -291,13 +301,17 @@ class _PlayerWidgetState extends State<PlayerWidget>
   }
 
   /// Apply user-preference-based properties AFTER media is open.
+  ///
+  /// NOTE: On desktop, the upscaler is NOT applied here. It is managed
+  /// exclusively by the videoParams listener which selects the scaler
+  /// based on detected resolution (bilinear for 4K+, user preset for
+  /// sub-4K). Applying it here before the resolution is known causes
+  /// ANGLE/D3D11 to choke on 4K frames with heavy shaders.
   Future<void> _applyUserPreferenceProperties() async {
-    if (!Platform.isAndroid) {
-      final preset = await UserPreferences.getUpscalePreset();
-      await applyUpscalePreset(_player, preset);
+    if (Platform.isAndroid) {
+      final enhancementEnabled = await UserPreferences.getStreamEnhancement();
+      await applyStreamEnhancement(_player, enhancementEnabled);
     }
-    final enhancementEnabled = await UserPreferences.getStreamEnhancement();
-    await applyStreamEnhancement(_player, enhancementEnabled);
   }
 
   Future<void> _applyLowLatencyProperties() async {
@@ -388,6 +402,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
 
         if (contentItem.contentType != ContentType.liveStream) {
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
+          _resolution4KState = null;
           await _player.open(
             Media(
               contentItem.url,
@@ -402,6 +417,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
           if (mounted) setState(() => isLoading = false);
         } else {
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
+          _resolution4KState = null;
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
@@ -411,6 +427,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
       } else {
         _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
+        _resolution4KState = null;
         await _player.open(
           Media(
             contentItem.url,
@@ -466,6 +483,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
               _overlayKey.currentState?.resetContentState(
                 newUrl: contentItem.url,
               );
+              _resolution4KState = null;
               await _player.open(Media(contentItem.url));
               await _applyUserPreferenceProperties();
               if (await UserPreferences.getLowLatencyMode()) {
@@ -602,6 +620,67 @@ class _PlayerWidgetState extends State<PlayerWidget>
         // Properties are applied pre-open; no re-application needed on play events.
       });
 
+      // Resolution-aware upscaler: sole owner of scaler selection on desktop.
+      // Heavy shaders (ewa_lanczossharp, ewa_lanczos, spline36) crash the
+      // ANGLE/D3D11 texture pipeline at 4K. We NEVER apply them pre-open;
+      // instead we wait for videoParams to confirm resolution, then decide:
+      //   • >= 3840  → bilinear (safe for 4K)
+      //   • < 3840   → user's chosen upscaler preset
+      _player.stream.videoParams.listen((vp) async {
+        if (!mounted || Platform.isAndroid) return;
+        if (vp.w == null || vp.w! <= 0) return;
+
+        final is4K = vp.w! >= 3840;
+
+        // Skip if we already applied settings for this resolution tier
+        if (_resolution4KState == is4K) return;
+        _resolution4KState = is4K;
+
+        final native = _player.platform;
+        if (native is! NativePlayer) return;
+
+        try {
+          // Wait for MPV to decode first frames and populate video-params
+          await Future.delayed(const Duration(milliseconds: 2000));
+          if (!mounted) return;
+
+          if (is4K) {
+            // ── 4K+ : lightweight pipeline ──
+            debugPrint(
+              '[Player] 4K detected (${vp.w}x${vp.h}) — using bilinear',
+            );
+            await native.setProperty('scale', 'bilinear');
+            await native.setProperty('cscale', 'bilinear');
+            await native.setProperty('dscale', 'bilinear');
+            await native.setProperty('sigmoid-upscaling', 'no');
+            await native.setProperty('linear-upscaling', 'no');
+            await native.setProperty('correct-downscaling', 'no');
+            await native.setProperty('deband', 'no');
+            // Aggressive buffering for 4K
+            await native.setProperty('demuxer-max-bytes', '200MiB');
+            if (contentItem.contentType == ContentType.liveStream) {
+              await native.setProperty('framedrop', 'decoder+vo');
+            }
+          } else {
+            // ── Sub-4K : apply user's upscaler preset ──
+            debugPrint(
+              '[Player] Sub-4K detected (${vp.w}x${vp.h}) — '
+              'applying user upscaler preset',
+            );
+            final preset = await UserPreferences.getUpscalePreset();
+            await applyUpscalePreset(_player, preset);
+            final enhancementEnabled =
+                await UserPreferences.getStreamEnhancement();
+            await applyStreamEnhancement(_player, enhancementEnabled);
+            if (contentItem.contentType == ContentType.liveStream) {
+              await native.setProperty('framedrop', 'no');
+            }
+          }
+        } catch (e) {
+          debugPrint('[Player] Resolution-based scaler switch failed: $e');
+        }
+      });
+
       _player.stream.error.listen((error) async {
         if (error.contains('Failed to open')) {
           _errorHandler.handleError(
@@ -620,6 +699,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 _overlayKey.currentState?.resetContentState(
                   newUrl: contentItem.url,
                 );
+                _resolution4KState = null;
                 await _player.open(Media(contentItem.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -680,6 +760,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
         if (contentItem.contentType == ContentType.liveStream) {
           if (!mounted) return;
           _overlayKey.currentState?.resetContentState(newUrl: contentItem.url);
+          _resolution4KState = null;
           await _player.open(Media(contentItem.url));
           await _applyUserPreferenceProperties();
           if (await UserPreferences.getLowLatencyMode()) {
@@ -714,6 +795,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 _errorHandler.reset();
 
                 _overlayKey.currentState?.resetContentState(newUrl: item.url);
+                _resolution4KState = null;
                 await _player.open(Media(item.url));
                 await _applyUserPreferenceProperties();
                 if (await UserPreferences.getLowLatencyMode()) {
@@ -746,6 +828,7 @@ class _PlayerWidgetState extends State<PlayerWidget>
                 );
                 final startMs = itemHistory?.watchDuration?.inMilliseconds ?? 0;
                 _overlayKey.currentState?.resetContentState(newUrl: item.url);
+                _resolution4KState = null;
                 await _player.open(
                   Media(item.url, start: Duration(milliseconds: startMs)),
                   play: true,

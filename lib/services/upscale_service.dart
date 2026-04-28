@@ -100,11 +100,17 @@ Future<void> applyUpscalePreset(Player player, String preset) async {
   // Verify MPV actually applied the scale value
   await Future.delayed(const Duration(milliseconds: 200));
   try {
+    final expectedScale = switch (effectivePreset) {
+      'enhanced' => 'spline36',
+      'high_quality' => 'ewa_lanczos',
+      'ewa_lanczossharp' => 'ewa_lanczossharp',
+      _ => 'bilinear',
+    };
     final applied = await native.getProperty('scale');
     debugPrint(
-      '[Upscaler] Requested: $effectivePreset | MPV applied: $applied',
+      '[Upscaler] Requested: $effectivePreset ($expectedScale) | MPV applied: $applied',
     );
-    if (applied.trim() != effectivePreset.trim()) {
+    if (applied.trim() != expectedScale) {
       debugPrint(
         '[Upscaler] WARNING: scale mismatch — upscaler may not be active',
       );

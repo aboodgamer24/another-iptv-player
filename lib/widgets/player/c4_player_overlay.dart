@@ -7,6 +7,7 @@ import 'package:media_kit_video/media_kit_video.dart';
 import 'package:window_manager/window_manager.dart';
 import '../../controllers/xtream_code_home_controller.dart';
 import '../../services/player_state.dart' as app_player_state;
+import '../../services/hdr_service.dart';
 import '../../models/content_type.dart';
 import '../../models/category_view_model.dart';
 import '../../services/fullscreen_notifier.dart';
@@ -89,6 +90,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
 
   final _positionNotifier = ValueNotifier<Duration>(Duration.zero);
   final _durationNotifier = ValueNotifier<Duration>(Duration.zero);
+  final _hdrTypeNotifier = ValueNotifier<HdrType>(HdrType.none);
   List<ContentItem>? _panelQueue;
   Timer? _enhancementDebounce;
 
@@ -211,6 +213,18 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
         // _confirmedNonLive is only cleared when the content itself changes
         // (handled by the ContentType/queue change path below).
       }),
+      // HDR detection — read-only, triggers after playback starts
+      widget.player.stream.playing.listen((playing) async {
+        if (!playing) {
+          _hdrTypeNotifier.value = HdrType.none;
+          return;
+        }
+        // Wait for MPV to decode first frames and populate video-params
+        await Future.delayed(const Duration(milliseconds: 2000));
+        if (!mounted) return;
+        final hdrType = await HdrService.detectHdrType(widget.player);
+        if (mounted) _hdrTypeNotifier.value = hdrType;
+      }),
     ];
 
     // Periodic poll for live stats (tracks metadata may update over time)
@@ -290,6 +304,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     }
     _positionNotifier.dispose();
     _durationNotifier.dispose();
+    _hdrTypeNotifier.dispose();
     super.dispose();
   }
 
@@ -520,6 +535,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
           _lastSolidDuration = Duration.zero;
           _duration = Duration.zero;
           _durationNotifier.value = Duration.zero;
+          _hdrTypeNotifier.value = HdrType.none;
         }
         _position = Duration.zero;
         _positionNotifier.value = Duration.zero;
@@ -728,15 +744,53 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(
-                    app_player_state.PlayerState.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: compact ? 12 : null,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          app_player_state.PlayerState.title,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: compact ? 12 : null,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      // HDR badge
+                      ValueListenableBuilder<HdrType>(
+                        valueListenable: _hdrTypeNotifier,
+                        builder: (context, hdrType, _) {
+                          if (hdrType == HdrType.none) return const SizedBox.shrink();
+                          final color = switch (hdrType) {
+                            HdrType.hdr10       => const Color(0xFFFFD700),
+                            HdrType.hlg         => const Color(0xFF00BFFF),
+                            HdrType.hdr10plus   => const Color(0xFFFF8C00),
+                            HdrType.dolbyVision => const Color(0xFF9B59B6),
+                            HdrType.none        => Colors.transparent,
+                          };
+                          return Container(
+                            margin: const EdgeInsets.only(left: 6),
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.15),
+                              border: Border.all(color: color, width: 1),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              hdrType.label,
+                              style: TextStyle(
+                                color: color,
+                                fontSize: compact ? 8 : 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                   if (!compact && isXtreamCode)
                     Text(
@@ -1385,6 +1439,15 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                           _upscalerPreset == 'none')
                       ? 'Disabled'
                       : _upscalerPreset!,
+                ),
+                ValueListenableBuilder<HdrType>(
+                  valueListenable: _hdrTypeNotifier,
+                  builder: (context, hdrType, _) {
+                    return _InfoRow(
+                      label: 'HDR',
+                      value: hdrType == HdrType.none ? 'SDR' : hdrType.label,
+                    );
+                  },
                 ),
               ],
             ),
