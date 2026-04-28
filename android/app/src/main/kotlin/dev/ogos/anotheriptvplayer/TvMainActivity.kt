@@ -34,10 +34,9 @@ class TvMainActivity : ComponentActivity() {
                 var forcedTab   by remember { mutableStateOf<Int?>(null) }
 
                 LaunchedEffect(Unit) {
-                    val (playlist, _) = withContext(Dispatchers.IO) {
-                        val prefs = getSharedPreferences("FlutterSharedPreferences", Context.MODE_PRIVATE)
-                        val playlistJson = prefs.getString("flutter.flutter.current_playlist_json", null)
-                        Pair(!playlistJson.isNullOrEmpty(), playlistJson)
+                    val (playlist) = withContext(Dispatchers.IO) {
+                        val has = TvRepository.hasPlaylist(this@TvMainActivity)
+                        Pair(has, null)
                     }
                     hasPlaylist = playlist
                     isReady = true

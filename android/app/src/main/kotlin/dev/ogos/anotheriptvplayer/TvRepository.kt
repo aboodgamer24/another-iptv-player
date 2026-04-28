@@ -14,34 +14,96 @@ object TvRepository {
     private var _credentials: Triple<String, String, String>? = null
 
     fun loadPlaylist(context: Context): JSONObject? {
+        // First try: read from SQLite (Flutter's real storage)
+        val fromDb = loadPlaylistFromSqlite(context)
+        if (fromDb != null) return fromDb
+
+        // Fallback: legacy SharedPreferences key (for playlists saved by TV itself)
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val json = prefs.getString(KEY_PLAYLIST, null) ?: return null
+        val json  = prefs.getString(KEY_PLAYLIST, null) ?: return null
 
         return try {
             val obj = JSONObject(json)
-
-            // Normalize to a canonical internal format that setupApi() can read
-            val url      = obj.optString("url").ifBlank      { obj.optString("url") }
-            val username = obj.optString("username").ifBlank  { obj.optString("username") }
-            val password = obj.optString("password").ifBlank  { obj.optString("password") }
-
+            val url = obj.optString("url")
             if (url.isBlank()) return null
-
-            val normalized = JSONObject().apply {
-                put("url",      url)
-                put("username", username)
-                put("password", password)
-                put("type",     obj.optString("type", "xtream"))
-                put("name",     obj.optString("name", url))
-            }
-            currentPlaylist = normalized
+            currentPlaylist = obj
             _credentials   = null
             setupApi()
-            
-            android.util.Log.d("TvRepository", "loadPlaylist → url=${currentPlaylist?.optString("url")} apiService=${_apiService != null}")
-            
+            android.util.Log.d("TvRepository", "loadPlaylist ← SharedPrefs url=$url")
             currentPlaylist
         } catch (_: Exception) { null }
+    }
+
+    private fun loadPlaylistFromSqlite(context: Context): JSONObject? {
+        val dbFile = context.getDatabasePath("another-iptv-player.sqlite")
+        if (!dbFile.exists()) {
+            android.util.Log.d("TvRepository", "loadPlaylist: SQLite DB not found at ${dbFile.absolutePath}")
+            return null
+        }
+
+        return try {
+            val db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                dbFile.absolutePath, null,
+                android.database.sqlite.SQLiteDatabase.OPEN_READONLY
+            )
+            db.use { database ->
+                // Get the most recently added Xtream playlist first, fallback to any playlist
+                val cursor = database.rawQuery(
+                    """SELECT url, username, password, name, type
+                       FROM playlists
+                       WHERE type = 'PlaylistType.xtream'
+                       ORDER BY createdAt DESC
+                       LIMIT 1""",
+                    null
+                )
+
+                cursor.use {
+                    if (!it.moveToFirst()) {
+                        // No xtream playlist — try any playlist
+                        val fallback = database.rawQuery(
+                            "SELECT url, username, password, name, type FROM playlists ORDER BY createdAt DESC LIMIT 1",
+                            null
+                        )
+                        fallback.use { fb ->
+                            if (!fb.moveToFirst()) return null
+                            buildPlaylistJson(fb)
+                        }
+                    } else {
+                        buildPlaylistJson(it)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("TvRepository", "loadPlaylistFromSqlite error: ${e.message}")
+            null
+        }
+    }
+
+    private fun buildPlaylistJson(cursor: android.database.Cursor): JSONObject? {
+        fun col(name: String) = runCatching {
+            cursor.getString(cursor.getColumnIndexOrThrow(name)) ?: ""
+        }.getOrDefault("")
+
+        val url      = col("url")
+        val username = col("username")
+        val password = col("password")
+        val name     = col("name")
+        val type     = col("type")
+
+        if (url.isBlank()) return null
+
+        val obj = JSONObject().apply {
+            put("url",      url)
+            put("username", username)
+            put("password", password)
+            put("name",     name)
+            put("type",     if (type.contains("xtream")) "xtream" else "m3u")
+        }
+        currentPlaylist = obj
+        _credentials   = null
+        setupApi()
+        android.util.Log.d("TvRepository", "loadPlaylist ← SQLite url=$url apiService=${_apiService != null}")
+        return currentPlaylist
     }
 
     private fun setupApi() {
@@ -95,9 +157,23 @@ object TvRepository {
     }
 
     fun hasPlaylist(context: Context): Boolean {
+        // Check SQLite first
+        val dbFile = context.getDatabasePath("another-iptv-player.sqlite")
+        if (dbFile.exists()) {
+            return try {
+                val db = android.database.sqlite.SQLiteDatabase.openDatabase(
+                    dbFile.absolutePath, null,
+                    android.database.sqlite.SQLiteDatabase.OPEN_READONLY
+                )
+                db.use {
+                    val cursor = it.rawQuery("SELECT COUNT(*) FROM playlists", null)
+                    cursor.use { c -> c.moveToFirst() && c.getInt(0) > 0 }
+                }
+            } catch (_: Exception) { false }
+        }
+        // Fallback to SharedPreferences
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val json = prefs.getString(KEY_PLAYLIST, null)
-        return !json.isNullOrBlank()
+        return !prefs.getString(KEY_PLAYLIST, null).isNullOrBlank()
     }
 
     fun savePlaylist(context: Context, url: String, username: String, password: String) {
