@@ -152,7 +152,14 @@ fun TvAppShell(initialTab: Int = 0) {
                     4 -> TvFavoritesScreen()
                     5 -> TvWatchLaterScreen()
                     6 -> TvSearchScreen()
-                    7 -> TvSettingsScreen()
+                    7 -> TvSettingsScreen(
+                        onSwitchPlaylist = {
+                            // Clear the saved playlist so TvMainActivity restarts to WelcomeScreen
+                            TvRepository.clearPlaylist(context)
+                            // Finish the current activity and go back to MainActivity (Flutter)
+                            (context as? android.app.Activity)?.finish()
+                        }
+                    )
                     else -> TvHomeScreen()
                 }
             }

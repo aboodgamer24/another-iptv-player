@@ -41,4 +41,13 @@ class TvMainActivity : ComponentActivity() {
             }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        // If playlist was cleared (e.g. user pressed "Switch playlist" in settings),
+        // restart this activity so it re-evaluates and shows WelcomeScreen.
+        if (!TvRepository.hasPlaylist(this)) {
+            recreate()
+        }
+    }
 }

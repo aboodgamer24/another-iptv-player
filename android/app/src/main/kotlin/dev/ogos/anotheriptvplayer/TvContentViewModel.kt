@@ -5,6 +5,9 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.Dispatchers
+import android.content.Context
 
 class TvContentViewModel : ViewModel() {
     private val _state = MutableStateFlow(TvContentState())
@@ -117,7 +120,151 @@ class TvContentViewModel : ViewModel() {
             }
         }
     }
+
+    fun loadSeriesDetail(series: TvContentItem) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(
+                seriesDetail = SeriesDetailState(item = series, isLoading = true)
+            )
+            val api = TvRepository.getApiService()
+            val (u, p, _) = TvRepository.getPlaylistCredentials()
+            if (api == null) {
+                _state.value = _state.value.copy(
+                    seriesDetail = _state.value.seriesDetail?.copy(isLoading = false, error = "No playlist configured")
+                )
+                return@launch
+            }
+            try {
+                val info = api.getSeriesInfo(u, p, seriesId = series.id)
+                val seasons = info.episodes?.mapValues { (_, eps) ->
+                    eps.map { ep ->
+                        TvContentItem(
+                            id = ep.id,
+                            name = "E${ep.episode_num} — ${ep.title}",
+                            url = TvRepository.buildEpisodeUrl(ep.id, ep.container_extension ?: "mkv"),
+                            imageUrl = series.imageUrl,
+                            contentType = "series",
+                        )
+                    }
+                } ?: emptyMap()
+                _state.value = _state.value.copy(
+                    seriesDetail = SeriesDetailState(item = series, isLoading = false, seasons = seasons)
+                )
+            } catch (e: Exception) {
+                _state.value = _state.value.copy(
+                    seriesDetail = _state.value.seriesDetail?.copy(isLoading = false, error = e.message ?: "Error")
+                )
+            }
+        }
+    }
+
+    fun clearSeriesDetail() {
+        _state.value = _state.value.copy(seriesDetail = null)
+    }
+
+    fun search(query: String) {
+        if (query.isBlank()) {
+            _state.value = _state.value.copy(
+                searchResults = emptyList(),
+                isSearching = false,
+                searchQuery = ""
+            )
+            return
+        }
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isSearching = true, searchQuery = query)
+            val api = TvRepository.getApiService()
+            val (u, p, _) = TvRepository.getPlaylistCredentials()
+
+            if (api == null) {
+                _state.value = _state.value.copy(isSearching = false, searchResults = emptyList())
+                return@launch
+            }
+
+            val results = mutableListOf<TvContentItem>()
+
+            // Search live channels: filter already-loaded channels by name
+            _state.value.liveChannels.values.flatten().filter {
+                it.name.contains(query, ignoreCase = true)
+            }.let { results.addAll(it) }
+
+            // Search VOD: filter already-loaded movies by name
+            _state.value.vodItems.values.flatten().filter {
+                it.name.contains(query, ignoreCase = true)
+            }.let { results.addAll(it) }
+
+            // Search Series: filter already-loaded series by name
+            _state.value.seriesItems.values.flatten().filter {
+                it.name.contains(query, ignoreCase = true)
+            }.let { results.addAll(it) }
+
+            // If results are sparse (< 5), also fetch from API directly without category_id filter
+            if (results.size < 5) {
+                try {
+                    val liveCategories = _state.value.liveCategories
+                    if (liveCategories.isNotEmpty()) {
+                        val all = api.getLiveStreams(u, p, liveCategories[0].id)
+                        all.filter { it.name.contains(query, ignoreCase = true) }
+                            .map {
+                                TvContentItem(
+                                    id = it.stream_id, name = it.name,
+                                    url = TvRepository.buildStreamUrl(it.stream_id, "live"),
+                                    imageUrl = it.stream_icon ?: "", contentType = "live"
+                                )
+                            }.let { results.addAll(it) }
+                    }
+                } catch (_: Exception) {}
+
+                try {
+                    val vodCategories = _state.value.vodCategories
+                    if (vodCategories.isNotEmpty()) {
+                        val all = api.getVodStreams(u, p, vodCategories[0].id)
+                        all.filter { it.name.contains(query, ignoreCase = true) }
+                            .map {
+                                TvContentItem(
+                                    id = it.stream_id, name = it.name,
+                                    url = TvRepository.buildStreamUrl(it.stream_id, "movie", it.container_extension ?: "mp4"),
+                                    imageUrl = it.stream_icon ?: "", contentType = "movie"
+                                )
+                            }.let { results.addAll(it) }
+                    }
+                } catch (_: Exception) {}
+            }
+
+            _state.value = _state.value.copy(
+                isSearching = false,
+                searchResults = results.distinctBy { it.id + it.contentType }.take(60)
+            )
+        }
+    }
+
+    fun loadFavorites(context: Context) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isFavoritesLoading = true)
+            val items = withContext(Dispatchers.IO) {
+                TvRepository.getFavorites(context)
+            }
+            _state.value = _state.value.copy(favorites = items, isFavoritesLoading = false)
+        }
+    }
+
+    fun loadWatchHistory(context: Context) {
+        viewModelScope.launch {
+            _state.value = _state.value.copy(isHistoryLoading = true)
+            val items = withContext(Dispatchers.IO) {
+                TvRepository.getWatchHistory(context)
+            }
+            _state.value = _state.value.copy(watchHistory = items, isHistoryLoading = false)
+        }
+    }
 }
+
+data class SeriesDetailState(
+    val item: TvContentItem,
+    val isLoading: Boolean = true,
+    val seasons: Map<String, List<TvContentItem>> = emptyMap(), // season number → episodes
+    val error: String = ""
+)
 
 data class TvContentState(
     val isLoading: Boolean = false,
@@ -126,7 +273,15 @@ data class TvContentState(
     val vodCategories: List<TvCategory> = emptyList(),
     val vodItems: Map<String, List<TvContentItem>> = emptyMap(),
     val seriesCategories: List<TvCategory> = emptyList(),
-    val seriesItems: Map<String, List<TvContentItem>> = emptyMap()
+    val seriesItems: Map<String, List<TvContentItem>> = emptyMap(),
+    val seriesDetail: SeriesDetailState? = null,
+    val searchResults: List<TvContentItem> = emptyList(),
+    val isSearching: Boolean = false,
+    val searchQuery: String = "",
+    val favorites: List<TvContentItem> = emptyList(),
+    val watchHistory: List<TvContentItem> = emptyList(),
+    val isFavoritesLoading: Boolean = false,
+    val isHistoryLoading: Boolean = false
 )
 
 data class TvContentItem(

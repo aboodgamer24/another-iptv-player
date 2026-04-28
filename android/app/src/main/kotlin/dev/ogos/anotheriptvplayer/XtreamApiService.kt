@@ -51,11 +51,11 @@ interface XtreamApiService {
 
     @GET("player_api.php")
     suspend fun getSeriesInfo(
-        @Query("username") u: String,
-        @Query("password") p: String,
-        @Query("series_id") seriesId: String,
-        @Query("action") action: String = "get_series_info"
-    ): XtreamSeriesInfo
+        @Query("username") username: String,
+        @Query("password") password: String,
+        @Query("action") action: String = "get_series_info",
+        @Query("series_id") seriesId: String
+    ): SeriesInfoResponse
 
     @GET("player_api.php")
     suspend fun getVodInfo(
@@ -65,6 +65,36 @@ interface XtreamApiService {
         @Query("action") action: String = "get_vod_info"
     ): XtreamVodInfo
 }
+
+data class SeriesInfoResponse(
+    val info: SeriesInfo? = null,
+    val episodes: Map<String, List<EpisodeItem>>? = null
+)
+
+data class SeriesInfo(
+    val name: String = "",
+    val cover: String = "",
+    val plot: String = "",
+    val cast: String = "",
+    val director: String = "",
+    val genre: String = "",
+    val releaseDate: String = "",
+    val rating: String = ""
+)
+
+data class EpisodeItem(
+    val id: String = "",
+    val episode_num: Int = 0,
+    val title: String = "",
+    val container_extension: String = "mkv",
+    val info: EpisodeInfo? = null
+)
+
+data class EpisodeInfo(
+    val duration: String = "",
+    val plot: String = "",
+    val rating: String = ""
+)
 
 data class XtreamCategory(
     val category_id: String,
