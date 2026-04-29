@@ -1,6 +1,6 @@
 <div align="center">
   <img width="110" src="https://raw.githubusercontent.com/aboodgamer24/another-iptv-player/main/assets/logo.png" alt="C4TV Player Logo" />
-  <h1>Another IPTV Player</h1>
+  <h1>C4TV Player</h1>
   <p><strong>Beautiful UI · Multi-Device Sync · Lightning-Fast Streaming · 100% Free & Open Source</strong></p>
 
 </div>
