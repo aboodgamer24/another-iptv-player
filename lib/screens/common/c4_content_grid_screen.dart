@@ -210,8 +210,9 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                               onToggleWatchLater: () =>
                                   watchLaterController.toggleWatchLater(item),
                               onFocusChanged: (focused) {
-                                if (focused)
+                                if (focused) {
                                   setState(() => _focusedItem = item);
+                                }
                               },
                               onTap: () {
                                 navigateByContentType(context, item);

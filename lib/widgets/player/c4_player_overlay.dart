@@ -217,7 +217,7 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
       // Width is only non-null after the first frame is decoded, which is when
       // video-params (primaries/gamma) are guaranteed to be populated by MPV.
       widget.player.stream.width
-          .where((w) => w != null && w! > 0)
+          .where((w) => w != null && w > 0)
           .first
           .asStream()
           .listen((_) async {
@@ -769,8 +769,9 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       ValueListenableBuilder<HdrType>(
                         valueListenable: _hdrTypeNotifier,
                         builder: (context, hdrType, _) {
-                          if (hdrType == HdrType.none)
+                          if (hdrType == HdrType.none) {
                             return const SizedBox.shrink();
+                          }
                           final color = switch (hdrType) {
                             HdrType.hdr10 => const Color(0xFFFFD700),
                             HdrType.hlg => const Color(0xFF00BFFF),
@@ -1823,14 +1824,12 @@ class _PlayerControlBtn extends StatefulWidget {
   final VoidCallback onPressed;
   final double size;
   final double iconSize;
-  final bool isLarge;
 
   const _PlayerControlBtn({
     required this.icon,
     required this.onPressed,
     this.size = 48,
     this.iconSize = 24,
-    this.isLarge = false,
   });
 
   @override
@@ -1842,7 +1841,6 @@ class _PlayerControlBtnState extends State<_PlayerControlBtn> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
       onTapUp: (_) {
@@ -1859,11 +1857,7 @@ class _PlayerControlBtnState extends State<_PlayerControlBtn> {
           height: widget.size,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: _pressed
-                ? (widget.isLarge
-                      ? theme.colorScheme.primary.withValues(alpha: 0.8)
-                      : Colors.white24)
-                : (widget.isLarge ? theme.colorScheme.primary : Colors.white10),
+            color: _pressed ? Colors.white24 : Colors.white10,
           ),
           child: Icon(widget.icon, color: Colors.white, size: widget.iconSize),
         ),

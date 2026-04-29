@@ -35,7 +35,6 @@ class MainNavigationScreen extends StatefulWidget {
 
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
-  final Set<int> _loadedTabs = {0}; // Home loads immediately
 
   String _getTitle(BuildContext context) {
     switch (_selectedIndex) {

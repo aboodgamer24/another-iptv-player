@@ -610,8 +610,6 @@ class _WelcomeScreenState extends State<WelcomeScreen>
     Widget? suffixIcon,
     TextInputType? keyboardType,
     TextInputAction? textInputAction,
-    VoidCallback? onUpKey,
-    VoidCallback? onDownKey,
     ValueChanged<String>? onFieldSubmitted,
     String? Function(String?)? validator,
   }) {

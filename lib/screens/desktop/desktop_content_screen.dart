@@ -7,7 +7,6 @@ import 'package:c4tv_player/utils/responsive_helper.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../models/content_type.dart';
 import 'package:c4tv_player/controllers/xtream_code_home_controller.dart';
-import 'package:provider/provider.dart';
 
 /// Desktop 2-panel layout used for Live TV, Movies, and Series tabs.
 /// Left panel: category sidebar. Right panel: content grid with search.

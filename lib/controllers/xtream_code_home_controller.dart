@@ -371,21 +371,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void _rotateHero() {
-    if (_heroPool.isEmpty) return;
-    // Pick a random item that is different from the current one
-    ContentItem? next;
-    final pool = _heroPool.where((i) => i.id != _heroItem?.id).toList();
-    if (pool.isNotEmpty) {
-      pool.shuffle();
-      next = pool.first;
-    } else {
-      _heroPool.shuffle();
-      next = _heroPool.first;
-    }
-    _heroItem = next;
-    notifyListeners();
-  }
 
   void refresh() => notifyListeners();
 

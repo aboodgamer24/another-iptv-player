@@ -1,33 +1,12 @@
 Analyzing another-iptv-player...                                
 
-warning - Unused import: '../screens/m3u/m3u_player_screen.dart' - lib\controllers\watch_history_controller.dart:11:8 - unused_import
-warning - Unused import: '../screens/series/episode_screen.dart' - lib\controllers\watch_history_controller.dart:13:8 - unused_import
-warning - Unused import: 'package:another_iptv_player/widgets/player_widget.dart' - lib\controllers\watch_history_controller.dart:14:8 - unused_import
-warning - Unused import: 'package:another_iptv_player/screens/m3u/m3u_player_screen.dart' - lib\controllers\watch_later_controller.dart:10:8 - unused_import
-warning - Unused import: 'package:another_iptv_player/screens/series/episode_screen.dart' - lib\controllers\watch_later_controller.dart:11:8 - unused_import
-warning - The declaration '_rotateHero' isn't referenced - lib\controllers\xtream_code_home_controller.dart:310:8 - unused_element
-   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:595:7 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:597:7 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:606:7 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\repositories\user_preferences.dart:611:7 - curly_braces_in_flow_control_structures
-warning - The value of the field '_loadedTabs' isn't used - lib\screens\main_navigation_screen.dart:41:18 - unused_field
-   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_home_screen.dart:188:23 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\screens\mobile\mobile_home_screen.dart:429:31 - curly_braces_in_flow_control_structures
-warning - A value for optional parameter 'onUpKey' isn't ever given - lib\screens\welcome_screen.dart:623:19 - unused_element_parameter
-warning - A value for optional parameter 'onDownKey' isn't ever given - lib\screens\welcome_screen.dart:624:19 - unused_element_parameter
-   info - Statements in an if should be enclosed in a block - lib\services\tmdb_service.dart:67:17 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\services\upscale_service.dart:22:5 - curly_braces_in_flow_control_structures
-  error - Target of URI doesn't exist: '../screens/tv/tv_exo_player_screen.dart' - lib\utils\navigate_by_content_type.dart:15:8 - uri_does_not_exist
-   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:602:39 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:1578:15 - curly_braces_in_flow_control_structures
-   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:1580:15 - curly_braces_in_flow_control_structures
-   info - The import of 'package:flutter/services.dart' is unnecessary because all of the used elements are also provided by the import of 'package:flutter/material.dart' - lib\widgets\player\tv_exo_player_overlay.dart:3:8 - unnecessary_import
-   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\player\tv_exo_player_overlay.dart:291:31 - deprecated_member_use
-   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\player\tv_exo_player_overlay.dart:332:37 - deprecated_member_use
-   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\player\tv_exo_player_overlay.dart:627:26 - deprecated_member_use
-   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\player\tv_exo_player_overlay.dart:629:36 - deprecated_member_use
-   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss - lib\widgets\player\tv_exo_player_overlay.dart:634:28 - deprecated_member_use
-warning - Unused import: 'package:another_iptv_player/utils/platform_utils.dart' - lib\widgets\video_widget.dart:8:8 - unused_import
-warning - Unused import: 'package:flutter/material.dart' - scratch\check_api.dart:2:8 - unused_import
-   info - Don't invoke 'print' in production code - scratch\check_api.dart:5:3 - avoid_print
+warning - The declaration '_rotateHero' isn't referenced - lib\controllers\xtream_code_home_controller.dart:374:8 - unused_element
+   info - Statements in an if should be enclosed in a block - lib\screens\common\c4_content_grid_screen.dart:214:35 - curly_braces_in_flow_control_structures
+warning - Unused import: 'package:provider/provider.dart' - lib\screens\desktop\desktop_content_screen.dart:10:8 - unused_import
+warning - The value of the field '_loadedTabs' isn't used - lib\screens\main_navigation_screen.dart:38:18 - unused_field
+warning - A value for optional parameter 'onUpKey' isn't ever given - lib\screens\welcome_screen.dart:613:19 - unused_element_parameter
+warning - A value for optional parameter 'onDownKey' isn't ever given - lib\screens\welcome_screen.dart:614:19 - unused_element_parameter
+warning - The '!' will have no effect because the receiver can't be null - lib\widgets\player\c4_player_overlay.dart:220:39 - unnecessary_non_null_assertion
+   info - Statements in an if should be enclosed in a block - lib\widgets\player\c4_player_overlay.dart:773:29 - curly_braces_in_flow_control_structures
+warning - A value for optional parameter 'isLarge' isn't ever given - lib\widgets\player\c4_player_overlay.dart:1833:10 - unused_element_parameter
 
