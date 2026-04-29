@@ -74,7 +74,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           case 0:
             return MobileHomeScreen(playlistId: widget.playlist.id);
           case 1:
-            if (controller.isLoading) {
+            if (controller.isLoading && (controller.liveCategories?.isEmpty ?? true)) {
               return const Center(child: CircularProgressIndicator());
             }
             return MobileLiveTvScreen(
@@ -82,7 +82,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: context.loc.live_streams,
             );
           case 2:
-            if (controller.isLoading) {
+            if (controller.isLoading && controller.movieCategories.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
             return MobileContentScreen(
@@ -91,7 +91,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: context.loc.movies,
             );
           case 3:
-            if (controller.isLoading) {
+            if (controller.isLoading && controller.seriesCategories.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
             return MobileContentScreen(
@@ -108,17 +108,17 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           case 0:
             return C4Dashboard(playlistId: widget.playlist.id);
           case 1:
-            if (controller.isLoading) {
+            if (controller.isLoading && (controller.liveCategories?.isEmpty ?? true)) {
               return const Center(child: CircularProgressIndicator());
             }
             return const C4LiveGridScreen();
           case 2:
-            if (controller.isLoading) {
+            if (controller.isLoading && controller.movieCategories.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
             return const C4ContentGridScreen(contentType: ContentType.vod);
           case 3:
-            if (controller.isLoading) {
+            if (controller.isLoading && controller.seriesCategories.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
             return const C4ContentGridScreen(contentType: ContentType.series);

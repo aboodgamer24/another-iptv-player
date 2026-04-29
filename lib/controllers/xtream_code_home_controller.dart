@@ -142,7 +142,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
   Future<void> _loadCategories(bool all) async {
     try {
-      // Only show full-screen loader if we have NO data at all
       if (_liveCategories.isEmpty &&
           _movieCategories.isEmpty &&
           _seriesCategories.isEmpty) {
@@ -154,7 +153,6 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final playlistId = AppState.currentPlaylist!.id;
 
       if (all) {
-        // Run categories+streams fetches in parallel per type but don't block fully if we have some data
         unawaited(
           Future.wait([
             _repository
@@ -171,10 +169,9 @@ class XtreamCodeHomeController extends ChangeNotifier {
                 .then((_) => _loadCategories(false)),
           ]),
         );
-        // If we were forced to refresh, we still want to show what we currently have in DB
       }
 
-      // ── LOAD FROM DB — Shallow fetch (Categories only first) ──────
+      // ── PHASE 1: Fast — load categories only (no streams) ────────────
       final results = await Future.wait([
         db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.live),
         db.getCategoriesByTypeAndPlaylist(playlistId, CategoryType.vod),
@@ -185,105 +182,97 @@ class XtreamCodeHomeController extends ChangeNotifier {
       final allVodCats = results[1] as List<dynamic>;
       final allSerCats = results[2] as List<dynamic>;
 
-      // ── GET SAMPLES FOR DASHBOARD (Parallel) ─────────────────────
-      final samples = await Future.wait([
-        db.getRandomVodStreams(playlistId, 15),
-        db.getRandomSeriesStreams(playlistId, 15),
-      ]);
-
-      // Fetch all live category streams in parallel — cast categoryId to String
-      // to avoid MapEntry<dynamic, ...> type mismatch compile error
-      final liveEntries = await Future.wait<MapEntry<String, List<LiveStream>>>(
-        allLiveCats.map(
-          (cat) => db
-              .getLiveStreamsByCategoryId(playlistId, cat.categoryId as String)
-              .then(
-                (streams) => MapEntry<String, List<LiveStream>>(
-                  cat.categoryId as String,
-                  streams,
-                ),
-              ),
-        ),
-      );
-      final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
-
-      // ── AUTO-FETCH if DB is empty ──────────────────────────────────
       if (!all &&
           allLiveCats.isEmpty &&
           allVodCats.isEmpty &&
           allSerCats.isEmpty) {
-        debugPrint(
-          '[XtreamController] DB is empty — triggering parallel content fetch',
-        );
+        debugPrint('[XtreamController] DB is empty — triggering parallel content fetch');
         unawaited(_loadCategories(true));
         return;
       }
 
-      final randomVods = samples[0] as List<VodStream>;
-      final randomSeries = samples[1] as List<SeriesStream>;
-
-      // Load hidden categories once
+      // Load hidden categories
       final hiddenSet = (await UserPreferences.getHiddenCategories()).toSet();
 
       _liveCategories.clear();
       _movieCategories.clear();
       _seriesCategories.clear();
 
-      for (final cat in allLiveCats) {
-        final streams = liveMap[cat.categoryId as String] ?? [];
-        if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _liveCategories.add(
-          CategoryViewModel(
-            category: cat,
-            contentItems: _convertToItems(streams, ContentType.liveStream),
-          ),
-        );
-      }
-
+      // Build VOD and Series categories with empty contentItems (lazy-loaded later)
       for (final cat in allVodCats) {
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _movieCategories.add(
-          CategoryViewModel(category: cat, contentItems: []),
-        );
+        _movieCategories.add(CategoryViewModel(category: cat, contentItems: []));
       }
-
       for (final cat in allSerCats) {
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _seriesCategories.add(
-          CategoryViewModel(category: cat, contentItems: []),
-        );
+        _seriesCategories.add(CategoryViewModel(category: cat, contentItems: []));
       }
 
-      // Populate hero from random fetch
-      _heroPool = [
-        ...randomVods.map(
-          (x) => ContentItem(
-            x.streamId,
-            x.name,
-            x.streamIcon,
-            ContentType.vod,
-            vodStream: x,
-          ),
-        ),
-        ...randomSeries.map(
-          (x) => ContentItem(
-            x.seriesId,
-            x.name,
-            x.cover ?? '',
-            ContentType.series,
-            seriesStream: x,
-          ),
-        ),
-      ];
-      if (_heroPool.isNotEmpty) {
-        _heroPool.shuffle();
-        _heroItem = _heroPool.first;
-        _recommendations = _heroPool.take(15).toList();
+      // For live categories: build with empty items first, load streams in background
+      for (final cat in allLiveCats) {
+        if (!all && hiddenSet.contains(cat.categoryId)) continue;
+        _liveCategories.add(CategoryViewModel(category: cat, contentItems: []));
       }
 
-      _generateDashboardContent();
+      // ── RELEASE THE UI NOW — categories are ready, screens can render ──
       _isLoading = false;
       notifyListeners();
+
+      // ── PHASE 2: Slow — load live streams and dashboard data in background ──
+      unawaited(() async {
+        try {
+          // Live streams (fill in contentItems for each live category)
+          final liveEntries = await Future.wait<MapEntry<String, List<LiveStream>>>(
+            allLiveCats.map(
+              (cat) => db
+                  .getLiveStreamsByCategoryId(playlistId, cat.categoryId as String)
+                  .then(
+                    (streams) => MapEntry<String, List<LiveStream>>(
+                      cat.categoryId as String,
+                      streams,
+                    ),
+                  ),
+            ),
+          );
+          final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
+
+          // Update live categories with their streams
+          for (final vm in _liveCategories) {
+            final streams = liveMap[vm.category.categoryId] ?? [];
+            vm.contentItems
+              ..clear()
+              ..addAll(_convertToItems(streams, ContentType.liveStream));
+          }
+
+          // Dashboard random samples
+          final samples = await Future.wait([
+            db.getRandomVodStreams(playlistId, 15),
+            db.getRandomSeriesStreams(playlistId, 15),
+          ]);
+
+          final randomVods = samples[0] as List<VodStream>;
+          final randomSeries = samples[1] as List<SeriesStream>;
+
+          _heroPool = [
+            ...randomVods.map(
+              (x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.vod, vodStream: x),
+            ),
+            ...randomSeries.map(
+              (x) => ContentItem(x.seriesId, x.name, x.cover ?? '', ContentType.series, seriesStream: x),
+            ),
+          ];
+          if (_heroPool.isNotEmpty) {
+            _heroPool.shuffle();
+            _heroItem = _heroPool.first;
+            _recommendations = _heroPool.take(15).toList();
+          }
+
+          _generateDashboardContent();
+          notifyListeners();
+        } catch (e) {
+          debugPrint('Phase 2 background error: $e');
+        }
+      }());
     } catch (e, st) {
       debugPrint(st.toString());
       debugPrint('Error loading content: $e');

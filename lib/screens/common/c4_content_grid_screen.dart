@@ -22,7 +22,7 @@ class C4ContentGridScreen extends StatefulWidget {
 class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
   int _selectedCategoryIndex = 0;
   ContentItem? _focusedItem;
-  bool _isLoadingItems = false;
+  bool _isLoadingItems = true;
 
   double _sidebarWidth = 200;
   static const double _minSidebarWidth = 120;
@@ -31,6 +31,15 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
   @override
   void initState() {
     super.initState();
+    final controller = context.read<XtreamCodeHomeController>();
+    final categories = widget.contentType == ContentType.vod
+        ? controller.movieCategories
+        : controller.seriesCategories;
+
+    if (categories.isNotEmpty && categories[0].contentItems.isNotEmpty) {
+      _isLoadingItems = false;
+    }
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _loadCategoryItems(0);
     });
@@ -46,7 +55,10 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
     final cat = categories[index];
 
     if (cat.contentItems.isNotEmpty) {
-      setState(() => _selectedCategoryIndex = index);
+      setState(() {
+        _selectedCategoryIndex = index;
+        _isLoadingItems = false;
+      });
       return;
     }
 

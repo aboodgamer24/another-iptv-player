@@ -36,7 +36,21 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
   @override
   void initState() {
     super.initState();
-    _loadAllItems();
+    // Pre-check if we already have items to avoid spinner flicker
+    bool hasAnyItems = false;
+    for (final cat in widget.categories) {
+      if (cat.contentItems.isNotEmpty) {
+        hasAnyItems = true;
+        break;
+      }
+    }
+    if (hasAnyItems) {
+      _isLoadingItems = false;
+      _loadAllItems(silent: true);
+    } else {
+      _isLoadingItems = true;
+      _loadAllItems();
+    }
   }
 
   @override
@@ -51,8 +65,10 @@ class _MobileContentScreenState extends State<MobileContentScreen> {
     }
   }
 
-  Future<void> _loadAllItems() async {
-    setState(() => _isLoadingItems = true);
+  Future<void> _loadAllItems({bool silent = false}) async {
+    if (!silent) {
+      setState(() => _isLoadingItems = true);
+    }
 
     // Lazily load content items for VOD/Series categories (they start empty)
     if (widget.contentType == ContentType.vod ||
