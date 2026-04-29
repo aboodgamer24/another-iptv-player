@@ -367,6 +367,13 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
     _startHideTimer();
 
     final key = event.logicalKey;
+
+    // Space — toggle play/pause
+    if (key == LogicalKeyboardKey.space) {
+      widget.player.playOrPause();
+      return;
+    }
+
     if (key == LogicalKeyboardKey.arrowUp || key == LogicalKeyboardKey.pageUp) {
       _adjustVolume(0.05);
     } else if (key == LogicalKeyboardKey.arrowDown ||
@@ -1083,14 +1090,20 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
             RepaintBoundary(
               child: Row(
                 children: [
-                  _PlayerControlBtn(
-                    icon: widget.player.state.playing
-                        ? Icons.pause_rounded
-                        : Icons.play_arrow_rounded,
-                    isLarge: !compact,
-                    size: compact ? 32 : 64,
-                    iconSize: compact ? 20 : 40,
-                    onPressed: () => widget.player.playOrPause(),
+                  // ── Play/Pause button with animated icon swap ──────────────
+                  StreamBuilder<bool>(
+                    stream: widget.player.stream.playing,
+                    initialData: widget.player.state.playing,
+                    builder: (context, snapshot) {
+                      final isPlaying = snapshot.data ?? false;
+                      return _PlayPauseBtn(
+                        isPlaying: isPlaying,
+                        isLarge: !compact,
+                        size: compact ? 32 : 64,
+                        iconSize: compact ? 20 : 40,
+                        onPressed: () => widget.player.playOrPause(),
+                      );
+                    },
                   ),
                   SizedBox(width: compact ? 8 : 32),
                   GestureDetector(
@@ -1725,6 +1738,84 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
+// ── Animated Play/Pause button ────────────────────────────────────────────────
+// Dedicated widget that smoothly cross-fades between the play and pause icon.
+// Uses AnimatedSwitcher with a scale+fade transition so both icons never
+// overlap during the transition and the swap feels snappy but not jarring.
+class _PlayPauseBtn extends StatefulWidget {
+  final bool isPlaying;
+  final VoidCallback onPressed;
+  final double size;
+  final double iconSize;
+  final bool isLarge;
+
+  const _PlayPauseBtn({
+    required this.isPlaying,
+    required this.onPressed,
+    this.size = 48,
+    this.iconSize = 24,
+    this.isLarge = false,
+  });
+
+  @override
+  State<_PlayPauseBtn> createState() => _PlayPauseBtnState();
+}
+
+class _PlayPauseBtnState extends State<_PlayPauseBtn> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTapDown: (_) => setState(() => _pressed = true),
+      onTapUp: (_) {
+        setState(() => _pressed = false);
+        widget.onPressed();
+      },
+      onTapCancel: () => setState(() => _pressed = false),
+      child: AnimatedScale(
+        scale: _pressed ? 0.88 : 1.0,
+        duration: const Duration(milliseconds: 80),
+        curve: Curves.easeOut,
+        child: Container(
+          width: widget.size,
+          height: widget.size,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: _pressed
+                ? (widget.isLarge
+                      ? theme.colorScheme.primary.withValues(alpha: 0.8)
+                      : Colors.white24)
+                : (widget.isLarge ? theme.colorScheme.primary : Colors.white10),
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            switchInCurve: Curves.easeOut,
+            switchOutCurve: Curves.easeIn,
+            transitionBuilder: (child, animation) {
+              return ScaleTransition(
+                scale: Tween<double>(begin: 0.6, end: 1.0).animate(animation),
+                child: FadeTransition(opacity: animation, child: child),
+              );
+            },
+            child: Icon(
+              widget.isPlaying
+                  ? Icons.pause_rounded
+                  : Icons.play_arrow_rounded,
+              // ValueKey forces AnimatedSwitcher to treat state change as a new widget
+              key: ValueKey<bool>(widget.isPlaying),
+              color: Colors.white,
+              size: widget.iconSize,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Generic icon control button (rewind / forward / etc.) ────────────────────
 class _PlayerControlBtn extends StatefulWidget {
   final IconData icon;
   final VoidCallback onPressed;
