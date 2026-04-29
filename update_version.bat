@@ -69,7 +69,7 @@ set "WSL_APK_SH=\\wsl.localhost\Debian\home\abood\build_apk.sh"
 >> "%PS_TMP%" echo.
 >> "%PS_TMP%" echo # 3 — installer.iss
 >> "%PS_TMP%" echo $content = Get-Content 'installer.iss'
->> "%PS_TMP%" echo $content = $content -replace '#define MyAppVersion \"[^\"]*\"', ('#define MyAppVersion \"' + $v + '"')
+>> "%PS_TMP%" echo $content = $content -replace '#define MyAppVersion "[^"]*"', ('#define MyAppVersion "' + $v + '"')
 >> "%PS_TMP%" echo Set-Content 'installer.iss' $content
 >> "%PS_TMP%" echo Write-Host '[3/4] installer.iss updated.'
 >> "%PS_TMP%" echo.
