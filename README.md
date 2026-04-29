@@ -323,7 +323,7 @@ Licensed under the terms in the [LICENSE](LICENSE) file.
 
 - Name inspired by [Another Redis Desktop Manager](https://github.com/qishibo/AnotherRedisDesktopManager)
 - Video playback powered by [media_kit](https://github.com/media-kit/media-kit)
-- Original project & special thanks to [**bsogulcan**](https://github.com/bsogulcan) for creating and open-sourcing [another-iptv-player](https://github.com/bsogulcan/another-iptv-player) — the foundation this project is built upon
+- Original project & special thanks to [**@bsogulcan**](https://github.com/bsogulcan) for creating and open-sourcing [another-iptv-player](https://github.com/bsogulcan/another-iptv-player) — the foundation this project is built upon
 - Xtream Codes API documentation by [JUL1EN094](https://github.com/JUL1EN094)
 
 ---
