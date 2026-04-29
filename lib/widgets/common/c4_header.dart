@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'c4tv_logo.dart';
 import 'hover_scale_wrapper.dart';
 
 class C4Header extends StatelessWidget {
@@ -21,7 +22,7 @@ class C4Header extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      height: 80,
+      height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -34,6 +35,15 @@ class C4Header extends StatelessWidget {
       ),
       child: Row(
         children: [
+          // ── Logo + page title ────────────────────────────────────────────
+          C4tvLogo(size: 28, showLabel: false),
+          const SizedBox(width: 14),
+          Container(
+            width: 1,
+            height: 22,
+            color: (theme.dividerTheme.color ?? Colors.white10),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,

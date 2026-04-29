@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'c4tv_logo.dart';
 import 'hover_scale_wrapper.dart';
 
 class C4RailItem {
@@ -52,10 +53,10 @@ class _C4RailState extends State<C4Rail> {
       ),
       child: Column(
         children: [
-          const SizedBox(height: 40),
-          // Logo or App Icon
-          Icon(Icons.tv, size: 32, color: theme.colorScheme.primary),
-          const SizedBox(height: 40),
+          const SizedBox(height: 28),
+          // ── C4TV logo at top of sidebar ──────────────────────────────
+          C4tvLogo(size: 38),
+          const SizedBox(height: 28),
           Expanded(
             child: ListView.separated(
               itemCount: widget.items.length,
@@ -88,11 +89,9 @@ class _C4RailState extends State<C4Rail> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                              ? theme.colorScheme.primary.withValues(alpha: 0.12)
                               : isFocused
-                              ? theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.05,
-                                )
+                              ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(

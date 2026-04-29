@@ -21,10 +21,8 @@ import 'package:c4tv_player/utils/platform_utils.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Only do truly synchronous/fast setup here
   await PlatformUtils.detectTV();
 
-  // Desktop window setup (platform-gated, fast)
   if (Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
     await windowManager.ensureInitialized();
     WindowOptions windowOptions = const WindowOptions(
@@ -40,7 +38,6 @@ Future<void> main() async {
     });
   }
 
-  // Run app immediately — splash shows while heavy init runs
   runApp(
     MultiProvider(
       providers: [
@@ -89,12 +86,11 @@ class MyApp extends StatelessWidget {
           GlobalWidgetsLocalizations.delegate,
           GlobalCupertinoLocalizations.delegate,
         ],
-        title: 'Another IPTV Player',
+        title: 'C4TV Player',
         theme: themeProvider.currentThemeData,
         darkTheme: themeProvider.isDark ? themeProvider.currentThemeData : null,
         themeMode: themeProvider.isDark ? ThemeMode.dark : ThemeMode.light,
         debugShowCheckedModeBanner: false,
-        // Wire D-pad arrow keys → directional focus movement
         shortcuts: {
           ...WidgetsApp.defaultShortcuts,
           const SingleActivator(LogicalKeyboardKey.arrowUp):
@@ -106,12 +102,9 @@ class MyApp extends StatelessWidget {
           const SingleActivator(LogicalKeyboardKey.arrowRight):
               const DirectionalFocusIntent(TraversalDirection.right),
         },
-        // CRITICAL: actions map must exist to actually handle the intents above
         actions: {
           ...WidgetsApp.defaultActions,
         },
-        // Wrap the home inside a Builder so FocusTraversalGroup is
-        // inside MaterialApp's own FocusScope, not outside it
         home: KeyboardListener(
           focusNode: FocusNode(skipTraversal: true),
           autofocus: true,
