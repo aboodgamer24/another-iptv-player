@@ -41,7 +41,7 @@ Your data follows you everywhere. Connect to your own self-hosted sync server an
 | ⏰ Watch Later            | ✅     |
 | ⚙️ Settings & Preferences | ✅     |
 
-The sync server is a lightweight **Node.js + PostgreSQL** backend you host yourself — no third-party cloud, no data sharing, full privacy. See the [Self-Hosting the Sync Server](#-self-hosting-the-sync-server) section below to get started in minutes.
+The sync server is a lightweight **Node.js + PostgreSQL** backend you host yourself — no third-party cloud, no data sharing, full privacy. See the [Self-Hosting the Sync Server](https://github.com/aboodgamer24/c4tv-player/tree/main/sync-server) section below to get started in minutes.
 
 ---
 
