@@ -265,35 +265,25 @@ class _WelcomeScreenState extends State<WelcomeScreen>
 
   Widget _buildLogo(ColorScheme colorScheme) {
     return Container(
-      width: 88,
-      height: 88,
+      width: 100,
+      height: 100,
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            colorScheme.primary,
-            colorScheme.primary.withValues(alpha: 0.7),
-          ],
-        ),
+        borderRadius: BorderRadius.circular(22),
         boxShadow: [
           BoxShadow(
-            color: colorScheme.primary.withValues(alpha: 0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
+            color: colorScheme.primary.withValues(alpha: 0.25),
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
         ],
       ),
-      child: ClipOval(
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(22),
         child: Image.asset(
           'assets/logo.png',
           fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => Icon(
-            Icons.live_tv_rounded,
-            size: 44,
-            color: colorScheme.onPrimary,
-          ),
+          errorBuilder: (_, __, ___) =>
+              Icon(Icons.live_tv_rounded, size: 50, color: colorScheme.primary),
         ),
       ),
     );

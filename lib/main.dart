@@ -102,9 +102,7 @@ class MyApp extends StatelessWidget {
           const SingleActivator(LogicalKeyboardKey.arrowRight):
               const DirectionalFocusIntent(TraversalDirection.right),
         },
-        actions: {
-          ...WidgetsApp.defaultActions,
-        },
+        actions: {...WidgetsApp.defaultActions},
         home: KeyboardListener(
           focusNode: FocusNode(skipTraversal: true),
           autofocus: true,

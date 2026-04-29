@@ -202,16 +202,12 @@ class _SubtitleSettingsScreenState extends State<SubtitleSettingsScreen> {
                                 Icon(
                                   Icons.text_fields,
                                   size: 18,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   context.loc.font_settings,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
+                                  style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ],
@@ -284,16 +280,12 @@ class _SubtitleSettingsScreenState extends State<SubtitleSettingsScreen> {
                                 Icon(
                                   Icons.palette,
                                   size: 18,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   context.loc.color_settings,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
+                                  style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ],
@@ -330,16 +322,12 @@ class _SubtitleSettingsScreenState extends State<SubtitleSettingsScreen> {
                                 Icon(
                                   Icons.style,
                                   size: 18,
-                                  color: Theme.of(
-                                    context,
-                                  ).colorScheme.primary,
+                                  color: Theme.of(context).colorScheme.primary,
                                 ),
                                 const SizedBox(width: 8),
                                 Text(
                                   context.loc.style_settings,
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall
+                                  style: Theme.of(context).textTheme.titleSmall
                                       ?.copyWith(fontWeight: FontWeight.w600),
                                 ),
                               ],

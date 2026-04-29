@@ -5,11 +5,11 @@ enum HdrType { none, hdr10, hlg, hdr10plus, dolbyVision }
 
 extension HdrTypeLabel on HdrType {
   String get label => switch (this) {
-    HdrType.hdr10       => 'HDR10',
-    HdrType.hlg         => 'HLG',
-    HdrType.hdr10plus   => 'HDR10+',
+    HdrType.hdr10 => 'HDR10',
+    HdrType.hlg => 'HLG',
+    HdrType.hdr10plus => 'HDR10+',
     HdrType.dolbyVision => 'DOLBY VISION',
-    HdrType.none        => '',
+    HdrType.none => '',
   };
 }
 
@@ -31,7 +31,9 @@ class HdrService {
         final primaries = await native.getProperty('video-params/primaries');
         final gamma = await native.getProperty('video-params/gamma');
 
-        debugPrint('[HdrService] poll=$i primaries="$primaries" gamma="$gamma"');
+        debugPrint(
+          '[HdrService] poll=$i primaries="$primaries" gamma="$gamma"',
+        );
 
         if (primaries.isEmpty) continue;
         if (!primaries.contains('bt.2020')) return HdrType.none;

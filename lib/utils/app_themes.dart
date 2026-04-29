@@ -15,31 +15,33 @@ final _androidFadeThrough = PageTransitionsTheme(
 /// All four themes share the same structural tokens; only hue/surface differ.
 /// ─────────────────────────────────────────────────────────────────────────────
 class AppThemes {
-  // ── Brand green (from logo) ────────────────────────────────────────────
-  static const Color brandGreen        = Color(0xFF2EBD6B);
-  static const Color brandGreenDark    = Color(0xFF1F9A54); // hover / pressed
-  static const Color brandGreenLight   = Color(0xFFB6EDD0); // container / highlight
+  // ── Brand Yellow (from logo) ────────────────────────────────────────────
+  static const Color brandYellow = Color(0xFFFFD600);
+  static const Color brandYellowDark = Color(0xFFC7A500); // hover / pressed
+  static const Color brandYellowLight = Color(
+    0xFFFFF3A0,
+  ); // container / highlight
 
   // ── Dark theme surfaces (Midnight) ────────────────────────────────────
-  static const Color midnightBg        = Color(0xFF0D1117);
-  static const Color midnightSurface   = Color(0xFF161B22);
-  static const Color midnightSurface2  = Color(0xFF21262D);
-  static const Color midnightOutline   = Color(0xFF30363D);
-  static const Color midnightText      = Color(0xFFE6EDF3);
+  static const Color midnightBg = Color(0xFF0D1117);
+  static const Color midnightSurface = Color(0xFF161B22);
+  static const Color midnightSurface2 = Color(0xFF21262D);
+  static const Color midnightOutline = Color(0xFF30363D);
+  static const Color midnightText = Color(0xFFE6EDF3);
   static const Color midnightTextMuted = Color(0xFF8B949E);
 
   // ── Sky-Blue palette ──────────────────────────────────────────────────
-  static const Color skyPrimary   = Color(0xFF4A90D9);
-  static const Color skyAccent    = Color(0xFF2E7BC6);
+  static const Color skyPrimary = Color(0xFF4A90D9);
+  static const Color skyAccent = Color(0xFF2E7BC6);
 
   // ── Crimson palette ───────────────────────────────────────────────────
-  static const Color crimsonPrimary  = Color(0xFFA50000);
-  static const Color crimsonAccent   = Color(0xFFD32F2F);
-  static const Color crimsonBg       = Color(0xFF0D0000);
-  static const Color crimsonSurface  = Color(0xFF1A0000);
+  static const Color crimsonPrimary = Color(0xFFA50000);
+  static const Color crimsonAccent = Color(0xFFD32F2F);
+  static const Color crimsonBg = Color(0xFF0D0000);
+  static const Color crimsonSurface = Color(0xFF1A0000);
   static const Color crimsonSurface2 = Color(0xFF2A0505);
-  static const Color crimsonText     = Color(0xFFF5E6E6);
-  static const Color crimsonMuted    = Color(0xFFBB8C8C);
+  static const Color crimsonText = Color(0xFFF5E6E6);
+  static const Color crimsonMuted = Color(0xFFBB8C8C);
 
   // ════════════════════════════════════════════════════════════════════════
   // DARK theme  (default — Midnight + Brand Green)
@@ -50,19 +52,19 @@ class AppThemes {
     fontFamily: 'DMSans',
     pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.dark(
-      primary:                brandGreen,
-      onPrimary:              Colors.white,
-      primaryContainer:       brandGreen.withValues(alpha: 0.18),
-      onPrimaryContainer:     brandGreenLight,
-      secondary:              brandGreenDark,
-      onSecondary:            Colors.white,
-      surface:                midnightSurface,
-      onSurface:              midnightText,
-      onSurfaceVariant:       midnightTextMuted,
-      outline:                midnightOutline,
+      primary: brandYellow,
+      onPrimary: Colors.black,
+      primaryContainer: brandYellow.withValues(alpha: 0.18),
+      onPrimaryContainer: brandYellowLight,
+      secondary: brandYellowDark,
+      onSecondary: Colors.black,
+      surface: midnightSurface,
+      onSurface: midnightText,
+      onSurfaceVariant: midnightTextMuted,
+      outline: midnightOutline,
       surfaceContainerHighest: midnightSurface2,
-      surfaceContainerHigh:   const Color(0xFF1C2128),
-      surfaceContainer:       const Color(0xFF181C22),
+      surfaceContainerHigh: const Color(0xFF1C2128),
+      surfaceContainer: const Color(0xFF181C22),
     ),
     scaffoldBackgroundColor: midnightBg,
     appBarTheme: AppBarTheme(
@@ -84,14 +86,17 @@ class AppThemes {
     ),
     navigationRailTheme: NavigationRailThemeData(
       backgroundColor: midnightBg,
-      selectedIconTheme: const IconThemeData(color: brandGreen),
+      selectedIconTheme: const IconThemeData(color: brandYellow),
       unselectedIconTheme: const IconThemeData(color: midnightTextMuted),
-      selectedLabelTextStyle: const TextStyle(color: brandGreen, fontWeight: FontWeight.bold),
+      selectedLabelTextStyle: const TextStyle(
+        color: brandYellow,
+        fontWeight: FontWeight.bold,
+      ),
       unselectedLabelTextStyle: const TextStyle(color: midnightTextMuted),
     ),
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: midnightBg,
-      selectedItemColor: brandGreen,
+      selectedItemColor: brandYellow,
       unselectedItemColor: midnightTextMuted,
     ),
     dividerTheme: const DividerThemeData(color: midnightOutline, thickness: 1),
@@ -114,33 +119,45 @@ class AppThemes {
     chipTheme: ChipThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       backgroundColor: midnightSurface2,
-      selectedColor: brandGreen.withValues(alpha: 0.25),
+      selectedColor: brandYellow.withValues(alpha: 0.25),
       labelStyle: const TextStyle(color: midnightText),
     ),
     textTheme: const TextTheme(
-      headlineLarge:  TextStyle(color: midnightText, fontWeight: FontWeight.bold),
-      headlineMedium: TextStyle(color: midnightText, fontWeight: FontWeight.bold),
-      headlineSmall:  TextStyle(color: midnightText, fontWeight: FontWeight.w600),
-      titleLarge:     TextStyle(color: midnightText, fontWeight: FontWeight.w600),
-      titleMedium:    TextStyle(color: midnightText),
-      bodyLarge:      TextStyle(color: midnightText),
-      bodyMedium:     TextStyle(color: midnightTextMuted),
-      labelSmall:     TextStyle(color: midnightTextMuted, fontSize: 11),
+      headlineLarge: TextStyle(
+        color: midnightText,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineMedium: TextStyle(
+        color: midnightText,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineSmall: TextStyle(
+        color: midnightText,
+        fontWeight: FontWeight.w600,
+      ),
+      titleLarge: TextStyle(color: midnightText, fontWeight: FontWeight.w600),
+      titleMedium: TextStyle(color: midnightText),
+      bodyLarge: TextStyle(color: midnightText),
+      bodyMedium: TextStyle(color: midnightTextMuted),
+      labelSmall: TextStyle(color: midnightTextMuted, fontSize: 11),
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: brandGreen),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: brandYellow,
+    ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
-        (s) => s.contains(WidgetState.selected) ? brandGreen : midnightTextMuted,
+        (s) =>
+            s.contains(WidgetState.selected) ? brandYellow : midnightTextMuted,
       ),
       trackColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected)
-            ? brandGreen.withValues(alpha: 0.4)
+            ? brandYellow.withValues(alpha: 0.4)
             : midnightOutline,
       ),
     ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: brandGreen,
-      foregroundColor: Colors.white,
+      backgroundColor: brandYellow,
+      foregroundColor: Colors.black,
     ),
   );
 
@@ -153,16 +170,16 @@ class AppThemes {
     fontFamily: 'DMSans',
     pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.light(
-      primary:             brandGreen,
-      onPrimary:           Colors.white,
-      primaryContainer:    brandGreenLight,
-      onPrimaryContainer:  const Color(0xFF004D27),
-      secondary:           brandGreenDark,
-      onSecondary:         Colors.white,
-      surface:             const Color(0xFFF5F5F5),
-      onSurface:           const Color(0xFF1C1C1C),
-      onSurfaceVariant:    const Color(0xFF5F5F5F),
-      outline:             const Color(0xFFD0D0D0),
+      primary: brandYellow,
+      onPrimary: Colors.black,
+      primaryContainer: brandYellowLight,
+      onPrimaryContainer: const Color(0xFF4D3D00),
+      secondary: brandYellowDark,
+      onSecondary: Colors.black,
+      surface: const Color(0xFFF5F5F5),
+      onSurface: const Color(0xFF1C1C1C),
+      onSurfaceVariant: const Color(0xFF5F5F5F),
+      outline: const Color(0xFFD0D0D0),
       surfaceContainerHighest: const Color(0xFFE8E8E8),
     ),
     appBarTheme: const AppBarTheme(centerTitle: false, elevation: 0),
@@ -178,10 +195,12 @@ class AppThemes {
     chipTheme: ChipThemeData(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: brandGreen),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: brandYellow,
+    ),
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: brandGreen,
-      foregroundColor: Colors.white,
+      backgroundColor: brandYellow,
+      foregroundColor: Colors.black,
     ),
   );
 
@@ -194,16 +213,16 @@ class AppThemes {
     fontFamily: 'DMSans',
     pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.light(
-      primary:             skyPrimary,
-      onPrimary:           Colors.white,
-      primaryContainer:    const Color(0xFFD0E8F9),
-      onPrimaryContainer:  const Color(0xFF0A3A6B),
-      secondary:           skyAccent,
-      onSecondary:         Colors.white,
-      surface:             const Color(0xFFF0F7FC),
-      onSurface:           const Color(0xFF1A2B3D),
-      onSurfaceVariant:    const Color(0xFF546E84),
-      outline:             const Color(0xFFB8D4EA),
+      primary: skyPrimary,
+      onPrimary: Colors.white,
+      primaryContainer: const Color(0xFFD0E8F9),
+      onPrimaryContainer: const Color(0xFF0A3A6B),
+      secondary: skyAccent,
+      onSecondary: Colors.white,
+      surface: const Color(0xFFF0F7FC),
+      onSurface: const Color(0xFF1A2B3D),
+      onSurfaceVariant: const Color(0xFF546E84),
+      outline: const Color(0xFFB8D4EA),
       surfaceContainerHighest: const Color(0xFFDCEDF8),
     ),
     scaffoldBackgroundColor: const Color(0xFFF5FAFF),
@@ -255,21 +274,21 @@ class AppThemes {
     fontFamily: 'DMSans',
     pageTransitionsTheme: _androidFadeThrough,
     colorScheme: ColorScheme.dark(
-      primary:             crimsonPrimary,
-      onPrimary:           Colors.white,
-      primaryContainer:    crimsonPrimary.withValues(alpha: 0.25),
-      onPrimaryContainer:  const Color(0xFFFFCDD2),
-      secondary:           crimsonAccent,
-      onSecondary:         Colors.white,
-      surface:             crimsonSurface,
-      onSurface:           crimsonText,
-      onSurfaceVariant:    crimsonMuted,
-      outline:             const Color(0xFF4A1515),
+      primary: crimsonPrimary,
+      onPrimary: Colors.white,
+      primaryContainer: crimsonPrimary.withValues(alpha: 0.25),
+      onPrimaryContainer: const Color(0xFFFFCDD2),
+      secondary: crimsonAccent,
+      onSecondary: Colors.white,
+      surface: crimsonSurface,
+      onSurface: crimsonText,
+      onSurfaceVariant: crimsonMuted,
+      outline: const Color(0xFF4A1515),
       surfaceContainerHighest: crimsonSurface2,
-      surfaceContainerHigh:    const Color(0xFF220808),
-      surfaceContainer:        const Color(0xFF1E0404),
-      error:               const Color(0xFFFF6B6B),
-      onError:             Colors.black,
+      surfaceContainerHigh: const Color(0xFF220808),
+      surfaceContainer: const Color(0xFF1E0404),
+      error: const Color(0xFFFF6B6B),
+      onError: Colors.black,
     ),
     scaffoldBackgroundColor: crimsonBg,
     appBarTheme: const AppBarTheme(
@@ -293,7 +312,10 @@ class AppThemes {
       backgroundColor: crimsonBg,
       selectedIconTheme: const IconThemeData(color: crimsonPrimary),
       unselectedIconTheme: const IconThemeData(color: crimsonMuted),
-      selectedLabelTextStyle: const TextStyle(color: crimsonPrimary, fontWeight: FontWeight.bold),
+      selectedLabelTextStyle: const TextStyle(
+        color: crimsonPrimary,
+        fontWeight: FontWeight.bold,
+      ),
       unselectedLabelTextStyle: const TextStyle(color: crimsonMuted),
     ),
     bottomNavigationBarTheme: BottomNavigationBarThemeData(
@@ -305,7 +327,10 @@ class AppThemes {
       backgroundColor: crimsonBg,
       indicatorColor: crimsonPrimary.withValues(alpha: 0.2),
     ),
-    dividerTheme: const DividerThemeData(color: Color(0xFF2A0A0A), thickness: 1),
+    dividerTheme: const DividerThemeData(
+      color: Color(0xFF2A0A0A),
+      thickness: 1,
+    ),
     inputDecorationTheme: InputDecorationTheme(
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       filled: true,
@@ -328,16 +353,21 @@ class AppThemes {
       selectedColor: crimsonPrimary.withValues(alpha: 0.3),
     ),
     textTheme: const TextTheme(
-      headlineLarge:  TextStyle(color: crimsonText, fontWeight: FontWeight.bold),
-      headlineMedium: TextStyle(color: crimsonText, fontWeight: FontWeight.bold),
-      headlineSmall:  TextStyle(color: crimsonText, fontWeight: FontWeight.w600),
-      titleLarge:     TextStyle(color: crimsonText, fontWeight: FontWeight.w600),
-      titleMedium:    TextStyle(color: crimsonText),
-      bodyLarge:      TextStyle(color: crimsonText),
-      bodyMedium:     TextStyle(color: crimsonMuted),
-      labelSmall:     TextStyle(color: crimsonMuted, fontSize: 11),
+      headlineLarge: TextStyle(color: crimsonText, fontWeight: FontWeight.bold),
+      headlineMedium: TextStyle(
+        color: crimsonText,
+        fontWeight: FontWeight.bold,
+      ),
+      headlineSmall: TextStyle(color: crimsonText, fontWeight: FontWeight.w600),
+      titleLarge: TextStyle(color: crimsonText, fontWeight: FontWeight.w600),
+      titleMedium: TextStyle(color: crimsonText),
+      bodyLarge: TextStyle(color: crimsonText),
+      bodyMedium: TextStyle(color: crimsonMuted),
+      labelSmall: TextStyle(color: crimsonMuted, fontSize: 11),
     ),
-    progressIndicatorTheme: const ProgressIndicatorThemeData(color: crimsonPrimary),
+    progressIndicatorTheme: const ProgressIndicatorThemeData(
+      color: crimsonPrimary,
+    ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
         (s) => s.contains(WidgetState.selected) ? crimsonPrimary : crimsonMuted,
@@ -352,11 +382,16 @@ class AppThemes {
 
   static ThemeData getThemeByName(String name) {
     switch (name) {
-      case 'light':   return lightTheme;
-      case 'dark':    return darkTheme;
-      case 'skyBlue': return skyBlueTheme;
-      case 'crimson': return crimsonTheme;
-      default:        return darkTheme;
+      case 'light':
+        return lightTheme;
+      case 'dark':
+        return darkTheme;
+      case 'skyBlue':
+        return skyBlueTheme;
+      case 'crimson':
+        return crimsonTheme;
+      default:
+        return darkTheme;
     }
   }
 

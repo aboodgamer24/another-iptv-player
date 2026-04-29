@@ -116,17 +116,24 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
                 width: 96,
                 height: 96,
                 decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: colorScheme.primary,
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: colorScheme.primary.withValues(alpha: 0.25),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
                 ),
-                child: ClipOval(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
                   child: Image.asset(
                     'assets/logo.png',
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Icon(
                       Icons.live_tv_rounded,
                       size: 48,
-                      color: colorScheme.onPrimary,
+                      color: colorScheme.primary,
                     ),
                   ),
                 ),
@@ -173,13 +180,15 @@ class _AppInitializerScreenState extends State<AppInitializerScreen> {
       return const PlaylistScreen();
     } else {
       debugPrint('[AppInitializer] Navigating to MainNavigationScreen');
-      final playlist = _lastPlaylist ?? Playlist(
-        id: 'dummy',
-        name: 'Test Playlist',
-        type: PlaylistType.m3u,
-        createdAt: DateTime.now(),
-      );
-      
+      final playlist =
+          _lastPlaylist ??
+          Playlist(
+            id: 'dummy',
+            name: 'Test Playlist',
+            type: PlaylistType.m3u,
+            createdAt: DateTime.now(),
+          );
+
       // Ensure AppState is synced for the dummy navigation
       AppState.currentPlaylist = playlist;
       if (playlist.type == PlaylistType.m3u) {

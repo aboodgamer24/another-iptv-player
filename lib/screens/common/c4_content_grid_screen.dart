@@ -165,55 +165,60 @@ class _C4ContentGridScreenState extends State<C4ContentGridScreen> {
                   child: _isLoadingItems
                       ? const Center(child: CircularProgressIndicator())
                       : items.isEmpty
-                          ? Center(
-                              child: Text(
-                                context.loc.not_found_in_category,
-                                style: TextStyle(color: Theme.of(context).hintColor),
-                              ),
-                            )
-                          : GridView.builder(
-                              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      ? Center(
+                          child: Text(
+                            context.loc.not_found_in_category,
+                            style: TextStyle(
+                              color: Theme.of(context).hintColor,
+                            ),
+                          ),
+                        )
+                      : GridView.builder(
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
                                 crossAxisCount: _getCrossAxisCount(context),
                                 childAspectRatio: 2 / 3, // Poster aspect ratio
                                 crossAxisSpacing: 16,
                                 mainAxisSpacing: 16,
                               ),
-                              itemCount: items.length,
-                              itemBuilder: (context, index) {
-                                final item = items[index];
-                                final favoritesController = context
-                                    .watch<FavoritesController>();
-                                final watchLaterController = context
-                                    .watch<WatchLaterController>();
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final item = items[index];
+                            final favoritesController = context
+                                .watch<FavoritesController>();
+                            final watchLaterController = context
+                                .watch<WatchLaterController>();
 
-                                return C4Card(
-                                  title: item.name,
-                                  imageUrl: item.imageUrl,
-                                  contentType: item.contentType,
-                                  isFavorite: favoritesController.favorites.any(
-                                    (f) =>
-                                        f.streamId == item.id &&
-                                        f.contentType == item.contentType,
+                            return C4Card(
+                              title: item.name,
+                              imageUrl: item.imageUrl,
+                              contentType: item.contentType,
+                              isFavorite: favoritesController.favorites.any(
+                                (f) =>
+                                    f.streamId == item.id &&
+                                    f.contentType == item.contentType,
+                              ),
+                              onToggleFavorite: () =>
+                                  favoritesController.toggleFavorite(item),
+                              isInWatchLater: watchLaterController
+                                  .watchLaterItems
+                                  .any(
+                                    (w) =>
+                                        w.streamId == item.id &&
+                                        w.contentType == item.contentType,
                                   ),
-                                  onToggleFavorite: () =>
-                                      favoritesController.toggleFavorite(item),
-                                  isInWatchLater: watchLaterController.watchLaterItems
-                                      .any(
-                                        (w) =>
-                                            w.streamId == item.id &&
-                                            w.contentType == item.contentType,
-                                      ),
-                                  onToggleWatchLater: () =>
-                                      watchLaterController.toggleWatchLater(item),
-                                  onFocusChanged: (focused) {
-                                    if (focused) setState(() => _focusedItem = item);
-                                  },
-                                  onTap: () {
-                                    navigateByContentType(context, item);
-                                  },
-                                );
+                              onToggleWatchLater: () =>
+                                  watchLaterController.toggleWatchLater(item),
+                              onFocusChanged: (focused) {
+                                if (focused)
+                                  setState(() => _focusedItem = item);
                               },
-                            ),
+                              onTap: () {
+                                navigateByContentType(context, item);
+                              },
+                            );
+                          },
+                        ),
                 ),
               ],
             ),

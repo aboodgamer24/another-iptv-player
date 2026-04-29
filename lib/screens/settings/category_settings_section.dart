@@ -8,7 +8,11 @@ class CategorySettingsScreen extends StatefulWidget {
   final XtreamCodeHomeController controller;
   final bool isEmbedded;
 
-  const CategorySettingsScreen({super.key, required this.controller, this.isEmbedded = false});
+  const CategorySettingsScreen({
+    super.key,
+    required this.controller,
+    this.isEmbedded = false,
+  });
 
   @override
   State<CategorySettingsScreen> createState() => _CategorySettingsScreenState();
@@ -65,10 +69,15 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
     final content = Consumer<XtreamCodeHomeController>(
       builder: (context, controller, _) {
         return ListView(
-          padding: widget.isEmbedded ? EdgeInsets.zero : const EdgeInsets.symmetric(horizontal: 16),
+          padding: widget.isEmbedded
+              ? EdgeInsets.zero
+              : const EdgeInsets.symmetric(horizontal: 16),
           children: [
             ListTile(
-              title: Text(context.loc.live, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                context.loc.live,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               tileColor: Colors.black12,
             ),
             Row(
@@ -101,14 +110,16 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
               return SwitchListTile(
                 title: Text(cat.category.categoryName),
                 value: !isHidden,
-                onChanged: (val) =>
-                    _toggleHidden(val, cat.category.categoryId),
+                onChanged: (val) => _toggleHidden(val, cat.category.categoryId),
               );
             }),
 
             const Divider(),
             ListTile(
-              title: Text(context.loc.movies, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                context.loc.movies,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               tileColor: Colors.black12,
             ),
             Row(
@@ -141,14 +152,16 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
               return SwitchListTile(
                 title: Text(cat.category.categoryName),
                 value: !isHidden,
-                onChanged: (val) =>
-                    _toggleHidden(val, cat.category.categoryId),
+                onChanged: (val) => _toggleHidden(val, cat.category.categoryId),
               );
             }),
 
             const Divider(),
             ListTile(
-              title: Text(context.loc.series_plural, style: const TextStyle(fontWeight: FontWeight.bold)),
+              title: Text(
+                context.loc.series_plural,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               tileColor: Colors.black12,
             ),
             Row(
@@ -181,8 +194,7 @@ class _CategorySettingsScreenState extends State<CategorySettingsScreen> {
               return SwitchListTile(
                 title: Text(cat.category.categoryName),
                 value: !isHidden,
-                onChanged: (val) =>
-                    _toggleHidden(val, cat.category.categoryId),
+                onChanged: (val) => _toggleHidden(val, cat.category.categoryId),
               );
             }),
           ],

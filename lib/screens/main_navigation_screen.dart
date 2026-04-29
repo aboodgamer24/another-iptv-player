@@ -24,9 +24,6 @@ import 'mobile/mobile_favorites_screen.dart';
 import 'mobile/mobile_watch_later_screen.dart';
 import 'mobile/mobile_global_search_screen.dart';
 
-
-
-
 class MainNavigationScreen extends StatefulWidget {
   final Playlist playlist;
 
@@ -144,7 +141,6 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     final content = _buildContent();
 
     if (PlatformUtils.isMobile) {
@@ -272,21 +268,24 @@ class _TvLoadingSkeletonState extends State<_TvLoadingSkeleton>
               const SizedBox(height: 12),
               // Card row skeleton
               Row(
-                children: List.generate(5, (i) => Expanded(
-                  child: Padding(
-                    padding: EdgeInsets.only(right: i < 4 ? 12 : 0),
-                    child: Opacity(
-                      opacity: opacity,
-                      child: Container(
-                        height: 130,
-                        decoration: BoxDecoration(
-                          color: Colors.white12,
-                          borderRadius: BorderRadius.circular(8),
+                children: List.generate(
+                  5,
+                  (i) => Expanded(
+                    child: Padding(
+                      padding: EdgeInsets.only(right: i < 4 ? 12 : 0),
+                      child: Opacity(
+                        opacity: opacity,
+                        child: Container(
+                          height: 130,
+                          decoration: BoxDecoration(
+                            color: Colors.white12,
+                            borderRadius: BorderRadius.circular(8),
+                          ),
                         ),
                       ),
                     ),
                   ),
-                )),
+                ),
               ),
             ],
           ),

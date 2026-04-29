@@ -1,5 +1,4 @@
-import 'package:c4tv_player/database/database.dart'
-    hide M3uEpisodes, M3uSeries;
+import 'package:c4tv_player/database/database.dart' hide M3uEpisodes, M3uSeries;
 import 'package:c4tv_player/models/category.dart';
 import 'package:c4tv_player/models/category_type.dart';
 import 'package:c4tv_player/models/content_type.dart';

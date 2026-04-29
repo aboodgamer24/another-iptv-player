@@ -124,12 +124,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
                 : const Duration(milliseconds: 250),
             child: IgnorePointer(
               ignoring: !_overlayVisible,
-              child: Stack(
-                children: [
-                  _buildTopBar(),
-                  _buildBottomBar(),
-                ],
-              ),
+              child: Stack(children: [_buildTopBar(), _buildBottomBar()]),
             ),
           ),
 
@@ -215,9 +210,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
               child: IconButton(
                 onPressed: _toggleSidePanel,
                 icon: Icon(
-                  _sidePanelOpen
-                      ? Icons.menu_open_rounded
-                      : Icons.menu_rounded,
+                  _sidePanelOpen ? Icons.menu_open_rounded : Icons.menu_rounded,
                   color: _sidePanelOpen
                       ? const Color(0xFF4F98A3)
                       : Colors.white,
@@ -288,9 +281,7 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
         width: 340,
         decoration: BoxDecoration(
           color: Colors.black.withValues(alpha: 0.92),
-          boxShadow: const [
-            BoxShadow(color: Colors.black54, blurRadius: 24),
-          ],
+          boxShadow: const [BoxShadow(color: Colors.black54, blurRadius: 24)],
         ),
         child: Column(
           children: [
@@ -470,8 +461,10 @@ class _TvExoPlayerOverlayState extends State<TvExoPlayerOverlay> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_listScrollController.hasClients) {
         const itemH = 60.0;
-        final offset =
-            (widget.currentIndex * itemH - 100).clamp(0.0, double.infinity);
+        final offset = (widget.currentIndex * itemH - 100).clamp(
+          0.0,
+          double.infinity,
+        );
         _listScrollController.animateTo(
           offset,
           duration: const Duration(milliseconds: 300),
@@ -531,9 +524,7 @@ class _TabButton extends StatelessWidget {
             margin: const EdgeInsets.all(4),
             padding: const EdgeInsets.symmetric(vertical: 9),
             decoration: BoxDecoration(
-              color: isSelected
-                  ? const Color(0xFF4F98A3)
-                  : Colors.transparent,
+              color: isSelected ? const Color(0xFF4F98A3) : Colors.transparent,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -542,8 +533,7 @@ class _TabButton extends StatelessWidget {
               style: TextStyle(
                 color: isSelected ? Colors.white : Colors.white54,
                 fontSize: 13,
-                fontWeight:
-                    isSelected ? FontWeight.w600 : FontWeight.normal,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
               ),
             ),
           ),
@@ -570,10 +560,7 @@ class _InfoRow extends StatelessWidget {
             width: 90,
             child: Text(
               label,
-              style: const TextStyle(
-                color: Colors.white38,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: Colors.white38, fontSize: 13),
             ),
           ),
           Expanded(
@@ -625,8 +612,8 @@ class _ChannelListTileState extends State<_ChannelListTile> {
             color: widget.isActive
                 ? accent.withValues(alpha: 0.18)
                 : _focused
-                    ? Colors.white.withValues(alpha: 0.08)
-                    : Colors.transparent,
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
               color: widget.isActive
@@ -665,8 +652,7 @@ class _ChannelListTileState extends State<_ChannelListTile> {
                 child: Text(
                   widget.item.name,
                   style: TextStyle(
-                    color:
-                        widget.isActive ? accent : Colors.white,
+                    color: widget.isActive ? accent : Colors.white,
                     fontSize: 13,
                     fontWeight: widget.isActive
                         ? FontWeight.w600

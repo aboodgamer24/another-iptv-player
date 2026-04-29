@@ -89,9 +89,13 @@ class _C4RailState extends State<C4Rail> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: isSelected
-                              ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                              ? theme.colorScheme.primary.withValues(
+                                  alpha: 0.12,
+                                )
                               : isFocused
-                              ? theme.colorScheme.onSurface.withValues(alpha: 0.05)
+                              ? theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.05,
+                                )
                               : Colors.transparent,
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(

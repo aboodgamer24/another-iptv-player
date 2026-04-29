@@ -769,17 +769,21 @@ class C4PlayerOverlayState extends State<C4PlayerOverlay> {
                       ValueListenableBuilder<HdrType>(
                         valueListenable: _hdrTypeNotifier,
                         builder: (context, hdrType, _) {
-                          if (hdrType == HdrType.none) return const SizedBox.shrink();
+                          if (hdrType == HdrType.none)
+                            return const SizedBox.shrink();
                           final color = switch (hdrType) {
-                            HdrType.hdr10       => const Color(0xFFFFD700),
-                            HdrType.hlg         => const Color(0xFF00BFFF),
-                            HdrType.hdr10plus   => const Color(0xFFFF8C00),
+                            HdrType.hdr10 => const Color(0xFFFFD700),
+                            HdrType.hlg => const Color(0xFF00BFFF),
+                            HdrType.hdr10plus => const Color(0xFFFF8C00),
                             HdrType.dolbyVision => const Color(0xFF9B59B6),
-                            HdrType.none        => Colors.transparent,
+                            HdrType.none => Colors.transparent,
                           };
                           return Container(
                             margin: const EdgeInsets.only(left: 6),
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
                               color: color.withValues(alpha: 0.15),
                               border: Border.all(color: color, width: 1),
@@ -1800,9 +1804,7 @@ class _PlayPauseBtnState extends State<_PlayPauseBtn> {
               );
             },
             child: Icon(
-              widget.isPlaying
-                  ? Icons.pause_rounded
-                  : Icons.play_arrow_rounded,
+              widget.isPlaying ? Icons.pause_rounded : Icons.play_arrow_rounded,
               // ValueKey forces AnimatedSwitcher to treat state change as a new widget
               key: ValueKey<bool>(widget.isPlaying),
               color: Colors.white,

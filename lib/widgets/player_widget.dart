@@ -248,7 +248,10 @@ class _PlayerWidgetState extends State<PlayerWidget>
         }
 
         if (PlatformUtils.isTV) {
-          await native.setProperty('ytdl-format', 'bestvideo[height<=1080]+bestaudio/best[height<=1080]');
+          await native.setProperty(
+            'ytdl-format',
+            'bestvideo[height<=1080]+bestaudio/best[height<=1080]',
+          );
           await native.setProperty('video-bitrate', '8000000');
         }
       } else {

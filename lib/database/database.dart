@@ -1200,7 +1200,10 @@ class AppDatabase extends _$AppDatabase {
     return rows.map((row) => SeriesStream.fromDriftSeriesStream(row)).toList();
   }
 
-  Future<List<VodStream>> getRandomVodStreams(String playlistId, int count) async {
+  Future<List<VodStream>> getRandomVodStreams(
+    String playlistId,
+    int count,
+  ) async {
     final query = select(vodStreams)
       ..where((tbl) => tbl.playlistId.equals(playlistId))
       ..orderBy([(tbl) => OrderingTerm.random()])
@@ -1209,7 +1212,10 @@ class AppDatabase extends _$AppDatabase {
     return rows.map((row) => VodStream.fromDriftVodStream(row)).toList();
   }
 
-  Future<List<SeriesStream>> getRandomSeriesStreams(String playlistId, int count) async {
+  Future<List<SeriesStream>> getRandomSeriesStreams(
+    String playlistId,
+    int count,
+  ) async {
     final query = select(seriesStreams)
       ..where((tbl) => tbl.playlistId.equals(playlistId))
       ..orderBy([(tbl) => OrderingTerm.random()])

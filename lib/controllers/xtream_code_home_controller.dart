@@ -82,11 +82,16 @@ class XtreamCodeHomeController extends ChangeNotifier {
   List<ContentItem> get recommendations => _recommendations;
 
   List<ContentItem> get allLiveChannels =>
-      liveCategories?.expand((c) => getLiveChannelsByCategory(c.category.categoryId)).toList() ?? [];
-  List<ContentItem> get allMovies =>
-      movieCategories.expand((c) => getMoviesByCategory(c.category.categoryId)).toList();
-  List<ContentItem> get allSeries =>
-      seriesCategories.expand((c) => getSeriesByCategory(c.category.categoryId)).toList();
+      liveCategories
+          ?.expand((c) => getLiveChannelsByCategory(c.category.categoryId))
+          .toList() ??
+      [];
+  List<ContentItem> get allMovies => movieCategories
+      .expand((c) => getMoviesByCategory(c.category.categoryId))
+      .toList();
+  List<ContentItem> get allSeries => seriesCategories
+      .expand((c) => getSeriesByCategory(c.category.categoryId))
+      .toList();
 
   XtreamCodeHomeController(bool all) {
     _pageController = PageController();
@@ -138,7 +143,9 @@ class XtreamCodeHomeController extends ChangeNotifier {
   Future<void> _loadCategories(bool all) async {
     try {
       // Only show full-screen loader if we have NO data at all
-      if (_liveCategories.isEmpty && _movieCategories.isEmpty && _seriesCategories.isEmpty) {
+      if (_liveCategories.isEmpty &&
+          _movieCategories.isEmpty &&
+          _seriesCategories.isEmpty) {
         _isLoading = true;
         notifyListeners();
       }
@@ -148,20 +155,22 @@ class XtreamCodeHomeController extends ChangeNotifier {
 
       if (all) {
         // Run categories+streams fetches in parallel per type but don't block fully if we have some data
-        unawaited(Future.wait([
-          _repository
-              .getLiveCategories(forceRefresh: true)
-              .then((_) => _repository.getLiveChannelsFromApi())
-              .then((_) => _loadCategories(false)),
-          _repository
-              .getVodCategories(forceRefresh: true)
-              .then((_) => _repository.getMoviesFromApi())
-              .then((_) => _loadCategories(false)),
-          _repository
-              .getSeriesCategories(forceRefresh: true)
-              .then((_) => _repository.getSeriesFromApi())
-              .then((_) => _loadCategories(false)),
-        ]));
+        unawaited(
+          Future.wait([
+            _repository
+                .getLiveCategories(forceRefresh: true)
+                .then((_) => _repository.getLiveChannelsFromApi())
+                .then((_) => _loadCategories(false)),
+            _repository
+                .getVodCategories(forceRefresh: true)
+                .then((_) => _repository.getMoviesFromApi())
+                .then((_) => _loadCategories(false)),
+            _repository
+                .getSeriesCategories(forceRefresh: true)
+                .then((_) => _repository.getSeriesFromApi())
+                .then((_) => _loadCategories(false)),
+          ]),
+        );
         // If we were forced to refresh, we still want to show what we currently have in DB
       }
 
@@ -185,9 +194,16 @@ class XtreamCodeHomeController extends ChangeNotifier {
       // Fetch all live category streams in parallel — cast categoryId to String
       // to avoid MapEntry<dynamic, ...> type mismatch compile error
       final liveEntries = await Future.wait<MapEntry<String, List<LiveStream>>>(
-        allLiveCats.map((cat) => db
-            .getLiveStreamsByCategoryId(playlistId, cat.categoryId as String)
-            .then((streams) => MapEntry<String, List<LiveStream>>(cat.categoryId as String, streams))),
+        allLiveCats.map(
+          (cat) => db
+              .getLiveStreamsByCategoryId(playlistId, cat.categoryId as String)
+              .then(
+                (streams) => MapEntry<String, List<LiveStream>>(
+                  cat.categoryId as String,
+                  streams,
+                ),
+              ),
+        ),
       );
       final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
 
@@ -216,23 +232,48 @@ class XtreamCodeHomeController extends ChangeNotifier {
       for (final cat in allLiveCats) {
         final streams = liveMap[cat.categoryId as String] ?? [];
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _liveCategories.add(CategoryViewModel(category: cat, contentItems: _convertToItems(streams, ContentType.liveStream)));
+        _liveCategories.add(
+          CategoryViewModel(
+            category: cat,
+            contentItems: _convertToItems(streams, ContentType.liveStream),
+          ),
+        );
       }
 
       for (final cat in allVodCats) {
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _movieCategories.add(CategoryViewModel(category: cat, contentItems: []));
+        _movieCategories.add(
+          CategoryViewModel(category: cat, contentItems: []),
+        );
       }
 
       for (final cat in allSerCats) {
         if (!all && hiddenSet.contains(cat.categoryId)) continue;
-        _seriesCategories.add(CategoryViewModel(category: cat, contentItems: []));
+        _seriesCategories.add(
+          CategoryViewModel(category: cat, contentItems: []),
+        );
       }
 
       // Populate hero from random fetch
       _heroPool = [
-        ...randomVods.map((x) => ContentItem(x.streamId, x.name, x.streamIcon, ContentType.vod, vodStream: x)),
-        ...randomSeries.map((x) => ContentItem(x.seriesId, x.name, x.cover ?? '', ContentType.series, seriesStream: x)),
+        ...randomVods.map(
+          (x) => ContentItem(
+            x.streamId,
+            x.name,
+            x.streamIcon,
+            ContentType.vod,
+            vodStream: x,
+          ),
+        ),
+        ...randomSeries.map(
+          (x) => ContentItem(
+            x.seriesId,
+            x.name,
+            x.cover ?? '',
+            ContentType.series,
+            seriesStream: x,
+          ),
+        ),
       ];
       if (_heroPool.isNotEmpty) {
         _heroPool.shuffle();
@@ -269,31 +310,62 @@ class XtreamCodeHomeController extends ChangeNotifier {
     return streams.map((x) {
       if (type == ContentType.liveStream) {
         final s = x as LiveStream;
-        return ContentItem(s.streamId, s.name, s.streamIcon, type, liveStream: s);
+        return ContentItem(
+          s.streamId,
+          s.name,
+          s.streamIcon,
+          type,
+          liveStream: s,
+        );
       } else if (type == ContentType.vod) {
         final s = x as VodStream;
-        return ContentItem(s.streamId, s.name, s.streamIcon, type, vodStream: s, containerExtension: s.containerExtension);
+        return ContentItem(
+          s.streamId,
+          s.name,
+          s.streamIcon,
+          type,
+          vodStream: s,
+          containerExtension: s.containerExtension,
+        );
       } else {
         final s = x as SeriesStream;
-        return ContentItem(s.seriesId, s.name, s.cover ?? '', type, seriesStream: s);
+        return ContentItem(
+          s.seriesId,
+          s.name,
+          s.cover ?? '',
+          type,
+          seriesStream: s,
+        );
       }
     }).toList();
   }
 
-  Future<void> loadItemsForCategory(CategoryViewModel vm, ContentType type) async {
+  Future<void> loadItemsForCategory(
+    CategoryViewModel vm,
+    ContentType type,
+  ) async {
     if (vm.contentItems.isNotEmpty) return;
     final db = AppState.database;
     final playlistId = AppState.currentPlaylist!.id;
-    
+
     List<dynamic> streams;
     if (type == ContentType.liveStream) {
-      streams = await db.getLiveStreamsByCategoryId(playlistId, vm.category.categoryId);
+      streams = await db.getLiveStreamsByCategoryId(
+        playlistId,
+        vm.category.categoryId,
+      );
     } else if (type == ContentType.vod) {
-      streams = await db.getVodStreamsByCategoryAndPlaylistId(categoryId: vm.category.categoryId, playlistId: playlistId);
+      streams = await db.getVodStreamsByCategoryAndPlaylistId(
+        categoryId: vm.category.categoryId,
+        playlistId: playlistId,
+      );
     } else {
-      streams = await db.getSeriesStreamsByCategoryAndPlaylistId(categoryId: vm.category.categoryId, playlistId: playlistId);
+      streams = await db.getSeriesStreamsByCategoryAndPlaylistId(
+        categoryId: vm.category.categoryId,
+        playlistId: playlistId,
+      );
     }
-    
+
     vm.contentItems.clear();
     vm.contentItems.addAll(_convertToItems(streams, type));
     notifyListeners();
