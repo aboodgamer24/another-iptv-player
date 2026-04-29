@@ -1,9 +1,9 @@
-import 'package:another_iptv_player/models/playlist_model.dart';
-import 'package:another_iptv_player/models/api_configuration_model.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
-import 'package:another_iptv_player/screens/playlist_screen.dart';
+import 'package:c4tv_player/models/playlist_model.dart';
+import 'package:c4tv_player/models/api_configuration_model.dart';
+import 'package:c4tv_player/repositories/iptv_repository.dart';
+import 'package:c4tv_player/screens/playlist_screen.dart';
 
-import 'package:another_iptv_player/screens/welcome_screen.dart';
+import 'package:c4tv_player/screens/welcome_screen.dart';
 
 import 'package:flutter/material.dart';
 import '../../repositories/user_preferences.dart';
@@ -11,10 +11,10 @@ import '../../services/app_state.dart';
 import '../../services/playlist_service.dart';
 import '../../services/sync_service.dart';
 import '../../services/sync_applier.dart';
-import 'package:another_iptv_player/screens/main_navigation_screen_provider.dart';
-import 'package:another_iptv_player/services/service_locator.dart';
-import 'package:another_iptv_player/repositories/m3u_repository.dart';
-import 'package:another_iptv_player/utils/app_config.dart';
+import 'package:c4tv_player/screens/main_navigation_screen_provider.dart';
+import 'package:c4tv_player/services/service_locator.dart';
+import 'package:c4tv_player/repositories/m3u_repository.dart';
+import 'package:c4tv_player/utils/app_config.dart';
 
 class AppInitializerScreen extends StatefulWidget {
   const AppInitializerScreen({super.key});

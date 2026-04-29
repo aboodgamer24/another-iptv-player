@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/services/player_state.dart';
-import 'package:another_iptv_player/services/event_bus.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/services/player_state.dart';
+import 'package:c4tv_player/services/event_bus.dart';
 
 /// Minimalist OSD overlay for desktop playback.
 /// Auto-hides after inactivity, revealed on mouse move.

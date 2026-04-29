@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/repositories/user_preferences.dart';
-import 'package:another_iptv_player/services/app_state.dart';
-import 'package:another_iptv_player/services/sync_service.dart';
-import 'package:another_iptv_player/services/settings_sync.dart';
+import 'package:c4tv_player/repositories/user_preferences.dart';
+import 'package:c4tv_player/services/app_state.dart';
+import 'package:c4tv_player/services/sync_service.dart';
+import 'package:c4tv_player/services/settings_sync.dart';
 import '../models/playlist_model.dart';
 import '../screens/main_navigation_screen_provider.dart';
 import '../services/playlist_service.dart';

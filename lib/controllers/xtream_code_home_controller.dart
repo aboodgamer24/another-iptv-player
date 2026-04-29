@@ -1,11 +1,11 @@
 import 'dart:async';
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/models/category_view_model.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
-import 'package:another_iptv_player/services/app_state.dart';
+import 'package:c4tv_player/models/category_view_model.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/repositories/iptv_repository.dart';
+import 'package:c4tv_player/services/app_state.dart';
 import '../repositories/user_preferences.dart';
 import '../models/category_type.dart';
 import '../models/live_stream.dart';

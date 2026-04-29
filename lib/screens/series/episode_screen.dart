@@ -1,14 +1,14 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/models/watch_history.dart';
+import 'package:c4tv_player/database/database.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/models/watch_history.dart';
 import '../../../models/content_type.dart';
 import '../../../services/event_bus.dart';
 import '../../../widgets/loading_widget.dart';
 import '../../../widgets/player_widget.dart';
-import 'package:another_iptv_player/services/fullscreen_notifier.dart';
+import 'package:c4tv_player/services/fullscreen_notifier.dart';
 import 'package:window_manager/window_manager.dart';
 
 class EpisodeScreen extends StatefulWidget {

@@ -1,10 +1,10 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
-import 'package:another_iptv_player/screens/m3u/m3u_items_screen.dart';
-import 'package:another_iptv_player/screens/m3u/m3u_playlist_settings_screen.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/screens/m3u/m3u_items_screen.dart';
+import 'package:c4tv_player/screens/m3u/m3u_playlist_settings_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:another_iptv_player/controllers/m3u_home_controller.dart';
-import 'package:another_iptv_player/models/playlist_model.dart';
+import 'package:c4tv_player/controllers/m3u_home_controller.dart';
+import 'package:c4tv_player/models/playlist_model.dart';
 import '../../repositories/m3u_repository.dart';
 
 import '../../services/app_state.dart';

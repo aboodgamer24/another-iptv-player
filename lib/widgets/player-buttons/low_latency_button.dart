@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/repositories/user_preferences.dart';
-import 'package:another_iptv_player/services/event_bus.dart';
+import 'package:c4tv_player/repositories/user_preferences.dart';
+import 'package:c4tv_player/services/event_bus.dart';
 
 class LowLatencyButton extends StatefulWidget {
   const LowLatencyButton({super.key});

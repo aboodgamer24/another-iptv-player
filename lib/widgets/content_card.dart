@@ -1,9 +1,9 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/utils/responsive_helper.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/utils/responsive_helper.dart';
 import 'common/hover_scale_wrapper.dart';
 
 class ContentCard extends StatefulWidget {

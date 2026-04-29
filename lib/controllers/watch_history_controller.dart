@@ -1,13 +1,13 @@
-import 'package:another_iptv_player/utils/get_playlist_type.dart';
+import 'package:c4tv_player/utils/get_playlist_type.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/models/watch_history.dart';
-import 'package:another_iptv_player/services/app_state.dart';
-import 'package:another_iptv_player/services/watch_history_service.dart';
-import 'package:another_iptv_player/services/sync_service.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import 'package:c4tv_player/database/database.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/models/watch_history.dart';
+import 'package:c4tv_player/services/app_state.dart';
+import 'package:c4tv_player/services/watch_history_service.dart';
+import 'package:c4tv_player/services/sync_service.dart';
+import 'package:c4tv_player/utils/navigate_by_content_type.dart';
 import '../services/service_locator.dart';
 
 class WatchHistoryController extends ChangeNotifier {

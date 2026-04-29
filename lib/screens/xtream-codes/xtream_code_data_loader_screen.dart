@@ -1,14 +1,14 @@
-import 'package:another_iptv_player/repositories/user_preferences.dart';
-import 'package:another_iptv_player/services/app_state.dart';
+import 'package:c4tv_player/repositories/user_preferences.dart';
+import 'package:c4tv_player/services/app_state.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/controllers/iptv_controller.dart';
-import 'package:another_iptv_player/models/api_configuration_model.dart';
-import 'package:another_iptv_player/models/playlist_model.dart';
-import 'package:another_iptv_player/models/progress_step.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/controllers/iptv_controller.dart';
+import 'package:c4tv_player/models/api_configuration_model.dart';
+import 'package:c4tv_player/models/playlist_model.dart';
+import 'package:c4tv_player/models/progress_step.dart';
+import 'package:c4tv_player/repositories/iptv_repository.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:provider/provider.dart';
-import 'package:another_iptv_player/services/settings_sync.dart';
+import 'package:c4tv_player/services/settings_sync.dart';
 import '../main_navigation_screen_provider.dart';
 import '../playlist_screen.dart';
 

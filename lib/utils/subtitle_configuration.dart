@@ -1,4 +1,4 @@
-import 'package:another_iptv_player/repositories/user_preferences.dart';
+import 'package:c4tv_player/repositories/user_preferences.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 

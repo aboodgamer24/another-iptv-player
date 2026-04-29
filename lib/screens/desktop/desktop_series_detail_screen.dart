@@ -1,16 +1,16 @@
 import 'dart:ui';
-import 'package:another_iptv_player/l10n/localization_extension.dart';
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/models/api_configuration_model.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
-import 'package:another_iptv_player/services/app_state.dart';
-import 'package:another_iptv_player/services/watch_history_service.dart';
-import 'package:another_iptv_player/controllers/favorites_controller.dart';
-import 'package:another_iptv_player/controllers/watch_later_controller.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/database/database.dart';
+import 'package:c4tv_player/models/api_configuration_model.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/repositories/iptv_repository.dart';
+import 'package:c4tv_player/services/app_state.dart';
+import 'package:c4tv_player/services/watch_history_service.dart';
+import 'package:c4tv_player/controllers/favorites_controller.dart';
+import 'package:c4tv_player/controllers/watch_later_controller.dart';
 import 'package:provider/provider.dart';
-import 'package:another_iptv_player/widgets/player_widget.dart';
+import 'package:c4tv_player/widgets/player_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 

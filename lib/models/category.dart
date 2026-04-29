@@ -1,6 +1,6 @@
 import 'package:drift/drift.dart';
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/utils/type_convertions.dart';
+import 'package:c4tv_player/database/database.dart';
+import 'package:c4tv_player/utils/type_convertions.dart';
 import 'category_type.dart';
 
 class Category {

@@ -1,12 +1,12 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
-import 'package:another_iptv_player/models/api_configuration_model.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/models/watch_history.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
-import 'package:another_iptv_player/services/app_state.dart';
-import 'package:another_iptv_player/services/watch_history_service.dart';
-import 'package:another_iptv_player/models/playlist_model.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/models/api_configuration_model.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/models/watch_history.dart';
+import 'package:c4tv_player/repositories/iptv_repository.dart';
+import 'package:c4tv_player/services/app_state.dart';
+import 'package:c4tv_player/services/watch_history_service.dart';
+import 'package:c4tv_player/models/playlist_model.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
@@ -15,11 +15,11 @@ import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import 'package:another_iptv_player/utils/get_playlist_type.dart';
+import 'package:c4tv_player/utils/get_playlist_type.dart';
 import '../../../controllers/favorites_controller.dart';
 import '../../../controllers/watch_later_controller.dart';
 import '../../../widgets/player_widget.dart';
-import 'package:another_iptv_player/services/fullscreen_notifier.dart';
+import 'package:c4tv_player/services/fullscreen_notifier.dart';
 import 'package:window_manager/window_manager.dart';
 
 class MovieScreen extends StatefulWidget {

@@ -1,9 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/watch_history.dart';
-import 'package:another_iptv_player/services/service_locator.dart';
+import 'package:c4tv_player/database/database.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/watch_history.dart';
+import 'package:c4tv_player/services/service_locator.dart';
 import 'sync_service.dart';
 
 class WatchHistoryService {

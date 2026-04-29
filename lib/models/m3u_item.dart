@@ -1,4 +1,4 @@
-import 'package:another_iptv_player/models/content_type.dart';
+import 'package:c4tv_player/models/content_type.dart';
 import 'package:drift/drift.dart';
 
 import '../database/database.dart';

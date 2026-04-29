@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/services/parental_control_service.dart';
-import 'package:another_iptv_player/widgets/pin_dialog.dart';
+import 'package:c4tv_player/services/parental_control_service.dart';
+import 'package:c4tv_player/widgets/pin_dialog.dart';
 
 /// Settings screen for managing parental controls:
 /// PIN setup/change/remove, keyword filtering, toggle lock.

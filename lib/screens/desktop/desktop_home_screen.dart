@@ -1,12 +1,12 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/controllers/favorites_controller.dart';
-import 'package:another_iptv_player/controllers/watch_history_controller.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/favorite.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/models/watch_history.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import 'package:c4tv_player/controllers/favorites_controller.dart';
+import 'package:c4tv_player/controllers/watch_history_controller.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/favorite.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/models/watch_history.dart';
+import 'package:c4tv_player/utils/navigate_by_content_type.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// Desktop Home / Dashboard showing Continue Watching, Recently Viewed

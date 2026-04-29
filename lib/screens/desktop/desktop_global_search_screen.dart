@@ -1,10 +1,10 @@
 import 'dart:async';
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/services/app_state.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/services/app_state.dart';
+import 'package:c4tv_player/utils/navigate_by_content_type.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 
 /// Desktop global search across Live TV, Movies, and Series.

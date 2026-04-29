@@ -1,7 +1,7 @@
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
 import 'package:drift/drift.dart';
-import 'package:another_iptv_player/database/database.dart';
+import 'package:c4tv_player/database/database.dart';
 
 class Favorite {
   final String id;

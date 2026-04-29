@@ -1,9 +1,9 @@
 import 'dart:convert';
-import 'package:another_iptv_player/models/m3u_item.dart';
-import 'package:another_iptv_player/models/playlist_model.dart';
-import 'package:another_iptv_player/repositories/iptv_repository.dart';
-import 'package:another_iptv_player/repositories/m3u_repository.dart';
-import 'package:another_iptv_player/repositories/user_preferences.dart';
+import 'package:c4tv_player/models/m3u_item.dart';
+import 'package:c4tv_player/models/playlist_model.dart';
+import 'package:c4tv_player/repositories/iptv_repository.dart';
+import 'package:c4tv_player/repositories/m3u_repository.dart';
+import 'package:c4tv_player/repositories/user_preferences.dart';
 
 import '../database/database.dart';
 

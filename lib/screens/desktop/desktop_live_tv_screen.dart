@@ -1,10 +1,10 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/models/category_view_model.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/widgets/player_widget.dart';
+import 'package:c4tv_player/models/category_view_model.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/widgets/player_widget.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:another_iptv_player/widgets/common/resizable_sidebar.dart';
+import 'package:c4tv_player/widgets/common/resizable_sidebar.dart';
 
 class DesktopLiveTvScreen extends StatefulWidget {
   final List<CategoryViewModel> categories;

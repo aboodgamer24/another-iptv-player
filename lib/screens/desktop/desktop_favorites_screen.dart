@@ -1,13 +1,13 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/controllers/favorites_controller.dart';
-import 'package:another_iptv_player/controllers/watch_later_controller.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/favorite.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
-import 'package:another_iptv_player/widgets/common/c4_card.dart';
-import 'package:another_iptv_player/widgets/player_widget.dart';
+import 'package:c4tv_player/controllers/favorites_controller.dart';
+import 'package:c4tv_player/controllers/watch_later_controller.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/favorite.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/utils/navigate_by_content_type.dart';
+import 'package:c4tv_player/widgets/common/c4_card.dart';
+import 'package:c4tv_player/widgets/player_widget.dart';
 import 'package:provider/provider.dart';
 
 class DesktopFavoritesScreen extends StatefulWidget {

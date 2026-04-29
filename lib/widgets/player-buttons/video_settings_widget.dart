@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:another_iptv_player/services/event_bus.dart';
-import 'package:another_iptv_player/services/player_state.dart';
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/services/event_bus.dart';
+import 'package:c4tv_player/services/player_state.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:media_kit/media_kit.dart' hide PlayerState;
-import 'package:another_iptv_player/repositories/user_preferences.dart';
+import 'package:c4tv_player/repositories/user_preferences.dart';
 
 class VideoSettingsWidget extends StatefulWidget {
   const VideoSettingsWidget({super.key});

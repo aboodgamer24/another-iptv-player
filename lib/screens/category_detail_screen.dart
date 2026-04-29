@@ -1,8 +1,8 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:another_iptv_player/models/category_view_model.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import 'package:c4tv_player/models/category_view_model.dart';
+import 'package:c4tv_player/utils/navigate_by_content_type.dart';
 import '../controllers/category_detail_controller.dart';
 import '../widgets/category_detail/category_app_bar.dart';
 import '../widgets/category_detail/content_states.dart';

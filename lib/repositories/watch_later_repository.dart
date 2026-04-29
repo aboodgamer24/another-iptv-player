@@ -1,8 +1,8 @@
-import 'package:another_iptv_player/database/database.dart';
-import 'package:another_iptv_player/models/content_type.dart';
-import 'package:another_iptv_player/models/playlist_content_model.dart';
-import 'package:another_iptv_player/services/app_state.dart';
-import 'package:another_iptv_player/services/service_locator.dart';
+import 'package:c4tv_player/database/database.dart';
+import 'package:c4tv_player/models/content_type.dart';
+import 'package:c4tv_player/models/playlist_content_model.dart';
+import 'package:c4tv_player/services/app_state.dart';
+import 'package:c4tv_player/services/service_locator.dart';
 import 'package:uuid/uuid.dart';
 
 class WatchLaterRepository {

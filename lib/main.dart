@@ -1,8 +1,8 @@
-import 'package:another_iptv_player/controllers/playlist_controller.dart';
-import 'package:another_iptv_player/controllers/favorites_controller.dart';
-import 'package:another_iptv_player/controllers/watch_later_controller.dart';
-import 'package:another_iptv_player/controllers/home_rails_controller.dart';
-import 'package:another_iptv_player/screens/app_initializer_screen.dart';
+import 'package:c4tv_player/controllers/playlist_controller.dart';
+import 'package:c4tv_player/controllers/favorites_controller.dart';
+import 'package:c4tv_player/controllers/watch_later_controller.dart';
+import 'package:c4tv_player/controllers/home_rails_controller.dart';
+import 'package:c4tv_player/screens/app_initializer_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -16,7 +16,7 @@ import 'services/app_lifecycle_sync.dart';
 import 'package:window_manager/window_manager.dart';
 import 'dart:io';
 
-import 'package:another_iptv_player/utils/platform_utils.dart';
+import 'package:c4tv_player/utils/platform_utils.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

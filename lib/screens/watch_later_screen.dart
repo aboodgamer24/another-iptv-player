@@ -1,11 +1,11 @@
-import 'package:another_iptv_player/l10n/localization_extension.dart';
+import 'package:c4tv_player/l10n/localization_extension.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/watch_later_controller.dart';
 import '../models/content_type.dart';
 import '../models/playlist_content_model.dart';
 import '../widgets/common/c4_content_rail.dart';
-import 'package:another_iptv_player/utils/navigate_by_content_type.dart';
+import 'package:c4tv_player/utils/navigate_by_content_type.dart';
 
 class WatchLaterScreen extends StatefulWidget {
   const WatchLaterScreen({super.key});

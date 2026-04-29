@@ -1,10 +1,10 @@
-import 'package:another_iptv_player/controllers/xtream_code_home_controller.dart';
-import 'package:another_iptv_player/services/player_state.dart';
-import 'package:another_iptv_player/widgets/player/c4_player_overlay.dart';
+import 'package:c4tv_player/controllers/xtream_code_home_controller.dart';
+import 'package:c4tv_player/services/player_state.dart';
+import 'package:c4tv_player/widgets/player/c4_player_overlay.dart';
 import 'package:flutter/material.dart';
 import 'package:media_kit_video/media_kit_video.dart';
 import 'package:provider/provider.dart';
-import 'package:another_iptv_player/models/content_type.dart';
+import 'package:c4tv_player/models/content_type.dart';
 
 class VideoWidget extends StatefulWidget {
   final VideoController controller;
