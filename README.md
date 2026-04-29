@@ -19,12 +19,9 @@ The app is designed to feel natural across all screen sizes — from phones to d
 
 - **Clean home screen** with your playlists, recent content, and quick-access categories
 - **Responsive layout** that adapts beautifully from 5-inch phones to 4K desktops
-- **Dark & light themes** with a smooth toggle
 - **Persistent bottom navigation** for instant access to Live TV, Movies, Series, Search, and Settings
-- **Picture-in-Picture** — float the player over other apps while you multitask (mobile)
 - **Category browsing** with search, sorting, and the ability to hide unwanted categories
 - **Full metadata display** — cover art, descriptions, ratings, and episode lists for series
-- **DM Sans typography** for a modern, readable interface across all platforms
 
 ---
 
@@ -71,10 +68,7 @@ Streaming speed and reliability come first.
 - Video, audio, and subtitle track selection with memory
 - Subtitle customization (font, size, color, position)
 - Multi-language UI (10+ languages)
-- Settings page with centralized control
-- Hide categories (Xtream Codes playlists)
 - Sorting options for channels and content
-- Wakelock during playback
 
 ---
 
@@ -100,7 +94,7 @@ Download the latest pre-built release for your platform from the [**Releases**](
 
 | Platform | Package                     |
 | -------- | --------------------------- |
-| Windows  | `.exe` installer or `.msix` |
+| Windows  | `.exe` installer            |
 | Android  | `.apk`                      |
 
 ### Quick Start
