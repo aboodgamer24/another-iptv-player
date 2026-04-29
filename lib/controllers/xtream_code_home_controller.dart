@@ -221,37 +221,59 @@ class XtreamCodeHomeController extends ChangeNotifier {
       // ── PHASE 2: Slow — load live streams and dashboard data in background ──
       unawaited(() async {
         try {
-          // Live streams (fill in contentItems for each live category)
-          final liveEntries = await Future.wait<MapEntry<String, List<LiveStream>>>(
-            allLiveCats.map(
-              (cat) => db
-                  .getLiveStreamsByCategoryId(playlistId, cat.categoryId as String)
-                  .then(
-                    (streams) => MapEntry<String, List<LiveStream>>(
-                      cat.categoryId as String,
-                      streams,
-                    ),
-                  ),
-            ),
-          );
-          final liveMap = Map<String, List<LiveStream>>.fromEntries(liveEntries);
+          // 1. Bulk load all streams from DB for fast in-memory access
+          final streamsResults = await Future.wait([
+            db.getLiveStreams(playlistId),
+            db.getVodStreamsByPlaylistId(playlistId),
+            db.getSeriesStreamsByPlaylistId(playlistId),
+          ]);
 
-          // Update live categories with their streams
+          final allLiveStreams = streamsResults[0] as List<LiveStream>;
+          final allVodStreams = streamsResults[1] as List<VodStream>;
+          final allSerStreams = streamsResults[2] as List<SeriesStream>;
+
+          // 2. Group by category in memory
+          final liveMap = <String, List<LiveStream>>{};
+          for (final s in allLiveStreams) {
+            liveMap.putIfAbsent(s.categoryId, () => []).add(s);
+          }
+          final vodMap = <String, List<VodStream>>{};
+          for (final s in allVodStreams) {
+            vodMap.putIfAbsent(s.categoryId, () => []).add(s);
+          }
+          final serMap = <String, List<SeriesStream>>{};
+          for (final s in allSerStreams) {
+            if (s.categoryId == null) continue;
+            serMap.putIfAbsent(s.categoryId!, () => []).add(s);
+          }
+
+          // 3. Update view models immediately
           for (final vm in _liveCategories) {
             final streams = liveMap[vm.category.categoryId] ?? [];
             vm.contentItems
               ..clear()
               ..addAll(_convertToItems(streams, ContentType.liveStream));
           }
+          for (final vm in _movieCategories) {
+            final streams = vodMap[vm.category.categoryId] ?? [];
+            vm.contentItems
+              ..clear()
+              ..addAll(_convertToItems(streams, ContentType.vod));
+          }
+          for (final vm in _seriesCategories) {
+            final streams = serMap[vm.category.categoryId] ?? [];
+            vm.contentItems
+              ..clear()
+              ..addAll(_convertToItems(streams, ContentType.series));
+          }
 
-          // Dashboard random samples
-          final samples = await Future.wait([
-            db.getRandomVodStreams(playlistId, 15),
-            db.getRandomSeriesStreams(playlistId, 15),
-          ]);
-
-          final randomVods = samples[0] as List<VodStream>;
-          final randomSeries = samples[1] as List<SeriesStream>;
+          // 4. Update Dashboard pool & samples
+          final randomVods = allVodStreams.length > 15 
+              ? (allVodStreams.toList()..shuffle()).take(15).toList() 
+              : allVodStreams;
+          final randomSeries = allSerStreams.length > 15 
+              ? (allSerStreams.toList()..shuffle()).take(15).toList() 
+              : allSerStreams;
 
           _heroPool = [
             ...randomVods.map(
